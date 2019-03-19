@@ -1,0 +1,19 @@
+#This package is developed for benchmarking TE libraries for whole-genome annotation purposes. 
+
+#To do so, you need to have a manually curated TE library to serve as the gold standard.
+
+#Be caution that any errors in the gold standard will be propergated and will result in misleading results.
+
+#I have provided the standard annotation for LTR retrotransposons in the rice genome (TIGR7/MSU7 version).
+
+#You may download the rice genome here:
+#http://rice.plantbiology.msu.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con
+
+#So if you want to test your custom LTR library in rice, you need to re-annotate the rice genome with your library first:
+RepeatMasker -pa 10 -q -no_is -norna -nolow -div 40 -lib custom.LTR.lib.fasta -cutoff 225 rice_genome.fasta
+
+#then
+perl lib-test.pl rice_genome.fasta all.con.std6.9.2.out rice_genome.fasta.test.out 
+
+#Plese cite our paper if this package helps your study.
+#Ou S and Jiang N (2018). LTR_retriever: A Highly Accurate and Sensitive Program for Identification of Long Terminal Repeat Retrotransposons. Plant Physiol. 176(2): 1410-1422.
