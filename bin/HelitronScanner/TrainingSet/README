@@ -1,0 +1,2 @@
+There are 2846 and 2048 Helitron termini after removing sequence redundancy at a similarity level of 90%.
+In order to generate LCVs with better performance, the 5'-TC and 3'-CTRR are masked in the training set. 
