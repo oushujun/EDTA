@@ -12,7 +12,7 @@ while (<FA>){
 	my ($id, $seq) = (split /\n/, $_, 2);
 	my $name = (split /\s+/, $id)[0];
 	$seq =~ s/\s+//g;
-	my $class = $1 if $name =~ /#(.*)$/;
+	my $class = $1 if $name =~ /.*#(.*)$/;
 	$num = sprintf("%08d", $num);
 	print ">TE_$num#$class\n$seq\n";
 	$num++;
