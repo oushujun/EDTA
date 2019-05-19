@@ -1,0 +1,364 @@
+--[[
+  This is an output template for HTML output.
+  The HTML is self-contained so this template may look a bit full.
+]]
+
+header = [[
+<!DOCTYPE html>
+<html lang="en-gb">
+  <head>
+    <title>
+      Speck &ndash; report for ]] .. global.spec_filename .. [[
+    </title>
+    <style>
+    .collapsibleList li {
+      cursor:auto;
+      list-style: none;
+      padding: 0px;
+      float: none;
+      width: 100%;
+      clear:both;
+    }
+    .ok:before {
+      color: green;
+    }
+    .fail:before {
+      color:red;
+    }
+    .err:before {
+      color: purple;
+    }
+    ul li.collapsibleListOpen:before {
+        content: '\25BC';
+        float: left;
+        cursor:pointer;
+        margin: 0 0.2em;
+    }
+    li.collapsibleListClosed {
+      cursor:pointer;
+    }
+    ul li.collapsibleListClosed:before {
+        content: '\25BA';
+        float: left;
+        cursor:pointer;
+        margin: 0 0.2em;
+    }
+    ul li:before {
+        /* content: '\26AA';
+        margin: 0 1em; */
+    }
+     body, html {
+          height: 100%;
+          margin: 0;
+          font-family: helvetica;
+      }
+      .tabs input[type=radio] {
+          position: absolute;
+          top: -9999px;
+          left: -9999px;
+      }
+      .content {
+        width: 80%;
+        height: 100%;
+        float: none;
+        list-style: none;
+        padding: 0;
+        margin: 75px auto;
+      }
+      .tabs {
+        width: 100%;
+        float: none;
+        list-style: none;
+        position: relative;
+        padding: 0;
+        margin-bottom: 60px;
+      }
+      .tabs li{
+        float: left;
+      }
+      .tabs label {
+          display: block;
+          padding: 10px 20px;
+          border-radius: 2px 2px 0 0;
+          font-weight: normal;
+          background: #F7F7F7;
+          cursor: pointer;
+          position: relative;
+          top: 3px;
+          -webkit-transition: all 0.2s ease-in-out;
+          -moz-transition: all 0.2s ease-in-out;
+          -o-transition: all 0.2s ease-in-out;
+          transition: all 0.2s ease-in-out;
+      }
+      .tabs label:hover {
+        background: rgba(255,255,255,0.5);
+        top: 0;
+      }
+      [id^=tab]:checked + label {
+        background: #EEEEEE;
+        top: 0;
+      }
+      [id^=tab]:checked ~ [id^=tab-content] {
+          display: block;
+      }
+      .tab-content{
+        z-index: 2;
+        display: none;
+        text-align: left;
+        width: 100%;
+        line-height: 140%;
+        background: #EEE;
+        padding: 15px;
+        position: absolute;
+        left: 0;
+        box-sizing: border-box;
+        -webkit-animation-duration: 0.5s;
+        -o-animation-duration: 0.5s;
+        -moz-animation-duration: 0.5s;
+        animation-duration: 0.5s;
+      }
+      .wrapper {
+        min-height: 100%;
+        height: auto !important;
+        height: 100%;
+        margin: 0 auto -55px;
+      }
+      .footer, .push {
+        height: 55px;
+      }
+      .boxx {
+        background: #FAFAFA;
+        border: 1px dotted #FAFAFA;
+        margin: 3px;
+      }
+      .subheader {
+        font-size: small;
+      }
+      .overflowed {
+        width: 100%;
+        clear: both;
+        overflow: auto;
+      }
+    </style>
+    <script>var runOnLoad=function(c,o,d,e){function x(){for(e=1;c.length;)c.shift()()}o[d]?(document[d]('DOMContentLoaded',x,0),o[d]('load',x,0)):o.attachEvent('onload',x);return function(t){e?o.setTimeout(t,0):c.push(t)}}([],window,'addEventListener');</script>
+
+    <script type="text/javascript">
+
+    var CollapsibleLists =
+    new function(){
+      this.apply = function(doNotRecurse){
+        var uls = document.getElementsByTagName('ul');
+        for (var index = 0; index < uls.length; index ++){
+          if (uls[index].className.match(/(^| )collapsibleList( |$)/)){
+            this.applyTo(uls[index], true);
+            if (!doNotRecurse){
+              var subUls = uls[index].getElementsByTagName('ul');
+              for (var subIndex = 0; subIndex < subUls.length; subIndex ++){
+                subUls[subIndex].className += ' collapsibleList';
+              }
+            }
+          }
+        }
+      };
+      this.applyTo = function(node, doNotRecurse){
+        var lis = node.getElementsByTagName('li');
+        for (var index = 0; index < lis.length; index ++){
+          if (!doNotRecurse || node == lis[index].parentNode){
+            if (lis[index].addEventListener){
+              lis[index].addEventListener(
+                  'mousedown', function (e){ e.preventDefault(); }, false);
+            }else{
+              lis[index].attachEvent(
+                  'onselectstart', function(){ event.returnValue = false; });
+            }
+            if (lis[index].addEventListener){
+              lis[index].addEventListener(
+                  'click', createClickListener(lis[index]), false);
+            }else{
+              lis[index].attachEvent(
+                  'onclick', createClickListener(lis[index]));
+            }
+            toggle(lis[index]);
+          }
+        }
+      };
+      function createClickListener(node){
+        return function(e){
+          if (!e) e = window.event;
+          var li = (e.target ? e.target : e.srcElement);
+          while (li.nodeName != 'LI') li = li.parentNode;
+          if (li == node) toggle(node);
+        };
+      }
+      function toggle(node){
+        var open = node.className.match(/(^| )collapsibleListClosed( |$)/);
+        var uls = node.getElementsByTagName('ul');
+        for (var index = 0; index < uls.length; index ++){
+          var li = uls[index];
+          while (li.nodeName != 'LI') li = li.parentNode;
+          if (li == node) uls[index].style.display = (open ? 'block' : 'none');
+        }
+        node.className =
+            node.className.replace(
+                /(^| )collapsibleList(Open|Closed)( |$)/, '');
+        if (uls.length > 0){
+          node.className += ' collapsibleList' + (open ? 'Open' : 'Closed');
+        }
+      }
+    }();
+    runOnLoad(function(){ CollapsibleLists.apply(); });
+
+    </script>
+    </head>
+<body>
+<div class="content wrapper">
+]]
+
+footer = [[
+<div style="clear: both;"></div>
+</div>
+<div class=\"footer\"   style="text-align:center; font-size: 12px;">
+  Generated by Speck on ]] .. os.date() .. [[. Check completed in ]] ..
+  global.runtime .. [[ s.</div>
+</body>
+</html>
+]]
+
+function print_aspects(aspects)
+  local str = ""
+  template_print("<ul class=\"collapsibleListOpen\">\n")
+  for aspect, aspect_details in pairs(aspects) do
+    if aspect_details.failures > 0 or  aspect_details.runtime_errors > 0 then
+      str = "fail"
+    else
+      str = "ok"
+    end
+    template_print("<li class=\"collapsibleListOpen " .. str .. "\">\n")
+    template_print("<span style=\"float: left;\">")
+    template_print("&hellip;" .. aspect .. "\n")
+    template_print("</span>")
+
+    template_print("<span style=\"float: right;\">")
+    template_print("        successes  <span style=\"color: green;\"> " ..
+                   aspect_details.successes .. "</span> \n")
+    template_print("        failures  <span style=\"color: red;\"> " ..
+                   aspect_details.failures .. "</span> \n")
+    template_print("        runtime errors  <span style=\"color: magenta;\"> " ..
+                   aspect_details.runtime_errors .. "</span> \n")
+    template_print("</span>")
+
+    if global.show_details then
+      if aspect_details.failures > 0 or aspect_details.runtime_errors > 0 then
+        template_print("<ul>\n")
+        for n, node in ipairs(aspect_details.nodes) do
+          template_print("<li class=\"" .. str .. "\">\n")
+          if node.ID then
+            template_print([[<span style="color: grey;">ID:</span>
+                             <span style="color: black;">]] ..
+                             node.ID .. [[</span>, ]])
+          end
+          template_print([[<span style="color: grey;">file</span>
+          <span style="color: #grey;">]] .. node.filename .. [[</span>,
+          <span style="color: grey;">line</span>
+          <span style="color: #grey;">]] .. node.linenumber .. [[</span>]])
+          template_print("<ul><li><span class='subheader'>Failure messages:</span> <ul>\n")
+          for c, msg in ipairs(node.failure_messages) do
+            template_print("<li><div class='overflowed'>" .. msg .. "</div></li>\n")
+          end
+          for c, msg in ipairs(node.runtime_error_messages) do
+            template_print("<li class='overflowed'>" .. msg .. "</li>\n")
+          end
+          template_print("</ul></li>")
+          template_print("<li><span class='subheader'>GFF3 for feature:</span><div class='gffcode boxx overflowed'><pre>")
+          node.node:accept(gff3_out_visitor)
+          template_print("</pre></div></li>")
+          template_print("</ul>\n")
+          template_print("</li>\n")
+        end
+        template_print("</ul>\n")
+      end
+    end
+    template_print("</li>\n")
+  end
+  template_print("</ul>\n")
+end
+
+template_print(header)
+
+template_print("<h1>Validation report with specification <i>" ..
+              global.spec_filename .. "</i></h1>")
+
+template_print("<ul class=\"tabs\">\n")
+
+template_print([[<li>
+          <input type="radio" checked name="tabs" id="tab1">
+          <label for="tab1">Features</label>
+          <div id="tab-content1" class="tab-content animated fadeIn">]])
+
+template_print("<ul class=\"collapsibleList\">\n")
+for feature, aspects in pairs(features) do
+  local str
+  for aspect, aspect_details in pairs(aspects) do
+    if aspect_details.failures > 0 or  aspect_details.runtime_errors > 0 then
+      str = "fail"
+      break
+    else
+      str = "ok"
+    end
+  end
+  template_print("<li class=\"" .. str .. "\"> " .. feature .. "\n")
+  print_aspects(aspects)
+  template_print("</li>\n")
+end
+template_print("</ul></div></li>\n")
+
+template_print([[<li>
+          <input type="radio" name="tabs" id="tab2">
+          <label for="tab2">Regions</label>
+          <div id="tab-content2" class="tab-content animated fadeIn">]])
+template_print("<ul class=\"collapsibleList\">\n")
+print_aspects(regions)
+template_print("</ul>\n")
+template_print("</div></li>\n")
+
+template_print([[<li>
+          <input type="radio" name="tabs" id="tab3">
+          <label for="tab3">Metadata</label>
+          <div id="tab-content3" class="tab-content animated fadeIn">]])
+template_print("<ul class=\"collapsibleList\">\n")
+print_aspects(metas)
+template_print("</ul>\n")
+template_print("</div></li>\n")
+
+template_print([[<li>
+          <input type="radio" name="tabs" id="tab4">
+          <label for="tab4">Comments</label>
+          <div id="tab-content4" class="tab-content animated fadeIn">]])
+template_print("<ul class=\"collapsibleList\">\n")
+print_aspects(comments)
+template_print("</ul>\n")
+template_print("</div></li>\n")
+
+template_print([[<li>
+          <input type="radio" name="tabs" id="tab5">
+          <label for="tab5">Sequences</label>
+          <div id="tab-content5" class="tab-content animated fadeIn">]])
+template_print("<ul class=\"collapsibleList\">\n")
+print_aspects(sequences)
+template_print("</ul>\n")
+template_print("</div></li>\n")
+
+template_print([[<li>
+          <input type="radio" name="tabs" id="tab6">
+          <label for="tab6">Warnings</label>
+          <div id="tab-content6" class="tab-content animated fadeIn">]])
+template_print("<ul>\n")
+for _, msg in ipairs(warnings) do
+  template_print("<li>" .. msg .. "</li>\n")
+end
+template_print("</ul>\n")
+template_print("</div></li>\n")
+
+template_print("</ul>\n")
+
+template_print(footer)

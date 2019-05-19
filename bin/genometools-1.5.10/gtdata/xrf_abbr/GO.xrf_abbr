@@ -1,0 +1,2177 @@
+!version: $Revision: 2.302 $
+!date: $Date: 2012/09/20 21:04:35 $
+!
+!Gene Ontology
+!Abbreviations for cross-referenced databases.
+!
+!Note that URLs are not necessarily stable entities and that some
+!databases may have many other access routes or mirror sites.
+!
+!This data is available as a web page at
+!http://www.geneontology.org/cgi-bin/xrefs.cgi
+
+abbreviation: AgBase
+database: AgBase resource for functional analysis of agricultural plant and animal gene products
+generic_url: http://www.agbase.msstate.edu/
+url_syntax: http://www.agbase.msstate.edu/cgi-bin/getEntry.pl?db_pick=[ChickGO/MaizeGO]&uid=[example_id]
+
+abbreviation: AGI_LocusCode
+database: Arabidopsis Genome Initiative
+object: Locus identifier
+example_id: AGI_LocusCode:At2g17950
+local_id_syntax: ^AT[MC0-5]G[0-9]{5}(\.[0-9]{1})?$
+generic_url: http://www.arabidopsis.org
+url_syntax: http://arabidopsis.org/servlets/TairObject?type=locus&name=[example_id]
+url_example: http://arabidopsis.org/servlets/TairObject?type=locus&name=At2g17950
+!url_syntax: http://mips.gsf.de/cgi-bin/proj/thal/search_gene?code=[example_id]
+!url_example: http://mips.gsf.de/cgi-bin/proj/thal/search_gene?code=At2g17950
+!url_syntax: http://www.tigr.org/tigr-scripts/euk_manatee/shared/ORF_infopage.cgi?db=ath1&orf=[example_id]
+!url_example: http://www.tigr.org/tigr-scripts/euk_manatee/shared/ORF_infopage.cgi?db=ath1&orf=At2g17950
+
+abbreviation: AGRICOLA_ID
+database: AGRICultural OnLine Access
+object: AGRICOLA call number
+example_id: AGRICOLA_NAL:TP248.2 P76 v.14
+generic_url: http://agricola.nal.usda.gov/
+
+abbreviation: AGRICOLA_IND
+database: AGRICultural OnLine Access
+object: AGRICOLA IND number
+example_id: AGRICOLA_IND:IND23252955
+generic_url: http://agricola.nal.usda.gov/
+
+abbreviation: ApiDB_PlasmoDB
+database: PlasmoDB Plasmodium Genome Resource
+object: PlasmoDB Gene ID
+example_id: ApiDB_PlasmoDB:PF11_0344
+generic_url: http://plasmodb.org/
+url_syntax: http://www.plasmodb.org/gene/[example_id]
+url_example: http://www.plasmodb.org/gene/PF11_0344
+
+abbreviation: AraCyc
+database: AraCyc metabolic pathway database for Arabidopsis thaliana
+object: Identifier
+example_id: AraCyc:PWYQT-62
+generic_url: http://www.arabidopsis.org/biocyc/index.jsp
+url_syntax: http://www.arabidopsis.org:1555/ARA/NEW-IMAGE?type=NIL&object=[example_id]
+url_example: http://www.arabidopsis.org:1555/ARA/NEW-IMAGE?type=NIL&object=PWYQT-62
+
+abbreviation: ASAP
+database: A Systematic Annotation Package for Community Analysis of Genomes
+object: Feature identifier
+example_id: ASAP:ABE-0000008
+generic_url: https://asap.ahabs.wisc.edu/annotation/php/ASAP1.htm
+url_syntax: https://asap.ahabs.wisc.edu/annotation/php/feature_info.php?FeatureID=[example_id]
+url_example: https://asap.ahabs.wisc.edu/annotation/php/feature_info.php?FeatureID=ABE-0000008
+
+abbreviation: AspGD
+database: Aspergillus Genome Database
+object: Identifier for AspGD Loci
+synonym: AspGDID
+example_id: AspGD:ASPL0000067538
+generic_url: http://www.aspergillusgenome.org/
+url_syntax: http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=[example_id]
+url_example: http://www.aspergillusgenome.org/cgi-bin/locus.pl?dbid=ASPL0000067538
+
+abbreviation: AspGD_LOCUS
+database: Aspergillus Genome Database
+object: Gene name (gene symbol in mammalian nomenclature)
+example_id: AspGD_LOCUS:AN10942
+generic_url: http://www.aspergillusgenome.org/
+url_syntax: http://www.aspergillusgenome.org/cgi-bin/locus.pl?locus=[example_id]
+url_example: http://www.aspergillusgenome.org/cgi-bin/locus.pl?locus=AN10942
+
+abbreviation: AspGD_REF
+database: Aspergillus Genome Database
+object: Literature Reference Identifier
+example_id: AspGD_REF:90
+generic_url: http://www.aspergillusgenome.org/
+url_syntax: http://www.aspergillusgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]
+url_example: http://www.aspergillusgenome.org/cgi-bin/reference/reference.pl?dbid=90
+
+abbreviation: BFO
+database: Basic Formal Ontology
+example_id: BFO:0000066
+generic_url: http://purl.obolibrary.org/obo/bfo
+url_syntax: http://purl.obolibrary.org/obo/BFO_[example_id]
+url_example: http://purl.obolibrary.org/obo/BFO_0000066
+
+abbreviation: BHF-UCL
+database: Cardiovascular Gene Ontology Annotation Initiative
+generic_url: http://www.ucl.ac.uk/cardiovasculargeneontology/
+
+abbreviation: BioCyc
+database: BioCyc collection of metabolic pathway databases
+object: Identifier
+example_id: BioCyc:PWY-5271
+generic_url: http://biocyc.org/
+url_syntax: http://biocyc.org/META/NEW-IMAGE?type=PATHWAY&object=[example_id]
+url_example: http://biocyc.org/META/NEW-IMAGE?type=PATHWAY&object=PWY-5271
+
+abbreviation: BIOMD
+database: BioModels Database
+object: Accession
+synonym: BIOMDID
+example_id: BIOMD:BIOMD0000000045
+generic_url: http://www.ebi.ac.uk/biomodels/
+url_syntax: http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=[example_id]
+url_example: http://www.ebi.ac.uk/compneur-srv/biomodels-main/publ-model.do?mid=BIOMD0000000045
+
+abbreviation: bioPIXIE_MEFIT
+database: biological Process Inference from eXperimental Interaction Evidence/Microarray Experiment Functional Integration Technology
+generic_url: http://avis.princeton.edu/mefit/
+generic_url: http://pixie.princeton.edu/pixie/
+
+abbreviation: BIOSIS
+database: BIOSIS previews
+object: Identifier
+example_id: BIOSIS:200200247281
+generic_url: http://www.biosis.org/
+
+abbreviation: BRENDA
+database: BRENDA, The Comprehensive Enzyme Information System
+object: EC enzyme identifier
+example_id: BRENDA:4.2.1.3
+generic_url: http://www.brenda-enzymes.info
+url_syntax: http://www.brenda-enzymes.info/php/result_flat.php4?ecno=[example_id]
+url_example: http://www.brenda-enzymes.info/php/result_flat.php4?ecno=4.2.1.3
+
+abbreviation: Broad
+database: Broad Institute
+generic_url: http://www.broad.mit.edu/
+
+abbreviation: Broad_MGG
+database: Magnaporthe grisea Database
+object: Locus
+example_id: Broad_MGG:MGG_05132.5
+generic_url: http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/Home.html
+url_syntax: http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/GeneLocus.html?sp=S[example_id]
+url_example: http://www.broad.mit.edu/annotation/genome/magnaporthe_grisea/GeneLocus.html?sp=SMGG_05132
+
+abbreviation: Broad_NEUROSPORA
+database: Neurospora crassa Database
+object: Identifier for Broad_Ncrassa Loci
+example_id: BROAD_NEUROSPORA:7000007580576824
+generic_url: http://www.broadinstitute.org/annotation/genome/neurospora/MultiHome.html
+url_syntax: http://www.broadinstitute.org/annotation/genome/neurospora/GeneDetails.html?sp=S[example_id]
+url_example: http://www.broadinstitute.org/annotation/genome/neurospora/GeneDetails.html?sp=S7000007580576824
+
+abbreviation: CACAO
+database: Community Assessment of Community Annotation with Ontologies
+object: accession
+example_id: MYCS2:A0QNF5
+generic_url: http://gowiki.tamu.edu/wiki/index.php/Category:CACAO
+url_syntax: http://gowiki.tamu.edu/wiki/index.php/[example_id]
+url_example: http://gowiki.tamu.edu/wiki/index.php/MYCS2:A0QNF5
+
+abbreviation: CAS
+database: CAS Chemical Registry
+object: Identifier
+example_id: CAS:58-08-2
+generic_url: http://www.cas.org/expertise/cascontent/registry/index.html
+
+abbreviation: CASGEN
+database: Catalog of Fishes genus database
+object: Identifier
+synonym: CAS_GEN
+example_id: CASGEN:1040
+generic_url: http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html
+url_syntax: http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=[example_id]
+url_example: http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Genus&id=1040
+
+abbreviation: CASREF
+database: Catalog of Fishes publications database
+object: Identifier
+example_id: CASREF:2031
+generic_url: http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html
+url_syntax: http://research.calacademy.org/research/ichthyology/catalog/getref.asp?id=[example_id]
+url_example: http://research.calacademy.org/research/ichthyology/catalog/getref.asp?id=2031
+
+abbreviation: CASSPC
+database: Catalog of Fishes species database
+object: Identifier
+synonym: CAS_SPC
+generic_url: http://research.calacademy.org/research/ichthyology/catalog/fishcatsearch.html
+url_syntax: http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=[example_id]
+url_syntax: http://research.calacademy.org/research/ichthyology/catalog/getname.asp?rank=Species&id=1979
+
+abbreviation: CAZY
+database: Carbohydrate Active EnZYmes
+object: Identifier
+example_id: CAZY:PL11
+local_id_syntax: ^(CE|GH|GT|PL)\d+$
+generic_url: http://www.cazy.org/
+url_syntax: http://www.cazy.org/[example_id].html
+url_example: http://www.cazy.org/PL11.html
+
+! Note that CBS examples are not in the traditional accession style because the entities in question are not entries in a database, and don't have accessions
+
+abbreviation: CBS
+database: Center for Biological Sequence Analysis
+generic_url: http://www.cbs.dtu.dk/
+object: prediction tool
+example_id: CBS:TMHMM
+url_example: http://www.cbs.dtu.dk/services/[example_id]/
+
+! note: CDD contact person is Rob Edwards (RobE@thefig.info); BRC: NMPDR
+
+abbreviation: CDD
+database: Conserved Domain Database at NCBI
+object: Identifier
+example_id: CDD:34222
+generic_url: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=cdd
+url_syntax: http://www.ncbi.nlm.nih.gov/Structure/cdd/cddsrv.cgi?uid=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/Structure/cdd/cddsrv.cgi?uid=34222
+
+abbreviation: CGD
+database: Candida Genome Database
+object: Identifier for CGD Loci
+synonym: CGDID
+example_id: CGD:CAL0005516
+local_id_syntax: ^(CAL|CAF)[0-9]{7}$
+generic_url: http://www.candidagenome.org/
+url_syntax: http://www.candidagenome.org/cgi-bin/locus.pl?dbid=[example_id]
+url_example: http://www.candidagenome.org/cgi-bin/locus.pl?dbid=CAL0005516
+
+! note: The CGD object also includes the orf19 assembly names, eg. orf19.2475
+
+abbreviation: CGD_LOCUS
+database: Candida Genome Database
+object: Gene name (gene symbol in mammalian nomenclature)
+example_id: CGD_LOCUS:HWP1
+generic_url: http://www.candidagenome.org/
+url_syntax: http://www.candidagenome.org/cgi-bin/locus.pl?locus=[example_id]
+url_example: http://www.candidagenome.org/cgi-bin/locus.pl?locus=HWP1
+
+abbreviation: CGD_REF
+database: Candida Genome Database
+object: Literature Reference Identifier
+example_id: CGD_REF:1490
+generic_url: http://www.candidagenome.org/
+url_syntax: http://www.candidagenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]
+url_example: http://www.candidagenome.org/cgi-bin/reference/reference.pl?dbid=1490
+
+! note: also see GO/gene-associations/readme/Compugen.README
+
+abbreviation: CGEN
+database: Compugen Gene Ontology Gene Association Data
+object: Identifier
+example_id: CGEN:PrID131022
+generic_url: http://www.cgen.com/
+
+abbreviation: CGSC
+database: CGSC: E.coli Genetic Stock Center
+object: Gene symbol
+example_id: CGSC:rbsK
+generic_url: http://cgsc.biology.yale.edu/
+url_example: http://cgsc.biology.yale.edu/Site.php?ID=315
+
+abbreviation: CHEBI
+database: Chemical Entities of Biological Interest
+object: Identifier
+synonym: ChEBI
+example_id: CHEBI:17234
+local_id_syntax: ^[0-9]{1,6}$
+generic_url: http://www.ebi.ac.uk/chebi/
+url_syntax: http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:[example_id]
+url_example: http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:17234
+
+abbreviation: CL
+database: Cell Type Ontology
+object: Identifier
+example_id: CL:0000041
+local_id_syntax: ^[0-9]{7}$
+generic_url: http://cellontology.org
+url_syntax: http://purl.obolibrary.org/obo/CL_[example_id]
+url_example: http://purl.obolibrary.org/obo/CL_0000041
+
+abbreviation: COG
+database: NCBI Clusters of Orthologous Groups
+generic_url: http://www.ncbi.nlm.nih.gov/COG/
+
+abbreviation: COG_Cluster
+database: NCBI COG cluster
+object: Identifier
+example_id: COG_Cluster:COG0001
+generic_url: http://www.ncbi.nlm.nih.gov/COG/
+url_syntax: http://www.ncbi.nlm.nih.gov/COG/new/release/cow.cgi?cog=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/COG/new/release/cow.cgi?cog=COG0001
+
+abbreviation: COG_Function
+database: NCBI COG function
+object: Identifier
+example_id: COG_Function:H
+generic_url: http://www.ncbi.nlm.nih.gov/COG/
+url_syntax: http://www.ncbi.nlm.nih.gov/COG/grace/shokog.cgi?fun=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/COG/grace/shokog.cgi?fun=H
+
+abbreviation: COG_Pathway
+database: NCBI COG pathway
+object: Identifier
+example_id: COG_Pathway:14
+generic_url: http://www.ncbi.nlm.nih.gov/COG/
+url_syntax: http://www.ncbi.nlm.nih.gov/COG/new/release/coglist.cgi?pathw=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/COG/new/release/coglist.cgi?pathw=14
+
+abbreviation: CORIELL
+database: Coriell Institute for Medical Research
+object: Identifier
+example_id: GM07892
+generic_url: http://ccr.coriell.org/
+url_syntax: http://ccr.coriell.org/Sections/Search/Sample_Detail.aspx?Ref=[example_id]
+url_example: http://ccr.coriell.org/Sections/Search/Sample_Detail.aspx?Ref=GM07892
+
+abbreviation: CORUM
+database: CORUM - the Comprehensive Resource of Mammalian protein complexes
+object: Identifier
+example_id: CORUM:837
+generic_url: http://mips.gsf.de/genre/proj/corum/
+url_syntax: http://mips.gsf.de/genre/proj/corum/complexdetails.html?id=[example_id]
+url_example: http://mips.gsf.de/genre/proj/corum/complexdetails.html?id=837
+
+abbreviation: dbSNP
+database: NCBI dbSNP
+object: Identifier
+example_id: dbSNP:rs3131969
+local_id_syntax: ^\d+$
+generic_url: http://www.ncbi.nlm.nih.gov/projects/SNP
+url_syntax: http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=rs3131969
+
+abbreviation: DDANAT
+database: Dictyostelium discoideum anatomy
+object: Identifier
+example_id: DDANAT:0000068
+local_id_syntax: [0-9]{7}
+generic_url: http://dictybase.org/Dicty_Info/dicty_anatomy_ontology.html
+
+abbreviation: DDBJ
+database: DNA Databank of Japan
+object: Sequence accession
+example_id: DDBJ:AA816246
+generic_url: http://www.ddbj.nig.ac.jp/
+url_syntax: http://arsa.ddbj.nig.ac.jp/arsa/ddbjSplSearch?KeyWord=[example_id]
+url_example: http://arsa.ddbj.nig.ac.jp/arsa/ddbjSplSearch?KeyWord=AA816246
+
+abbreviation: dictyBase
+database: dictyBase
+object: Identifier
+synonym: DDB
+synonym: DictyBase
+example_id: dictyBase:DDB_G0277859
+local_id_syntax: ^DDB_G[0-9]{7}$
+generic_url: http://dictybase.org
+url_syntax: http://dictybase.org/gene/[example_id]
+url_example: http://dictybase.org/gene/DDB_G0277859
+
+abbreviation: dictyBase_gene_name
+database: dictyBase
+object: Gene name
+example_id: dictyBase_gene_name:mlcE
+generic_url: http://dictybase.org
+url_syntax: http://dictybase.org/gene/[example_id]
+url_example: http://dictybase.org/gene/mlcE
+
+abbreviation: dictyBase_REF
+database: dictyBase literature references
+synonym: DDB_REF
+object: Literature Reference Identifier
+example_id: dictyBase_REF:10157
+generic_url: http://dictybase.org
+url_syntax: http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=[example_id]
+url_example: http://dictybase.org/db/cgi-bin/dictyBase/reference/reference.pl?refNo=10157
+
+abbreviation: DFLAT
+database: Developmental FunctionaL Annotation at Tufts
+generic_url: http://bcb.cs.tufts.edu/dflat/
+
+abbreviation: DOI
+database: Digital Object Identifier
+object: Identifier
+example_id: DOI:10.1016/S0963-9969(99)00021-6
+generic_url: http://dx.doi.org/
+url_syntax: http://dx.doi.org/DOI:[example_id]
+url_example: http://dx.doi.org/DOI:10.1016/S0963-9969(99)00021-6
+
+abbreviation: EC
+database: Enzyme Commission
+example_id: EC:1.4.3.6
+generic_url: http://ww.expasy.org/enzyme/
+generic_url: http://www.chem.qmul.ac.uk/iubmb/enzyme/
+url_syntax: http://www.expasy.org/enzyme/[example_id]
+url_example: http://www.expasy.org/enzyme/1.4.3.6
+! url_example: http://www.chem.qmw.ac.uk/iubmb/enzyme/EC1/4/3/6.html
+
+abbreviation: EchoBASE
+database: EchoBASE post-genomic database for Escherichia coli
+object: Identifier
+example_id: EchoBASE:EB0231
+local_id_syntax: ^EB[0-9]{4}$
+generic_url: http://www.ecoli-york.org/
+url_syntax: http://www.biolws1.york.ac.uk/echobase/Gene.cfm?recordID=[example_id]
+url_example: http://www.biolws1.york.ac.uk/echobase/Gene.cfm?recordID=EB0231
+
+abbreviation: ECK
+database: EcoGene Database of Escherichia coli Sequence and Function
+object: ECK accession (E. coli K-12 gene identifier)
+example_id: ECK:ECK3746
+local_id_syntax: ^ECK[0-9]{4}$
+generic_url: http://www.ecogene.org/
+url_syntax: http://www.ecogene.org/geneInfo.php?eck_id=[example_id]
+url_example: http://www.ecogene.org/geneInfo.php?eck_id=ECK3746
+
+abbreviation: ECO
+database: Evidence Code ontology
+object: Identifier
+example_id: ECO:0000002
+local_id_syntax: ^\d{7}$
+generic_url: http://www.geneontology.org/
+
+abbreviation: EcoCyc
+database: Encyclopedia of E. coli metabolism
+object: Pathway identifier
+example_id: EcoCyc:P2-PWY
+local_id_syntax: ^EG[0-9]{5}$
+generic_url: http://ecocyc.org/
+url_syntax: http://biocyc.org/ECOLI/NEW-IMAGE?type=PATHWAY&object=[example_id]
+url_example: http://biocyc.org/ECOLI/NEW-IMAGE?type=PATHWAY&object=P2-PWY
+
+abbreviation: EcoCyc_REF
+database: Encyclopedia of E. coli metabolism
+object: Reference identifier
+synonym: ECOCYC_REF
+example_id: EcoCyc_REF:COLISALII
+generic_url: http://ecocyc.org/
+url_syntax: http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=[example_id]
+url_example: http://biocyc.org/ECOLI/reference.html?type=CITATION-FRAME&object=COLISALII
+
+abbreviation: ECOGENE
+database: EcoGene Database of Escherichia coli Sequence and Function
+object: EcoGene accession
+example_id: ECOGENE:EG10818
+local_id_syntax: ^EG[0-9]{5}$
+generic_url: http://www.ecogene.org/
+url_syntax: http://www.ecogene.org/geneInfo.php?eg_id=[example_id]
+url_example: http://www.ecogene.org/geneInfo.php?eg_id=EG10818
+
+! note: to construct URLs, use EcoGene accessions or ECK accessions
+
+abbreviation: ECOGENE_G
+database: EcoGene Database of Escherichia coli Sequence and Function
+object: EcoGene Primary Gene Name
+example_id: ECOGENE_G:deoC
+generic_url: http://www.ecogene.org/
+
+abbreviation: EcoliWiki
+database: EcoliWiki from EcoliHub
+generic_url: http://ecoliwiki.net/
+local_id_syntax: ^[A-Za-z]{3,4}$
+
+abbreviation: EMBL
+database: EMBL Nucleotide Sequence Database
+object: Sequence accession
+example_id: EMBL:AA816246
+local_id_syntax: ^([A-Z]{1}[0-9]{5})|([A-Z]{2}[0-9]{6})|([A-Z]{4}[0-9]{8,9})$
+generic_url: http://www.ebi.ac.uk/embl/
+url_syntax: http://www.ebi.ac.uk/cgi-bin/emblfetch?style=html&Submit=Go&id=[example_id]
+url_example: http://www.ebi.ac.uk/cgi-bin/emblfetch?style=html&Submit=Go&id=AA816246
+
+abbreviation: ENA
+database: European Nucleotide Archive
+object: Sequence accession
+example_id: ENA:AA816246
+local_id_syntax: ^([A-Z]{1}[0-9]{5})|([A-Z]{2}[0-9]{6})|([A-Z]{4}[0-9]{8,9})$
+generic_url: http://www.ebi.ac.uk/ena/
+url_syntax: http://www.ebi.ac.uk/ena/data/view/[example_id]
+url_example: http://www.ebi.ac.uk/ena/data/view/AA816246
+
+abbreviation: ENSEMBL
+database: Ensembl database of automatically annotated genomic data
+object: Identifier (unspecified)
+synonym: Ensembl
+example_id: ENSEMBL:ENSP00000265949
+local_id_syntax: ^ENS[A-Z0-9]{10,17}$
+generic_url: http://www.ensembl.org/
+url_syntax: http://www.ensembl.org/id/[example_id]
+url_example: http://www.ensembl.org/id/ENSP00000265949
+
+abbreviation: ENSEMBL_GeneID
+database: Ensembl database of automatically annotated genomic data
+generic_url: http://www.ensembl.org/
+object: Gene identifier
+example_id: ENSEMBL_GeneID:ENSG00000126016
+local_id_syntax: ^ENSG[0-9]{9,16}$
+url_syntax: http://www.ensembl.org/id/[example_id]
+url_example: http://www.ensembl.org/id/ENSG00000126016
+
+abbreviation: ENSEMBL_ProteinID
+database: Ensembl database of automatically annotated genomic data
+generic_url: http://www.ensembl.org/
+object: Protein identifier
+example_id: ENSEMBL_ProteinID:ENSP00000361027
+local_id_syntax: ^ENSP[0-9]{9,16}$
+url_syntax: http://www.ensembl.org/id/[example_id]
+url_example: http://www.ensembl.org/id/ENSP00000361027
+
+abbreviation: ENSEMBL_TranscriptID
+database: Ensembl database of automatically annotated genomic data
+generic_url: http://www.ensembl.org/
+object: Transcript identifier
+example_id: ENSEMBL_TranscriptID:ENST00000371959
+local_id_syntax: ^ENST[0-9]{9,16}$
+url_syntax: http://www.ensembl.org/id/[example_id]
+url_example: http://www.ensembl.org/id/ENST00000371959
+
+abbreviation: EnsemblFungi
+database: Ensembl Fungi, the Ensembl Genomes database for accessing fungal genome data
+generic_url: http://fungi.ensembl.org/
+object: Identifier
+example_id: EnsemblFungi:YOR197W
+url_syntax: http://www.ensemblgenomes.org/id/[example_ID]
+url_example: http://www.ensemblgenomes.org/id/YOR197W
+
+abbreviation: EnsemblPlants/Gramene
+synonym: EnsemblPlants
+database: Ensembl Plants, the Ensembl Genomes database for accessing plant genome data
+generic_url: http://plants.ensembl.org/
+object: Identifier
+example_id: EnsemblPlants:LOC_Os01g22954
+url_syntax: http://www.ensemblgenomes.org/id/[example_ID]
+url_example: http://www.ensemblgenomes.org/id/LOC_Os01g22954
+
+abbreviation: ENZYME
+database: Swiss Institute of Bioinformatics enzyme database
+object: Identifier
+example_id: ENZYME:EC 1.1.1.1
+generic_url: http://www.expasy.ch/
+url_syntax: http://www.expasy.ch/cgi-bin/nicezyme.pl?[example_id]
+url_example: http://www.expasy.ch/cgi-bin/nicezyme.pl?1.1.1.1
+
+abbreviation: Eurofung
+database: Eurofungbase community annotation
+generic_url: http://www.eurofung.net/option=com_content&task=section&id=3&Itemid=4
+
+! note: For FB [NCBI use FLYBASE]
+
+abbreviation: FB
+database: FlyBase
+object: Identifier
+synonym: FlyBase
+synonym: FLYBASE
+example_id: FB:FBgn0000024
+local_id_syntax: ^FBgn[0-9]{7}$
+generic_url: http://flybase.org/
+url_syntax: http://flybase.org/reports/[example_id].html
+url_example: http://flybase.org/reports/FBgn0000024.html
+
+! abbreviation: FLYBASE
+! database: FlyBase
+! object: Gene symbol
+! example_id: FLYBASE:Adh
+! generic_url: http://flybase.org/
+! url_syntax: http://flybase.org/.bin/fbidq.html?[example_id]
+!
+! is that even correct?!?!
+
+abbreviation: FBbt
+database: Drosophila gross anatomy
+object: Identifier
+example_id: FBbt:00005177
+generic_url: http://flybase.org/
+url_syntax: http://flybase.org/cgi-bin/fbcvq.html?query=FBbt:[example_id]
+url_example: http://flybase.org/cgi-bin/fbcvq.html?query=FBbt:00005177
+
+abbreviation: FMA
+database: Foundational Model of Anatomy
+object: Identifier
+example_id: FMA:61905
+generic_url: http://sig.biostr.washington.edu/projects/fm/index.html
+
+abbreviation: FYPO
+database: Fission Yeast Phenotype Ontology
+object: Identifier
+example_id: FYPO:0000001
+local_id_syntax: ^\d{7}$
+generic_url: http://www.pombase.org/
+
+abbreviation: GDB
+database: Human Genome Database
+object: Accession
+example_id: GDB:306600
+generic_url: http://www.gdb.org/
+url_syntax: http://www.gdb.org/gdb-bin/genera/accno?accessionNum=GDB:[example_id]
+url_example: http://www.gdb.org/gdb-bin/genera/accno?accessionNum=GDB:306600
+
+abbreviation: GenBank
+database: GenBank
+object: Sequence accession
+synonym: GB
+example_id: GB:AA816246
+local_id_syntax: ^[A-Z]{2}[0-9]{6}$
+generic_url: http://www.ncbi.nlm.nih.gov/Genbank/
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=nucleotide&val=AA816246
+
+abbreviation: Gene3D
+database: Domain Architecture Classification
+object: Accession
+example_id: Gene3D:G3DSA:3.30.390.30
+generic_url: http://gene3d.biochem.ucl.ac.uk/Gene3D/
+url_syntax: http://gene3d.biochem.ucl.ac.uk/superfamily/?accession=[example_id]
+url_example: http://gene3d.biochem.ucl.ac.uk/superfamily/?accession=G3DSA%3A3.30.390.30
+
+abbreviation: GeneDB
+database: GeneDB
+object: Identifier
+example_id: PF3D7_1467300
+local_id_syntax: ^LmjF\.\d{2}\.\d{4}$
+local_id_syntax: ^PF3D7_\d{7}$
+local_id_syntax: ^Tb\d+\.[A-Za-z0-9]+\.\d+$
+generic_url: http://www.genedb.org/gene/
+url_syntax: http://www.genedb.org/gene/[example_id]
+url_example: http://www.genedb.org/gene/PF3D7_1467300
+
+abbreviation: GeneDB_Gmorsitans
+shorthand_name: Tsetse
+database: Glossina morsitans GeneDB
+object: Gene identifier
+example_id: GeneDB_Gmorsitans:Gmm-0142
+generic_url: http://www.genedb.org/genedb/glossina/
+url_syntax: http://www.genedb.org/genedb/Search?organism=glossina&name=[example_id]
+url_example: http://www.genedb.org/genedb/Search?organism=glossina&name=Gmm-0142
+is_obsolete: true
+replaced_by: GeneDB
+
+abbreviation: GeneDB_Lmajor
+shorthand_name: Lmajor
+database: Leishmania major GeneDB
+object: Gene identifier
+example_id: GeneDB_Lmajor:LM5.32
+local_id_syntax: ^LmjF\.\d+\.\d+$
+generic_url: http://www.genedb.org/genedb/leish/
+url_syntax: http://www.genedb.org/genedb/Search?organism=leish&name=[example_id]
+url_example: http://www.genedb.org/genedb/Search?organism=leish&name=LM5.32
+is_obsolete: true
+replaced_by: GeneDB
+
+abbreviation: GeneDB_Pfalciparum
+shorthand_name: Pfalcipar
+database: Plasmodium falciparum GeneDB
+object: Gene identifier
+example_id: GeneDB_Pfalciparum:PFD0755c
+local_id_syntax: ^SP[A-Z0-9]+\.[A-Za-z0-9]+$
+generic_url: http://www.genedb.org/genedb/malaria/
+url_syntax: http://www.genedb.org/genedb/Search?organism=malaria&name=[example_id]
+url_example: http://www.genedb.org/genedb/Search?organism=malaria&name=PFD0755c
+is_obsolete: true
+replaced_by: GeneDB
+
+! note: GeneDB_Spombe is deprecated; PomBase is now the authoritative source for Schizosaccharomyces pombe data
+
+abbreviation: GeneDB_Spombe
+shorthand_name: Spombe
+database: Schizosaccharomyces pombe GeneDB
+object: Gene identifier
+example_id: GeneDB_Spombe:SPAC890.04C
+local_id_syntax: ^SP[A-Z0-9]+\.[A-Za-z0-9]+$
+generic_url: http://old.genedb.org/genedb/pombe/index.jsp
+url_syntax: http://old.genedb.org/genedb/Search?organism=pombe&name=[example_id]
+url_example: http://old.genedb.org/genedb/Search?organism=pombe&name=SPAC890.04C
+is_obsolete: true
+replaced_by: PomBase
+
+abbreviation: GeneDB_Tbrucei
+shorthand_name: Tbrucei
+database: Trypanosoma brucei GeneDB
+object: Gene identifier
+example_id: GeneDB_Tbrucei:Tb927.1.5250
+local_id_syntax: ^Tb\d+\.\d+\.\d+$
+generic_url: http://www.genedb.org/genedb/tryp/
+url_syntax: http://www.genedb.org/genedb/Search?organism=tryp&name=[example_id]
+url_example: http://www.genedb.org/genedb/Search?organism=tryp&name=Tb927.1.5250
+is_obsolete: true
+replaced_by: GeneDB
+
+abbreviation: GenProtEC
+database: GenProtEC E. coli genome and proteome database
+generic_url: http://genprotec.mbl.edu/
+
+abbreviation: GEO
+database: NCBI Gene Expression Omnibus
+generic_url: http://www.ncbi.nlm.nih.gov/geo/
+example_id: GEO:GDS2223
+url_syntax: http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=GDS2223
+
+abbreviation: GermOnline
+database: GermOnline
+generic_url: http://www.germonline.org/
+
+abbreviation: GO
+database: Gene Ontology Database
+object: Identifier
+example_id: GO:0004352
+local_id_syntax: ^\d{7}$
+generic_url: http://amigo.geneontology.org/
+url_syntax: http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=GO:[example_id]
+url_example: http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=GO:0004352
+
+abbreviation: GO_REF
+database: Gene Ontology Database references
+object: Accession (for reference)
+example_id: GO_REF:0000001
+local_id_syntax: ^\d{7}$
+generic_url: http://www.geneontology.org/
+url_syntax: http://www.geneontology.org/cgi-bin/references.cgi#GO_REF:[example_id]
+url_example: http://www.geneontology.org/cgi-bin/references.cgi#GO_REF:0000001
+
+!abbreviation: GOA
+!database: GO Annotation at EBI
+!generic_url: http://www.ebi.ac.uk/goa/
+!
+!abbreviation: GOA_REF
+!database: GO Annotation at EBI (UniProtKB-GOA) references
+!object: Identifier (for literature reference)
+!example_id: GOA_REF:PBT00118838
+!generic_url: http://www.ebi.ac.uk/QuickGO
+!url_syntax: http://www.ebi.ac.uk/QuickGO/GAnnotation?ref=GOA_REF:[example_id]
+!url_example: http://www.ebi.ac.uk/QuickGO/GAnnotation?ref=GOA_REF:PBT00118838
+
+abbreviation: GOC
+database: Gene Ontology Consortium
+generic_url: http://www.geneontology.org/
+
+abbreviation: GONUTS
+database: Gene Ontology Normal Usage Tracking System (GONUTS)
+object: Identifier (for gene or gene product)
+example_id: GONUTS:MOUSE:CD28
+generic_url: http://gowiki.tamu.edu
+url_syntax: http://gowiki.tamu.edu/wiki/index.php/[example_id]
+url_example: http://gowiki.tamu.edu/wiki/index.php/MOUSE:CD28
+
+abbreviation: GR
+database: Gramene: A Comparative Mapping Resource for Grains
+object: Identifier (any)
+example_id: GR:sd1
+generic_url: http://www.gramene.org/
+url_syntax: http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=[example_id]
+url_example: http://www.gramene.org/db/searches/browser?search_type=All&RGN=on&query=sd1
+
+abbreviation: GR_GENE
+database: Gramene: A Comparative Mapping Resource for Grains
+object: Gene identifier
+synonym: GR_gene
+example_id: GR_GENE:GR:0060198
+generic_url: http://www.gramene.org/
+url_syntax: http://www.gramene.org/db/genes/search_gene?acc=[example_id]
+url_example: http://www.gramene.org/db/genes/search_gene?acc=GR:0060198
+
+abbreviation: GR_PROTEIN
+database: Gramene: A Comparative Mapping Resource for Grains
+object: Protein identifier
+synonym: GR_protein
+example_id: GR_PROTEIN:Q6VSV0
+local_id_syntax: ^[A-Z][0-9][A-Z0-9]{3}[0-9]$
+generic_url: http://www.gramene.org/
+url_syntax: http://www.gramene.org/db/protein/protein_search?acc=[example_id]
+url_example: http://www.gramene.org/db/protein/protein_search?acc=Q6VSV0
+
+abbreviation: GR_QTL
+database: Gramene: A Comparative Mapping Resource for Grains
+object: QTL identifier
+example_id: GR_QTL:CQU7
+generic_url: http://www.gramene.org/
+url_syntax: http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=[example_id]
+url_example: http://www.gramene.org/db/qtl/qtl_display?qtl_accession_id=CQU7
+
+abbreviation: GR_REF
+database: Gramene: A Comparative Mapping Resource for Grains
+object: Reference
+example_id: GR_REF:659
+generic_url: http://www.gramene.org/
+url_syntax: http://www.gramene.org/db/literature/pub_search?ref_id=[example_id]
+url_example: http://www.gramene.org/db/literature/pub_search?ref_id=659
+
+abbreviation: H-invDB
+database: H-invitational Database
+generic_url: http://www.h-invitational.jp/
+
+abbreviation: H-invDB_cDNA
+database: H-invitational Database
+object: Accession
+example_id: H-invDB_cDNA:AK093148
+generic_url: http://www.h-invitational.jp/
+url_syntax: http://www.h-invitational.jp/hinv/spsoup/transcript_view?acc_id=[example_id]
+url_example: http://www.h-invitational.jp/hinv/spsoup/transcript_view?acc_id=AK093149
+
+abbreviation: H-invDB_locus
+database: H-invitational Database
+object: Cluster identifier
+example_id: H-invDB_locus:HIX0014446
+generic_url: http://www.h-invitational.jp/
+url_syntax: http://www.h-invitational.jp/hinv/spsoup/locus_view?hix_id=[example_id]
+url_example: http://www.h-invitational.jp/hinv/spsoup/locus_view?hix_id=HIX0014446
+
+abbreviation: HAMAP
+database: High-quality Automated and Manual Annotation of microbial Proteomes
+object: Identifier
+example_id: HAMAP:MF_00031
+generic_url: http://us.expasy.org/sprot/hamap/
+url_syntax: http://us.expasy.org/unirules/[example_id]
+url_example: http://us.expasy.org/unirules/MF_00031
+
+abbreviation: HGNC
+database: HUGO Gene Nomenclature Committee
+object: Identifier
+example_id: HGNC:29
+generic_url: http://www.genenames.org/
+url_syntax: http://www.genenames.org/data/hgnc_data.php?hgnc_id=HGNC:[example_id]
+url_example: http://www.genenames.org/data/hgnc_data.php?hgnc_id=HGNC:29
+
+! note: HGNC:id is preferred over HGNC_gene, because gene symbols are liable to change, resulting in broken links.
+
+abbreviation: HGNC_gene
+database: HUGO Gene Nomenclature Committee
+object: Gene symbol
+example_id: HGNC_gene:ABCA1
+generic_url: http://www.genenames.org/
+url_syntax: http://www.genenames.org/data/hgnc_data.php?app_sym=[example_id]
+url_example: http://www.genenames.org/data/hgnc_data.php?app_sym=ABCA1
+
+! HPA IDs also work with the 'HPA' and leading zeros omitted
+! QuickGO links to the #ifcelline anchor within the HPA tissue profile page
+
+abbreviation: HPA
+database: Human Protein Atlas tissue profile information
+object: Identifier
+example_id: HPA:HPA000237
+generic_url: http://www.proteinatlas.org/
+url_syntax: http://www.proteinatlas.org/tissue_profile.php?antibody_id=[example_id]
+url_example: http://www.proteinatlas.org/tissue_profile.php?antibody_id=HPA000237
+
+abbreviation: HPA_antibody
+database: Human Protein Atlas antibody information
+object: Identifier
+example_id: HPA_antibody:HPA000237
+generic_url: http://www.proteinatlas.org/
+url_syntax: http://www.proteinatlas.org/antibody_info.php?antibody_id=[example_id]
+url_example: http://www.proteinatlas.org/antibody_info.php?antibody_id=HPA000237
+
+abbreviation: HUGO
+database: Human Genome Organisation
+generic_url: http://www.hugo-international.org/
+
+! note: IMG contact person is Rob Edwards (RobE@thefig.info); BRC: NMPDR
+
+abbreviation: IMG
+database: Integrated Microbial Genomes; JGI web site for genome annotation
+object: Identifier
+example_id: IMG:640008772
+generic_url: http://img.jgi.doe.gov
+url_syntax: http://img.jgi.doe.gov/cgi-bin/pub/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=[example_id]
+url_example: http://img.jgi.doe.gov/cgi-bin/pub/main.cgi?section=GeneDetail&page=geneDetail&gene_oid=640008772
+
+abbreviation: IMGT_HLA
+database: IMGT/HLA human major histocompatibility complex sequence database
+example_id: IMGT_HLA:HLA00031
+generic_url: http://www.ebi.ac.uk/imgt/hla
+
+abbreviation: IMGT_LIGM
+database: ImMunoGeneTics database covering immunoglobulins and T-cell receptors
+example_id: IMGT_LIGM:U03895
+generic_url: http://imgt.cines.fr
+
+abbreviation: IntAct
+database: IntAct protein interaction database
+object: Accession
+example_id: IntAct:EBI-17086
+generic_url: http://www.ebi.ac.uk/intact/
+url_syntax: http://www.ebi.ac.uk/intact/search/do/search?searchString=[example_id]
+url_example: http://www.ebi.ac.uk/intact/search/do/search?searchString=EBI-17086
+local_id_syntax: ^[0-9]+$
+
+abbreviation: InterPro
+database: InterPro database of protein domains and motifs
+object: Identifier
+synonym: INTERPRO
+synonym: IPR
+example_id: InterPro:IPR000001
+local_id_syntax: ^IPR\d{6}$
+generic_url: http://www.ebi.ac.uk/interpro/
+url_syntax: http://www.ebi.ac.uk/interpro/entry/[example_id]
+url_example: http://www.ebi.ac.uk/interpro/entry/IPR015421
+
+! note: IPI identifiers are in the format ID.version
+
+abbreviation: IPI
+database: International Protein Index
+object: Identifier
+example_id: IPI:IPI00000005.1
+generic_url: http://www.ebi.ac.uk/IPI/IPIhelp.html
+
+abbreviation: ISBN
+database: International Standard Book Number
+generic_url: http://isbntools.com/
+object: Identifier
+example_id: ISBN:0781702534
+url_syntax: https://en.wikipedia.org/w/index.php?title=Special%3ABookSources&isbn=[example_id]
+url_example: https://en.wikipedia.org/w/index.php?title=Special%3ABookSources&isbn=0123456789
+
+abbreviation: ISSN
+database: International Standard Serial Number
+object: Identifier
+example_id: ISSN:1234-1231
+generic_url: http://www.issn.org/
+
+abbreviation: IUPHAR
+database: International Union of Pharmacology
+generic_url: http://www.iuphar.org/
+
+abbreviation: IUPHAR_GPCR
+database: International Union of Pharmacology
+object: G-protein-coupled receptor family identifier
+example_id: IUPHAR_GPCR:1279
+generic_url: http://www.iuphar.org/
+url_syntax: http://www.iuphar-db.org/DATABASE/FamilyMenuForward?familyId=[example_id]
+url_example: http://www.iuphar-db.org/DATABASE/FamilyMenuForward?familyId=13
+
+abbreviation: IUPHAR_RECEPTOR
+database: International Union of Pharmacology
+object: Receptor identifier
+example_id: IUPHAR_RECEPTOR:2205
+generic_url: http://www.iuphar.org/
+url_syntax: http://www.iuphar-db.org/DATABASE/ObjectDisplayForward?objectId=[example_id]
+url_example: http://www.iuphar-db.org/DATABASE/ObjectDisplayForward?objectId=56
+
+abbreviation: JCVI
+synonym: TIGR
+database: J. Craig Venter Institute
+generic_url: http://www.jcvi.org/
+
+abbreviation: JCVI_Ath1
+database: Arabidopsis thaliana database at the J. Craig Venter Institute
+object: Accession
+synonym: TIGR_Ath1
+example_id: JCVI_Ath1:At3g01440
+generic_url: http://www.tigr.org/tdb/e2k1/ath1/ath1.shtml
+is_obsolete: true
+
+abbreviation: JCVI_CMR
+database: Comprehensive Microbial Resource at the J. Craig Venter Institute
+object: Locus
+synonym: TIGR_CMR
+example_id: JCVI_CMR:VCA0557
+generic_url: http://cmr.jcvi.org/
+url_syntax: http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=[example_id]
+url_example: http://cmr.jcvi.org/cgi-bin/CMR/shared/GenePage.cgi?locus=VCA0557
+
+synonym: TIGR_EGAD
+database: EGAD database at the J. Craig Venter Institute
+abbreviation: JCVI_EGAD
+object: Accession
+example_id: JCVI_EGAD:74462
+generic_url: http://cmr.jcvi.org/
+url_syntax: http://cmr.jcvi.org/cgi-bin/CMR/EgadSearch.cgi?search_string=[example_id]
+url_example: http://cmr.jcvi.org/cgi-bin/CMR/EgadSearch.cgi?search_string=74462
+
+abbreviation: JCVI_GenProp
+database: Genome Properties database at the J. Craig Venter Institute
+object: Accession
+synonym: TIGR_GenProp
+example_id: JCVI_GenProp:GenProp0120
+generic_url: http://cmr.jcvi.org/
+local_id_syntax: ^GenProp[0-9]{4}$
+url_syntax: http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=[example_id]
+url_example: http://cmr.jcvi.org/cgi-bin/CMR/shared/GenomePropDefinition.cgi?prop_acc=GenProp0120
+
+abbreviation: JCVI_Medtr
+database: Medicago truncatula genome database at the J. Craig Venter Institute 
+object: Accession
+example_id: JCVI_Medtr:Medtr5g024510
+generic_url: http://medicago.jcvi.org/cgi-bin/medicago/overview.cgi
+url_syntax: http://medicago.jcvi.org/cgi-bin/medicago/search/shared/ORF_infopage.cgi?orf=[example_id]
+url_example: http://medicago.jcvi.org/cgi-bin/medicago/search/shared/ORF_infopage.cgi?orf=Medtr5g024510
+
+abbreviation: JCVI_Pfa1
+database: Plasmodium falciparum database at the J. Craig Venter Institute
+object: Accession
+synonym: TIGR_Pfa1
+example_id: JCVI_Pfa1:PFB0010w
+generic_url: http://www.tigr.org/tdb/e2k1/pfa1/pfa1.shtml
+is_obsolete: true
+
+abbreviation: JCVI_REF
+database: J. Craig Venter Institute
+object: Reference locator
+synonym: TIGR_REF
+example_id: JCVI_REF:GO_ref
+generic_url: http://cmr.jcvi.org/
+url_example: http://cmr.jcvi.org/CMR/AnnotationSops.shtml
+
+abbreviation: JCVI_Tba1
+database: Trypanosoma brucei database at the J. Craig Venter Institute
+object: Accession
+synonym: TIGR_Tba1
+example_id: JCVI_Tba1:25N14.10
+generic_url: http://www.tigr.org/tdb/e2k1/tba1/
+is_obsolete: true
+
+abbreviation: JCVI_TIGRFAMS
+database: TIGRFAMs HMM collection at the J. Craig Venter Institute
+object: Accession
+synonym: TIGR_TIGRFAMS
+example_id: JCVI_TIGRFAMS:TIGR00254
+generic_url: http://search.jcvi.org/
+url_syntax: http://search.jcvi.org/search?p&q=[example_id]
+url_example: http://search.jcvi.org/search?p&q=TIGR00254
+
+abbreviation: JSTOR
+database: Digital archive of scholarly articles
+object: journal article
+example_id: JSTOR:3093870
+generic_url: http://www.jstor.org/
+url_syntax: http://www.jstor.org/stable/[example_id]
+url_example: http://www.jstor.org/stable/3093870
+
+abbreviation: KEGG
+database: Kyoto Encyclopedia of Genes and Genomes
+generic_url: http://www.genome.ad.jp/kegg/
+object: identifier
+
+abbreviation: KEGG_ENZYME
+database: KEGG Enzyme Database
+object: Enzyme Commission ID, as stored in KEGG
+example_id: KEGG_ENZYME:2.1.1.4
+local_id_syntax: ^\d(\.\d{1,2}){2}\.\d{1,3}$
+generic_url: http://www.genome.jp/dbget-bin/www_bfind?enzyme
+url_syntax: http://www.genome.jp/dbget-bin/www_bget?ec:[example_id]
+url_example: http://www.genome.jp/dbget-bin/www_bget?ec:2.1.1.4
+
+abbreviation: KEGG_LIGAND
+database: KEGG LIGAND Database
+object: Compound
+generic_url: http://www.genome.ad.jp/kegg/docs/upd_ligand.html
+example_id: KEGG_LIGAND:C00577
+local_id_syntax: ^C\d{5}$
+url_syntax: http://www.genome.jp/dbget-bin/www_bget?cpd:[example_id]
+url_example: http://www.genome.jp/dbget-bin/www_bget?cpd:C00577
+
+abbreviation: KEGG_PATHWAY
+database: KEGG Pathways Database
+object: Pathway
+example_id: KEGG_PATHWAY:ot00020
+generic_url: http://www.genome.jp/kegg/pathway.html
+url_syntax: http://www.genome.jp/dbget-bin/www_bget?path:[example_id]
+url_example: http://www.genome.jp/dbget-bin/www_bget?path:ot00020
+
+abbreviation: KEGG_REACTION
+database: KEGG Reaction Database
+object: Reaction
+example_id: KEGG:R02328
+local_id_syntax: ^R\d+$
+generic_url: http://www.genome.jp/kegg/reaction/
+url_syntax: http://www.genome.jp/dbget-bin/www_bget?rn:[example_id]
+url_example: http://www.genome.jp/dbget-bin/www_bget?rn:R02328
+
+abbreviation: LIFEdb
+database: LifeDB
+object: cDNA clone identifier
+example_id: LIFEdb:DKFZp564O1716
+generic_url: http://www.lifedb.de/
+url_syntax: http://www.dkfz.de/LIFEdb/LIFEdb.aspx?ID=[example_id]
+url_example: http://www.dkfz.de/LIFEdb/LIFEdb.aspx?ID=DKFZp564O1716
+
+abbreviation: LOCSVMpsi
+database: LOCSVMPSI
+generic_url: http://bioinformatics.ustc.edu.cn/locsvmpsi/locsvmpsi.php
+
+abbreviation: MA
+database: Adult Mouse Anatomical Dictionary
+object: Identifier
+example_id: MA:0000003
+generic_url: http://www.informatics.jax.org/
+url_syntax: http://www.informatics.jax.org/searches/AMA.cgi?id=MA:[example_id]
+url_example: http://www.informatics.jax.org/searches/AMA.cgi?id=MA:0000003
+
+abbreviation: MaizeGDB
+database: MaizeGDB
+object: MaizeGDB Object ID Number
+example_id: MaizeGDB:881225
+generic_url: http://www.maizegdb.org
+url_syntax: http://www.maizegdb.org/cgi-bin/id_search.cgi?id=[example_id]
+url_example: http://www.maizegdb.org/cgi-bin/id_search.cgi?id=881225
+
+abbreviation: MaizeGDB_Locus
+database: MaizeGDB
+generic_url: http://www.maizegdb.org
+object: Maize gene name
+example_id: MaizeGDB_Locus:ZmPK1
+local_id_syntax: ^[A-Za-z][A-Za-z0-9]*$
+url_syntax: http://www.maizegdb.org/cgi-bin/displaylocusresults.cgi?term=[example_id]
+url_example: http://www.maizegdb.org/cgi-bin/displaylocusresults.cgi?term=ZmPK1
+
+abbreviation: MEDLINE
+database: Medline literature database
+generic_url: http://www.nlm.nih.gov/databases/databases_medline.html
+object: Identifier
+example_id: MEDLINE:20572430
+
+abbreviation: PHI
+database: MeGO (Phage and Mobile Element Ontology)
+generic_url: http://aclame.ulb.ac.be/Classification/mego.html
+example_id: PHI:0000055
+
+abbreviation: MENGO
+database: Microbial ENergy processes Gene Ontology Project
+generic_url: http://mengo.vbi.vt.edu/
+
+abbreviation: MEROPS
+database: MEROPS peptidase database
+object: Identifier
+example_id: MEROPS:A08.001
+generic_url: http://merops.sanger.ac.uk/
+url_syntax: http://merops.sanger.ac.uk/cgi-bin/pepsum?mid=[example_id]
+url_example: http://merops.sanger.ac.uk/cgi-bin/pepsum?mid=A08.001
+
+abbreviation: MEROPS_fam
+database: MEROPS peptidase database
+object: Peptidase family identifier
+example_id: MEROPS_fam:M18
+generic_url: http://merops.sanger.ac.uk/
+url_syntax: http://merops.sanger.ac.uk/cgi-bin/famsum?family=[example_id]
+url_example: http://merops.sanger.ac.uk/cgi-bin/famsum?family=m18
+
+abbreviation: MeSH
+database: Medical Subject Headings
+object: MeSH heading
+example_id: MeSH:mitosis
+generic_url: http://www.nlm.nih.gov/mesh/2005/MBrowser.html
+url_syntax: http://www.nlm.nih.gov/cgi/mesh/2005/MB_cgi?mode=&term=[example_id]
+url_example: http://www.nlm.nih.gov/cgi/mesh/2005/MB_cgi?mode=&term=mitosis
+
+abbreviation: MetaCyc
+database: Metabolic Encyclopedia of metabolic and other pathways
+object: Identifier (pathway or reaction)
+example_id: MetaCyc:GLUTDEG-PWY
+generic_url: http://metacyc.org/
+url_syntax: http://biocyc.org/META/NEW-IMAGE?type=NIL&object=[example_id]
+url_example: http://biocyc.org/META/NEW-IMAGE?type=NIL&object=GLUTDEG-PWY
+
+abbreviation: MGD
+database: Mouse Genome Database
+object: Gene symbol
+example_id: MGD:Adcy9
+generic_url: http://www.informatics.jax.org/
+! url_syntax: http://www.informatics.jax.org/searches/marker.cgi?
+
+abbreviation: MGI
+database: Mouse Genome Informatics
+object: Accession
+example_id: MGI:MGI:80863
+local_id_syntax: ^MGI:[0-9]{5,}$
+generic_url: http://www.informatics.jax.org/
+url_syntax: http://www.informatics.jax.org/accession/[example_id]
+url_example: http://www.informatics.jax.org/accession/MGI:80863
+
+abbreviation: MIPS_funcat
+database: MIPS Functional Catalogue
+object: Identifier
+example_id: MIPS_funcat:11.02
+generic_url: http://mips.gsf.de/proj/funcatDB/
+url_syntax: http://mips.gsf.de/cgi-bin/proj/funcatDB/search_advanced.pl?action=2&wert=[example_id]
+url_example: http://mips.gsf.de/cgi-bin/proj/funcatDB/search_advanced.pl?action=2&wert=11.02
+
+abbreviation: MITRE
+database: The MITRE Corporation
+generic_url: http://www.mitre.org/
+
+abbreviation: MO
+database: MGED Ontology
+object: ontology term
+example_id: MO:Action
+generic_url: http://mged.sourceforge.net/ontologies/MGEDontology.php
+url_syntax: http://mged.sourceforge.net/ontologies/MGEDontology.php#[example_id]
+url_example: http://mged.sourceforge.net/ontologies/MGEDontology.php#Action
+
+! ModBase search accepts UniProtKB accessions and some other IDs; latter not shown here for clarity and sanity
+
+abbreviation: ModBase
+database: ModBase comprehensive Database of Comparative Protein Structure Models
+object: Accession
+example_id: ModBase:P10815
+generic_url: http://modbase.compbio.ucsf.edu/ 
+url_syntax: http://salilab.org/modbase/searchbyid?databaseID=[example_id]
+url_example: http://salilab.org/modbase/searchbyid?databaseID=P04848
+
+abbreviation: MTBBASE
+database: Collection and Refinement of Physiological Data on Mycobacterium tuberculosis
+generic_url: http://www.ark.in-berlin.de/Site/MTBbase.html
+
+abbreviation: MultiFun
+database: MultiFun cell function assignment schema
+generic_url: http://genprotec.mbl.edu/files/MultiFun.html
+
+abbreviation: NASC_code
+database: Nottingham Arabidopsis Stock Centre Seeds Database
+object: NASC code Identifier
+example_id: NASC_code:N3371
+generic_url: http://arabidopsis.info
+url_syntax: http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=[example_id]
+url_example: http://seeds.nottingham.ac.uk/NASC/stockatidb.lasso?code=N3371
+
+abbreviation: NC-IUBMB
+database: Nomenclature Committee of the International Union of Biochemistry and Molecular Biology
+generic_url: http://www.chem.qmw.ac.uk/iubmb/
+
+abbreviation: NCBI
+database: National Center for Biotechnology Information
+object: Prefix
+generic_url: http://www.ncbi.nlm.nih.gov/
+! example_id:
+! url_syntax: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]
+! url_example: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=
+
+! note: LocusID was the abbreviation for LocusLink, which has been superseded by NCBI_Gene (aka Entrez Gene)
+
+abbreviation: NCBI_Gene
+database: NCBI Gene
+object: Identifier
+synonym: GeneID
+synonym: LocusID
+example_id: NCBI_Gene:4771
+local_id_syntax: ^\d+$
+generic_url: http://www.ncbi.nlm.nih.gov/
+url_syntax: http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&db=gene&list_uids=4771
+
+abbreviation: NCBI_gi
+database: NCBI databases
+object: Identifier
+example_id: NCBI_gi:113194944
+local_id_syntax: ^[0-9]{6,}$
+generic_url: http://www.ncbi.nlm.nih.gov/
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=113194944
+
+abbreviation: NCBI_GP
+database: NCBI GenPept
+object: Protein identifier
+example_id: NCBI_GP:EAL72968
+local_id_syntax: ^[A-Z]{3}[0-9]{5}(\.[0-9]+)?$
+generic_url: http://www.ncbi.nlm.nih.gov/
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=protein&val=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?db=protein&val=EAL72968
+
+! An NCBI locus tag includes an organism-specific prefix and a tag value, separated by an underscore; see http://www.ncbi.nlm.nih.gov/genomes/lltp.cgi
+
+abbreviation: NCBI_locus_tag
+database: NCBI locus tag
+object: Identifier
+example_id: NCBI_locus_tag:CTN_0547
+generic_url: http://www.ncbi.nlm.nih.gov/
+
+abbreviation: NCBI_NM
+database: NCBI RefSeq
+object: mRNA identifier
+synonym: RefSeq
+example_id: NCBI_NM:123456
+generic_url: http://www.ncbi.nlm.nih.gov/
+is_obsolete: true
+replaced_by: RefSeq
+
+abbreviation: NCBI_NP
+database: NCBI RefSeq
+object: Protein identifier
+synonym: RefSeq
+example_id: NCBI_NP:123456
+generic_url: http://www.ncbi.nlm.nih.gov/
+is_obsolete: true
+replaced_by: RefSeq
+
+abbreviation: NIF_Subcellular
+database: Neuroscience Information Framework standard ontology, subcellular hierarchy
+object: ontology term
+example_id: NIF_Subcellular:sao1186862860
+generic_url: http://www.neurolex.org/wiki
+url_syntax: http://www.neurolex.org/wiki/[example_id]
+url_example: http://www.neurolex.org/wiki/sao1770195789
+
+abbreviation: NMPDR
+database: National Microbial Pathogen Data Resource
+object: Identifier
+example_id: NMPDR:fig|306254.1.peg.183
+generic_url: http://www.nmpdr.org
+url_syntax: http://www.nmpdr.org/linkin.cgi?id=[example_id]
+url_example: http://www.nmpdr.org/linkin.cgi?id=fig|306254.1.peg.183
+
+abbreviation: NTNU_SB
+database: Norwegian University of Science and Technology, Systems Biology team
+generic_url: http://www.ntnu.edu/nt/systemsbiology
+
+abbreviation: OBI
+database: Ontology for Biomedical Investigations
+object: Identifier
+example_id: OBI:0000038
+local_id_syntax: ^\d{7}$
+generic_url: http://obi-ontology.org/page/Main_Page
+
+abbreviation: OBO_REL
+database: OBO relation ontology
+object: Identifier
+example_id: OBO_REL:part_of
+generic_url: http://www.obofoundry.org/ro/
+
+abbreviation: OBO_SF_PO
+database: Source Forge OBO Plant Ontology (PO) term request tracker
+object: Term request
+example_id: OBO_SF_PO:3184921
+generic_url: http://sourceforge.net/tracker/?func=browse&group_id=76834&atid=835555
+url_syntax: https://sourceforge.net/tracker/index.php?func=detail&aid=[example_id]&group_id=76834&atid=835555
+url_example: https://sourceforge.net/tracker/index.php?func=detail&aid=3184921&group_id=76834&atid=835555
+
+! note: NCBI uses the synonym MIM for OMIM
+
+abbreviation: OMIM
+database: Mendelian Inheritance in Man
+object: Identifier
+synonym: MIM
+example_id: OMIM:190198
+generic_url: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=OMIM
+url_syntax: http://omim.org/entry/[example_id]
+url_example: http://omim.org/entry/190198
+
+abbreviation: OMSSA
+database: Open Mass Spectrometry Search Algorithm
+generic_url: http://pubchem.ncbi.nlm.nih.gov/omssa/
+
+abbreviation: PAMGO
+database: Plant-Associated Microbe Gene Ontology Interest Group
+generic_url: http://pamgo.vbi.vt.edu/
+
+abbreviation: PAMGO_GAT
+database: Genome Annotation Tool (Agrobacterium tumefaciens C58); PAMGO Interest Group
+object: Gene
+example_id: PAMGO_GAT:Atu0001
+generic_url: http://agro.vbi.vt.edu/public/
+url_syntax: http://agro.vbi.vt.edu/public/servlet/GeneEdit?&Search=Search&level=2&genename=[example_id]
+url_example: http://agro.vbi.vt.edu/public/servlet/GeneEdit?&Search=Search&level=2&genename=atu0001
+
+abbreviation: PAMGO_MGG
+database: Magnaporthe grisea database
+object: Locus
+example_id: PAMGO_MGG:MGG_05132
+generic_url: http://scotland.fgl.ncsu.edu/smeng/GoAnnotationMagnaporthegrisea.html
+url_syntax: http://scotland.fgl.ncsu.edu/cgi-bin/adHocQuery.cgi?adHocQuery_dbName=smeng_goannotation&Action=Data&QueryName=Functional+Categorization+of+MGG+GO+Annotation&P_KeyWord=[example_id]
+url_example: http://scotland.fgl.ncsu.edu/cgi-bin/adHocQuery.cgi?adHocQuery_dbName=smeng_goannotation&Action=Data&QueryName=Functional+Categorization+of+MGG+GO+Annotation&P_KeyWord=MGG_05132
+
+abbreviation: PAMGO_VMD
+database: Virginia Bioinformatics Institute Microbial Database
+object: Gene identifier
+example_id: PAMGO_VMD:109198
+generic_url: http://phytophthora.vbi.vt.edu
+url_syntax: http://vmd.vbi.vt.edu/cgi-bin/browse/go_detail.cgi?gene_id=[example_id]
+url_example: http://vmd.vbi.vt.edu/cgi-bin/browse/go_detail.cgi?gene_id=109198
+
+abbreviation: PAINT_REF
+database: Phylogenetic Annotation INference Tool References
+generic_url: http://www.pantherdb.org/
+object: Reference locator
+example_id: PAINT_REF:PTHR10046
+url_syntax: http://www.geneontology.org/gene-associations/submission/paint/[example_id]/[example_id].txt
+url_example: http://www.geneontology.org/gene-associations/submission/paint/PTHR10046/PTHR10046.txt
+
+abbreviation: PANTHER
+database: Protein ANalysis THrough Evolutionary Relationships Classification System
+generic_url: http://www.pantherdb.org/
+object: Protein family tree identifier
+example_id: PANTHER:PTN000000084
+url_syntax: http://pantree.org/node/annotationNode.jsp?id=[example_id]
+url_example: http://pantree.org/node/annotationNode.jsp?id=PTN000000084
+
+abbreviation: PATO
+database: Phenotypic quality ontology
+object: Identifier
+example_id: PATO:0001420
+generic_url: http://www.bioontology.org/wiki/index.php/PATO:Main_Page
+
+abbreviation: PATRIC
+database: PathoSystems Resource Integration Center
+object: Feature identifieer
+example_id: PATRIC:cds.000002.436951
+generic_url: http://patric.vbi.vt.edu
+url_syntax: http://patric.vbi.vt.edu/gene/overview.php?fid=[example_id]
+url_example: http://patric.vbi.vt.edu/gene/overview.php?fid=cds.000002.436951
+
+abbreviation: PDB
+database: Protein Data Bank
+object: Identifier
+example_id: PDB:1A4U
+generic_url: http://www.rcsb.org/pdb/
+local_id_syntax: ^[A-Za-z0-9]{4}$
+url_syntax: http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId=[example_id]
+url_example: http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId=1A4U
+
+abbreviation: Pfam
+database: Pfam database of protein families
+object: Accession
+example_id: Pfam:PF00046
+generic_url: http://www.sanger.ac.uk/Software/Pfam/
+url_syntax: http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?[example_id]
+url_example: http://www.sanger.ac.uk/cgi-bin/Pfam/getacc?PF00046
+
+abbreviation: PfamB
+database: Pfam-B supplement to Pfam
+object: Accession
+example_id: PfamB:PB014624
+generic_url: http://www.sanger.ac.uk/Software/Pfam/
+
+abbreviation: PharmGKB
+database: Pharmacogenetics and Pharmacogenomics Knowledge Base
+example_id: PharmGKB:PA267
+generic_url: http://www.pharmgkb.org
+url_syntax: http://www.pharmgkb.org/do/serve?objId=[example_id]
+url_example: http://www.pharmgkb.org/do/serve?objId=PA267
+
+abbreviation: PhenoScape
+database: PhenoScape Knowledgebase
+generic_url: http://phenoscape.org/
+
+abbreviation: PINC
+database: Proteome Inc.
+generic_url: http://www.proteome.com/
+
+abbreviation: PIR
+database: Protein Information Resource
+object: Accession
+example_id: PIR:I49499
+local_id_syntax: ^[A-Z]{1}[0-9]{5}$
+generic_url: http://pir.georgetown.edu/
+url_syntax: http://pir.georgetown.edu/cgi-bin/pirwww/nbrfget?uid=[example_id]
+url_example: http://pir.georgetown.edu/cgi-bin/pirwww/nbrfget?uid=I49499
+
+abbreviation: PIRSF
+database: PIR Superfamily Classification System
+object: Identifier
+example_id: PIRSF:SF002327
+generic_url: http://pir.georgetown.edu/pirsf/
+url_syntax: http://pir.georgetown.edu/cgi-bin/ipcSF?id=[example_id]
+url_example: http://pir.georgetown.edu/cgi-bin/ipcSF?id=SF002327
+
+! Older PMCIDs lacked the PMC prefix (e.g. PMCID:201377), but are being retrofitted
+
+abbreviation: PMCID
+database: Pubmed Central
+object: Identifier
+example_id: PMCID:PMC201377
+generic_url: http://www.pubmedcentral.nih.gov/
+url_syntax: http://www.ncbi.nlm.nih.gov/sites/entrez?db=pmc&cmd=search&term=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/sites/entrez?db=pmc&cmd=search&term=PMC201377
+!url_syntax: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Search&db=PMC&term=[example_id]
+!url_example: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=Search&db=PMC&term=PMC201377
+
+abbreviation: PMID
+database: PubMed
+object: Identifier
+synonym: PUBMED
+synonym: PubMed
+example_id: PMID:4208797
+generic_url: http://www.ncbi.nlm.nih.gov/PubMed/
+url_syntax: http://www.ncbi.nlm.nih.gov/pubmed/[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/pubmed/4208797
+
+abbreviation: PO
+database: Plant Ontology Consortium Database
+object: Identifier
+example_id: PO:0009004
+local_id_syntax: ^[0-9]{7}$
+generic_url: http://www.plantontology.org/
+url_syntax: http://www.plantontology.org/amigo/go.cgi?action=query&view=query&search_constraint=terms&query=PO:[example_id]
+url_example: http://www.plantontology.org/amigo/go.cgi?action=query&view=query&search_constraint=terms&query=PO:0009004
+
+abbreviation: PO_REF
+database: Plant Ontology custom references
+object: Reference identifier
+example_id: PO_REF:00001
+generic_url: http://wiki.plantontology.org:8080/index.php/PO_references
+url_syntax: http://wiki.plantontology.org:8080/index.php/PO_REF:[example_id]
+url_example: http://wiki.plantontology.org:8080/index.php/PO_REF:00001
+
+abbreviation: POC
+database: Plant Ontology Consortium
+generic_url: http://www.plantontology.org/
+
+abbreviation: PomBase
+database: PomBase
+object: Identifier
+example_id: PomBase:SPBC11B10.09
+generic_url: http://www.pombase.org/
+local_id_syntax: ^S\w+(\.)?\w+(\.)?$
+url_syntax: http://www.pombase.org/spombe/result/[example_id]
+url_example: http://www.pombase.org/spombe/result/SPBC11B10.09
+
+abbreviation: Pompep
+database: Schizosaccharomyces pombe protein data
+object: Gene/protein identifier
+example_id: Pompep:SPAC890.04C
+generic_url: ftp://ftp.sanger.ac.uk/pub/yeast/pombe/Protein_data/
+
+abbreviation: PPI
+database: Pseudomonas syringae community annotation project
+generic_url: http://genome.pseudomonas-syringae.org/
+
+abbreviation: PR
+database: Protein Ontology
+object: Identifer
+synonym: PRO
+example_id: PR:000025380
+local_id_syntax: ^[0-9]{9}$
+generic_url: http://www.proconsortium.org/pro/pro.shtml
+url_syntax: http://www.proconsortium.org/cgi-bin/pro/entry_pro?id=PR:[example_id]
+url_example: http://www.proconsortium.org/cgi-bin/pro/entry_pro?id=PR:000025380
+
+abbreviation: PRINTS
+database: PRINTS compendium of protein fingerprints
+object: Accession
+example_id: PRINTS:PR00025
+generic_url: http://www.bioinf.manchester.ac.uk/dbbrowser/PRINTS/
+url_syntax: http://www.bioinf.manchester.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?display_opts=Prints&category=None&queryform=false&regexpr=off&prints_accn=[example_id]
+url_example: http://www.bioinf.manchester.ac.uk/cgi-bin/dbbrowser/sprint/searchprintss.cgi?display_opts=Prints&category=None&queryform=false&regexpr=off&prints_accn=PR00025
+
+abbreviation: ProDom
+database: ProDom protein domain families
+object: Accession
+example_id: ProDom:PD000001
+generic_url: http://prodom.prabi.fr/prodom/current/html/home.php
+url_syntax: http://prodom.prabi.fr/prodom/current/cgi-bin/request.pl?question=DBEN&query=[example_id]
+url_example: http://prodom.prabi.fr/prodom/current/cgi-bin/request.pl?question=DBEN&query=PD000001
+
+abbreviation: Prosite
+database: Prosite database of protein families and domains
+object: Accession
+example_id: Prosite:PS00365
+generic_url: http://www.expasy.ch/prosite/
+url_syntax: http://www.expasy.ch/cgi-bin/prosite-search-ac?[example_id]
+url_example: http://www.expasy.ch/cgi-bin/prosite-search-ac?PS00365
+
+abbreviation: protein_id
+database: DDBJ / EMBL-Bank / GenBank
+generic_url: http://www.ddbj.nig.ac.jp/
+generic_url: http://www.ebi.ac.uk/embl/
+generic_url: http://www.ncbi.nlm.nih.gov/Genbank/
+object: Identifier
+example_id: protein_id:CAA71991
+local_id_syntax: ^[A-Z]{3}[0-9]{5}(\.[0-9]+)?$
+
+abbreviation: PROW
+database: Protein Reviews on the Web
+generic_url: http://www.ncbi.nlm.nih.gov/prow/
+
+abbreviation: PseudoCAP
+database: Pseudomonas Genome Project
+object: Identifier
+example_id: PseudoCAP:PA4756
+generic_url: http://v2.pseudomonas.com/
+url_syntax: http://v2.pseudomonas.com/getAnnotation.do?locusID=[example_id]
+url_example: http://v2.pseudomonas.com/getAnnotation.do?locusID=PA4756
+
+abbreviation: PSI-MI
+database: Proteomic Standard Initiative for Molecular Interaction
+object: Interaction identifier
+synonym: MI
+example_id: MI:0018
+generic_url: http://psidev.sourceforge.net/mi/xml/doc/user/index.html
+
+abbreviation: PSI-MOD
+database: Proteomics Standards Initiative protein modification ontology
+object: Protein modification identifier
+synonym: MOD
+example_id: MOD:00219
+generic_url: http://psidev.sourceforge.net/mod/
+url_syntax: http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:[example_id]
+url_example: http://www.ebi.ac.uk/ontology-lookup/?termId=MOD:00219
+
+abbreviation: PSORT
+database: PSORT protein subcellular localization databases and prediction tools for bacteria
+generic_url: http://www.psort.org/
+
+abbreviation: pTARGET
+database: pTARGET Prediction server for protein subcellular localization
+generic_url: http://bioinformatics.albany.edu/~ptarget/
+
+abbreviation: PubChem_BioAssay
+database: NCBI PubChem database of bioassay records
+object: Identifier
+example_id: PubChem_BioAssay:177
+generic_url: http://pubchem.ncbi.nlm.nih.gov/
+url_syntax: http://pubchem.ncbi.nlm.nih.gov/assay/assay.cgi?aid=[example_id]
+url_example: http://pubchem.ncbi.nlm.nih.gov/assay/assay.cgi?aid=177
+
+abbreviation: PubChem_Compound
+database: NCBI PubChem database of chemical structures
+object: Identifier
+generic_url: http://pubchem.ncbi.nlm.nih.gov/
+example_id: PubChem_Compound:2244
+local_id_syntax: ^[0-9]+$
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pccompound&term=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pccompound&term=2244
+
+abbreviation: PubChem_Substance
+database: NCBI PubChem database of chemical substances
+object: Identifier
+example_id: PubChem_Substance:4594
+local_id_syntax: ^[0-9]{4,}$
+generic_url: http://pubchem.ncbi.nlm.nih.gov/
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pcsubstance&term=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?CMD=search&DB=pcsubstance&term=4594
+
+abbreviation: Reactome
+database: Reactome - a curated knowledgebase of biological pathways
+object: Identifier
+example_id: Reactome:REACT_604
+generic_url: http://www.reactome.org/
+url_syntax: http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=[example_id]
+url_example: http://www.reactome.org/cgi-bin/eventbrowser_st_id?ST_ID=REACT_604
+
+abbreviation: REBASE
+database: REBASE restriction enzyme database
+object: Restriction enzyme name
+example_id: REBASE:EcoRI
+generic_url: http://rebase.neb.com/rebase/rebase.html
+url_syntax: http://rebase.neb.com/rebase/enz/[example_id].html
+url_example: http://rebase.neb.com/rebase/enz/EcoRI.html
+
+abbreviation: RefGenome
+database: GO Reference Genomes
+generic_url: http://www.geneontology.org/GO.refgenome.shtml
+
+! note: RefSeq contact person is Guy Plunkett III (guy@genome.wisc.edu); BRC: ERIC
+
+abbreviation: RefSeq
+database: RefSeq
+object: Identifier
+generic_url: http://www.ncbi.nlm.nih.gov/RefSeq/
+example_id: RefSeq:XP_001068954
+local_id_syntax: ^(NC|AC|NG|NT|NW|NZ|NM|NR|XM|XR|NP|AP|XP|ZP)_\d+$
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=XP_001068954
+
+abbreviation: RefSeq_NA
+database: RefSeq (Nucleic Acid)
+object: Identifier
+example_id: RefSeq_NA:NC_000913
+generic_url: http://www.ncbi.nlm.nih.gov/RefSeq/
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=NC_000913
+is_obsolete: true
+replaced_by: RefSeq
+
+abbreviation: RefSeq_Prot
+database: RefSeq (Protein)
+object: Identifier
+example_id: RefSeq_Prot:YP_498627
+generic_url: http://www.ncbi.nlm.nih.gov/RefSeq/
+url_syntax: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/entrez/viewer.fcgi?val=YP_498627
+is_obsolete: true
+replaced_by: RefSeq
+
+abbreviation: RESID
+database: RESID Database of Protein Modifications
+object: Identifier
+example_id: RESID:AA0062
+generic_url: ftp://ftp.ncifcrf.gov/pub/users/residues/
+
+abbreviation: Rfam
+database: Rfam database of RNA families
+object: accession
+example_id: Rfam:RF00012
+generic_url: http://rfam.sanger.ac.uk/
+url_syntax: http://rfam.sanger.ac.uk/family/[example_id]
+url_example: http://rfam.sanger.ac.uk/family/RF00012
+
+abbreviation: RGD
+database: Rat Genome Database
+object: Accession
+synonym: RGDID
+example_id: RGD:2004
+local_id_syntax: ^[0-9]{4,7}$
+generic_url: http://rgd.mcw.edu/
+url_syntax: http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=[example_id]
+url_example: http://rgd.mcw.edu/generalSearch/RgdSearch.jsp?quickSearch=1&searchKeyword=2004
+
+abbreviation: RHEA
+database: Rhea, the Annotated Reactions Database
+object: Accession
+example_id: RHEA:25811
+generic_url: http://www.ebi.ac.uk/rhea/
+url_syntax: http://www.ebi.ac.uk/rhea/reaction.xhtml?id=[example_id]
+url_example: http://www.ebi.ac.uk/rhea/reaction.xhtml?id=25811
+
+abbreviation: RNAmods
+database: RNA Modification Database
+object: Identifier
+synonym: RNAMDB
+example_id: RNAmods:037
+generic_url: http://s59.cas.albany.edu/RNAmods/
+url_syntax: http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?[example_id]
+url_example: http://s59.cas.albany.edu/RNAmods/cgi-bin/rnashow.cgi?091
+
+! abbreviation: RI  # changing this to Roslin_Institute
+
+abbreviation: Roslin_Institute
+database: Roslin Institute
+synonym: RI
+generic_url: http://www.roslin.ac.uk/
+
+abbreviation: RO
+database: OBO Relation Ontology Ontology
+generic_url: http://purl.obolibrary.org/obo/ro
+example_id: RO:0002211
+url_syntax: http://purl.obolibrary.org/obo/RO_[example_id]
+url_example: http://purl.obolibrary.org/obo/RO_0002211
+
+abbreviation: SABIO-RK
+database: SABIO Reaction Kinetics
+generic_url: http://sabio.villa-bosch.de/
+object: reaction
+example_id: SABIO-RK:1858
+url_syntax: http://sabio.villa-bosch.de/reacdetails.jsp?reactid=[example_id]
+url_example: http://sabio.villa-bosch.de/reacdetails.jsp?reactid=1858
+
+abbreviation: Sanger
+database: Wellcome Trust Sanger Institute
+generic_url: http://www.sanger.ac.uk/
+
+abbreviation: SEED
+database: The SEED;
+object: identifier
+example_id: SEED:fig|83331.1.peg.1
+generic_url: http://www.theseed.org
+url_syntax: http://www.theseed.org/linkin.cgi?id=[example_id]
+url_example: http://www.theseed.org/linkin.cgi?id=fig|83331.1.peg.1
+
+! note: SGD is a synonym for the SGDID
+
+abbreviation: SGD
+database: Saccharomyces Genome Database
+object: Identifier for SGD Loci
+synonym: SGDID
+example_id: SGD:S000006169
+local_id_syntax: ^S[0-9]{9}$
+generic_url: http://www.yeastgenome.org/
+url_syntax: http://db.yeastgenome.org/cgi-bin/locus.pl?dbid=[example_id]
+url_example: http://db.yeastgenome.org/cgi-bin/locus.pl?dbid=S000006169
+
+! note: The SGD_LOCUS object also includes the systematic S. cerevisiae ORF names, eg. YEL001C
+
+abbreviation: SGD_LOCUS
+database: Saccharomyces Genome Database
+object: Gene name (gene symbol in mammalian nomenclature)
+example_id: SGD_LOCUS:GAL4
+generic_url: http://www.yeastgenome.org/
+url_syntax: http://db.yeastgenome.org/cgi-bin/locus.pl?locus=[example_id]
+url_example: http://db.yeastgenome.org/cgi-bin/locus.pl?locus=GAL4
+
+abbreviation: SGD_REF
+database: Saccharomyces Genome Database
+object: Literature Reference Identifier
+example_id: SGD_REF:S000049602
+generic_url: http://www.yeastgenome.org/
+url_syntax: http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=[example_id]
+url_example: http://db.yeastgenome.org/cgi-bin/reference/reference.pl?dbid=S000049602
+
+abbreviation: SGN
+database: Sol Genomics Network
+object: Gene identifier
+example_id: SGN:4476
+generic_url: http://www.sgn.cornell.edu/
+url_syntax: http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=[example_id]
+url_example: http://www.sgn.cornell.edu/phenome/locus_display.pl?locus_id=4476
+
+abbreviation: SGN_ref
+database: Sol Genomics Network
+object: Reference identifier
+example_id: SGN_ref:861
+generic_url: http://www.sgn.cornell.edu/
+url_syntax: http://www.sgn.cornell.edu/chado/publication.pl?pub_id=[example_id]
+url_example: http://www.sgn.cornell.edu/chado/publication.pl?pub_id=861
+
+abbreviation: SMART
+database: Simple Modular Architecture Research Tool
+object: Accession
+example_id: SMART:SM00005
+generic_url: http://smart.embl-heidelberg.de/
+url_syntax: http://smart.embl-heidelberg.de/smart/do_annotation.pl?BLAST=DUMMY&DOMAIN=[example_id]
+url_example: http://smart.embl-heidelberg.de/smart/do_annotation.pl?BLAST=DUMMY&DOMAIN=SM00005
+
+abbreviation: SMD
+database: Stanford Microarray Database
+generic_url: http://genome-www.stanford.edu/microarray
+
+abbreviation: SO
+database: Sequence Ontology
+object: Identifier
+example_id: SO:0000195
+local_id_syntax: ^\d{7}$
+generic_url: http://sequenceontology.org/
+url_syntax: http://song.sourceforge.net/SOterm_tables.html#SO:[example_id]
+url_example: http://song.sourceforge.net/SOterm_tables.html#SO:0000195
+
+abbreviation: SPD
+database: Schizosaccharomyces pombe Postgenome Database at RIKEN; includes Orfeome Localisation data
+object: Identifier
+example_id: SPD:05/05F01
+local_id_syntax: ^[0-9]{2}/[0-9]{2}[A-Z][0-9]{2}$
+generic_url: http://www.riken.jp/SPD/
+url_syntax: http://www.riken.jp/SPD/[example_id].html
+url_example: http://www.riken.jp/SPD/05/05F01.html
+
+abbreviation: SUBTILIST
+database: Bacillus subtilis Genome Sequence Project
+object: Accession
+example_id: SUBTILISTG:BG11384
+generic_url: http://genolist.pasteur.fr/SubtiList/
+
+abbreviation: SUBTILISTG
+database: Bacillus subtilis Genome Sequence Project
+object: Gene symbol
+example_id: SUBTILISTG:accC
+generic_url: http://genolist.pasteur.fr/SubtiList/
+
+abbreviation: SUPERFAMILY
+database: SUPERFAMILY protein annotation database
+object: Accession
+example_id: SUPERFAMILY:51905
+generic_url: http://supfam.cs.bris.ac.uk/SUPERFAMILY/index.html
+url_syntax: http://supfam.cs.bris.ac.uk/SUPERFAMILY/cgi-bin/scop.cgi?ipid=SSF[example_id]
+url_example: http://supfam.cs.bris.ac.uk/SUPERFAMILY/cgi-bin/scop.cgi?ipid=SSF51905
+
+abbreviation: Swiss-Prot
+database: UniProtKB/Swiss-Prot
+object: Accession
+synonym: UniProtKB/Swiss-Prot
+example_id: Swiss-Prot:P51587
+generic_url: http://www.uniprot.org
+url_syntax: http://www.uniprot.org/uniprot/[example_id]
+url_example: http://www.uniprot.org/uniprot/P51587
+is_obsolete: true
+replaced_by: UniProtKB
+
+abbreviation: TAIR
+database: The Arabidopsis Information Resource
+object: Accession
+example_id: TAIR:gene:2062713
+example_id: TAIR:locus:2146653
+local_id_syntax: ^gene:[0-9]{7,12}$
+local_id_syntax: ^locus:[0-9]{7}$
+generic_url: http://www.arabidopsis.org/
+url_syntax: http://arabidopsis.org/servlets/TairObject?accession=[example_id]
+url_example: http://arabidopsis.org/servlets/TairObject?accession=gene:2062713
+url_example: http://arabidopsis.org/servlets/TairObject?accession=locus:2146653
+
+abbreviation: taxon
+database: NCBI Taxonomy
+object: Identifier
+synonym: NCBITaxon
+example_id: taxon:7227
+synonym: ncbi_taxid
+generic_url: http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/
+url_syntax: http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=[example_id]
+url_example: http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3702
+
+abbreviation: TC
+database: Transport Protein Database
+object: Identifier
+example_id: TC:9.A.4.1.1
+generic_url: http://www.tcdb.org/
+url_syntax: http://www.tcdb.org/tcdb/index.php?tc=[example_id]
+url_example: http://www.tcdb.org/tcdb/index.php?tc=9.A.4.1.1
+
+abbreviation: TGD
+database: Tetrahymena Genome Database
+generic_url: http://www.ciliate.org/
+
+! note: The TGD_LOCUS object also includes the systematic T. thermophila ORF names, eg. U66363
+
+abbreviation: TGD_LOCUS
+database: Tetrahymena Genome Database
+object: Gene name (gene symbol in mammalian nomenclature)
+example_id: TGD_LOCUS:PDD1
+generic_url: http://www.ciliate.org/
+url_syntax: http://db.ciliate.org/cgi-bin/locus.pl?locus=[example_id]
+url_example: http://db.ciliate.org/cgi-bin/locus.pl?locus=PDD1
+
+abbreviation: TGD_REF
+database: Tetrahymena Genome Database
+object: Literature Reference Identifier
+example_id: TGD_REF:T000005818
+generic_url: http://www.ciliate.org/
+url_syntax: http://db.ciliate.org/cgi-bin/reference/reference.pl?dbid=[example_id]
+url_example: http://db.ciliate.org/cgi-bin/reference/reference.pl?dbid=T000005818
+
+! abbreviation: TIGR_TGI
+! database: TIGR Gene Index from The Institute for Genomic Research
+! object: TC accession
+! example_id: TIGR_TGI:Cattle_TC123931
+! generic_url: http://www.tigr.org/
+! url_syntax: http://www.tigr.org/tigr-scripts/nhgi_scripts/tc_report.pl?tc=[example_id]
+! url_example: http://www.tigr.org/tigr-scripts/nhgi_scripts/tc_report.pl?tc=Cattle_TC123931
+!
+! moved!
+
+abbreviation: TRAIT
+database: TRAnscript Integrated Table
+synonym: MuscleTRAIT
+generic_url: http://muscle.cribi.unipd.it/
+
+abbreviation: TRANSFAC
+database: TRANSFAC database of eukaryotic transcription factors
+generic_url: http://www.gene-regulation.com/pub/databases.html#transfac
+
+abbreviation: TrEMBL
+database: UniProtKB-TrEMBL protein sequence database
+object: Accession
+synonym: UniProtKB/TrEMBL
+example_id: TrEMBL:O31124
+generic_url: http://www.uniprot.org
+url_syntax: http://www.uniprot.org/uniprot/[example_id]
+url_example: http://www.uniprot.org/uniprot/O31124
+is_obsolete: true
+replaced_by: UniProtKB
+
+abbreviation: UBERON
+database: Uber-anatomy ontology
+object: Identifier
+example_id: URBERON:0002398
+local_id_syntax: ^[0-9]{7}$
+generic_url: http://uberon.org
+url_syntax: http://purl.obolibrary.org/obo/UBERON_[example_id]
+url_example: http://purl.obolibrary.org/obo/UBERON_0002398
+
+abbreviation: UM-BBD
+database: University of Minnesota Biocatalysis/Biodegradation Database
+object: Prefix
+generic_url: http://umbbd.msi.umn.edu/
+
+abbreviation: UM-BBD_enzymeID
+database: University of Minnesota Biocatalysis/Biodegradation Database
+object: Enzyme identifier
+example_id: UM-BBD_enzymeID:e0413
+generic_url: http://umbbd.msi.umn.edu/
+url_syntax: http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=ep&enzymeID=[example_id]
+url_example: http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=ep&enzymeID=e0230
+
+abbreviation: UM-BBD_pathwayID
+database: University of Minnesota Biocatalysis/Biodegradation Database
+object: Pathway identifier
+example_id: UM-BBD_pathwayID:acr
+generic_url: http://umbbd.msi.umn.edu/
+url_syntax: http://umbbd.msi.umn.edu/[example_id]/[example_id]_map.html
+url_example: http://umbbd.msi.umn.edu/acr/acr_map.html
+
+abbreviation: UM-BBD_reactionID
+database: University of Minnesota Biocatalysis/Biodegradation Database
+object: Reaction identifier
+example_id: UM-BBD_reactionID:r0129
+generic_url: http://umbbd.msi.umn.edu/
+url_syntax: http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=r&reacID=[example_id]
+url_example: http://umbbd.msi.umn.edu/servlets/pageservlet?ptype=r&reacID=r0129
+
+abbreviation: UM-BBD_ruleID
+database: University of Minnesota Biocatalysis/Biodegradation Database
+object: Rule identifier
+example_id: UM-BBD_ruleID:bt0330
+generic_url: http://umbbd.msi.umn.edu/
+url_syntax: http://umbbd.msi.umn.edu/servlets/rule.jsp?rule=[example_id]
+url_example: http://umbbd.msi.umn.edu/servlets/rule.jsp?rule=bt0330
+
+! Note that UniGene IDs contain an organism abbreviation, which specifies the organism of interest and is required; the ID is split at the dot into organism abbreviation and cluster ID. See http://www.ncbi.nlm.nih.gov/UniGene/FAQ.shtml for more information.
+
+abbreviation: UniGene
+database: UniGene
+object: Identifier (for transcript cluster)
+example_id: UniGene:Hs.212293
+generic_url: http://www.ncbi.nlm.nih.gov/UniGene
+url_syntax: http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=[organism_abbreviation]&CID=[cluster_id]
+url_example: http://www.ncbi.nlm.nih.gov/UniGene/clust.cgi?ORG=Hs&CID=212293
+
+abbreviation: UniMod
+database: UniMod
+object: Identifier
+example_id: UniMod:1287
+generic_url: http://www.unimod.org/
+url_syntax: http://www.unimod.org/modifications_view.php?editid1=[example_id]
+url_example: http://www.unimod.org/modifications_view.php?editid1=1287
+
+! note: UniParc supersedes REMTREMBL; the latter is no longer maintained
+
+abbreviation: UniParc
+database: UniProt Archive
+object: Accession
+example_id: UniParc:UPI000000000A
+generic_url: http://www.uniprot.org/uniparc/
+url_syntax: http://www.uniprot.org/uniparc/[example_id]
+url_example: http://www.uniprot.org/uniparc/UPI000000000A
+
+abbreviation: UniPathway
+database: UniPathway
+object: Identifier
+example_id: UniPathway:UPA00155
+generic_url: http://www.grenoble.prabi.fr/obiwarehouse/unipathway
+url_syntax: http://www.grenoble.prabi.fr/obiwarehouse/unipathway/upa?upid=[example_id]
+url_example: http://www.grenoble.prabi.fr/obiwarehouse/unipathway/upa?upid=UPA00155
+
+abbreviation: UniProtKB
+database: Universal Protein Knowledgebase
+object: Accession
+synonym: UniProt
+example_id: UniProtKB:P51587
+local_id_syntax: ^([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z]([0-9][A-Z][A-Z0-9]{2}){1,2}[0-9])((-[0-9]+)|:PRO_[0-9]{10}){0,1}$
+generic_url: http://www.uniprot.org
+url_syntax: http://www.uniprot.org/uniprot/[example_id]
+url_example: http://www.uniprot.org/uniprot/P51587
+
+abbreviation: UniProtKB-KW
+synonym: SP_KW
+database: UniProt Knowledgebase keywords
+object: Identifier
+example_id: UniProtKB-KW:KW-0812
+generic_url: http://www.uniprot.org/keywords/
+url_syntax: http://www.uniprot.org/keywords/[example_id]
+url_example: http://www.uniprot.org/keywords/KW-0812
+
+abbreviation: UniProtKB-SubCell
+synonym: SP_SL
+database: UniProt Knowledgebase Subcellular Location vocabulary
+object: Identifier
+example_id: UniProtKB-SubCell:SL-0012
+generic_url: http://www.uniprot.org/locations/
+url_syntax: http://www.uniprot.org/locations/[example_id]
+url_example: http://www.uniprot.org/locations/SL-0012
+
+abbreviation: VBRC
+database: Viral Bioinformatics Resource Center
+object: Identifier
+example_id: VBRC:F35742
+generic_url: http://vbrc.org
+url_syntax: http://vbrc.org/query.asp?web_id=VBRC:[example_id]
+url_example: http://vbrc.org/query.asp?web_id=VBRC:F35742
+
+! note: The link URL for VEGA is species specific (much like Ensembl).
+! For a direct link you need to translate the abbreviation in the ID
+! (eg 'HUM') into 'Homo_sapiens':
+!
+! http://vega.sanger.ac.uk/Homo_sapiens/protview?peptide=OTTHUMP00000000661&db=core
+!
+! Therefore to make it easier D. Barrell has given the search URL which
+! gives the results of a search on a peptide ID.
+
+abbreviation: VEGA
+database: Vertebrate Genome Annotation database
+object: Identifier
+example_id: VEGA:OTTHUMP00000000661
+generic_url: http://vega.sanger.ac.uk/index.html
+url_syntax: http://vega.sanger.ac.uk/perl/searchview?species=all&idx=All&q=[example_id]
+url_example: http://vega.sanger.ac.uk/perl/searchview?species=all&idx=All&q=OTTHUMP00000000661
+
+abbreviation: VIDA
+database: Virus Database at University College London
+generic_url: http://www.biochem.ucl.ac.uk/bsm/virus_database/VIDA.html
+
+abbreviation: VZ
+database: ViralZone
+object: Page Reference Identifier
+example_id: VZ:957
+generic_url: http://viralzone.expasy.org/
+url_syntax: http://viralzone.expasy.org/all_by_protein/[example_id].html
+url_example: http://viralzone.expasy.org/all_by_protein/957.html
+
+abbreviation: VMD
+database: Virginia Bioinformatics Institute Microbial Database
+object: Gene identifier
+example_id: VMD:109198
+generic_url: http://phytophthora.vbi.vt.edu
+url_syntax: http://vmd.vbi.vt.edu/cgi-bin/browse/browserDetail_new.cgi?gene_id=[example_id]
+url_example: http://vmd.vbi.vt.edu/cgi-bin/browse/browserDetail_new.cgi?gene_id=109198
+
+abbreviation: WB
+database: WormBase database of nematode biology
+object: Gene identifier
+synonym: WormBase
+example_id: WB:WBGene00003001
+local_id_syntax: ^WP:CE[0-9]{5}$
+local_id_syntax: ^WB(Gene|Var|RNAi|Transgene)[0-9]{8}$
+generic_url: http://www.wormbase.org/
+url_syntax: http://www.wormbase.org/db/gene/gene?name=[example_id]
+url_example: http://www.wormbase.org/db/get?class=Gene;name=WBGene00003001
+
+abbreviation: WBbt
+database: C. elegans gross anatomy
+object: Identifier
+example_id: WBbt:0005733
+local_id_syntax: [0-9]{7}
+generic_url: http://www.wormbase.org/
+
+abbreviation: WBls
+database: C. elegans development
+object: Identifier
+example_id: WBls:0000010
+local_id_syntax: [0-9]{7}
+generic_url: http://www.wormbase.org/
+
+abbreviation: WBPhenotype
+database: WormBase phenotype ontology
+object: Gene identifier
+example_id: WBPhenotype:0002117
+local_id_syntax: ^[0-9]{7}$
+generic_url: http://www.wormbase.org/
+url_syntax: http://www.wormbase.org/species/c_elegans/phenotype/WBPhenotype:[example_id]
+url_example: http://www.wormbase.org/species/c_elegans/phenotype/WBPhenotype:0000154
+
+! abbreviation: WB_GENE
+! database: WormBase database of nematode biology
+! object: Gene symbol
+! synonym: WormBase
+! example_id: WB_GENE:lin-12
+! generic_url: http://www.wormbase.org/
+! url_syntax: http://www.wormbase.org/db/gene/gene?name=[example_id]
+! url_example: http://www.wormbase.org/db/gene/gene?name=lin-12
+
+abbreviation: WB_REF
+database: WormBase database of nematode biology
+object: Literature Reference Identifier
+example_id: WB_REF:WBPaper00004823
+generic_url: http://www.wormbase.org/
+url_syntax: http://www.wormbase.org/db/misc/paper?name=[example_id]
+url_example: http://www.wormbase.org/db/misc/paper?name=WBPaper00004823
+
+abbreviation: Wikipedia
+database: Wikipedia
+object: Page Reference Identifier
+example_id: Wikipedia:Endoplasmic_reticulum
+generic_url: http://en.wikipedia.org/
+url_syntax: http://en.wikipedia.org/wiki/[example_id]
+url_example: http://en.wikipedia.org/wiki/Endoplasmic_reticulum
+
+abbreviation: WP
+database: Wormpep database of proteins of C. elegans
+object: Identifier
+synonym: Wormpep
+example_id: WP:CE25104
+generic_url: http://www.wormbase.org/
+url_syntax: http://www.wormbase.org/db/get?class=Protein;name=WP:[example_id]
+url_example: http://www.wormbase.org/db/get?class=Protein;name=WP:CE15104
+is_obsolete: true
+
+abbreviation: YeastFunc
+database: Yeast Function
+generic_url: http://func.med.harvard.edu/yeast/
+
+abbreviation: ZFIN
+database: Zebrafish Information Network
+object: Identifier
+example_id: ZFIN:ZDB-GENE-990415-103
+local_id_syntax: ^ZDB-(GENE|GENO|MRPHLNO)-[0-9]{6}-[0-9]+$
+generic_url: http://zfin.org/
+url_syntax: http://zfin.org/cgi-bin/ZFIN_jump?record=[example_id]
+url_example: http://zfin.org/cgi-bin/ZFIN_jump?record=ZDB-GENE-990415-103

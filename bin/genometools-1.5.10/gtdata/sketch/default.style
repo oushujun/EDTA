@@ -1,0 +1,299 @@
+--[[
+  This is the GenomeTools annotation viewer config file.
+  All options must be set inside the 'style' table.
+  All items in this table must be tables, called 'sections'.
+  Typically there is one section per feature type.
+
+  Color definitions
+  -----------------
+  Colors are given as RGB triplets
+       {red=<val>,green=<val>,blue=<val>(,alpha=<val>)}
+  where <val> is a decimal value between 0 and 1.
+  The alpha value is optional, as a default 0.5 will be used.
+
+  Global format settings
+  ----------------------
+  Global settings, such as margins, spacers, etc. are found at the end of this
+  file, in the "format" section.
+]]--
+
+
+style =
+{
+  gene = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.9, green=0.9, blue=1.0},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = false,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  mRNA = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.4, green=0.5, blue=0.6},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = false,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  exon = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.6, green=0.6, blue=0.9},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = true,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  CDS = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.9, green=0.9, blue=0.2},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = true,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  TF_binding_site = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.8, green=0.6, blue=0.6},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = false,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  intron = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=1.0, green=1.0, blue=1.0},
+    style              = "caret",
+    -- Collapsing options
+    collapse_to_parent = true,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  repeat_region = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.8, green=0.3, blue=0.3},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = false,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = 0,
+  },
+--------------------------------------
+  LTR_retrotransposon = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.8, green=0.5, blue=0.5},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = false,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  long_terminal_repeat = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.9, green=0.9, blue=0.4},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = true,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+  target_site_duplication = {
+    max_show_width = 0,
+  },
+--------------------------------------
+    protein_match = {
+    -- Color definitions
+    stroke             = {red=0.0, green=0.0, blue=0.0, alpha = 1.0},
+    stroke_marked      = {red=1.0, green=0.0, blue=0.0},
+    fill               = {red=0.1, green=0.1, blue=0.5},
+    style              = "box",
+    -- Collapsing options
+    collapse_to_parent = true,
+    split_lines        = true,
+    -- Caption options
+    max_capt_show_width= nil,
+    -- Display this track only if the viewport is not wider than this
+    -- number of nucleotides. Set to 0 to disable type track.
+    max_show_width     = nil,
+  },
+--------------------------------------
+  five_prime_cis_splice_site = {
+    collapse_to_parent = true,
+  },
+--------------------------------------
+  five_prime_splice_site = {
+    collapse_to_parent = true,
+  },
+--------------------------------------
+  three_prime_cis_splice_site = {
+    collapse_to_parent = true,
+  },
+--------------------------------------
+  three_prime_splice_site = {
+    collapse_to_parent = true,
+  },
+--------------------------------------
+  expressed_sequence_match = {
+    fill               = {red=0.2, green=0.2, blue=0.8},
+    max_show_width     = 10000,
+    max_num_lines      = 10,
+    max_capt_show_width= 5000,
+  },
+--------------------------------------
+  binding_site = {
+    fill               = {red=0.7, green=0.2, blue=0.8},
+    max_show_width     = 10000,
+    max_num_lines      = 10,
+    max_capt_show_width= 10000,
+  },
+--------------------------------------
+  SNP = {
+    fill               = {red=0.1, green=0.8, blue=0.8},
+    max_show_width     = 10000,
+    max_num_lines      = 10,
+    max_capt_show_width= 10000,
+  },
+--------------------------------------
+  deletion = {
+    fill               = {red=0.1, green=0.8, blue=0.8},
+    max_show_width     = nil,
+    max_num_lines      = 10,
+    max_capt_show_width= 10000,
+  },
+--------------------------------------
+  chromosome = {
+    fill               = {red=0.1, green=0.8, blue=0.8},
+    max_show_width     = nil,
+    max_num_lines      = 10,
+  },
+--------------------------------------
+  substitution = {
+    fill               = {red=1.0, green=0.1, blue=0.05},
+    max_show_width     = 10000,
+    max_num_lines      = 10,
+    max_capt_show_width= 1000,
+  },
+--------------------------------------
+  BED_feature = {
+    fill               = {red=0.0, green=0.1, blue=0.0},
+    style              = "box",
+  },
+--------------------------------------
+  BED_thick_feature = {
+    fill               = {red=0.0, green=0.5, blue=0.0},
+    style              = "box",
+    collapse_to_parent = true,
+  },
+--------------------------------------
+  BED_block = {
+    fill               = {red=0.0, green=1.0, blue=0.0},
+    style              = "box",
+    collapse_to_parent = true,
+  },
+--------------------------------------
+  GC_content = {
+    -- this is for a custom track
+    stroke             = {red=0.2, green=0.2, blue=1.0, alpha = 0.4},
+  },
+--------------------------------------
+  -- Defines various format options for drawing.
+  format =
+  {
+    -- Set the following three settings to 'false' to globally disable them.
+    split_lines = true, -- generally enable splitting
+    show_block_captions = true, -- generally show captions
+    show_track_captions = true, -- generally show track captions
+    margins = 30,      -- space left and right of diagram, in pixels
+    bar_height = 16,   -- height of a feature bar, in pixels
+    bar_vspace = 10,   -- space between feature bars, in pixels
+    track_vspace = 15, -- space between tracks, in pixels
+    ruler_font_size = 8, -- size of scale labels
+    ruler_font_family = "Sans", -- font for ruler
+    ruler_space = 20, -- space between ruler and first track
+    ruler_offset = 0, -- position offset of ruler labels
+    ruler_nozeropos = false, -- the position before 1 shall be -1
+    block_caption_font_size = 8, -- size of block captions
+    block_caption_font_family = "Sans", -- font for block captions
+    block_caption_space = 7, -- space between blocks and their captions
+    track_caption_font_size = 8, -- size of track captions
+    track_caption_font_family = "Sans", -- font for track captions
+    track_caption_space = 7, -- space between tracks and their captions
+    arrow_width = 6,   -- width of feature arrowheads, in pixels
+    stroke_width = .5, -- width of outlines, in pixels
+    unit = "bp",       -- basepair unit, e.g. "bp"
+    ruler_left_text = "5'",  -- text left of the ruler axis
+    ruler_right_text = "3'", -- text right of the ruler axis
+    stroke_marked_width = 1.5, -- width of outlines for marked elements, in pixels
+    show_grid = true, -- shows light vertical lines for orientation
+    min_len_block = 20 , -- minimum length of a block in which single elements are shown
+    track_title_color     = {red=0.7, green=0.7, blue=0.7, alpha = 1.0},
+    default_stroke_color  = {red=0.1, green=0.1, blue=0.1, alpha = 1.0},
+    background_color      = {red=1.0, green=1.0, blue=1.0, alpha = 1.0},
+  },
+}

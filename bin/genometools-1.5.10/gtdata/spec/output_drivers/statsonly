@@ -1,0 +1,7 @@
+--[[
+  This is an output template for bare run statistics only.
+]]
+
+template_print(global.checked_ccs .. "\t" .. global.checked_types .. "\t"
+               .. global.checked_nodes .. "\t" .. global.checked_aspects .. "\t"
+               .. global.runtime .. "\n")

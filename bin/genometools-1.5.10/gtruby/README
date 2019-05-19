@@ -1,0 +1,16 @@
+This directory contains the GenomeTools Ruby bindings.
+
+To be able to use them, you have to add the following line to your Ruby script:
+
+require 'gtruby'
+
+and make sure that this directory is added to the ruby load-path variable ($:).
+Either by calling ruby with the option -I or by adding this directory to the
+RUBYLIB environment variable.
+
+Furthermore, you have to make sure that the GenomeTools shared libraries can be
+be found by the dlopen(3) system call. For example, by adding the lib/
+subdirectory of GenomeTools to your LD_LIBRARY_PATH environment variable.
+
+For examples on how to use these bindings, please refer to the scripts in
+the subdirectory testdata/gtruby/ of GenomeTools.

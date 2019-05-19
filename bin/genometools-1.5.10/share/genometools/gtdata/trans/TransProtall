@@ -1,0 +1,15 @@
+# simple mapping for protein sequences with all alphabet characters
+# * is for a stop codon. It is an extra character but not a wildcard.
+LVIFlvif i
+KRkr +
+EDed -
+AGag s
+STst o
+NQnq n
+YWyw a
+Pp p
+Hh h
+Mm m
+Cc c
+*- *
+XUBZJOxubzjo x

@@ -1,0 +1,21 @@
+    ##gff-version 3
+    ##sequence-region   seq 1 290
+    seq	.	gene	1	209	.	+	.	ID=gene1
+    seq	.	exon	1	90	.	+	.	Parent=gene1
+    seq	.	exon	110	190	.	+	.	Parent=gene1
+    seq	.	exon	201	209	.	+	.	Parent=gene1
+    ###
+    seq	.	gene	1	290	.	+	.	ID=gene2
+    seq	.	exon	1	90	.	+	.	Parent=gene2
+    seq	.	exon	101	190	.	+	.	Parent=gene2
+    seq	.	exon	201	290	.	+	.	Parent=gene2
+    ###
+    seq	.	gene	10	290	.	+	.	ID=gene3
+    seq	.	exon	10	90	.	+	.	Parent=gene3
+    seq	.	exon	110	190	.	+	.	Parent=gene3
+    seq	.	exon	201	290	.	+	.	Parent=gene3
+    ###
+    seq	.	gene	181	290	.	+	.	ID=gene4
+    seq	.	exon	181	190	.	+	.	Parent=gene4
+    seq	.	exon	201	290	.	+	.	Parent=gene4
+    ###

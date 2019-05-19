@@ -1,0 +1,123 @@
+--[[
+  This is an output template for the regular text output format.
+]]
+
+package.path = gt.script_dir .. "/../?.lua;" .. package.path
+
+if global.colored_output then
+  require("ansicolors")
+else
+  ansicolors = {}
+  ansicolors.yellow = ""
+  ansicolors.red = ""
+  ansicolors.green = ""
+  ansicolors.magenta = ""
+  ansicolors.reset = ""
+end
+
+function tablelength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
+function print_aspects(aspects)
+  for aspect, aspect_details in pairs(aspects) do
+    template_print("  - " .. aspect .. " (")
+    if aspect_details.successes > 0 then
+      template_print(ansicolors.green .. aspect_details.successes
+                     .. " success/es" .. ansicolors.reset)
+    end
+    if aspect_details.failures > 0 then
+      if aspect_details.successes > 0 then
+        template_print(", ")
+      end
+      template_print(ansicolors.red .. aspect_details.failures
+                     .. " failure/s" .. ansicolors.reset)
+    end
+    if aspect_details.runtime_errors > 0 then
+      if aspect_details.successes > 0 or aspect_details.failures > 0 then
+        template_print(", ")
+      end
+      template_print(ansicolors.magenta .. aspect_details.runtime_errors
+                     .. " runtime error/s" .. ansicolors.reset)
+    end
+    template_print(")\n")
+    if global.show_details then
+      for n, node in ipairs(aspect_details.nodes) do
+        local id = ""
+        if node.ID then
+          id = node.ID .. ", "
+        end
+        template_print(ansicolors.red .."      offending node #"..n .. " ("
+               .. id .. "from " .. node.filename .. ", line "
+               .. node.linenumber .. "):" .. ansicolors.reset .. "\n")
+        for _, msg in ipairs(node.failure_messages) do
+          template_print(ansicolors.red .."         " .. msg
+                         .. ansicolors.reset .. "\n")
+        end
+        for _, msg in ipairs(node.runtime_error_messages) do
+          template_print(ansicolors.magenta .."         " .. msg
+                         .. ansicolors.reset .. "\n")
+        end
+      end
+    end
+  end
+end
+
+local nof_feats = tablelength(features)
+local nof_regions = tablelength(regions)
+local nof_metas = tablelength(metas)
+local nof_sequences = tablelength(sequences)
+local nof_comments = tablelength(comments)
+
+template_print("According to the specification in " ..
+               global.spec_filename .. ",\n\n")
+
+if nof_feats > 0 then
+  for feature, aspects in pairs(features) do
+    template_print("a " .. ansicolors.yellow .. feature
+                   .. ansicolors.reset ..  " feature\n")
+    print_aspects(aspects)
+  end
+end
+
+if nof_metas > 0 then
+  template_print("a " .. ansicolors.yellow .. "meta"
+                 .. ansicolors.reset ..  " node\n")
+  print_aspects(metas)
+end
+
+if nof_regions > 0 then
+  template_print("a " .. ansicolors.yellow .. "region"
+                 .. ansicolors.reset ..  " node\n")
+  print_aspects(regions)
+end
+
+if nof_comments > 0 then
+  template_print("a " .. ansicolors.yellow .. "comment"
+                 .. ansicolors.reset ..  " node\n")
+  print_aspects(comments)
+end
+
+if nof_sequences > 0 then
+  template_print("a " .. ansicolors.yellow .. "sequence"
+                 .. ansicolors.reset ..  " node\n")
+  print_aspects(sequences)
+end
+
+if #warnings then
+  template_print("\nEncountered " .. ansicolors.yellow
+                 .. #warnings .. ansicolors.reset .. " parser warning/s.\n")
+  if global.show_details then
+    for _, msg in ipairs(warnings) do
+      template_print("  - " .. msg .. "\n")
+    end
+  end
+end
+
+template_print("\nTraversed " .. global.checked_ccs ..
+               " CCs (" .. global.checked_types .. " feature types), checked "
+               .. global.checked_nodes .. " nodes for "
+               .. global.checked_aspects .. " aspects.\n")
+template_print("Finished in " .. global.runtime .. " s.\n")
