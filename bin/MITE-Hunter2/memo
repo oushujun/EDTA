@@ -1,0 +1,3 @@
+perl MITE_Hunter_Installer.pl -d /mnt/home/oushujun/git_bin/MITE-Hunter/ -m /mnt/home/oushujun/git_bin/mdust/mdust -f formatdb -b blastall -M muscle
+
+perl MITE_Hunter_Installer.pl -d /home/oushujun/las/git_bin/MITE-Hunter2/ -m /home/oushujun/las/git_bin/mdust/mdust -f formatdb -b blastall -M muscle
