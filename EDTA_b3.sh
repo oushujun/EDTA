@@ -14,8 +14,7 @@ threads=36
 #cd ../
 
 # run LTR_retriever
-#if [ ! 0 ]; then
-#fi
+if [ ! 0 ]; then
 
 # copy raw LTRlib to a folder for EDTA processing
 mkdir $genome.LTR.EDTA_process
@@ -175,10 +174,16 @@ cd $genome.combine.EDTA_process
 cat $genome.TIR.fa.stg0.HQ $genome.Helitron.fa.stg0.HQ > $genome.TIR.Helitron.fa.stg0.HQ
 RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR.Helitron.fa.stg0.HQ $genome.LTR.fa.stg0
 perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0 > $genome.LTR.fa.stg1
+fi
 
 # remove LTR and helitron in TIR candidates
-cat $genome.LTR.fa.stg0.HQ $genome.Helitron.fa.stg0.HQ > $genome.LTR.Helitron.fa.stg0.HQ
-RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.Helitron.fa.stg0.HQ $genome.TIR.fa.stg0
+#cat $genome.LTR.fa.stg0.HQ $genome.Helitron.fa.stg0.HQ > $genome.LTR.Helitron.fa.stg0.HQ
+#RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.Helitron.fa.stg0.HQ $genome.TIR.fa.stg0
+#perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1
+
+# remove LTR and helitron in TIR candidates
+#cat $genome.LTR.fa.stg0.HQ $genome.Helitron.fa.stg0.HQ > $genome.LTR.Helitron.fa.stg0.HQ
+RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg0
 perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1
 
 # remove LTR and TIR in Helitron candidates
@@ -188,6 +193,7 @@ perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 
 
 # aggregate clean sublibraries and cluster
 cat $genome.LTR.fa.stg1 $genome.TIR.fa.stg1 $genome.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.fa.stg1
+exit
 perl ~/las/git_bin/TElib_benchmark/util/cleanup_nested.pl -in $genome.LTR.TIR.Helitron.fa.stg1 -minlen 80 -threads 30 > $genome.LTR.TIR.Helitron.fa.stg1.cln
 perl ~/las/git_bin/TElib_benchmark/util/cleanup_nested.pl -in $genome.LTR.TIR.Helitron.fa.stg1.cln -minlen 80 -threads 30 > $genome.LTR.TIR.Helitron.fa.stg1.cln2
 perl ~/las/git_bin/TElib_benchmark/util/cleanup_nested.pl -in $genome.LTR.TIR.Helitron.fa.stg1.cln2 -minlen 80 -threads 30 > $genome.LTR.TIR.Helitron.fa.stg1.cln3
