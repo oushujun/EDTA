@@ -26,8 +26,7 @@ while (<FA>){
 			$num++;
 			}
 		} else {
-		$data{$fam} = ">TE_${num}#$class\n$seq\n";
-#	print ">TE_$num#$class\n$seq\n";
+		$data{$num} = ">TE_${num}#$class\n$seq\n";
 		$num++;
 		}
 	}
@@ -37,5 +36,3 @@ foreach my $fam (sort{$data{$a} cmp $data{$b}} (keys %data)){
 	print $data{$fam};
 	}
 
-#>Chr1:5149821..5149977_LTR#LTR/unknown
-#>Chr1:26987256..26991447_LTR#LTR/Gypsy
