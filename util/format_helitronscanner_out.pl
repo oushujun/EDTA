@@ -1,19 +1,20 @@
 #!/usr/bin/perl -w
 use strict;
+use FindBin;
 
-my $usage = "
+my $usage = "\nFormat HelitronScanner fasta candidates with additional filterings
 	perl format_helitronscanner_out.pl genome.fa
 \n";
 
 my $genome = $ARGV[0];
-my $call_seq = "~/las/git_bin/TElib_benchmark/util/call_seq_by_list.pl";
+my $call_seq = "$FindBin::Bin/call_seq_by_list.pl";
 
 my $ext_len = 10; #extend 10 bp on each end
 my $tgt_ste_filter = 1; #1 will filter out candidate without AT or TT target site; 0 will not.
 my $min_score = 12; #candidates with head and tail quality scores add up less than this will be discarded
 
 
-die "HelitronScanner result files for the $genome is not found!\n$usage" unless -s $genome;
+die "HelitronScanner result files for the $genome is not found!\n$usage" unless -s $genome and -s "$genome.HelitronScanner.draw.rc.hel.fa";
 
 
 open Hel, "cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa |" or die $usage;
