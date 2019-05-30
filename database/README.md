@@ -6,3 +6,10 @@
 
 `HelitronScanner.training.set.fa` is 100 bp head and tail sequences from curated Helitrons obtained from the [HelitronScanner](https://sourceforge.net/projects/helitronscanner/) package. Sequences were first masked using the `rice6.9.5.liban` library to filter out non-Helitron sequences, then sequence names were renamed to fit the `RepeatMasker` sequence name length requirement.
 
+`Tpases020812DNA` is the DNA TE transposase database obtained from the [LTR_retriever](https://github.com/oushujun/LTR_retriever) package.
+
+`Tpases020812LINE` is the LINE retrotransposase database obtained from the [LTR_retriever](https://github.com/oushujun/LTR_retriever) package.
+
+`alluniRefprexp082813` is the unique plant protein transposase database obtained from the [LTR_retriever](https://github.com/oushujun/LTR_retriever) package. For non-plant species, you may use [uniport_sprot databases](ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/) instead.
+
+
