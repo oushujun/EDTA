@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
 use strict;
 
-my $usage = "";
+my $usage = "\nRemove non-TE sequences in repeatmasked sequences (softmask)
+	perl cleanup_nonTE.pl genome.rm.fa > genome.rm.fa.clean\n";
 
 my $maxlen = 3000; #the max length allowed for non-repetitive sequence; longer than this will be removed
 my $minlen = 100; #the min length to retain a seq, if shorter than this after removal it will be discarded
