@@ -8,12 +8,13 @@ GENOME=$1
 
 ### the base path of this script
 path=$(dirname "$0")
+
 ## where to find HelitronScanner.jar
 HSDIR=$path/../bin/HelitronScanner
 
 ### preset CPU and max memory
 CPU=4
-MEMGB=300
+MEMGB=300 #Gb
 
 ### allow user to specify CPU number to run HelitronScanner
 if [ ! -z "$2" ];
