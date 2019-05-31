@@ -1,0 +1,258 @@
+>Eukarya
+Arabidopsis thaliana	Athal-tRNAs.fa
+Caenorhabditis briggsae (cb25.agp8 July 2002)	Cbrig-tRNAs.fa
+Caenorhabditis elegans (May 2003)	Celeg-tRNAs.fa
+Canis familiaris (canFam1 July 2004)	Cfam1-tRNAs.fa
+Drosophila melanogaster (Release 4)	Dm-tRNAs.fa
+Takifugu rubripes (v.3.0 Aug. 2002) 	Fr1-tRNAs.fa
+Gallus gallus (galGal2 Feb 2004)	Ggal2-tRNAs-all.fa
+Homo sapiens (Hg17 May 2004 assembly)	Hg17-tRNAs.fa
+Mus musculus (mm6 March 2005)	Mm6-tRNAs.fa
+Oryza Sativa (indica 2005)	Os-tRNAs.fa
+Plasmodium falciparum (Oct 2002)	Pfalc-tRNAs.fa
+Pan troglodytes (chimp) (Nov 2003 assembly)	panTro1-tRNAs-all.fa
+Rattus norvegicus (rn3 June 2003 assembly)	Rn3-tRNAs.fa
+Saccharomyces cerevisiae	Sc-tRNAs.fa
+Schizosaccharomyces pombe (v. July 2004)	Sp-tRNAs.fa
+>Archaea
+Aeropyrum pernix	Aero_pern-tRNAs.fa
+Archaeoglobus fulgidus	Arch_fulg-tRNAs.fa
+Haloarcula marismortui ATCC 43049	Halo_mari_ATCC_43049-tRNAs.fa
+Halobacterium sp	Halo_sp-tRNAs.fa
+Methanosarcina acetivorans	Meth_acet-tRNAs.fa
+Methanococcus jannaschii	Meth_jann-tRNAs.fa
+Methanopyrus kandleri	Meth_kand-tRNAs.fa
+Methanococcus maripaludis S2	Meth_mari_S2-tRNAs.fa
+Methanosarcina mazei	Meth_maze-tRNAs.fa
+Methanobacterium thermoautotrophicum	Meth_ther-tRNAs.fa
+Nanoarchaeum equitans	Nano_equi-tRNAs.fa
+Picrophilus torridus DSM 9790	Picr_torr_DSM_9790-tRNAs.fa
+Pyrococcus abyssi	Pyro_abys-tRNAs.fa
+Pyrobaculum aerophilum	Pyro_aero-tRNAs.fa
+Pyrococcus furiosus	Pyro_furi-tRNAs.fa
+Pyrococcus horikoshii	Pyro_hori-tRNAs.fa
+Sulfolobus acidocaldarius DSM 639	Sulf_acid_DSM_639-tRNAs.fa
+Sulfolobus solfataricus	Sulf_solf-tRNAs.fa
+Sulfolobus tokodaii	Sulf_toko-tRNAs.fa
+Thermoplasma acidophilum	Ther_acid-tRNAs.fa
+Thermococcus kodakaraensis KOD1	Ther_koda_KOD1-tRNAs.fa
+Thermoplasma volcanium	Ther_volc-tRNAs.fa
+>Bacteria
+Acinetobacter sp ADP1	Acin_sp_ADP1-tRNAs.fa
+Agrobacterium tumefaciens C58 Cereon	Agro_tume_C58_Cereon-tRNAs.fa
+Agrobacterium tumefaciens C58 UWash	Agro_tume_C58_UWash-tRNAs.fa
+Anaplasma marginale St Maries	Anap_marg_St_Maries-tRNAs.fa
+Aquifex aeolicus	Aqui_aeol-tRNAs.fa
+Azoarcus sp EbN1	Azoa_sp_EbN1-tRNAs.fa
+Bacillus anthracis A2012	Baci_anth_A2012-tRNAs.fa
+Bacillus anthracis Ames	Baci_anth_Ames-tRNAs.fa
+Bacillus anthracis Ames 0581	Baci_anth_Ames_0581-tRNAs.fa
+Bacillus anthracis str Sterne	Baci_anth_str_Sterne-tRNAs.fa
+Bacillus cereus ATCC14579	Baci_cere_ATCC14579-tRNAs.fa
+Bacillus cereus ATCC 10987	Baci_cere_ATCC_10987-tRNAs.fa
+Bacillus cereus ZK	Baci_cere_ZK-tRNAs.fa
+Bacillus clausii KSM-K16	Baci_clau_KSM-K16-tRNAs.fa
+Bacillus halodurans	Baci_halo-tRNAs.fa
+Bacillus licheniformis ATCC 14580	Baci_lich_ATCC_14580-tRNAs.fa
+Bacillus licheniformis DSM 13	Baci_lich_DSM_13-tRNAs.fa
+Bacillus subtilis	Baci_subt-tRNAs.fa
+Bacillus thuringiensis konkukian	Baci_thur_konkukian-tRNAs.fa
+Bacteroides fragilis NCTC 9434	Bact_frag_NCTC_9434-tRNAs.fa
+Bacteroides fragilis YCH46	Bact_frag_YCH46-tRNAs.fa
+Bacteroides thetaiotaomicron VPI-5482	Bact_thet_VPI-5482-tRNAs.fa
+Bartonella henselae Houston-1	Bart_hens_Houston-1-tRNAs.fa
+Bartonella quintana Toulouse	Bart_quin_Toulouse-tRNAs.fa
+Bdellovibrio bacteriovorus	Bdel_bact-tRNAs.fa
+Bifidobacterium longum	Bifi_long-tRNAs.fa
+Blochmannia floridanus	Bloc_flor-tRNAs.fa
+Bordetella bronchiseptica	Bord_bron-tRNAs.fa
+Bordetella parapertussis	Bord_para-tRNAs.fa
+Bordetella pertussis	Bord_pert-tRNAs.fa
+Borrelia burgdorferi	Borr_burg-tRNAs.fa
+Borrelia garinii PBi	Borr_gari_PBi-tRNAs.fa
+Bradyrhizobium japonicum	Brad_japo-tRNAs.fa
+Brucella abortus 9-941	Bruc_abor_9-941-tRNAs.fa
+Brucella melitensis	Bruc_meli-tRNAs.fa
+Brucella suis 1330	Bruc_suis_1330-tRNAs.fa
+Buchnera aphidicola	Buch_aphi-tRNAs.fa
+Buchnera aphidicola Sg	Buch_aphi_Sg-tRNAs.fa
+Buchnera sp	Buch_sp-tRNAs.fa
+Burkholderia mallei ATCC 23344	Burk_mall_ATCC_23344-tRNAs.fa
+Burkholderia pseudomallei K96243	Burk_pseu_K96243-tRNAs.fa
+Campylobacter jejuni	Camp_jeju-tRNAs.fa
+Campylobacter jejuni RM1221	Camp_jeju_RM1221-tRNAs.fa
+Caulobacter crescentus	Caul_cres-tRNAs.fa
+Chlamydophila abortus S26 3	Chla_abor_S26_3-tRNAs.fa
+Chlamydophila caviae	Chla_cavi-tRNAs.fa
+Chlamydia muridarum	Chla_muri-tRNAs.fa
+Chlamydophila pneumoniae AR39	Chla_pneu_AR39-tRNAs.fa
+Chlamydophila pneumoniae CWL029	Chla_pneu_CWL029-tRNAs.fa
+Chlamydophila pneumoniae J138	Chla_pneu_J138-tRNAs.fa
+Chlamydophila pneumoniae TW 183	Chla_pneu_TW_183-tRNAs.fa
+Chlamydia trachomatis	Chla_trac-tRNAs.fa
+Chlorobium tepidum TLS	Chlo_tepi_TLS-tRNAs.fa
+Chromobacterium violaceum	Chro_viol-tRNAs.fa
+Clostridium acetobutylicum	Clos_acet-tRNAs.fa
+Clostridium perfringens	Clos_perf-tRNAs.fa
+Clostridium tetani E88	Clos_teta_E88-tRNAs.fa
+Corynebacterium diphtheriae	Cory_diph-tRNAs.fa
+Corynebacterium efficiens YS-314	Cory_effi_YS-314-tRNAs.fa
+Corynebacterium glutamicum	Cory_glut-tRNAs.fa
+Corynebacterium glutamicum ATCC 13032 Bielefeld	Cory_glut_ATCC_13032_Bielefeld-tRNAs.fa
+Corynebacterium glutamicum ATCC 13032 Kitasato	Cory_glut_ATCC_13032_Kitasato-tRNAs.fa
+Coxiella burnetii	Coxi_burn-tRNAs.fa
+Dehalococcoides ethenogenes 195	Deha_ethe_195-tRNAs.fa
+Deinococcus radiodurans	Dein_radi-tRNAs.fa
+Desulfotalea psychrophila LSv54	Desu_psyc_LSv54-tRNAs.fa
+Desulfovibrio vulgaris Hildenborough	Desu_vulg_Hildenborough-tRNAs.fa
+Ehrlichia ruminantium Gardel	Ehrl_rumi_Gardel-tRNAs.fa
+Ehrlichia ruminantium Welgevonden	Ehrl_rumi_Welgevonden-tRNAs.fa
+Ehrlichia ruminantium str. Welgevonden	Ehrl_rumi_str._Welgevonden-tRNAs.fa
+Enterococcus faecalis V583	Ente_faec_V583-tRNAs.fa
+Erwinia carotovora atroseptica SCRI1043	Erwi_caro_atroseptica_SCRI1043-tRNAs.fa
+Escherichia coli CFT073	Esch_coli_CFT073-tRNAs.fa
+Escherichia coli K12	Esch_coli_K12-tRNAs.fa
+Escherichia coli O157H7	Esch_coli_O157H7-tRNAs.fa
+Escherichia coli O157H7 EDL933	Esch_coli_O157H7_EDL933-tRNAs.fa
+Francisella tularensis tularensis	Fran_tula_tularensis-tRNAs.fa
+Fusobacterium nucleatum	Fuso_nucl-tRNAs.fa
+Geobacillus kaustophilus HTA426	Geob_kaus_HTA426-tRNAs.fa
+Geobacter sulfurreducens	Geob_sulf-tRNAs.fa
+Gloeobacter violaceus	Gloe_viol-tRNAs.fa
+Gluconobacter oxydans 621H	Gluc_oxyd_621H-tRNAs.fa
+Haemophilus ducreyi 35000HP	Haem_ducr_35000HP-tRNAs.fa
+Haemophilus influenzae	Haem_infl-tRNAs.fa
+Haemophilus influenzae 86 028NP	Haem_infl_86_028NP-tRNAs.fa
+Helicobacter hepaticus	Heli_hepa-tRNAs.fa
+Helicobacter pylori 26695	Heli_pylo_26695-tRNAs.fa
+Helicobacter pylori J99	Heli_pylo_J99-tRNAs.fa
+Idiomarina loihiensis L2TR	Idio_loih_L2TR-tRNAs.fa
+Lactobacillus acidophilus NCFM	Lact_acid_NCFM-tRNAs.fa
+Lactobacillus johnsonii NCC 533	Lact_john_NCC_533-tRNAs.fa
+Lactococcus lactis	Lact_lact-tRNAs.fa
+Lactobacillus plantarum	Lact_plan-tRNAs.fa
+Legionella pneumophila Lens	Legi_pneu_Lens-tRNAs.fa
+Legionella pneumophila Paris	Legi_pneu_Paris-tRNAs.fa
+Legionella pneumophila Philadelphia 1	Legi_pneu_Philadelphia_1-tRNAs.fa
+Leifsonia xyli xyli CTCB0	Leif_xyli_xyli_CTCB0-tRNAs.fa
+Leptospira interrogans	Lept_inte-tRNAs.fa
+Leptospira interrogans serovar Copenhageni	Lept_inte_serovar_Copenhageni-tRNAs.fa
+Leptospira interrogans serovar Lai	Lept_inte_serovar_Lai-tRNAs.fa
+Listeria innocua	List_inno-tRNAs.fa
+Listeria monocytogenes	List_mono-tRNAs.fa
+Listeria monocytogenes 4b F2365	List_mono_4b_F2365-tRNAs.fa
+Mannheimia succiniciproducens MBEL55E	Mann_succ_MBEL55E-tRNAs.fa
+Mesoplasma florum L1	Meso_flor_L1-tRNAs.fa
+Mesorhizobium loti	Meso_loti-tRNAs.fa
+Methylococcus capsulatus Bath	Meth_caps_Bath-tRNAs.fa
+Mycobacterium avium paratuberculosis	Myco_aviu_paratuberculosis-tRNAs.fa
+Mycobacterium bovis	Myco_bovi-tRNAs.fa
+Mycoplasma gallisepticum	Myco_gall-tRNAs.fa
+Mycoplasma genitalium	Myco_geni-tRNAs.fa
+Mycoplasma hyopneumoniae 232	Myco_hyop_232-tRNAs.fa
+Mycobacterium leprae	Myco_lepr-tRNAs.fa
+Mycoplasma mobile 163K	Myco_mobi_163K-tRNAs.fa
+Mycoplasma mycoides	Myco_myco-tRNAs.fa
+Mycoplasma penetrans	Myco_pene-tRNAs.fa
+Mycoplasma pneumoniae	Myco_pneu-tRNAs.fa
+Mycoplasma pulmonis	Myco_pulm-tRNAs.fa
+Mycobacterium tuberculosis CDC1551	Myco_tube_CDC1551-tRNAs.fa
+Mycobacterium tuberculosis H37Rv	Myco_tube_H37Rv-tRNAs.fa
+Neisseria gonorrhoeae FA 1090	Neis_gono_FA_1090-tRNAs.fa
+Neisseria meningitidis MC58	Neis_meni_MC58-tRNAs.fa
+Neisseria meningitidis Z2491	Neis_meni_Z2491-tRNAs.fa
+Nitrosomonas europaea	Nitr_euro-tRNAs.fa
+Nocardia farcinica IFM10152	Noca_farc_IFM10152-tRNAs.fa
+Nostoc sp	Nost_sp-tRNAs.fa
+Oceanobacillus iheyensis	Ocea_ihey-tRNAs.fa
+Onion yellows phytoplasma	Onio_yell_phytoplasma-tRNAs.fa
+Parachlamydia sp UWE25	Para_sp_UWE25-tRNAs.fa
+Pasteurella multocida	Past_mult-tRNAs.fa
+Photorhabdus luminescens	Phot_lumi-tRNAs.fa
+Photobacterium profundum SS9	Phot_prof_SS9-tRNAs.fa
+Pirellula sp	Pire_sp-tRNAs.fa
+Porphyromonas gingivalis W83	Porp_ging_W83-tRNAs.fa
+Prochlorococcus marinus CCMP1375	Proc_mari_CCMP1375-tRNAs.fa
+Prochlorococcus marinus MED4	Proc_mari_MED4-tRNAs.fa
+Prochlorococcus marinus MIT9313	Proc_mari_MIT9313-tRNAs.fa
+Propionibacterium acnes KPA171202	Prop_acne_KPA171202-tRNAs.fa
+Pseudomonas aeruginosa	Pseu_aeru-tRNAs.fa
+Pseudomonas fluorescens Pf-5	Pseu_fluo_Pf-5-tRNAs.fa
+Pseudomonas putida KT2440	Pseu_puti_KT2440-tRNAs.fa
+Pseudomonas syringae	Pseu_syri-tRNAs.fa
+Pseudomonas syringae pv B728a	Pseu_syri_pv_B728a-tRNAs.fa
+Ralstonia solanacearum	Rals_sola-tRNAs.fa
+Rhodopseudomonas palustris CGA009	Rhod_palu_CGA009-tRNAs.fa
+Rickettsia conorii	Rick_cono-tRNAs.fa
+Rickettsia felis URRWXCal2	Rick_feli_URRWXCal2-tRNAs.fa
+Rickettsia prowazekii	Rick_prow-tRNAs.fa
+Rickettsia typhi wilmington	Rick_typh_wilmington-tRNAs.fa
+Salmonella enterica Choleraesuis	Salm_ente_Choleraesuis-tRNAs.fa
+Salmonella enterica Paratypi ATCC 9150	Salm_ente_Paratypi_ATCC_9150-tRNAs.fa
+Salmonella typhi	Salm_typh-tRNAs.fa
+Salmonella typhimurium LT2	Salm_typh_LT2-tRNAs.fa
+Salmonella typhi Ty2	Salm_typh_Ty2-tRNAs.fa
+Shewanella oneidensis	Shew_onei-tRNAs.fa
+Shigella flexneri 2a	Shig_flex_2a-tRNAs.fa
+Shigella flexneri 2a 2457T	Shig_flex_2a_2457T-tRNAs.fa
+Silicibacter pomeroyi DSS-3	Sili_pome_DSS-3-tRNAs.fa
+Sinorhizobium meliloti	Sino_meli-tRNAs.fa
+Staphylococcus aureus COL	Stap_aure_COL-tRNAs.fa
+Staphylococcus aureus MW2	Stap_aure_MW2-tRNAs.fa
+Staphylococcus aureus Mu50	Stap_aure_Mu50-tRNAs.fa
+Staphylococcus aureus N315	Stap_aure_N315-tRNAs.fa
+Staphylococcus aureus aureus MRSA252	Stap_aure_aureus_MRSA252-tRNAs.fa
+Staphylococcus aureus aureus MSSA476	Stap_aure_aureus_MSSA476-tRNAs.fa
+Staphylococcus epidermidis ATCC 12228	Stap_epid_ATCC_12228-tRNAs.fa
+Staphylococcus epidermidis RP62A	Stap_epid_RP62A-tRNAs.fa
+Staphylococcus haemolyticus	Stap_haem-tRNAs.fa
+Streptococcus agalactiae 2603	Stre_agal_2603-tRNAs.fa
+Streptococcus agalactiae NEM316	Stre_agal_NEM316-tRNAs.fa
+Streptomyces avermitilis	Stre_aver-tRNAs.fa
+Streptomyces coelicolor	Stre_coel-tRNAs.fa
+Streptococcus mutans	Stre_muta-tRNAs.fa
+Streptococcus pneumoniae R6	Stre_pneu_R6-tRNAs.fa
+Streptococcus pneumoniae TIGR4	Stre_pneu_TIGR4-tRNAs.fa
+Streptococcus pyogenes	Stre_pyog-tRNAs.fa
+Streptococcus pyogenes M1 GAS	Stre_pyog_M1_GAS-tRNAs.fa
+Streptococcus pyogenes M49 591	Stre_pyog_M49_591-tRNAs.fa
+Streptococcus pyogenes MGAS10394	Stre_pyog_MGAS10394-tRNAs.fa
+Streptococcus pyogenes MGAS315	Stre_pyog_MGAS315-tRNAs.fa
+Streptococcus pyogenes MGAS8232	Stre_pyog_MGAS8232-tRNAs.fa
+Streptococcus pyogenes SSI-1	Stre_pyog_SSI-1-tRNAs.fa
+Streptococcus thermophilus CNRZ1066	Stre_ther_CNRZ1066-tRNAs.fa
+Streptococcus thermophilus LMG 18311	Stre_ther_LMG_18311-tRNAs.fa
+Symbiobacterium thermophilum IAM14863	Symb_ther_IAM14863-tRNAs.fa
+Synechocystis PCC6803	Syne_PCC6-tRNAs.fa
+Synechococcus elongatus PCC 6301	Syne_elon_PCC_6301-tRNAs.fa
+Synechococcus sp WH8102	Syne_sp_WH8102-tRNAs.fa
+Thermosynechococcus elongatus	Ther_elon-tRNAs.fa
+Thermotoga maritima	Ther_mari-tRNAs.fa
+Thermoanaerobacter tengcongensis	Ther_teng-tRNAs.fa
+Thermus thermophilus HB27	Ther_ther_HB27-tRNAs.fa
+Thermus thermophilus HB8	Ther_ther_HB8-tRNAs.fa
+Treponema denticola ATCC 35405	Trep_dent_ATCC_35405-tRNAs.fa
+Treponema pallidum	Trep_pall-tRNAs.fa
+Tropheryma whipplei TW08 27	Trop_whip_TW08_27-tRNAs.fa
+Tropheryma whipplei Twist	Trop_whip_Twist-tRNAs.fa
+Ureaplasma urealyticum	Urea_urea-tRNAs.fa
+Vibrio cholerae	Vibr_chol-tRNAs.fa
+Vibrio fischeri ES114	Vibr_fisc_ES114-tRNAs.fa
+Vibrio parahaemolyticus	Vibr_para-tRNAs.fa
+Vibrio vulnificus CMCP6	Vibr_vuln_CMCP6-tRNAs.fa
+Vibrio vulnificus YJ016	Vibr_vuln_YJ016-tRNAs.fa
+Wigglesworthia brevipalpis	Wigg_brev-tRNAs.fa
+Wolbachia endosymbiont of Brugia malayi TRS	Wolb_endo_of_Brugia_malayi_TRS-tRNAs.fa
+Wolbachia endosymbiont of Drosophila melanogaster	Wolb_endo_of_Drosophila_melanogaster-tRNAs.fa
+Wolinella succinogenes	Woli_succ-tRNAs.fa
+Xanthomonas campestris	Xant_camp-tRNAs.fa
+Xanthomonas campestris 8004	Xant_camp_8004-tRNAs.fa
+Xanthomonas citri	Xant_citr-tRNAs.fa
+Xanthomonas oryzae KACC10331	Xant_oryz_KACC10331-tRNAs.fa
+Xylella fastidiosa	Xyle_fast-tRNAs.fa
+Xylella fastidiosa Temecula1	Xyle_fast_Temecula1-tRNAs.fa
+Yersinia pestis CO92	Yers_pest_CO92-tRNAs.fa
+Yersinia pestis KIM	Yers_pest_KIM-tRNAs.fa
+Yersinia pestis biovar Mediaevails	Yers_pest_biovar_Mediaevails-tRNAs.fa
+Yersinia pseudotuberculosis IP32953	Yers_pseu_IP32953-tRNAs.fa
+Zymomonas mobilis ZM4	Zymo_mobi_ZM4-tRNAs.fa
