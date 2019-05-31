@@ -14,7 +14,7 @@ my $tgt_ste_filter = 1; #1 will filter out candidate without AT or TT target sit
 my $min_score = 12; #candidates with head and tail quality scores add up less than this will be discarded
 
 
-die "HelitronScanner result files for the $genome is not found!\n$usage" unless -s $genome and -s "$genome.HelitronScanner.draw.rc.hel.fa";
+die "HelitronScanner result files for the $genome is not found!\n$usage" unless -e $genome and -e "$genome.HelitronScanner.draw.rc.hel.fa";
 
 
 open Hel, "cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa |" or die $usage;
