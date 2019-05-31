@@ -37,6 +37,7 @@ foreach (@ARGV){
 	}
 
 open IN, "<$IN" or die "\nERROR: Input sequence file is not exist!\n\n$usage";
+$blastplus = '' unless defined $blastplus;
 `${blastplus}makeblastdb -in $IN -dbtype nucl`;
 
 my %seq;
