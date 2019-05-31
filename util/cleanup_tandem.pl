@@ -59,7 +59,7 @@ foreach (@ARGV){
 	$k++;
 	}
 
-die $usage unless -s $file;
+die $usage unless -e $file;
 
 my %tandem;
 my $tandem='';
