@@ -16,8 +16,8 @@ use FindBin;
 ## Output:
 #	$genome.LTR.TIR.Helitron.fa.stg1
 
-my $usage = "\nProvide initial filterings for raw TE libraries and generate stage 0 and stage0.HQ datasets
-	perl EDTA_stage0.pl [options]
+my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates and generate the stage 1 library
+	perl EDTA_process.pl [options]
 		-genome	[File]	The genome FASTA
 		-ltr	[File]	The raw LTR library FASTA
 		-tir	[File]	The raw TIR library FASTA
