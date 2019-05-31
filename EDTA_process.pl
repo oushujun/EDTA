@@ -67,10 +67,10 @@ foreach (@ARGV){
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
-die "LTR raw library file $LTRraw not exists!\n$usage" unless -s $LTRraw;
-die "TIR raw library file $TIRraw not exists!\n$usage" unless -s $TIRraw;
-die "MITE raw library file $MITEraw not exists!\n$usage" unless -s $MITEraw;
-die "Helitron raw library file $Helitronraw not exists!\n$usage" unless -s $Helitronraw;
+die "LTR raw library file $LTRraw not exists!\n$usage" unless -e $LTRraw;
+die "TIR raw library file $TIRraw not exists!\n$usage" unless -e $TIRraw;
+die "MITE raw library file $MITEraw not exists!\n$usage" unless -e $MITEraw;
+die "Helitron raw library file $Helitronraw not exists!\n$usage" unless -e $Helitronraw;
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The MITE_Hunter is not found in $MITE_Hunter!\n" unless -s $MITE_Hunter;
@@ -100,6 +100,7 @@ chdir "$genome.LTR.EDTA_process";
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.raw.fa.renamed > $genome.LTR.fa.stg0`;
 
 # identify mite contaminants with MITE-Hunter
+`rm genome*`;
 `perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome.LTR.fa.stg0`;
 `cat *_Step8_* > $genome.LTR.fa.stg0.mite`;
 
@@ -143,7 +144,7 @@ chdir "../$genome.TIR.EDTA_process";
 `ln -s ../$MITEraw $genome.MITE.raw.fa` unless -s "$genome.MITE.raw.fa";
 
 # convert name to RM readible
-`perl -i -nle \'s/MITEhunter//; print $_ and next unless /^>/; my \$id = (split)[0]; print \"\${id}#MITE/unknown\"\' $genome.MITE.raw.fa`;
+`perl -i -nle \'s/MITEhunter//; print \$_ and next unless /^>/; my \$id = (split)[0]; print \"\${id}#MITE/unknown\"\' $genome.MITE.raw.fa`;
 `perl $rename_TE $genome.MITE.raw.fa > $genome.MITE.raw.fa.renamed`;
 
 # remove MITEs existed in TIR-Learner results, clean up tandem repeats and short seq with cleanup_tandem.pl
@@ -210,9 +211,9 @@ chdir "../$genome.combine.EDTA_process";
 
 # aggregate clean sublibraries and cluster
 `cat $genome.LTR.fa.stg1 $genome.TIR.fa.stg1 $genome.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.fa.stg1.raw`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw -threads $threads -minlene 100 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln -threads $threads -minlene 100 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2 -threads $threads -minlene 100 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1`;
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw -threads $threads -minlene 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln`;
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln -threads $threads -minlene 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2`;
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2 -threads $threads -minlene 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1`;
 `cp $genome.LTR.TIR.Helitron.fa.stg1 ../`;
 chdir '..';
 
