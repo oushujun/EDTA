@@ -1,0 +1,11 @@
+##This file will provide LTR_retriever paths to dependent programs.
+##You can leave the respective paths empty if programs are accessible through ENV (i.e. exported to .bashrc)
+##If you specify a path, please make sure that the required program(s) is directly contained in that path but not in any child directories.
+##e.g. BLAST+=/opt/software/BLAST+/2.2.30--GCC-4.4.5/bin/
+##LTR_retriever is build based on GenomeTools/1.5.4, BLAST+/2.2.28, BLAST/2.2.26, CDHIT/4.6.1c, HMMER/3.1b2, RepeatMasker/4.0.0 and Tandem Repeats Finder 4.07b
+
+BLAST+= 	#a path that contains makeblastdb, blastn, blastx
+RepeatMasker=	#a path that contains RepeatMasker
+HMMER=		#a path that contains hmmsearch
+CDHIT=		#a path that contains cd-hit-est (preferred). CDHIT and BLAST are replaceable
+BLAST=		#a path that contains blastclust (optional)
