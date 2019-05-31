@@ -24,6 +24,7 @@ my $usage = "
 	\n";
 
 # pre-defined parameters
+my $name = '';
 my $target = '';
 my $rmDNATE = 0;
 my $rmLINE = 0;
@@ -56,6 +57,7 @@ foreach (@ARGV){
 
 die "Warning: Nothing will be cleaned based on your parameters.\n" if $rmDNATE eq 0 and $rmLINE eq 0 and $rmProt eq 0;
 die "Sequence file not found!\n$usage" unless -s $target;
+$name = $target;
 
 #prepare blastx databases
 my $rand=int(rand(1000000));
@@ -68,7 +70,7 @@ if ($rmDNATE eq 1){
 	`${blastplus}makeblastdb -in $DNA -dbtype prot`;
 	`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $DNA -out $target.dnate.out`;
 	`perl $purger -blast $target.dnate.out -seq $target -cov $procovTE -purge 0 -len $prolensig`;
-	`mv $target.clean $target.dnate_clean`;
+	`cp $target.clean $target.dnate_clean`;
 	$target = "$target.dnate_clean";
 	`rm $DNA*`;
 	}
@@ -81,7 +83,7 @@ if ($rmLINE eq 1){
 	`${blastplus}makeblastdb -in $LINE -dbtype prot`;
 	`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $LINE -out $target.line.out`;
 	`perl $purger -blast $target.line.out -seq $target -cov $procovTE -purge 0 -len $prolensig`;
-	`mv $target.clean $target.line_clean`;
+	`cp $target.clean $target.line_clean`;
 	$target = "$target.line_clean";
 	`rm $LINE*`;
 	}
@@ -94,7 +96,10 @@ if ($rmProt eq 1){
 	`${blastplus}makeblastdb -in $Protlib -dbtype prot`;
 	`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $Protlib -out $target.prot.out`;
 	`perl $purger -blast $target.prot.out -seq $target -cov $procovPL -purge 1 -len $prolensig`;
-	`mv $target.clean $target.prot_clean`;
+	`cp $target.clean $target.prot_clean`;
 	`rm $Protlib*`;
 	}
+
+# rename the final clean sequence
+`cp $target.clean $name.clean`;
 
