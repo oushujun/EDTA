@@ -1,101 +1,94 @@
 #!/usr/bin/perl -w
 use strict;
+use FindBin;
 
-my $genome = "Rice_MSU7.fasta";
+########################################################
+##### Extensive de-novo TE Annotator (EDTA) v1.0    ####
+##### Shujun Ou (shujun.ou.1@gmail.com, 05/31/2019) ####
+########################################################
 
-###########################
-###### LTR_retriever ######
-###########################
+## Input: $genome
+## Output: $genome.TElib.fa
 
-# run LTR_retriever
+my $usage = '';
 
-# identify and remove mite contaminations with MITE-Hunter
-perl ~/las/git_bin/TElib_benchmark/bin/MITE-Hunter2/MITE_Hunter_manager.pl -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c 16 -i $genome.LTRlib.fa
-cat MITE-Hunter_edu/*_Step8_* > $genome.LTRlib.fa.mite
-RepeatMasker -pa 36 -q -no_is -norna -nolow -div 40 -lib $genome.LTRlib.fa.mite -cutoff 225 $genome.LTRlib.fa &
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -f $genome.LTRlib.fa.masked > $genome.LTRlib.fa.masked.cln
+# pre-defined
+my $genome = '';
+my $threads = 4;
+my $script_path = $FindBin::Bin;
+my $EDTA_raw = "$script_path/EDTA_raw.pl";
+my $EDTA_process = "$script_path/EDTA_process.pl";
+my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
+my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
+my $cleanup_nested = "$script_path/util/cleanup_nested.pl";
+my $repeatmodeler = " ";
+my $repeatmasker = " ";
+my $blast = " ";
 
+# read parameters
+my $k=0;
+foreach (@ARGV){
+	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
+	$repeatmodeler = $ARGV[$k+1] if /^-repeatmodeler/i and $ARGV[$k+1] !~ /^-/;
+	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker/i and $ARGV[$k+1] !~ /^-/;
+	$blast = $ARGV[$k+1] if /^-blast/i and $ARGV[$k+1] !~ /^-/;
+	$threads = $ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1] !~ /^-/;
+	die $usage if /^-help$|^-h$/i;
+	$k++;
+	}
 
+# check files and dependencies
+die "Genome file $genome not exists!\n$usage" unless -s $genome;
+die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
+die "The script EDTA_process.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
+die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
+die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
+die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
 
-###########################
-######  TIR-Learner  ######
-###########################
+if (0){
+# Get raw TE candidates
+`perl $EDTA_raw -genome $genome -threads $threads`;
 
-# run TIR-Learner
+# Filter raw TE candidates and the make stage 1 library
+`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -mite $genome.EDTA.raw/$genome.MITE.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blast -threads $threads`;
 
-# convert TIR-Learner names into RepeatMasker readible names, seperate MITE (<600bp) and TIR elements
-perl ~/las/git_bin/TElib_benchmark/util/rename_tirlearner.pl TIR-Learner_Rice_0425.fa > TIR-Learner_Rice_0425.fa.renamed
+# Make the final working directory
+`mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
+chdir "$genome.EDTA.final";
 
-# clean up LTR seq with LTR-retriever-derived library, clean up tandem repeats and short seq with cleanup_tandem.pl
-nohup RepeatMasker -pa 36 -q -no_is -norna -nolow -div 40 -lib Rice_MSU7.fasta.LTRlib.fa.masked.cln -cutoff 225 TIR-Learner_Rice_0425.fa.renamed &
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -minlen 80 -cleanN 1 -cleanT 1 -trf 1 -f TIR-Learner_Rice_0425.fa.renamed > TIR-Learner_Rice_0425.fa.renamed.masked.cln
+# clean up LINE retrotransposases in the stage 1 library
+`cp ../$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.fa.stg1`;
+`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.fa.stg1 -rmdnate 0 -rmline 1 -rmprot 0 -blast $blast -threads $threads`;
 
-# make TIR and LTR library
-cat TIR-Learner_Rice_0425.fa.renamed.masked.cln $genome.LTRlib.fa.masked.cln > $genome.LTR_TIR.lib.fa
+# RepeatMask the genome with the cleanned stage 1 library
+`ln -s ../$genome $genome` unless -e $genome;
+`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1.clean $genome`;
+}
 
+chdir "$genome.EDTA.final"; #tst
 
+#####################################
+###### Final TE/SINE/LINE scan ######
+#####################################
 
-###########################
-######  MITE-Hunter  ######
-###########################
+`${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
+`${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome.masked`;
 
-# run MITE-Hunter
-perl ~/las/git_bin/TElib_benchmark/bin/MITE-Hunter2/MITE_Hunter_manager.pl -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c 16 -i $genome
+exit;
+# rename RepeatModeler candidates and make stage 2 library
+#`cat TBD > $genome.RepeatModeler.raw.fa`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa > $genome.RepeatModeler.raw.fa.stg0`;
+`cat $genome.RepeatModeler.raw.fa.stg0 $genome.LTR.TIR.Helitron.fa.stg1.clean > $genome.LTR.TIR.Helitron.others.fa.stg2`;
 
-# get all candidate sequences
-cat Rice_MSU7.fasta.mite/Rice_MSU7.fasta.mites_Step8_* > Rice_MSU7.fasta.mites_Step8.all.fa
+# clean up coding sequences in the stage 2 library
+`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.others.fa.stg2 -rmdnate 0 -rmline 0 -rmprot 1 -blast $blast -threads $threads`;
 
-# convert name to RM readible
-perl -nle 's/MITEhunter//; print $_ and next unless /^>/; my $id = (split)[0]; print "${id}#MITE/unknown"' MITE-Hunter2_0421_edu.fa > MITE-Hunter2_0421_edu.fa.mod
+# final rounds of redundancy removal and make final library
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.others.fa.stg2.clean -threads $threads -minlene 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.others.fa.stg2.cln`;
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.others.fa.stg2.cln -threads $threads -minlene 80 -cov 0.95 -blastplus $blast > $genome.TElib.fa`;
 
-# clean up non-MITE with LTR-TIR library, clean up tandem repeats and short seq with cleanup_tandem.pl
-nohup RepeatMasker -pa 36 -q -no_is -norna -nolow -div 40 -lib Rice_MSU7.fasta.LTR_TIR.lib.fa -cutoff 225 MITE-Hunter2_0421_edu.fa.mod
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -minlen 80 -cleanN 1 -trf 1 -f MITE-Hunter2_0421_edu.fa.mod.masked > MITE-Hunter2_0421_edu.fa.mod.masked.cln
-
-# make LTR-TIR-MITE library
-cat Rice_MSU7.fasta.LTR_TIR.lib.fa MITE-Hunter2_0421_edu.fa.mod.masked.cln > Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa
-
-# Cluster sequences and remove nested insertions
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_nested.pl -in Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa -minlen 80 -threads 30 > Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa.cln
-
-# run HelitronScanner to find Helitron contaminations
-sh ~/las/git_bin/Plant_TE_annotation/helitron/run_helitron_scanner.sh Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa.cln
-perl ~/las/git_bin/TElib_benchmark/util/format_helitronscanner_out.pl Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa.cln
-
-# Add curated Helitron head and tail sequences to the Helitron mask lib
-cat ~/las/git_bin/TElib_benchmark/database/HelitronScanner.training.set.fa >> Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa.HelitronScanner.filtered.fa
-
-# remove Helitron contaminations
-RepeatMasker -pa 36 -q -no_is -norna -nolow -div 40 -lib Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa.HelitronScanner.filtered.fa -cutoff 225 Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -minlen 80 -cleanN 1 -cleanT 1 -trf 1 -f Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa.masked > Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa.masked.cln
-
-
-#############################
-###### HelitronScanner ######
-#############################
-
-# run HelitronScanner
-sh ~/las/git_bin/Plant_TE_annotation/helitron/run_helitron_scanner.sh $genome
-
-# filtre out low-quality Helitron candidates
-perl ~/las/git_bin/TElib_benchmark/util/format_helitronscanner_out.pl $genome
-perl -nle 'print $_ and next unless /^>/; my $line=(split)[0]; $line=~s/#SUB_//; print "$line#DNA/Helitron"' $genome.HelitronScanner.filtered.fa > $genome.HelitronScanner.filtered.fa.mod
-
-#clean up non-Helitron with LTR-TIR-MITE library, clean up tandem repeats and short seq with cleanup_tandem.pl
-nohup RepeatMasker -pa 36 -q -no_is -norna -nolow -div 40 -lib Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa -cutoff 225 NIP_TIGR7.fasta.HelitronScanner.filtered.fa.mod
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -minlen 100 -cleanN 1 -cleanT 1 -trf 1 -f NIP_TIGR7.fasta.HelitronScanner.filtered.fa.mod.masked > NIP_TIGR7.fasta.HelitronScanner.filtered.fa.mod.masked.cln
-
-#clean up DNA TE and LINE coding sequence, and plant protein coding sequence
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_proteins.pl NIP_TIGR7.fasta.HelitronScanner.filtered.fa.mod.masked.cln
-
-
-
-## make structural library, reduce redundancy, and mask the genome
-cat Rice_MSU7.fasta.LTR_TIR_MITE.lib.fa NIP_TIGR7.fasta.HelitronScanner.filtered.fa.mod.masked.cln.clean.clean > Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa
-cd-hit-est -i Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa -o Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa.clust -c 0.8 -G 0.8 -s 0.9 -T 20 -aL 0.9 -aS 0.95 -T 30 &
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_nested.pl -in Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa -minlen 80 -threads 30 > Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa.cln &
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_nested.pl -in Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa.cln -minlen 80 -threads 30 > Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa.cln2 &
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_nested.pl -in Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa.cln2 -minlen 80 -threads 30 > Rice_MSU7.fasta.LTR_TIR_MITE_Helitron.lib.fa.cln3 &
+# copy the library one folder up
+`cp $genome.TElib.fa ../`;
 
 
 
