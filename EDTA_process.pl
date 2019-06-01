@@ -81,10 +81,10 @@ die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s 
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 
 # Make working directories
-`mkdir $genome.LTR.EDTA_process` unless -e "$genome.LTR.EDTA_process" && -d "$genome.LTR.EDTA_process";
-`mkdir $genome.TIR.EDTA_process` unless -e "$genome.TIR.EDTA_process" && -d "$genome.TIR.EDTA_process";
-`mkdir $genome.Helitron.EDTA_process` unless -e "$genome.Helitron.EDTA_process" && -d "$genome.Helitron.EDTA_process";
-`mkdir $genome.combine.EDTA_process` unless -e "$genome.combine.EDTA_process" && -d "$genome.combine.EDTA_process";
+`mkdir $genome.EDTA.LTR` unless -e "$genome.EDTA.LTR" && -d "$genome.EDTA.LTR";
+`mkdir $genome.EDTA.TIR` unless -e "$genome.EDTA.TIR" && -d "$genome.EDTA.TIR";
+`mkdir $genome.EDTA.Helitron` unless -e "$genome.EDTA.Helitron" && -d "$genome.EDTA.Helitron";
+`mkdir $genome.EDTA.combine` unless -e "$genome.EDTA.combine" && -d "$genome.EDTA.combine";
 
 
 ###########################
@@ -92,7 +92,7 @@ die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 ###########################
 
 # enter the LTR folder for EDTA processing
-chdir "$genome.LTR.EDTA_process";
+chdir "$genome.EDTA.LTR";
 `ln -s ../$LTRraw $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
 
 # clean up tandem repeats and short seq with cleanup_tandem.pl
@@ -118,7 +118,7 @@ chdir "$genome.LTR.EDTA_process";
 `perl $output_by_list 1 $genome.LTR.fa.stg0.cln 1 $genome.LTR.fa.stg0.cln.list -FA > $genome.LTR.fa.stg0.HQ`;
 
 # copy results to the combine folder
-`cp $genome.LTR.fa.stg0 $genome.LTR.fa.stg0.HQ ../$genome.combine.EDTA_process`;
+`cp $genome.LTR.fa.stg0 $genome.LTR.fa.stg0.HQ ../$genome.EDTA.combine`;
 
 
 ###########################
@@ -126,7 +126,7 @@ chdir "$genome.LTR.EDTA_process";
 ###########################
 
 # enter the TIR folder for EDTA processing
-chdir "../$genome.TIR.EDTA_process";
+chdir "../$genome.EDTA.TIR";
 `ln -s ../$TIRraw $genome.TIR.raw.fa` unless -s "$genome.TIR.raw.fa";
 
 # convert TIR-Learner names into RepeatMasker readible names, seperate MITE (<600bp) and TIR elements
@@ -169,7 +169,7 @@ chdir "../$genome.TIR.EDTA_process";
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg0.HQ`;
 
 # copy results to the combine folder
-`cp $genome.TIR.fa.stg0 $genome.TIR.fa.stg0.HQ ../$genome.combine.EDTA_process`;
+`cp $genome.TIR.fa.stg0 $genome.TIR.fa.stg0.HQ ../$genome.EDTA.combine`;
 
 
 ##############################
@@ -177,7 +177,7 @@ chdir "../$genome.TIR.EDTA_process";
 ##############################
 
 # enter the Helitron folder for EDTA processing
-chdir "../$genome.Helitron.EDTA_process";
+chdir "../$genome.EDTA.Helitron";
 `ln -s ../$Helitronraw $genome.Helitron.raw.fa` unless -s "$genome.Helitron.raw.fa";
 
 # format raw candidates
@@ -187,7 +187,7 @@ chdir "../$genome.Helitron.EDTA_process";
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.Helitron.raw.fa.renamed > $genome.Helitron.fa.stg0`;
 
 # copy results to the combine folder
-`cp $genome.Helitron.fa.stg0 ../$genome.combine.EDTA_process`;
+`cp $genome.Helitron.fa.stg0 ../$genome.EDTA.combine`;
 
 
 #################################
@@ -195,7 +195,7 @@ chdir "../$genome.Helitron.EDTA_process";
 #################################
 
 # enter the combine folder for EDTA processing
-chdir "../$genome.combine.EDTA_process";
+chdir "../$genome.EDTA.combine";
 
 # copy LTR.stg0 as LTR.stg1
 `cp $genome.LTR.fa.stg0 $genome.LTR.fa.stg1`;
@@ -216,4 +216,3 @@ chdir "../$genome.combine.EDTA_process";
 `perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2 -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1`;
 `cp $genome.LTR.TIR.Helitron.fa.stg1 ../`;
 chdir '..';
-
