@@ -1,8 +1,5 @@
-##############################################
-#                                            #
-#    The Extensive *de novo* TE Annotator    #
-#                                            #
-##############################################
+
+# The Extensive *de novo* TE Annotator (EDTA)
 
 ## Introduction
 This package is developed for automated whole-genome *de-novo* TE annotation and benchmarking the annotation performance of TE libraries.
