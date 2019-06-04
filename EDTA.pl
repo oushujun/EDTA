@@ -45,7 +45,6 @@ die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
 
-if (0){
 # Get raw TE candidates
 `perl $EDTA_raw -genome $genome -threads $threads`;
 
@@ -63,7 +62,6 @@ chdir "$genome.EDTA.final";
 # RepeatMask the genome with the cleanned stage 1 library
 `ln -s ../$genome $genome` unless -e $genome;
 `${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1.clean $genome`;
-}
 
 chdir "$genome.EDTA.final"; #tst
 
