@@ -12,4 +12,4 @@
 
 `alluniRefprexp082813` is the unique plant protein transposase database obtained from the [LTR_retriever](https://github.com/oushujun/LTR_retriever) package. For non-plant species, you may use [uniport_sprot databases](ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/) instead.
 
-
+`dummy060817.fa` just a random sequence copied from the `LTR_retriever` package. It is used to test run `RepeatMasker`.
