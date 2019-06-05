@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use FindBin;
+use File::Basename;
 
 #######################################################################
 ##### Perform EDTA basic and advcanced filterings on TE candidates ####
@@ -80,6 +81,11 @@ die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unle
 die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 
+# make a softlink to the genome
+my $genome_file = basename($genome);
+`ln -s $genome $genome_file` unless -e $genome_file;
+$genome = $genome_file;
+
 # Make working directories
 `mkdir $genome.EDTA.LTR` unless -e "$genome.EDTA.LTR" && -d "$genome.EDTA.LTR";
 `mkdir $genome.EDTA.TIR` unless -e "$genome.EDTA.TIR" && -d "$genome.EDTA.TIR";
@@ -100,17 +106,18 @@ chdir "$genome.EDTA.LTR";
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.raw.fa.renamed > $genome.LTR.fa.stg0`;
 
 # identify mite contaminants with MITE-Hunter
-`rm genome*`;
-`perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome.LTR.fa.stg0`;
+`rm genome* 2>/dev/null`;
+`perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome.LTR.fa.stg0 2>/dev/null`;
 `cat *_Step8_* > $genome.LTR.fa.stg0.mite`;
 
 # identify Helitron contaminants with HelitronScanner
 `sh $HelitronScanner $genome.LTR.fa.stg0 $threads`;
-`cat $genome.LTR.fa.stg0.HelitronScanner.draw.hel.fa $genome.LTR.fa.stg0.HelitronScanner.draw.rc.hel.fa $script_path/database/HelitronScanner.training.set.fa > $genome.LTR.fa.stg0.helitron`;
+`cat $genome.LTR.fa.stg0.HelitronScanner.draw.hel.fa $genome.LTR.fa.stg0.HelitronScanner.draw.rc.hel.fa | perl -nle \'print \$_ and next unless /^>/; my \$line=(split)[0]; \$line=~s/\#SUB_//; \$line=~s/[\#\\/]/_/g; print \"\$line\#DNA\/Helitron\"\' > $genome.LTR.fa.stg0.helitron`;
+`cat $script_path/database/HelitronScanner.training.set.fa >> $genome.LTR.fa.stg0.helitron`;
 
 # remove potential mite and helitron contaminants
 `cat $genome.LTR.fa.stg0.mite $genome.LTR.fa.stg0.helitron > $genome.LTR.fa.stg0.mite.helitron`;
-`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.mite.helitron $genome.LTR.fa.stg0`;
+`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.mite.helitron $genome.LTR.fa.stg0 2>/dev/null`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 100 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0.masked > $genome.LTR.fa.stg0.cln`;
 
 # extract LTR regions from stg0.cln as HQ
@@ -119,6 +126,7 @@ chdir "$genome.EDTA.LTR";
 
 # copy results to the combine folder
 `cp $genome.LTR.fa.stg0 $genome.LTR.fa.stg0.HQ ../$genome.EDTA.combine`;
+chdir '..';
 
 
 ###########################
@@ -126,7 +134,7 @@ chdir "$genome.EDTA.LTR";
 ###########################
 
 # enter the TIR folder for EDTA processing
-chdir "../$genome.EDTA.TIR";
+chdir "$genome.EDTA.TIR";
 `ln -s ../$TIRraw $genome.TIR.raw.fa` unless -s "$genome.TIR.raw.fa";
 
 # convert TIR-Learner names into RepeatMasker readible names, seperate MITE (<600bp) and TIR elements
@@ -148,7 +156,7 @@ chdir "../$genome.EDTA.TIR";
 `perl $rename_TE $genome.MITE.raw.fa > $genome.MITE.raw.fa.renamed`;
 
 # remove MITEs existed in TIR-Learner results, clean up tandem repeats and short seq with cleanup_tandem.pl
-`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR_1.fa.stg0 $genome.MITE.raw.fa.renamed`;
+`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR_1.fa.stg0 $genome.MITE.raw.fa.renamed 2>/dev/null`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.MITE.raw.fa.renamed.masked > $genome.MITE.fa.stg0`;
 
 # aggregate TIR-Learner and MITE-Hunter results together
@@ -157,19 +165,22 @@ chdir "../$genome.EDTA.TIR";
 # identify LTR contaminants with LTRharvest
 `$genometools suffixerator -db $genome.TIR.fa.stg0 -indexname $genome.TIR.fa.stg0 -tis -suf -lcp -des -ssp -sds -dna`;
 `$genometools ltrharvest -index $genome.TIR.fa.stg0 -out $genome.TIR.fa.stg0.LTR`;
+`rm $genome.TIR.fa.stg0.esq $genome.TIR.fa.stg0.lcp $genome.TIR.fa.stg0.llv $genome.TIR.fa.stg0.md5 $genome.TIR.fa.stg0.prj $genome.TIR.fa.stg0.sds $genome.TIR.fa.stg0.suf`;
 `perl -i -nle \'s/#.*\\[/_/; s/\\]//; s/,/_/g; print \$_\' $genome.TIR.fa.stg0.LTR`;
 
 # identify Helitron contaminants with HelitronScanner
 `sh $HelitronScanner $genome.TIR.fa.stg0 $threads`;
-`cat $genome.TIR.fa.stg0.HelitronScanner.draw.hel.fa $genome.TIR.fa.stg0.HelitronScanner.draw.rc.hel.fa $script_path/database/HelitronScanner.training.set.fa > $genome.TIR.fa.stg0.helitron`;
+`cat $genome.TIR.fa.stg0.HelitronScanner.draw.hel.fa $genome.TIR.fa.stg0.HelitronScanner.draw.rc.hel.fa | perl -nle \'print \$_ and next unless /^>/; my \$line=(split)[0]; \$line=~s/\#SUB_//; \$line=~s/[\#\\/]/_/g; print \"\$line\#DNA\/Helitron\"\' > $genome.TIR.fa.stg0.helitron`;
+`cat $script_path/database/HelitronScanner.training.set.fa >> $genome.TIR.fa.stg0.helitron`;
 
 # remove potential LTR and helitron contaminants
 `cat $genome.TIR.fa.stg0.LTR $genome.TIR.fa.stg0.helitron > $genome.TIR.fa.stg0.LTR.helitron`;
-`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR.fa.stg0.LTR.helitron $genome.TIR.fa.stg0`;
+`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR.fa.stg0.LTR.helitron $genome.TIR.fa.stg0 2>/dev/null`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg0.HQ`;
 
 # copy results to the combine folder
 `cp $genome.TIR.fa.stg0 $genome.TIR.fa.stg0.HQ ../$genome.EDTA.combine`;
+chdir '..';
 
 
 ##############################
@@ -177,7 +188,7 @@ chdir "../$genome.EDTA.TIR";
 ##############################
 
 # enter the Helitron folder for EDTA processing
-chdir "../$genome.EDTA.Helitron";
+chdir "$genome.EDTA.Helitron";
 `ln -s ../$Helitronraw $genome.Helitron.raw.fa` unless -s "$genome.Helitron.raw.fa";
 
 # format raw candidates
@@ -188,6 +199,7 @@ chdir "../$genome.EDTA.Helitron";
 
 # copy results to the combine folder
 `cp $genome.Helitron.fa.stg0 ../$genome.EDTA.combine`;
+chdir '..';
 
 
 #################################
@@ -195,18 +207,18 @@ chdir "../$genome.EDTA.Helitron";
 #################################
 
 # enter the combine folder for EDTA processing
-chdir "../$genome.EDTA.combine";
+chdir "$genome.EDTA.combine";
 
 # copy LTR.stg0 as LTR.stg1
 `cp $genome.LTR.fa.stg0 $genome.LTR.fa.stg1`;
 
 # remove LTR in TIR candidates
-`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg0`;
+`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg0 2>/dev/null`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1`;
 
 # remove LTR and TIR in Helitron candidates
 `cat $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg0.HQ > $genome.LTR.TIR.fa.stg0.HQ`;
-`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.fa.stg0.HQ $genome.Helitron.fa.stg0`;
+`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.fa.stg0.HQ $genome.Helitron.fa.stg0 2>/dev/null`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.Helitron.fa.stg0.masked > $genome.Helitron.fa.stg1`;
 
 # aggregate clean sublibraries and cluster
