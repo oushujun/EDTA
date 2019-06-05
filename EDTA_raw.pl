@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use FindBin;
+use File::Basename;
 
 ########################################################
 ##### Perform initial searches for TE candidates    ####
@@ -51,6 +52,11 @@ die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriev
 #die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The MITE_Hunter is not found in $MITE_Hunter!\n" unless -s $MITE_Hunter;
 die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;
+
+# make a softlink to the genome
+my $genome_file = basename($genome);
+`ln -s $genome $genome_file` unless -e $genome_file;
+$genome = $genome_file;
 
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
