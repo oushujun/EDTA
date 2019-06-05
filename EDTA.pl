@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use FindBin;
+use File::Basename;
 
 ########################################################
 ##### Extensive de-novo TE Annotator (EDTA) v1.0    ####
@@ -44,6 +45,11 @@ die "The script EDTA_process.pl is not found in $EDTA_process!\n" unless -s $EDT
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
+
+# make a softlink to the genome
+my $genome_file = basename($genome);
+`ln -s $genome $genome_file` unless -e $genome_file;
+$genome = $genome_file;
 
 if (0){
 # Get raw TE candidates
