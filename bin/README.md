@@ -7,7 +7,7 @@
 
 [MITE-Hunter](http://target.iplantcollaborative.org/mite_hunter.html) is a program for discovering MITEs from genomic sequences. `MITE-Hunter2` was downloaded from [TARGeT](http://target.iplantcollaborative.org/mite_hunter/). The codes were further modified for ease of installation and execution.
 
-[TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice) is an open-source ensemble method for TIR transposable element annotation. `TIR-Learner-Rice` was downloaded from [TIR-Learner-Rice](https://github.com/weijiaweijia/TIR-Learner-Rice).
+[TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice) is an open-source ensemble method for TIR transposable element annotation. `TIR-Learner1.9_osj` is a pipeline version converted from [TIR-Learner-Rice](https://github.com/weijiaweijia/TIR-Learner-Rice).
 
 [HelitronScanner](https://sourceforge.net/projects/helitronscanner/) is a Java program to identify *Helitron* transposons in genome sequences. `HelitronScanner` v1.1 was downloaded from [HelitronScanner](https://sourceforge.net/projects/helitronscanner/).
 
