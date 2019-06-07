@@ -17,8 +17,8 @@ use File::Basename;
 #	$genome.MITE.raw.fa
 #	$genome.Helitron.raw.fa
 
-my $usage = "\nProvide initial filterings for raw TE libraries and generate stage 0 and stage0.HQ datasets
-	perl EDTA_stage0.pl [options]
+my $usage = "\nObtain raw TE libraries using various structure-based programs
+	perl EDTA_raw.pl [options]
 		-genome	[File]	The genome FASTA
 		-threads	[int]	Number of theads to run this script
 		-help|-h	Display this help info
@@ -31,7 +31,7 @@ my $script_path = $FindBin::Bin;
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-my $TIR_Learner = "$script_path/bin/TIR_Learner/TIR_Learner";
+my $TIR_Learner = "$script_path/bin/TIR_Learner1.9_osj/TIR_Learner.sh";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 
@@ -86,6 +86,7 @@ chdir "$genome.EDTA.raw/LTR";
 `cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 `perl $LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
+chdir '..';
 
 
 ###########################
@@ -93,10 +94,12 @@ chdir "$genome.EDTA.raw/LTR";
 ###########################
 
 # enter the working directory and create genome softlink
-chdir "../TIR";
+chdir "./TIR";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # run TIR-Learner
+`sh $TIR_Learner $genome $genome $threads`;
+chdir '..';
 # TBD
 
 
@@ -105,7 +108,7 @@ chdir "../TIR";
 ###########################
 
 # enter the working directory and create genome softlink
-chdir "../MITE";
+chdir "./MITE";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # run MITE-Hunter
@@ -113,6 +116,7 @@ chdir "../MITE";
 `cat *_Step8_* > $genome.MITE.raw.fa`;
 `rm $genome $genome.index $genome.nhr $genome.nin $genome.nsq`;
 `cp $genome.MITE.raw.fa ../$genome.MITE.raw.fa`;
+chdir '..';
 
 
 #############################
@@ -120,9 +124,10 @@ chdir "../MITE";
 #############################
 
 # enter the working directory and create genome softlink
-chdir "../Helitron";
+chdir "./Helitron";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # run HelitronScanner
 `sh $HelitronScanner $genome $threads`;
 `cp $genome.HelitronScanner.filtered.fa ../$genome.Helitron.raw.fa`;
+chdir '..';
