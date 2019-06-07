@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     names=pd.read_csv("%sContig.name"%(genome_Name+spliter),header=None)
   #  names=pd.read_table("%sContig.name"%(genome_Name+spliter),header=None)
-    l_name=list(names[0])
+    l_name=list(names[0].astype(str))
     for name in l_name:
         cat= "cat *%s*80.fa > %s"%(name,genome_Name+spliter+name+spliter+"homo.fa")
         os.system(cat)

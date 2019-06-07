@@ -34,7 +34,7 @@ def SplitFasta(contigFile,genomeFile,genomeName):
     records=list(SeqIO.parse(genomeFile,"fasta"))
     names=pd.read_csv(contigFile,header=None) #shujun
    # names=pd.read_table(contigFile,header=None)
-    l_name=list(names[0])
+    l_name=list(names[0].astype(str))
     for name in l_name:
         SeqIO.write((rec for rec in records if rec.id.split(":")[0]==name),"%s.fasta"%(targetDir+genomeName+spliter+name),"fasta")
 

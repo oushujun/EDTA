@@ -37,7 +37,7 @@ def getContigNames(genomeFile,genomeName):
 def RenameFasta(contigFile,genomeName):
     names=pd.read_csv(contigFile,header=None)
    # names=pd.read_table(contigFile,header=None)
-    l_name=list(names[0])
+    l_name=list(names[0].astype(str))
     for name in l_name:
         cp="cp %s/candidate.fasta %s"%(name,genomeName+spliter+name+spliter+"GRFmite.fa")
         os.system(cp)
