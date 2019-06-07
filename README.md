@@ -13,15 +13,20 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 ## Installation
     conda create -n EDTA
     conda activate EDTA
-    conda install -c conda-forge perl perl-text-soundex
-    conda install -c cyclus java-jdk
-    conda install -c bioconda cd-hit
-    conda install -c bioconda/label/cf201901 repeatmasker
-    conda install -c bioconda repeatmodeler
+    conda install -y -c conda-forge perl perl-text-soundex multiprocess regex
+    conda install -y -c cyclus java-jdk
+    conda install -y -c bioconda cd-hit repeatmodeler
+    conda install -y -c bioconda/label/cf201901 repeatmasker
+    conda install -y -c anaconda biopython pandas glob2
+    conda install -y -c anaconda scikit-learn=0.19.0
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
 ## EDTA Usage
+Activate the EDTA program:
+
+    conda activate EDTA
+
 Form head to toe (you got a genome and you want to get a high-quality TE library):
     
     perl EDTA.pl -genome your_genome.fasta -threads 36
