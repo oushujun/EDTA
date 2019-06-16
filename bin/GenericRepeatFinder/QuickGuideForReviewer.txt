@@ -1,0 +1,129 @@
+This document includes major steps and commands to run GRF as mentioned in our manuscript "GRF: a generic and accurate tool for genome-wide de novo repeat detection". Detailed explanations and other functions can be found in "readme.txt".
+
+In our manuscript, we performed genome-wide repeat detection in Arabidopsis, mouse, and human.
+
+(1) Input data
+
+We download genome sequences of these species from the following websites:
+
+Arabidopsis: ftp://ftp.ensemblgenomes.org/pub/plants/release-31/fasta/arabidopsis_thaliana/dna/Arabidopsis_thaliana.TAIR10.31.dna.toplevel.fa.gz
+
+mouse: ftp://ftp.ensembl.org/pub/release-84/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
+
+human: ftp://ftp.ensembl.org/pub/release-84/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+
+Assuming the downloaded genome sequence is named "genome.fa", we performed following repeat detections using the executable programs in "bin/":
+
+(2) TIR detection
+
+To detect TIRs (20-1000 nt) with at most 4 mismatches and 4 indels in stems and at most 10% unpaired bases in stems with 64 threads:
+
+# grf-main -i genome.fa -o . -c 0 --min_tr 10 --max_indel 4 --max_mismatch 4 -t 64
+
+Here, the output directory is current directory. In the output directory, "perfect.fasta" includes TIRs with perfect stems and no spacer in the middle; "perfect.spacer.fasta" includes TIRs with perfect stems and a spacer in the middle; "imperfect.fasta" includes TIRs with imperfect stems.
+
+To detect TIRs (20-1000 nt) with at most 10% unpaired bases in stems:
+
+# grf-main -i genome.fa -o . -c 0 --min_tr 10 -t 64
+
+To detect high-quality IRs (length ratio of spacer/total length >= 0.2):
+
+# grf-main -i genome.fa -o . -c 0 -r 0.2 --min_tr 10 -t 64
+
+To detect long-stem TIRs (stem length >= 100 nt):
+
+# grf-main -i genome.fa -o . -c 0 --min_tr 100 -t 64
+
+To detect both high-quality and long-stem IRs:
+
+# grf-main -i genome.fa -o . -c 0 -r 0.2 --min_tr 10 --long_tr 100 -t 64
+
+To filter out TIRs with tandem repeats in stems using phobos, we used python scripts in "script/" (see "readme.txt" section 4.2):
+
+Assuming the TIR FASTA file is named "input.fa"
+
+# python script/extract_tr.py input.fa tr.fa
+
+# phobos-linux-gcc4.1.2 --outputFormat 0 tr.fa > tr.out
+
+# python script/filter.py input.fa tr.out output.fa
+
+The file "output.fa" includes the TIRs without tandem repeats in stems.
+
+(3) TDR detection
+
+Commands are similar with TIR detection. The only change is "-c 2".
+
+(4) Interspersed repeat detection
+
+To detect interspersed repeats
+
+# grf-intersperse -i genome.fa -o .
+
+In the output directory, the file "interspersed_repeat.out" includes detected interspersed repeats in groups.
+
+To filter out interspersed repeats containing tandem repeats using phobos, we used python scripts in "script/"(see "readme.txt" section 4.3):
+
+# python script/convert.py interspersed_repeat.out repeat.fa
+
+# phobos-linux-gcc4.1.2 --outputFormat 0 repeat.fa > repeat.out
+
+# python script/filter2.py repeat.fa repeat.out output.fa
+
+# python script/format.py output.fa interspersed_repeat.filtered.out
+
+The file "interspersed_repeat.filtered.out" includes the interspersed repeats without tandem repeats.
+
+(5) MITE detection
+
+# grf-main -i genome.fa -o . -c 1 --min_tr 10 -t 64
+
+In the output directory, "candidate.fasta" includes MITE candidate sequences.
+
+# cd-hit-est -i candidate.fasta -o clusteredCandidate.fasta -c 0.80 -n 5 -d 0 -T 16 -aL 0.99 -s 0.8 -M 0 > cd-hit-est.out
+
+# grf-cluster -i clusteredCandidate.fasta.clstr -g genome.fa -o .
+
+In the output directory, "mite.fasta" includes representative sequences of each MITE family; "miteSet.fasta" inlcludes all MITE sequences in each family.
+
+(6) LTR transposon detection
+
+To detect candidate TDRs (TR: 100-3500 nt; spacer: 1000-20000 nt):
+
+# grf-main -i genome.fa -c 2 -o . --min_tr 100 -t 64 --min_space 1090 --max_space 23490 --match 2 --mismatch 2 --indel 3 -f 1 -p 30
+
+# cat perfect.id perfect.spacer.id imperfect.id > repeat.id
+	
+# grf-filter 100 3500 1000 20000 repeat.id repeat.filter.id
+
+To detect LTR transposon using modified LTR_FINDER ("bin/ltr_finder") (see "readme.txt" section 5):
+
+Assuming "ps_scan" is installed in "ps_scan"; Arabidopsis tRNA database is named "LTR_FINDER.x86_64-1.0.6/tRNAdb/Athal-tRNAs.fa".
+
+# ltr_finder genome.fa repeat.filter.id -a ps_scan -s LTR_FINDER.x86_64-1.0.6/tRNAdb/Athal-tRNAs.fa > repeat.out
+
+Here, "repeat.out" is the LTR_FINDER output file including the detected LTR transposons.
+
+(7) Show DBN structures of TIRs
+
+Assuming the input TIR FASTA file is named "repeat.fa".
+
+# grf-dbn repeat.fa repeat.dbn
+
+(8) Show alignments of TIRs/TDRs
+
+Assuming the input TIR/TDR FASTA file is named "repeat.fa".
+
+For TIRs:
+
+# grf-alignment 1 repeat.fa repeat.aln
+
+For TDRs:
+
+# grf-alignment 2 repeat.fa repeat.aln
+
+(9) Show the alignments and consensus sequences of interspersed repeats
+
+Assuming the file containing detected interspersed repeats is named "interspersed_repeat.out".
+
+# grf-alignment2 interspersed_repeat.out interspersed_repeat.aln

@@ -1,0 +1,171 @@
+PFSEARCH(1)                                           PFSEARCH(1)
+
+NAME
+       pfsearch  -  search  a protein or DNA sequence library for
+       sequence segments matching a profile
+
+SYNOPSIS
+       pfsearch [ -abflLrsuxyz ] [ profile-file | - ]
+                   [ seq-library-file | - ]    [C=#] [W=#]
+
+DESCRIPTION
+       pfsearch compares a query profile against a DNA or protein
+       sequence  library.  The result is an unsorted list of pro-
+       file-sequence matches written to the standard  output.   A
+       variety  of  output  formats containing different informa-
+       tions can be specified via the options -a, -l, -L, -r, -u,
+       -s,  -x, -y, -z, and the command-line parameter C=#.  pro-
+       file-file contains a  profile  in  PROSITE  format.   seq-
+       library-file  contains  a  sequence library in EMBL/SWISS-
+       PROT format (assumed by default) or in Pearson/Fasta  for-
+       mat  (indicated  by option -f).  pfsearch can be used as a
+       filter if - is used instead of one of the input filenames.
+
+OPTIONS
+       -a     Report  optimal  alignment scores for all sequences
+              regardless  of  the  cut-off  value.   This  option
+              simultaneously forces DISJOINT=UNIQUE.
+
+       -b     Search  the  complementary strands of DNA sequences
+              as well.
+
+       -f     Input sequence-library is in Pearson/Fasta  format.
+
+       -l     Indicate   by  number  the  highest  cut-off  level
+              exceeded by the match score in the output list.
+
+       -L     Indicate by character string  the  highest  cut-off
+              level  exceeded  by  the  match score in the output
+              list. Note  that  the  generalized  profile  format
+              includes  a text string field to specify a name for
+              a cut-off level. The -L option causes  the  program
+              to  display  the  first two characters of this text
+              string (usually  something  like  "!",  "?",  "??",
+              etc.) at the beginning of each match description.
+
+       -r     Use  raw  scores  rather than normalized scores for
+              match selection.  Normalized  scores  will  not  be
+              listed in the output.
+
+       -s     List  the sequences of the matched regions as well.
+              The  output  will  be   a   Pearson/Fasta-formatted
+              sequence library.
+
+       -u     Forces DISJOINT=UNIQUE.
+
+       -x     List  profile-sequence  alignments  in  pftools PSA
+              format.
+
+       -y     Display alignments  between  the  profile  and  the
+              matched  sequence  regions in a human-friendly for-
+              mat.
+
+       -z     Indicate  starting  and  ending  position  of   the
+              matched  profile range. The latter position will be
+              given as a negative offset from the end of the pro-
+              file.  Thus  the  range [    1,    -1] means entire
+              profile.
+
+PARAMETERS
+       C=#    Cut-off value.  Over-writes the level zero  cut-off
+              value  specified  in the profile.  An integer argu-
+              ment is interpreted as a raw score value, a decimal
+              argument  as  a  normalized score value. An integer
+              value forces option -r.
+
+       W=#    Output width.  Output lines will be truncated after
+              W characters.  Default: W=132.
+
+EXAMPLES
+       (1)    pfsearch -f sh3.prf sh3.seq C=6.0
+
+              Searches    the   Pearson/Fasta-formatted   protein
+              sequence library sh3.seq for  SH3  domains  with  a
+              cut-off   value  of  6.0  normalized  score  units.
+              sh3.seq contains 20 SH3  domain-containing  protein
+              sequences from SWISS-PROT release 32.  sh3.prf con-
+              tains the PROSITE entry SH3/PS50002.
+
+       (2)    pfsearch -bx ecp.prf CVPBR322 | psa2msa -du | read-
+              seq -p -fMSF > ecp.msf
+
+              Generates  a multiple sequence alignment  of poten-
+              tial E. coli promoters on both strands  of  plasmid
+              pBR322.   ecp.prf  contains  a  profile for E. coli
+              promoters.    CVPBR322    contains    EMBL    entry
+              J01749|CVPBR322.   The result file ecp.msf can fur-
+              ther be processed by  GCG  programs  accepting  MSF
+              files as input.
+
+              See also manual pages of psa2msa.
+
+AUTHOR
+       Philipp Bucher
+       Philipp.Bucher@isrec.unil.ch
+
+
+
+
+
+
+PSA2MSA(1)                                             PSA2MSA(1)
+
+NAME
+       psa2msa  -   reformat  PSA  file to Pearson/Fasta multiple
+       sequence alignment file
+
+SYNOPSIS
+       psa2msa [ -dlpu ] [ [ psa-file | - ] ]   [ M=#]
+
+DESCRIPTION
+       psa2msa reformats a PSA-formatted profile-sequence  align-
+       ment file into a Pearson/Fasta-formatted multiple sequence
+       alignment file.  The result is  written  to  the  standard
+       output.   psa-file contains alignments of several sequence
+       segments to the same profile in PSA format.  Such  a  file
+       is  typically  generated  by program pfsearch using option
+       -x.  The output can be converted into other formats ( e.g.
+       MSF)  with  the  aid  of the public domain program readseq
+       (available   from    ftp.bio.indiana.edu:/molbio/readseq).
+       psa2msa  can  be  used as a filter if - is used instead of
+       the input filename, or if the input filename is omitted.
+
+OPTIONS
+       -d     Replace periods by dashes on output.
+
+       -l     Replace upper case letters by lower case letters on
+              output.
+
+       -p     Replace dashes by periods on output.
+
+       -u     Replace lower case letters by upper case letters on
+              output.
+
+PARAMETERS
+       M=#    Maximal length of an insertion.  If the real length
+              of an insertion exceeds this value, the excess num-
+              ber of residues will be deleted from the center  of
+              the  insertion.   M=0  means no upper limit for the
+              length  of  an  insertion.   Setting  an  insertion
+              length  limit helps to keep the resulting alignment
+              at manageable size.  Default: M=0.
+
+EXAMPLES
+       (1)    pfsearch -bx ecp.prf CVPBR322 | psa2msa -du | read-
+              seq -p -fMSF > ecp.msf
+
+              Generates  a  multiple  sequence  alignment of pre-
+              dicted E. coli promoters on both strands of plasmid
+              pBR322.   ecp.prf  contains  a  profile for E. coli
+              promoters.    CVPBR322    contains    EMBL    entry
+              J01749|CVPBR322.  The result in ecp.msf can further
+              be processed by GCG programs accepting MSF files as
+              input.
+
+              See also manual pages of pfsearch.
+
+AUTHOR
+       Philipp Bucher
+       Philipp.Bucher@isrec.unil.ch
+
+pftools 2.2                 June 1999                  PSA2MSA(1)

@@ -1,0 +1,251 @@
+ps_scan documentation
+=====================
+
+Reference:
+Alexandre Gattiker, Elisabeth Gasteiger, Amos Bairoch.
+ScanProsite: a reference implementation of a PROSITE scanning tool.
+Applied Bioinformatics 2002:1(2) 107-108.
+
+Contact: prosite@expasy.org
+
+ps_scan is a perl program used to scan one or several patterns, rules and/or
+profiles from PROSITE against one or several protein sequnces in Swiss-Prot or
+FASTA format. It requires two compiled external programs from the PFTOOLS
+package : "pfscan" used to scan a sequence against a profile library and
+"psa2msa" which is necessary for the "-o msa" output format only.
+
+Authors: 
+ Alexandre Gattiker
+ Edouard de Castro; E-mail: ecastro@isb-sib.ch
+ Elisabeth Gasteiger
+
+Installation
+------------
+
+Download a binary package for your platform from 
+
+ftp://ftp.expasy.org/databases/prosite/ps_scan/ps_scan_<platform>.tar.gz
+
+or the source packages from
+
+ftp://ftp.lausanne.isb-sib.ch/pub/software/unix/pftools/
+
+in which case you will need gcc or a compatible fortran compiler to compile the
+pftools sources.
+
+You may need to edit the ps_scan.pl to provide absolute paths to the directory
+where you have installed the pfscan and psa2msa executables, unless you have
+stored them in a directory in your PATH.
+
+A local copy of the PROSITE database is also needed. You may download it
+in a single file from
+
+ftp://ftp.expasy.org/databases/prosite/prosite.dat
+
+Usage
+-----
+
+perl ps_scan.pl [options] sequence-file(s)
+ps_scan version $VERSION options:
+-h : this help screen
+Input/Output:
+  -e : specify the ID or AC of an entry in sequence-file
+  -o : specify an output format : $formats_string
+  -d : specify a prosite.dat file
+  -p : specify a pattern or the AC of a prosite motif
+  -f : specify a motif AC to scan against together with all its 
+       releated post-processing motifs (but show only specified 
+       motif hits)
+Selection:
+  -r : do not scan profiles
+  -m : only scan profiles
+  -s : skip frequently matching (unspecific) patterns and profiles
+  -l : cut-off level for profiles (default : 0)
+Pattern match mode:
+  -x : specify maximum number of accepted matches of X's in sequence
+       (default=0)
+  -g : Turn greediness off
+  -v : Turn overlaps off
+  -i : Allow included matches
+
+The sequence-file may be in Swiss-Prot or FASTA format.
+If no PROSITE file is submitted, it will be searched in the paths
+$PROSITE/prosite.dat and $SPROT/prosite/prosite.dat.
+There may be several -d, -p and -q arguments.
+
+Pfsearch options:
+  -w pfsearch : Compares a query profile against a protein sequence library.
+  A profile file must be specified with option -d.
+
+   $progname -w pfsearch [-C cutoff] [-R] -d profile-file seq-library-file(s)
+
+ -R: use raw scores rather than normalized scores for match selection
+ -C=# : Cut-off value. Reports only match score higher than the specified 
+        parameter.
+An integer argument is interpreted as a raw score value,
+a decimal argument as a normalized score value. An integer value forces 
+option -R.
+
+
+Output formats
+--------------
+
+An output format may be specified with the -o option. Here are the available
+formats, with an example output with a profile :
+
+-o scan : default ps_scan output format.
+
+YAHD_ECOLI : PS50088 ANK_REPEAT Ankyrin repeat profile.
+      12 - 37  -------LAAQQGDIDKVKTCLALGVDINTCDR                           L=-1
+      38 - 70  QGKTAITLASLYQQYACVQALIDAGADINKQDH                           L=0
+    138 - 175  VGWTPLLEAIVLNDGGikqqaIVQLLLEHGASPHLTDK                      L=0
+    176 - 201  YGKTPLELARERGFEEIAQLLIAAGA-------                           L=0
+
+-o fasta : matching sequences in FASTA format.
+
+>YAHD_ECOLI/12-37 : PS50088 ANK_REPEAT L=-1 Ankyrin repeat profile.
+LAAQQGDIDKVKTCLALGVDINTCDR
+>YAHD_ECOLI/38-70 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+QGKTAITLASLYQQYACVQALIDAGADINKQDH
+>YAHD_ECOLI/138-175 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+VGWTPLLEAIVLNDGGIKQQAIVQLLLEHGASPHLTDK
+>YAHD_ECOLI/176-201 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+YGKTPLELARERGFEEIAQLLIAAGA
+
+-o psa : profile-to-sequence-alignments with insertions in lowercase and
+         deletions marked as dashes.
+
+>YAHD_ECOLI/12-37 : PS50088 ANK_REPEAT L=-1 Ankyrin repeat profile.
+-------LAAQQGDIDKVKTCLALGVDINTCDR
+>YAHD_ECOLI/38-70 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+QGKTAITLASLYQQYACVQALIDAGADINKQDH
+>YAHD_ECOLI/138-175 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+VGWTPLLEAIVLNDGGikqqaIVQLLLEHGASPHLTDK
+>YAHD_ECOLI/176-201 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+YGKTPLELARERGFEEIAQLLIAAGA-------
+
+-o msa : multiple sequence alignment of the matches in each sequence, built
+         from the psa format with gaps marked as dots.
+
+>YAHD_ECOLI/12-37 : PS50088 ANK_REPEAT L=-1 Ankyrin repeat profile.
+-------LAAQQGDID.....KVKTCLALGVDINTCDR
+>YAHD_ECOLI/38-70 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+QGKTAITLASLYQQYA.....CVQALIDAGADINKQDH
+>YAHD_ECOLI/138-175 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+VGWTPLLEAIVLNDGGikqqaIVQLLLEHGASPHLTDK
+>YAHD_ECOLI/176-201 : PS50088 ANK_REPEAT L=0 Ankyrin repeat profile.
+YGKTPLELARERGFEE.....IAQLLIAAGA-------
+
+-o pff : tabular format listing bounding positions on the sequence and the
+         profile, the raw and normalized profile score, and the cut-off level.
+
+YAHD_ECOLI	12	37	ANK_REPEAT	8	-1	196	6.653	-1
+YAHD_ECOLI	38	70	ANK_REPEAT	1	-1	351	10.793	0
+YAHD_ECOLI	138	175	ANK_REPEAT	1	-1	288	9.110	0
+YAHD_ECOLI	176	201	ANK_REPEAT	1	-8	343	10.579	0
+
+Pattern and rule matches are reported in the same formats, but cut-off levels
+are not available. In scan, psa and msa output formats, amino acids matching an
+"x" in the pattern are reported in lowercase. In pff format only the first
+three columns are available. The "-o matchlist" output format is specific to
+patterns and not meant for public use.
+
+
+Profile and pattern matching parameters
+---------------------------------------
+
+Several parameters can be fine-tuned. 
+
+- profile cut-off levels (-l option)
+
+  Most profiles contain several cut-off levels. The level 0 cut-off is the
+  trusted cut-off for positive matches, but a level -1 is usually defined above
+  which a match is potential, especially if there are other matches in the
+  sequence with the profile. By default, pfscan is run with the cut-off
+  level 0, so that only trusted matches are reported. To retrieve potential
+  (weak) matches as well, run ps_scan with the option "-l -1". Weak matches
+  are then reported with the indication "L=-1".
+
+- skip frequently matching patterns (-s option)
+
+  Some PROSITE entries such as those describing commonly found post-
+  translational modifications (a typical example is N-glycosylation) are found
+  in the majority of known protein sequences. While it is generally useful to
+  note their presence, some programs may want, in some cases, to ignore those
+  entries, which contain the line "CC   /SKIP-FLAG=TRUE;".
+
+Pattern match mode:
+
+- pattern greediness off (-g option)
+
+  A pattern-matching engine is said to be "greedy" if it tries to extend at
+  most variable-length pattern elements. The sequence "ABCDC" and the pattern
+  "A-x(1,3)-C" will produce the match "ABCDC" with a greedy engine, and the
+  match "ABC" with a non-greedy one. By default, PROSITE is scanned in greedy
+  mode, unless the -g option is set.
+
+- overlaps (-v option) and included matches (-i option)
+
+  Some patterns may produce distinct but overlapping matches on a given
+  sequence.  Additionally, if the pattern contains variable-length elements,
+  some of these matches may be completely included in another one. Different
+  combinations of -g, -v and -i options may produce differences in match count
+  and match positions with patterns that contain variable-length elements. An
+  engine which allows overlaps should be greedy in order to reduce the number
+  of multiple hits which are almost entirely overlapping except at the
+  extremities.
+
+- treatment of X characters in sequences (-x option)
+
+  The PROSITE syntax describes how to treat ambiguities in the pattern, but not
+  how to handle ambiguities in the sequence. In rare sequences in Swiss-Prot
+  and other databases, the characters B and Z are used according to IUBMB
+  nomenclature when a residue may be either Asp or Asn, or Glu or Gln,
+  respectively. The ps_scan program will produce a match if the sequence has a
+  "B" and the pattern allows either a "D" or a "N", or both (and similarly for
+  Z).
+
+  Whether the character X should be allowed to match any position of a pattern
+  is more controversial. It is generally useful to accept a single pattern
+  position to match X (unless that pattern position is an X itself, in which
+  case we can accept more). The maximum number of X characters which are
+  allowed to match a non-X position in a pattern can be specified with the -x
+  option. The default value is 1.
+
+Examples
+--------
+
+examples :
+
+scan 1 sequence with 1 pattern
+perl ps_scan.pl -p PS00123 seq.dat
+perl ps_scan.pl -p "P-S-[QW]" seq.dat
+
+scan 1 sequence with all prosite, including profiles
+perl ps_scan.pl seq.dat
+
+scan 2 profiles or patterns against swiss-prot
+perl ps_scan.pl -p PS00123 -p PS00124 sprot.dat
+
+scan all patterns and rules against swiss-prot
+perl ps_scan.pl -r sprot.dat
+
+scan a profile file against a sequence file
+perl ps_scan.pl -d profile.prf sprot.dat
+
+License
+-------
+
+The ps_scan program and the Prosite.pm module are Copyright (C) 2001-2006, 
+Swiss Institute of Bioinformatics. They are released under the
+terms of the GNU General Public License, available at
+http://www.gnu.org/copyleft/gpl.html.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
