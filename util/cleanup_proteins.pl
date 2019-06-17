@@ -97,7 +97,7 @@ if ($rmProt eq 1){
 	`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $Protlib -out $target.prot.out`;
 	`perl $purger -blast $target.prot.out -seq $target -cov $procovPL -purge 1 -len $prolensig`;
 	`cp $target.clean $target.prot_clean`;
-	$target = "$target.line_clean";
+	$target = "$target.prot_clean";
 	`rm $Protlib*`;
 	}
 
