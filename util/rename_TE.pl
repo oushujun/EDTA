@@ -15,6 +15,8 @@ while (<FA>){
 	my $name = (split /\s+/, $id)[0];
 	$seq =~ s/\s+//g;
 	my ($fam, $class) = ($1, $2) if $name =~ /^(.*)#(.*)$/;
+	#rename TE as unknown if $class info could not be retrieved
+	$class = "unknown" unless defined $class;
 	#retain LTR-INT info for LTR sequences
 	if ($class =~ /LTR/i){
 		my ($loc, $part) = ('', '');
