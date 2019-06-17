@@ -48,6 +48,7 @@ my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
 my $cleanup_nested = "$script_path/util/cleanup_nested.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
 my $rename_TE = "$script_path/util/rename_TE.pl";
+my $GRF = "";
 my $repeatmodeler = "";
 my $repeatmasker = "";
 my $blast = "";
@@ -104,13 +105,20 @@ my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow d
 die "The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
 # trf
-$trf="$script_path/bin/TRF/trf409.legacylinux64" if $trf eq ''; #path to the trf program
+$trf="$script_path/bin/TRF/trf409.legacylinux64" if $trf eq ''; #default path to the trf program
 `$trf 2>/dev/null`;
 $trf="$script_path/bin/TRF/trf409.macosx" if $?==32256;
 `$trf 2>/dev/null`;
 die "Error: No Tandem Repeat Finder is working on the current system.
 	Both trf409.macosx and trf409.legacylinux64 were tested, and failed.
-	Please report it to https://github.com/oushujun/LTR_retriever/issues" if $?==32256;
+	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
+# GRF
+$GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #default path to the GRF program 
+`$GRF 2>/dev/null`;
+die "Error: The Generic Repeat Finder (GRF) is not working on the current system.
+	Please reinstall it in $GRF following instructions in https://github.com/bioinfolabmu/GenericRepeatFinder.
+	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
+
 #cd-hit-est
 #$cdhitpath=`which cd-hit-est 2>/dev/null` if $cdhitpath eq '';
 #$cdhitpath=~s/cd-hit-est\n//;
