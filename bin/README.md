@@ -13,8 +13,6 @@
 
 [Tandem Repeats Finder (TRF)](https://tandem.bu.edu/trf/trf.html) is a program to locate and display tandem repeats in DNA sequences. `TRF` v4.09 was downloaded from [TRF](https://tandem.bu.edu/trf/trf.html).
 
-[mdust](https://github.com/lh3/mdust) is a program for filtering low complexity regions from nucleic acid sequences. `mdust` was downloaded from [mdust](https://github.com/lh3/mdust).
-
 ## Citations
 	Ellinghaus D, Kurtz S, Willhoeft U. LTRharvest, an efficient and flexible software for de novo detection of LTR retrotransposons. BMC Bioinformatics. 2008;9:18.
 	
