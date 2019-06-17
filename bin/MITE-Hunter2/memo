@@ -1,3 +1,10 @@
-perl MITE_Hunter_Installer.pl -d /mnt/home/oushujun/git_bin/MITE-Hunter/ -m /mnt/home/oushujun/git_bin/mdust/mdust -f formatdb -b blastall -M muscle
+# Installation
+conda create -n MITE-Hunter
+conda activate MITE-Hunter
+conda install -y -c biocore blast-legacy
+conda install -y -c bioconda muscle mdust
+./MITE_Hunter_manager.pl
 
+# The legacy way to install (obsolete)
+perl MITE_Hunter_Installer.pl -d /mnt/home/oushujun/git_bin/MITE-Hunter/ -m /mnt/home/oushujun/git_bin/mdust/mdust -f formatdb -b blastall -M muscle
 perl MITE_Hunter_Installer.pl -d /home/oushujun/las/git_bin/MITE-Hunter2/ -m /home/oushujun/las/git_bin/mdust/mdust -f formatdb -b blastall -M muscle
