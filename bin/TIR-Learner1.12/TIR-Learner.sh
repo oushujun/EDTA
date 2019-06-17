@@ -31,8 +31,8 @@ genomeFile=`realpath $rawFile` #the genome file with real path
 genomeName="TIR-Learner"
 path=$(dirname "$0") #program path
 dir=$(pwd) #current work directory
-#grfp="$path/../GenericRepeatFinder/bin/"
-grfp="~/las/bin/GenericRepeatFinder/bin/"
+grfp="$path/../GenericRepeatFinder/bin/"
+#grfp="~/las/bin/GenericRepeatFinder/bin/"
 t=16 #CPUs
 
 ## allow user to specify CPU number
