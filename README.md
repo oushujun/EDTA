@@ -31,6 +31,16 @@ Activate the EDTA program:
 Form head to toe (you got a genome and you want to get a high-quality TE library):
     
     perl EDTA.pl -genome your_genome.fasta -threads 36
+      -genome	[File]	The genome FASTA
+      -step	[all|filter|final] Specify which steps you want to run EDTA.
+				all: run the entire pipeline (default)
+				filter: start from raw TEs to the end.
+				final: start from filtered TEs to finalizing the run.
+      -protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
+				You may use uniprot_sprot database available from here:
+				ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
+      -threads	[int]	Number of theads to run this script (default: 4)
+      -help|-h	Display this help info
 
 Just the body (you got raw TE candidates from various programs and you want to filter them using EDTA):
 
@@ -40,8 +50,6 @@ Just the body (you got raw TE candidates from various programs and you want to f
       -tir	[File]	The raw TIR library FASTA
       -mite	[File]	The raw MITE library FASTA
       -helitron	[File]	The raw Helitron library FASTA
-      -repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
-      -blast [path]	The directory containing Blastn (default: read from ENV)
       -threads	[int]	Number of theads to run this script
       -help|-h	Display this help info
 
