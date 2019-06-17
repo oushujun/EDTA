@@ -31,7 +31,7 @@ my $script_path = $FindBin::Bin;
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-my $TIR_Learner = "$script_path/bin/TIR-Learner1.9_osj/TIR-Learner.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner1.12/TIR-Learner.sh";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 
@@ -44,12 +44,14 @@ foreach (@ARGV){
 	$k++;
   }
 
+print "Check files and dependencies, prepare working directories.\n\n";
+
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
-#die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
+die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The MITE_Hunter is not found in $MITE_Hunter!\n" unless -s $MITE_Hunter;
 die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;
 
@@ -70,6 +72,8 @@ $genome = $genome_file;
 ###### LTR_retriever ######
 ###########################
 
+print "Start to find LTR candidates.\n\n";
+
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/LTR";
 `ln -s ../../$genome $genome` unless -s $genome;
@@ -86,30 +90,51 @@ chdir "$genome.EDTA.raw/LTR";
 `cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 `perl $LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
-chdir '..';
+chdir '../..';
+
+# check results
+die "Error: LTR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.LTR.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
+	print "Finish finding LTR candidates.\n\n";
+	} else {
+	print "Warning: The LTR result file has 0 bp!\n\n";
+	}
 
 
 ###########################
 ######  TIR-Learner  ######
 ###########################
 
+print "Start to find TIR candidates.\n\n";
+
 # enter the working directory and create genome softlink
-chdir "./TIR";
+chdir "$genome.EDTA.raw/TIR";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # run TIR-Learner
-`sh $TIR_Learner $genome $genome $threads`;
-`cp TIR-Learner-Result/${genome}_FinalAnn.fa ../$genome.TIR.raw.fa`;
-chdir '..';
-# TBD
+`sh $TIR_Learner $genome $threads`;
+`cp TIR-Learner-Result/TIR-Learner_FinalAnn.fa ../$genome.TIR.raw.fa`;
+#`cp TIR-Learner-Result/${genome}_FinalAnn.fa ../$genome.TIR.raw.fa`;
+chdir '../..';
+
+# check results
+die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
+	print "Finish finding TIR candidates.\n\n";
+	} else {
+	print "Warning: The TIR result file has 0 bp!\n\n";
+	}
 
 
 ###########################
 ######  MITE-Hunter  ######
 ###########################
 
+print "Start to find MITE candidates.\n\n";
+
 # enter the working directory and create genome softlink
-chdir "./MITE";
+chdir "$genome.EDTA.raw/MITE";
+`rm -rf genome*`;
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # run MITE-Hunter
@@ -117,18 +142,38 @@ chdir "./MITE";
 `cat *_Step8_* > $genome.MITE.raw.fa`;
 `rm $genome $genome.index $genome.nhr $genome.nin $genome.nsq`;
 `cp $genome.MITE.raw.fa ../$genome.MITE.raw.fa`;
-chdir '..';
+chdir '../..';
+
+# check results
+die "Error: MITE results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.MITE.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.MITE.raw.fa"){
+	print "Finish finding MITE candidates.\n\n";
+	} else {
+	print "Warning: The MITE result file has 0 bp!\n\n";
+	}
 
 
 #############################
 ###### HelitronScanner ######
 #############################
 
+print "Start to find Helitron candidates.\n\n";
+
 # enter the working directory and create genome softlink
-chdir "./Helitron";
+chdir "$genome.EDTA.raw/Helitron";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # run HelitronScanner
 `sh $HelitronScanner $genome $threads`;
 `cp $genome.HelitronScanner.filtered.fa ../$genome.Helitron.raw.fa`;
-chdir '..';
+chdir '../..';
+
+# check results
+die "Error: Helitron results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.Helitron.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.Helitron.raw.fa"){
+	print "Finish finding Helitron candidates.\n\n";
+	} else {
+	print "Warning: The Helitron result file has 0 bp!\n\n";
+	}
+
+
