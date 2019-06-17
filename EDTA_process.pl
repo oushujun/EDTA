@@ -26,6 +26,9 @@ my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates
 		-helitron	[File]	The raw Helitron library FASTA
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		-blast [path]	The directory containing Blastn (default: read from ENV)
+		-protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
+					You may use uniprot_sprot database available from here: 
+					ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
 		-threads	[int]	Number of theads to run this script
 		-help|-h	Display this help info
 \n";
@@ -47,6 +50,8 @@ my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $cleanup_nested = "$script_path/util/cleanup_nested.pl";
+my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
+my $protlib = "$script_path/database/alluniRefprexp082813";
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $repeatmasker = " ";
 my $blast = " ";
@@ -61,6 +66,7 @@ foreach (@ARGV){
 	$Helitronraw = $ARGV[$k+1] if /^-helitron/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker/i and $ARGV[$k+1] !~ /^-/;
 	$blast = $ARGV[$k+1] if /^-blast/i and $ARGV[$k+1] !~ /^-/;
+	$protlib = $ARGV[$k+1] if /^-protlib/i and $ARGV[$k+1] !~ /^-/;
 	$threads = $ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1] !~ /^-/;
 	die $usage if /^-help$|^-h$/i;
 	$k++;
@@ -79,6 +85,8 @@ die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $Helitro
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
 die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unless -s $rename_tirlearner;
 die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
+die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
+die "The protein-coding sequence library is not found in $protlib!\n" unless -s $protlib;
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 
 # make a softlink to the genome
@@ -225,6 +233,11 @@ chdir "$genome.EDTA.combine";
 `cat $genome.LTR.fa.stg1 $genome.TIR.fa.stg1 $genome.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.fa.stg1.raw`;
 `perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln`;
 `perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2 -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1`;
-`cp $genome.LTR.TIR.Helitron.fa.stg1 ../`;
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2 -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3`;
+
+# remove protein-coding sequences
+`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3 -rmdnate 0 -rmline 1 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
+`mv $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3.clean $genome.LTR.TIR.Helitron.fa.stg1`;
+
 chdir '..';
+
