@@ -19,7 +19,10 @@
 # for Altix only, otherwise the path needs to be changed
 #-----------------------------------------------------
 use Getopt::Std;
+use FindBin;
 #-----------------------------------------------------
+my $script_path = $FindBin::Bin;
+
 getopts("i:D:e:M:m:I:n:E:t:s:T:p:P:b:r:l:f:v:a:A:c:G:o:h:");
 
 $Input        = defined $opt_i ? $opt_i : "";
@@ -111,7 +114,7 @@ foreach(keys(%Name_Seq)) {
 
 	if($No_Hits_Found == 0) {
 		print "Find homologs...\n";
-		system("perl /home/oushujun/las/git_bin/MITE-Hunter2/IDTE_PHI.pl -i temp_blast.out -q temp_query.fa -D $Database -o $Name -M $Min_Pro -d $Max_Gap -I $ID_Tag -n $Max_Output -e $Max_Evalue -l $Edge_Len -r $Edge_Len\n");
+		system("perl $script_path/IDTE_PHI.pl -i temp_blast.out -q temp_query.fa -D $Database -o $Name -M $Min_Pro -d $Max_Gap -I $ID_Tag -n $Max_Output -e $Max_Evalue -l $Edge_Len -r $Edge_Len\n"); #shujun
 		if(-e "$Name.flank") {
 			$Seq_Num = 0;
 			open(NF, "$Name.flank")||die"2 $!\n";
@@ -127,7 +130,7 @@ foreach(keys(%Name_Seq)) {
 				print "$Seq_Num < $ReBlast_Num blast again using -G -4 -E -2 -q -3 -r 2 ...\n";
 				system("blastall -i temp_query.fa -d $Database -e $Max_Evalue -p blastn -o temp_blast.out -G -4 -E -2 -q -3 -r 2\n");
 				print "Find homologs...\n";
-				system("perl /home/oushujun/las/git_bin/MITE-Hunter2/IDTE_PHI.pl -i temp_blast.out -q temp_query.fa -D $Database -o $Name -M $Min_Pro -d $Max_Gap -I $ID_Tag -n $Max_Output -e $Max_Evalue -l $Edge_Len -r $Edge_Len\n");
+				system("perl $script_path/IDTE_PHI.pl -i temp_blast.out -q temp_query.fa -D $Database -o $Name -M $Min_Pro -d $Max_Gap -I $ID_Tag -n $Max_Output -e $Max_Evalue -l $Edge_Len -r $Edge_Len\n");
 				$Seq_Num = 0;
 				open(NF, "$Name.flank")||die"2 $!\n";
 				while(<NF>) {
@@ -142,10 +145,10 @@ foreach(keys(%Name_Seq)) {
 			if($Seq_Num >= $Min_Copy) {
 				print "multiple alignment...\n";
 				if(length($Raw_Seq) < $Long_Muscle) {
-					system("muscle -in $Name.flank -out $Name.aln");
+					system("muscle -in $Name.flank -out $Name.aln 2>/dev/null"); #shujun slienced muscle output
 				}else{
 					print "(length < $Long_Muscle run muscle with -maxiters 1 -diags)\n";
-					system("muscle -in $Name.flank -out $Name.aln -maxiters 1 -diags");
+					system("muscle -in $Name.flank -out $Name.aln -maxiters 1 -diags 2>/dev/null"); #shujun slienced muscle output
 				}
 
 				
@@ -258,15 +261,15 @@ foreach(keys(%Name_Seq)) {
 					print "$Add_Filted_Num with additional sequences were filtered out\n";
 
 					if(length($Raw_Seq) < $Long_Muscle) {
-						system("muscle -in $Name.flank -out $Name.aln");
+						system("muscle -in $Name.flank -out $Name.aln 2>/dev/null"); #shujun slienced muscle output
 					}else{
 						print "(length < $Long_Muscle run muscle with -maxiters 1 -diags)\n";
-						system("muscle -in $Name.flank -out $Name.aln -maxiters 1 -diags");
+						system("muscle -in $Name.flank -out $Name.aln -maxiters 1 -diags 2>/dev/null"); #shujun slienced muscle output
 					}
 				}
 
 				#----------------------------------------- identify whether it is a TE or not ----------------------------
-				system("perl /home/oushujun/las/git_bin/MITE-Hunter2/identify_TE_from_mutialign.pl -i $Name.aln -e $Edge_Len -v $Min_Diverge -m $Min_Copy\n");
+				system("perl $script_path/identify_TE_from_mutialign.pl -i $Name.aln -e $Edge_Len -v $Min_Diverge -m $Min_Copy\n"); #shujun
 				
 				system("rm $Name.aln\n");
 

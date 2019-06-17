@@ -43,7 +43,7 @@ foreach(@Raw_Files) {
 
 		$Line =~ s/_formatdb_/$Formatdb/;
 		$Line =~ s/_blastall_/$Blastall/;
-		$Line =~ s/_mdust_/$Mdust/; #shujun
+		$Line =~ s/_mDust_/$Mdust/;
 		$Line =~ s/_muscle_/$Muscle/;
 		
 		$Line =~ s/_BFI_/$BFI/;

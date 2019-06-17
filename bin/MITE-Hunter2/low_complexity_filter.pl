@@ -18,7 +18,7 @@ usuage() if((!$Input)||($Help));
 #-----------------------------------------------------
 
 if($Dusted eq "none") {
-	system("_mdust_ $Input > $Input.dusted\n");
+	system("mdust $Input > $Input.dusted\n"); #shujun
 	$Dusted = $Input.".dusted";
 }
 

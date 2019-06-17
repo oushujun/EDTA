@@ -7,12 +7,14 @@
 # altix
 #-----------------------------------------------------
 use Getopt::Std;
+use FindBin; #shujun
 #-----------------------------------------------------
+my $script_path = $FindBin::Bin; #shujun
 getopts("d:g:i:h:");
 
 $Input   = defined $opt_d ? $opt_d : "";
 $GenBank = defined $opt_g ? $opt_g : 0;
-$Indexer = defined $opt_i ? $opt_i : "/iob_home/srwlab/vehell/scratch/Tools/File_Deal/reads_indexer.pl";
+$Indexer = defined $opt_i ? $opt_i : "$script_path/reads_indexer.pl"; #shujun
 $Help    = defined $opt_h ? $opt_h : "";
 
 usuage() if((!$Input)||($Help));
@@ -99,7 +101,7 @@ sub usuage {
 
 	\$Input   = defined \$opt_d ? \$opt_d : "";
 	\$GenBank = defined \$opt_g ? \$opt_g : 0;
-	\$Indexer = defined \$opt_i ? \$opt_i : "/iob_home/srwlab/vehell/scratch/Tools/File_Deal/reads_indexer.pl";
+	\$Indexer = defined \$opt_i ? \$opt_i : "$script_path/reads_indexer.pl";
 	\$Help    = defined \$opt_h ? \$opt_h : "";
 
     _EOT_

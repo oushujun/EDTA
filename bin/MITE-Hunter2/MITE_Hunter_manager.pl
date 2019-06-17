@@ -12,7 +12,10 @@
 # get putative MITE-like sequences from given genomic sequences
 # -----------------------------------------------------
 use Getopt::Std;
+use FindBin; #shujun
 # -----------------------------------------------------
+my $script_path = $FindBin::Bin; #shujun
+
 getopts("i:F:w:s:g:n:c:d:f:t:M:l:p:L:I:m:T:C:P:A:S:h:");
 
 $Genomic_Seq = defined $opt_i ? $opt_i : "";
@@ -71,7 +74,7 @@ $Output7 = $Genome_Tag."_Step7.fa";
 
 $Output8 = $Genome_Tag."_Step8";
 
-$Format_Index = "/home/oushujun/las/git_bin/MITE-Hunter2/reads_indexer.pl";
+$Format_Index = "$script_path/reads_indexer.pl"; #shujun
 
 #--------------------- split genome sequnces --------------
 if($Step_code =~ /1/) {
@@ -79,17 +82,17 @@ if($Step_code =~ /1/) {
 	#------------------- format database if necessary --------
 	if($Formated != 1) {
 		print "formating database ...\n";
-		system("perl /home/oushujun/las/git_bin/MITE-Hunter2/blast_formatdb_index.pl -d $Genomic_Seq -i $Format_Index \n");
+		system("perl $script_path/blast_formatdb_index.pl -d $Genomic_Seq -i $Format_Index \n"); #shujun
 	}
 
 	#------- cut genomic sequeneces into fragments --------
-	system("perl /home/oushujun/las/git_bin/MITE-Hunter2/fasta_windows_maker.pl -i $Genomic_Seq -w $Window_Len -s $Step_Len -P $Sample_Per -o $Output1\n");
+	system("perl $script_path/fasta_windows_maker.pl -i $Genomic_Seq -w $Window_Len -s $Step_Len -P $Sample_Per -o $Output1\n"); #shujun
 }
 
 #-------------------- find raw candidates -------------------
 if($Step_code =~ /2/) {
 	#------- split sequence fragments into groups ---------
-	system("perl /home/oushujun/las/git_bin/MITE-Hunter2/fasta_spliter.pl -i $Output1 -n $Group_Num -o $Genome_Tag\n");
+	system("perl $script_path/fasta_spliter.pl -i $Output1 -n $Group_Num -o $Genome_Tag\n"); #shujun
 	#------- identify putative MITEs from each group ------
 	@Groups = glob("$Genome_Tag.*");
 	$Sub_Group_Num = 1;
@@ -98,7 +101,7 @@ if($Step_code =~ /2/) {
 		print "Group file: $Group_Fasta_File\n";
 		print "-i $Group_Fasta_File -f $Flank_Len -t $TIR_Len -m $Max_TSD -l $Loose_Num -p $Min_Low_Per -g $Genome_Tag \n";
 		$Sub_Tag = $Genome_Tag."_".$Sub_Group_Num;
-		system("perl /home/oushujun/las/git_bin/MITE-Hunter2/MITE_Hunter_worker1.pl -i $Group_Fasta_File -f $Flank_Len -t $TIR_Len -m $Max_TSD -p $Min_Low_Per -g $Sub_Tag &\n");
+		system("perl $script_path/MITE_Hunter_worker1.pl -i $Group_Fasta_File -f $Flank_Len -t $TIR_Len -m $Max_TSD -p $Min_Low_Per -g $Sub_Tag &\n"); #shujun
 		$Sub_Group_Num ++;
 	}
 
@@ -117,8 +120,8 @@ if($Step_code =~ /2/) {
 #-------------- filter out sequences mainly composed with low complexty ----------
 if($Step_code =~ /3/) {
 	system("cat *.TSD.* > $Output2\n");
-	system("/home/oushujun/las/git_bin/mdust/mdust $Output2 > $Output2.dusted\n");
-	system("perl /home/oushujun/las/git_bin/MITE-Hunter2/low_complexity_filter.pl -i $Output2 -d $Output2.dusted -p $Dust_Per -l $Max_LowCom -o $Output3\n");
+	system("mdust $Output2 > $Output2.dusted\n");
+	system("perl $script_path/low_complexity_filter.pl -i $Output2 -d $Output2.dusted -p $Dust_Per -l $Max_LowCom -o $Output3\n"); #shujun
 }
 
 #-------------------------- BLAST to filter candidates ------------------- 
@@ -156,7 +159,7 @@ if($Step_code =~ /4/) {
 		$File = $_;
 		system("formatdb -i $File -o F -p F\n");
 		system("blastall -i $File -d $File -e 1e-10 -p blastn -o $File.self -m 8 -v 60 -b 60 -a $CPU_Num -F F -G 4 -E 2 -q -3 -r 2\n");
-		system("perl /home/oushujun/las/git_bin/MITE-Hunter2/MITE_Hunter_worker2.pl -q $File -b $File.self -c 2 -o $File.pre\n");
+		system("perl $script_path/MITE_Hunter_worker2.pl -q $File -b $File.self -c 2 -o $File.pre\n"); #shujun
 	}
 	system("cat *.pre.fa > $Output4");
 }
@@ -214,14 +217,14 @@ if($Step_code =~ /5/) {
 		system("formatdb -i $Output4 -o F -p F\n");
 		system("blastall -i $Output4 -d $Output4 -e 1e-10 -p blastn -o $Output4.self -m 8 -v 2000 -b 2000 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
 	}
-	system("perl /home/oushujun/las/git_bin/MITE-Hunter2/examplar_maker.pl -i $Output4 -b $Output4.self -p 0 -n 2 -o $Output5 -m $Exe_Min_Len -s $Exe_Min_Ide\n");
+	system("perl $script_path/examplar_maker.pl -i $Output4 -b $Output4.self -p 0 -n 2 -o $Output5 -m $Exe_Min_Len -s $Exe_Min_Ide\n"); #shujun
 }
 
 #-------------------------- check exemplars --------------------
 if($Step_code =~ /6/) {
 	$Max_Gap = $Max_LowCom + 10;
 	#------------------------------ check whether the putative MITEs are real, get consensus sequences and group ----------------------
-	system("perl /home/oushujun/las/git_bin/MITE-Hunter2/MITE_Hunter_worker3.pl -i $Output5 -D $Genomic_Seq -m $Min_Copy -I $Genome_Tag -f $Fixed_TSD -c $Truncated -o $Output6 -G $Max_Gap\n");		
+	system("perl $script_path/MITE_Hunter_worker3.pl -i $Output5 -D $Genomic_Seq -m $Min_Copy -I $Genome_Tag -f $Fixed_TSD -c $Truncated -o $Output6 -G $Max_Gap\n"); #shujun
 }
 
 #-------------------- further group and find exemplars again -------------------
@@ -229,14 +232,14 @@ if($Step_code =~ /7/) {
 	#------------------------------ self blast followed by examplar_maker.pl to group putative MITEs ---------------------------------
 	system("formatdb -i $Output6 -o F -p F\n");
 	system("blastall -i $Output6 -d $Output6 -e 1e-10 -p blastn -o $Output6.self -m 8 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
-	system("perl /home/oushujun/las/git_bin/MITE-Hunter2/examplar_maker.pl -i $Output6 -b $Output6.self -p 0 -n 2 -o $Output7 -m $Exe_Min_Len -s $Exe_Min_Ide -l 1\n");
+	system("perl $script_path/examplar_maker.pl -i $Output6 -b $Output6.self -p 0 -n 2 -o $Output7 -m $Exe_Min_Len -s $Exe_Min_Ide -l 1\n"); #shujun
 }
 
 #-------------------- group into subfamilies -------------------
 if($Step_code =~ /8/) {
 	system("formatdb -i $Output7 -o F -p F\n");
 	system("blastall -i $Output7 -d $Output7 -e 1e-10 -p blastn -o $Output7.self -v 500 -b 500 -m 9 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num\n");
-	system("perl /home/oushujun/las/git_bin/MITE-Hunter2/MITE_Hunter_worker4.pl -i $Output7 -b $Output7.self -o $Output8\n");
+	system("perl $script_path/MITE_Hunter_worker4.pl -i $Output7 -b $Output7.self -o $Output8\n"); #shujun
 }
 
 # -----------------------------------------------------
