@@ -31,7 +31,7 @@ my $script_path = $FindBin::Bin;
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-my $TIR_Learner = "$script_path/bin/TIR-Learner1.12/TIR-Learner.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner1.13/TIR-Learner.sh";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 

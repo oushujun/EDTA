@@ -45,14 +45,16 @@ rawFile=$1 #the genome file with relative path
 #filePath=`realpath $rawFile`
 #genomeFile=`basename $filePath`
 #[ -f $genomeFile ] || ln -s $filePath $genomeFile
-genomeFile="/work/LAS/thomasp-lab/weijia/research/test_B54/p2.fasta" #the genome file with real path
-genomeName="p2"
+genomeFile=`realpath $rawFile` #the genome file with real path
+#genomeFile="/work/LAS/thomasp-lab/weijia/research/test_B54/p2.fasta" #the genome file with real path
+genomeName="TIR-Learner"
+#genomeName="p2"
 path=$(dirname "$0") #program path
-path="/work/LAS/thomasp-lab/weijia/research/TIR-Learner1.12/"
+#path="/work/LAS/thomasp-lab/weijia/research/TIR-Learner1.12/"
 dir=$(pwd) #current work directory
-#grfp="$path/../GenericRepeatFinder/bin/"
-grfp="/work/LAS/thomasp-lab/weijia/research/software/GenericRepeatFinder/bin/"
-t=48 #CPUs
+grfp="$path/../GenericRepeatFinder/bin/"
+#grfp="/work/LAS/thomasp-lab/weijia/research/software/GenericRepeatFinder/bin/"
+t=16 #CPUs
 
 ## allow user to specify CPU number
 if [ ! -z "$2" ];
@@ -67,7 +69,6 @@ fi
 echo "############################################################ Pre-Processing ###########################################################"
 
 ## Check sequence file
-#[ -f $genomeFile ] || ln -s $rawFile $genomeFile
 python3 $path/pre.py -g $genomeFile -name $genomeName
 
 ## mkdir temp
@@ -84,15 +85,11 @@ cd $dir"/Module1"
 [ -d $genomeName ] || mkdir $genomeName
 [ -d temp ] || mkdir temp
 
-if [ ! 0 ]; then #debug
-echo test
-fi
-
 echo "Module 1, Step 1: Blast Genome against Reference Library"
 python3 $path/Module1/Blast_Ref.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module1"
-#python3 $path/Module1/Blast_Ref.py -g $rawFile -name $genomeName -p $path -t $t -d $dir"/Module1"
 cp $genomeName/*blast* temp/
 
+# if no blast result, then skip Module 1 and 2
 cd $genomeName
 file=tem_blastRestul
 if [ -s $file ]
@@ -106,7 +103,6 @@ python3 $path/Module1/Fullcov.py  -name $genomeName -p $path -d $dir"/Module1"
 
 echo "Module 1, Step 3: Making blastDB and get candidate sequences"
 python3 $path/Module1/GetSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module1"
-#python3 $path/Module1/GetSeq.py -g $rawFile -name $genomeName -p $path -t $t -d $dir"/Module1"
 
 echo "Module 1, Step 4: Check TIR and TSD"
 python3 $path/Module1/CheckTIRTSD.py -name $genomeName -p $path -t $t -d $dir"/Module1"
@@ -116,11 +112,9 @@ python3 $path/Module1/WriteToGff_M1.py -name $genomeName -p $path -t $t -d $dir"
 
 echo "Module 1, Step 6: Check Low Complexity"
 python3 $path/Module1/Lowcomp_M1.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module1"
-#python3 $path/Module1/Lowcomp_M1.py -g $rawFile -name $genomeName -p $path -t $t -d $dir"/Module1"
 
 echo "############################################################ Module 1 Finished ###########################################################"
 
-#exit
 
 ################
 ### Module 2 ###
