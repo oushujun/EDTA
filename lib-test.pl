@@ -100,6 +100,8 @@ $category{'helitron'}="Helitron";
 $category{'total'}="[0-9]"; #grep any line with numbers
 $category{'classified'}="'Unknown\\|unknown\\/unknown'"; #unknown TEs of all kind
 
+die "The specified catetory $category is not found in our database!\n" unless exists $category{$category};
+
 ## get all classified regions
 if ($category eq "classified"){
 	`grep -v -P '$category{$category}' $std_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - > $std_out.$category.cvg`;
