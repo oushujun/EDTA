@@ -107,6 +107,7 @@ if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
 
 print "Start to find TIR candidates.\n\n";
 
+if (0){
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/TIR";
 `ln -s ../../$genome $genome` unless -s $genome;
@@ -116,6 +117,8 @@ chdir "$genome.EDTA.raw/TIR";
 `cp TIR-Learner-Result/TIR-Learner_FinalAnn.fa ../$genome.TIR.raw.fa`;
 #`cp TIR-Learner-Result/${genome}_FinalAnn.fa ../$genome.TIR.raw.fa`;
 chdir '../..';
+} #test
+`touch "$genome.EDTA.raw/$genome.TIR.raw.fa"`; #test
 
 # check results
 die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.raw.fa";
