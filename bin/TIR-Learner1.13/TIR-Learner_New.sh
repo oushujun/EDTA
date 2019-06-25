@@ -50,13 +50,15 @@ rawFile=$1 #the genome file with relative path
 #filePath=`realpath $rawFile`
 #genomeFile=`basename $filePath`
 #[ -f $genomeFile ] || ln -s $filePath $genomeFile
-genomeFile="/work/LAS/thomasp-lab/weijia/research/test_B54/p2.fasta" #the genome file with real path
-genomeName="p2"
+genomeFile=`realpath $rawFile` #the genome file with real path
+#genomeFile="/work/LAS/thomasp-lab/weijia/research/test_B54/p2.fasta" #the genome file with real path
+genomeName="TIR-Learner"
+#genomeName="p2"
 path=$(dirname "$0") #program path
-path="/work/LAS/thomasp-lab/weijia/research/TIR-Learner1.12/"
+#path="/work/LAS/thomasp-lab/weijia/research/TIR-Learner1.12/"
 dir=$(pwd) #current work directory
-#grfp="$path/../GenericRepeatFinder/bin/"
-grfp="/work/LAS/thomasp-lab/weijia/research/software/GenericRepeatFinder/bin/"
+grfp="$path/../GenericRepeatFinder/bin/"
+#grfp="/work/LAS/thomasp-lab/weijia/research/software/GenericRepeatFinder/bin/"
 t=48 #CPUs
 
 ## allow user to specify CPU number
