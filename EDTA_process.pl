@@ -111,7 +111,7 @@ chdir "$genome.EDTA.LTR";
 
 # clean up tandem repeats and short seq with cleanup_tandem.pl
 `perl $rename_TE $genome.LTR.raw.fa > $genome.LTR.raw.fa.renamed`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.raw.fa.renamed > $genome.LTR.fa.stg0`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.raw.fa.renamed > $genome.LTR.fa.stg0`;
 
 # identify mite contaminants with MITE-Hunter
 `rm genome* 2>/dev/null`;
@@ -126,7 +126,7 @@ chdir "$genome.EDTA.LTR";
 # remove potential mite and helitron contaminants
 `cat $genome.LTR.fa.stg0.mite $genome.LTR.fa.stg0.helitron > $genome.LTR.fa.stg0.mite.helitron`;
 `${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.mite.helitron $genome.LTR.fa.stg0 2>/dev/null`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 100 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0.masked > $genome.LTR.fa.stg0.cln`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0.masked > $genome.LTR.fa.stg0.cln`;
 
 # extract LTR regions from stg0.cln as HQ
 `grep \"_LTR\" $genome.LTR.fa.stg0.cln > $genome.LTR.fa.stg0.cln.list`;
@@ -184,7 +184,7 @@ chdir "$genome.EDTA.TIR";
 # remove potential LTR and helitron contaminants
 `cat $genome.TIR.fa.stg0.LTR $genome.TIR.fa.stg0.helitron > $genome.TIR.fa.stg0.LTR.helitron`;
 `${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR.fa.stg0.LTR.helitron $genome.TIR.fa.stg0 2>/dev/null`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg0.HQ`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg0.HQ`;
 
 # copy results to the combine folder
 `cp $genome.TIR.fa.stg0 $genome.TIR.fa.stg0.HQ ../$genome.EDTA.combine`;
@@ -222,7 +222,8 @@ chdir "$genome.EDTA.combine";
 
 # remove LTR in TIR candidates
 `${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg0 2>/dev/null`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1`;
+#`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked | perl $rename_tirlearner - > $genome.TIR.fa.stg1`;
 
 # remove LTR and TIR in Helitron candidates
 `cat $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg0.HQ > $genome.LTR.TIR.fa.stg0.HQ`;
@@ -230,14 +231,14 @@ chdir "$genome.EDTA.combine";
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.Helitron.fa.stg0.masked > $genome.Helitron.fa.stg1`;
 
 # aggregate clean sublibraries and cluster
-`cat $genome.LTR.fa.stg1 $genome.TIR.fa.stg1 $genome.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.fa.stg1.raw`;
+`cat $genome.LTR.fa.stg1 $genome.TIR.fa.stg1 $genome.Helitron.fa.stg1 | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.LTR.TIR.Helitron.fa.stg1.raw`;
 `perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln`;
 `perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2`;
 `perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2 -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3`;
 
 # remove protein-coding sequences
 `perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3 -rmdnate 0 -rmline 1 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
-`mv $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3.clean $genome.LTR.TIR.Helitron.fa.stg1`;
+`perl $rename_TE $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3.clean > $genome.LTR.TIR.Helitron.fa.stg1`;
 
 chdir '..';
 
