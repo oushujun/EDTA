@@ -8,13 +8,14 @@ my $usage = "
 
 my $len_cutoff = 600; #TIR elements <= this value are classified as MITEs, others DNA TEs.
 
-my $fasta = $ARGV[0];
-die "\nThe input file is not found!\n$usage" unless -s $fasta;
+#my $fasta = $ARGV[0];
+#die "\nThe input file is not found!\n$usage" unless -s $fasta;
 
 
-open Fasta, "<$fasta" or die $usage;
+#open Fasta, "<$fasta" or die $usage;
 $/ = "\n>";
-while (<Fasta>){
+#while (<Fasta>){
+while (<>){
 	s/>//g;
 	my ($id, $seq) = (split /\n/, $_, 2);
 	$seq =~ s/\s+//g;
@@ -25,8 +26,13 @@ while (<Fasta>){
 		$class = "MITE";
 		}
 	my ($name, $superfam, $tsd) = ('NA', 'NA', 'NA');
-	($name, $superfam, $tsd) = ($1, $2, $3) if $id =~ /^(.*)_(D.*)_TIR.*TSD:([ATCGNX_]+)_[0-9]+.*/i;
-	print ">$name#$class/$superfam TSD:$tsd\n$seq\n";
+	($name, $superfam, $tsd) = ($1, $2, $3) if $id =~ /^(.*)_(D.*)_TIR.*TSD:([ATCGNX_]+)_[0-9]+.*/i; #renamed TIR-Learner output
+	if ($name ne 'NA'){
+		print ">$name#$class/$superfam TSD:$tsd\n$seq\n";
+		} else {
+		($name, $superfam) = ($1, $2) if $id =~ /^(.*)#.*\/(D.*)/;
+		print ">$name#$class/$superfam\n$seq\n";
+		}
 	}
-close Fasta;
+#close Fasta;
 
