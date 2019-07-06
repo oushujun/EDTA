@@ -21,6 +21,7 @@ print "
 my $usage = "\nGenerates a structure-based high-quality TE library
 	perl EDTA.pl [options]
 		-genome	[File]	The genome FASTA
+		-species [Rice|Maize|others]	
 		-step	[all|filter|final] Specify which steps you want to run EDTA.
 						all: run the entire pipeline (default)
 						filter: start from raw TEs to the end.
@@ -118,12 +119,6 @@ $GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #defau
 die "Error: The Generic Repeat Finder (GRF) is not working on the current system.
 	Please reinstall it in $GRF following instructions in https://github.com/bioinfolabmu/GenericRepeatFinder.
 	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
-
-#cd-hit-est
-#$cdhitpath=`which cd-hit-est 2>/dev/null` if $cdhitpath eq '';
-#$cdhitpath=~s/cd-hit-est\n//;
-#die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" if (!(-X "${cdhitpath}cd-hit-est") and $cdhit);
-#die "The path of CDHIT is not specified!\n" unless -X "${cdhitpath}cd-hit-est";
 
 print "\t\tAll passed!\n";
 
