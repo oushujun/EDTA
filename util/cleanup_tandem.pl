@@ -120,6 +120,5 @@ while (<File>){
 
 	print ">$id\n$seq\n" unless $mark==1;
 	}
-$/="\n";
 close Info;
 close File;
