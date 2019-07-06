@@ -80,5 +80,7 @@ foreach my $id (keys %seq){
 
 foreach my $id (sort{$a cmp $b} (keys %seq)){
 	print ">$id\n$seq{$id}\n";
-	}
-       
+	} 
+
+`rm $IN.nhr $IN.nin $IN.nsq`;
+
