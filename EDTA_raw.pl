@@ -20,18 +20,23 @@ use File::Basename;
 my $usage = "\nObtain raw TE libraries using various structure-based programs
 	perl EDTA_raw.pl [options]
 		-genome	[File]	The genome FASTA
+		-species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
+		-type	[ltr|tir|mite|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
 		-threads	[int]	Number of theads to run this script
 		-help|-h	Display this help info
 \n";
 
 # pre-defined
 my $genome = '';
+my $species = 'others';
+my $type = 'all';
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-my $TIR_Learner = "$script_path/bin/TIR-Learner1.13/TIR-Learner.sh";
+#my $TIR_Learner = "$script_path/bin/TIR-Learner1.13/TIR-Learner.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner1.15/TIR-Learner_1.15.sh";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 
@@ -39,6 +44,8 @@ my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $k=0;
 foreach (@ARGV){
 	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
+	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
+	$type = lc $ARGV[$k+1] if /^-type$/i and $ARGV[$k+1] !~ /^-/;
 	$threads = $ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1] !~ /^-/;
 	die $usage if /^-help$|^-h$/i;
 	$k++;
@@ -72,6 +79,8 @@ $genome = $genome_file;
 ###### LTR_retriever ######
 ###########################
 
+if ($type eq "ltr" or $type eq "all"){
+
 print "Start to find LTR candidates.\n\n";
 
 # enter the working directory and create genome softlink
@@ -100,38 +109,42 @@ if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
 	print "Warning: The LTR result file has 0 bp!\n\n";
 	}
 
+}
 
 ###########################
 ######  TIR-Learner  ######
 ###########################
 
+if ($type eq "tir" or $type eq "all"){
+
 print "Start to find TIR candidates.\n\n";
 
-if (0){
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/TIR";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # run TIR-Learner
-`sh $TIR_Learner $genome $threads`;
+`sh $TIR_Learner -g $genome -s $species -t $threads`;
 `cp TIR-Learner-Result/TIR-Learner_FinalAnn.fa ../$genome.TIR.raw.fa`;
-#`cp TIR-Learner-Result/${genome}_FinalAnn.fa ../$genome.TIR.raw.fa`;
 chdir '../..';
-} #test
-`touch "$genome.EDTA.raw/$genome.TIR.raw.fa"`; #test
 
 # check results
 die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.raw.fa";
 if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
 	print "Finish finding TIR candidates.\n\n";
 	} else {
+	`touch "$genome.EDTA.raw/$genome.TIR.raw.fa"`;
 	print "Warning: The TIR result file has 0 bp!\n\n";
 	}
+
+}
 
 
 ###########################
 ######  MITE-Hunter  ######
 ###########################
+
+if ($type eq "mite" or $type eq "all"){
 
 print "Start to find MITE candidates.\n\n";
 
@@ -155,10 +168,13 @@ if (-s "$genome.EDTA.raw/$genome.MITE.raw.fa"){
 	print "Warning: The MITE result file has 0 bp!\n\n";
 	}
 
+}
 
 #############################
 ###### HelitronScanner ######
 #############################
+
+if ($type eq "helitron" or $type eq "all"){
 
 print "Start to find Helitron candidates.\n\n";
 
@@ -179,4 +195,5 @@ if (-s "$genome.EDTA.raw/$genome.Helitron.raw.fa"){
 	print "Warning: The Helitron result file has 0 bp!\n\n";
 	}
 
+}
 
