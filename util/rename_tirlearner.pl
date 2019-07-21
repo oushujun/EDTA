@@ -25,12 +25,13 @@ while (<>){
 		} else {
 		$class = "MITE";
 		}
-	my ($name, $superfam, $tsd) = ('NA', 'NA', 'NA');
+	my ($name, $superfam, $tsd) = ('NA', 'TIR', 'NA');
 	($name, $superfam, $tsd) = ($1, $2, $3) if $id =~ /^(.*)_(D.*)_TIR.*TSD:([ATCGNX_]+)_[0-9]+.*/i; #renamed TIR-Learner output
 	if ($name ne 'NA'){
 		print ">$name#$class/$superfam TSD:$tsd\n$seq\n";
 		} else {
 		($name, $superfam) = ($1, $2) if $id =~ /^(.*)#.*\/(D.*)/;
+		$name = $id unless $name ne 'NA';
 		print ">$name#$class/$superfam\n$seq\n";
 		}
 	}
