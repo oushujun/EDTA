@@ -5,7 +5,7 @@ use File::Basename;
 my $usage="
         Usage: perl cleanup.pl -f sample.fa [options] > sample.cln.fa 
 	Options:
-		-misschar	n	Define the letter representing unknown sequences; case insensitive; default: n
+		-misschar	[n|l]	Define the letter representing unknown sequences; default: n. l: recognize lower case letters
 		-Nscreen	[0|1]	Enable (1) or disable (0) the -nc parameter; default: 1
 		-nc		[int]	Ambuguous sequence len cutoff; discard the entire sequence if > this number; default: 0
 		-nr		[0-1]	Ambuguous sequence percentage cutoff; discard the entire sequence if > this number; default: 1
@@ -13,6 +13,7 @@ my $usage="
 		-maxlen		[int]	Maximum sequence length filter after clean up; default: 25000 (bp)
 		-cleanN		[0|1]	Retain (0) or remove (1) the -misschar taget in output sequence; default: 0
 		-cleanT		[0|1]	Remove entire seq. if any terminal seq (20bp) has 15bp of N (1); disabled by default (0).
+		-minrm		[int]	The minimum length of -misschar to be removed if -cleanN 1; default: 1.
 		-trf		[0|1]	Enable (1) or disable (0) tandem repeat finder (trf); default: 1
 		-trf_path	path	Path to the trf program
         \n";
@@ -34,6 +35,7 @@ my $n_count=0; #count the $target in each sequence, if it exceeds this number, i
 my $n_rate=1; #count the $target in each sequence, if it exceeds this percentage, it will be discarted.
 my $minlen=100; #Minimum sequence length filter after clean up; default: 100 (bp)
 my $maxlen=25000; #Maximum sequence length filter after clean up; default: 25000 (bp)
+my $minrm=1; #The minimum length of -misschar to be removed if -cleanN 1
 my $align_score=1000; #-e para, dft:1000 
 my $max_seed=2000; #maximum period size to report
 my $cleanN=0; #1 will remove $target="n" in output sequence
@@ -50,6 +52,7 @@ foreach (@ARGV){
 	$n_rate=$ARGV[$k+1] if /^-nr$/i;
 	$minlen=$ARGV[$k+1] if /^-minlen$/i;
 	$maxlen=$ARGV[$k+1] if /^-maxlen$/i;
+	$minrm=$ARGV[$k+1] if /^-minrm$/i;
 	$align_score=$ARGV[$k+1] if /^-minscore$/i;
 	$file=$ARGV[$k+1] if /^-f$/i;
 	$cleanN=$ARGV[$k+1] if /^-cleanN$/i;
@@ -80,7 +83,12 @@ while (<File>){
 	my $length=length $seq;
 	my $mark=0;
 	my $count=0;
-	$count++ while $seq=~/$target/gi;
+	if ($target =~ /n/i){ #hardmask N
+		$count++ while $seq=~/$target/gi;
+		}
+	if ($target =~ /^l$/i){ #softmask lowercase
+		$count++ while $seq=~/[atcgnN]/g;
+		}
 	my $count_rate=$count/$length;
 
 #missing control
@@ -104,20 +112,29 @@ while (<File>){
 		my $start_20=substr $seq, 0, 20;
 		my $end_20=substr $seq, -20;
 		my ($count_s, $count_e) = (0,0);
-		$count_s++ while $start_20=~/$target/gi;
-		$count_e++ while $end_20=~/$target/gi;
+		if ($target =~ /n/i){ #hardmask
+			$count_s++ while $start_20=~/$target/gi;
+			$count_e++ while $end_20=~/$target/gi;
+			}
+		elsif ($target =~ /^l$/i){ #softmask
+			$count_s++ while $start_20=~/[atcgnN]/g;
+			$count_e++ while $end_20=~/[atcgnN]/g;
+			}
 		(print Info "$id\tSequence head has $count_s bp missing\n" and $mark=1) if $count_s>=15;
 		(print Info "$id\tSequence tail has $count_e bp missing\n" and $mark=1) if $count_e>=15;
 		}
 
 #remove missing seq and length control
 	if ($cleanN==1){
-		$seq=~s/$target//gi;
+#		$seq=~s/$target//gi if $target =~ /n/i;
+		$seq=~s/([nN]{$minrm,})//gi if $target =~ /n/i; #hardmask
+		$seq =~ s/([atcgnN]{$minrm,})//g if $target =~ /^l$/i; #softmask
 		my $len=length $seq;
 		(print Info "$id\tOnly $len bp left after cleanup\n" and $mark=1) if $len < $minlen;
 		(print Info "$id\tSequence $len bp > the limit $maxlen bp after cleanup\n" and $mark=1) if $len > $maxlen;
 		}
 
+	$seq = uc $seq;
 	print ">$id\n$seq\n" unless $mark==1;
 	}
 close Info;
