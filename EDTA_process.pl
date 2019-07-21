@@ -101,6 +101,7 @@ $genome = $genome_file;
 `mkdir $genome.EDTA.combine` unless -e "$genome.EDTA.combine" && -d "$genome.EDTA.combine";
 
 
+if (0){
 ###########################
 ######  Process LTR  ######
 ###########################
@@ -137,6 +138,7 @@ chdir "$genome.EDTA.LTR";
 chdir '..';
 
 
+}
 ###########################
 ######  Process TIR  ######
 ###########################
