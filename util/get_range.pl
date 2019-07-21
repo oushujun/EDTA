@@ -9,6 +9,7 @@ my $usage="to out put some information from the ltrharvest_screen.scn/ltrdigest_
 
 my $version="
 	Version: 
+		v2.0 Shujun Ou	07-06-2016 Add -extlen parameter that allows customized coordiate extension. Default: 50
 		v1.9 Shujun Ou	03-17-2016 Add -fl parameter to output LTR regions with 50 bp two-end-extended coordinates, also change -x to 50bp extension.
 		v1.8 Shujun Ou	04-16-2015 Add -g parameter to take whole genome file as input, instead of the *ltrTE.fa file from LTRharvest
 		v1.7 Shujun Ou	04-08-2015 Add -int parameter to output the internal region coordinates to the fasta name
@@ -32,6 +33,7 @@ my $max_iLratio=50; #dft=50, maximum internal/LTR region length ratio
 my $boundary=0; #0 for no boundary cutting (default). 1 will walk 10bp inside the original range on both ends for boundary alignment.
 my $flanking=0; #0 for no flanking output. 1 will output extra 50 bp flanking at both ends for boundary correction, TSD searching, and LTR judging.
 my $extend=0; #0 for no region extension (default). 1 will extend 50bp outside the original range for boundary adjustment.
+my $extlen=50; #if $extend==1, then extend the coordiate for $extlen on each side. Default: 50
 my $longer=0; #0 for no right and left LTR length comparison, 1 will output the longer LTR region only.
 my $full=0; #0 will not output full length loci. 1 will output the full range loci.
 my $in=0; #0 will not output internal region to the list. 1 will output lLTR, rLTR and internal region in separate lines.
@@ -44,6 +46,7 @@ foreach my $para (@ARGV){
 	$boundary=1 if ($para=~/^-b$/i);
 	$flanking=1 if ($para=~/^-fl$/i);
 	$extend=1 if ($para=~/^-x$/i);
+	$extlen=$ARGV[$k+1] if $para=~/^-extlen$/i;
 	$longer=1 if ($para=~/^-L$/i);
 	$full=1 if ($para=~/^-f$/i);
 	$in=1 if ($para=~/^-i$/i);
@@ -73,6 +76,7 @@ if ($LTR==1 && $genome==0){
 #print "$id\n";
 		$chr{"$2..$3"}=$1 if (/(\S+)\:([0-9]+)\.\.([0-9]+)/); #eg: gi.478789307.gb.AQOG01045884.1:56716..59758     pass    motif:AAAG      TSD:TGAAG
 		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|/);#eg: >Chr1:106522..118080|
+		$chr{"$2..$3"}=$1 if (/^(\S+)_([0-9]+)_([0-9]+)/); #>Chr10_3119406_3119688
 #print "$1\n";
 		}
 	}
@@ -153,10 +157,10 @@ if ($LTR==1){
 		}
 
 	if ($extend==1 or $flanking==1){
-		$lLTR_start-=50; #directly extend the coordinate for 50 bp
-		$lLTR_end+=50;
-		$rLTR_start-=50;
-		$rLTR_end+=50;
+		$lLTR_start-=$extlen; #directly extend the coordinate for $extlen bp
+		$lLTR_end+=$extlen;
+		$rLTR_start-=$extlen;
+		$rLTR_end+=$extlen;
 		print Extend "$chr:$element_start..$element_end\t$chr:$lLTR_start..$rLTR_end\n" if defined $chr;
 		}
 
