@@ -61,7 +61,7 @@ java -Xmx${MEMGB}g -jar ${HSDIR}/HelitronScanner.jar draw -pscore ${GENOME}.Heli
 ######################### 
 
 ### will read in both $GENOME.HelitronScanner.draw.hel.fa $GENOME.HelitronScanner.draw.rc.hel.fa and filter out candidates based on prediction scores (min = 12) and target site (AT or TT).
-perl $path/format_helitronscanner_out.pl $GENOME
+perl $path/format_helitronscanner_out.pl -genome $GENOME -sitefilter 1 -minscore 12 -keepshorter 1 -extout 0
 
 
 
