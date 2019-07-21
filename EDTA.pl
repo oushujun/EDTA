@@ -3,10 +3,11 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.2";
+my $version = "v1.3";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
+#v1.3 07/20/2019
 
 print "
 ########################################################
@@ -18,14 +19,15 @@ print "
 ## Input: $genome
 ## Output: $genome.TElib.fa
 
-my $usage = "\nGenerates a structure-based high-quality TE library
+my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-quality structure-based TE library. Usage:
 	perl EDTA.pl [options]
 		-genome	[File]	The genome FASTA
-		-species [Rice|Maize|others]	
+		-species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
 		-step	[all|filter|final] Specify which steps you want to run EDTA.
 						all: run the entire pipeline (default)
 						filter: start from raw TEs to the end.
 						final: start from filtered TEs to finalizing the run.
+		-overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
 		-protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
 					You may use uniprot_sprot database available from here:
 					ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
@@ -39,16 +41,21 @@ my $usage = "\nGenerates a structure-based high-quality TE library
 
 # pre-defined
 my $genome = '';
+my $species = "others";
 my $step = "ALL";
+my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
-my $EDTA_process = "$script_path/EDTA_process.pl";
+my $EDTA_process = "$script_path/EDTA_processD2.pl";
+#my $EDTA_process = "$script_path/EDTA_process.pl";
 my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
 my $cleanup_nested = "$script_path/util/cleanup_nested.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
 my $rename_TE = "$script_path/util/rename_TE.pl";
+#my $mdust = "$script_path/bin/mdust/mdust";
+my $mdust = "";
 my $GRF = "";
 my $repeatmodeler = "";
 my $repeatmasker = "";
@@ -59,7 +66,9 @@ my $trf = "";
 my $k=0;
 foreach (@ARGV){
 	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
+	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
 	$step = uc $ARGV[$k+1] if /^-step$/i and $ARGV[$k+1] !~ /^-/;
+	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmodeler = $ARGV[$k+1] if /^-repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
 	$blast = $ARGV[$k+1] if /^-blast$/i and $ARGV[$k+1] !~ /^-/;
@@ -76,6 +85,7 @@ print "$date\tDependency checking:\n";
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
+#die "The program mdust is not found in $mdust!\n" unless -s $mdust;
 die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
 die "The script EDTA_process.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
@@ -118,7 +128,12 @@ $GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #defau
 `$GRF 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not working on the current system.
 	Please reinstall it in $GRF following instructions in https://github.com/bioinfolabmu/GenericRepeatFinder.
-	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
+	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" if $?==32256;
+# mdust
+$mdust=`which mdust 2>/dev/null` if $mdust eq '';
+$mdust=~s/mdust\n//;
+die "mdust is not working on the current system. Please reinstall it in this folder $mdust.
+	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" unless -X "${mdust}mdust";
 
 print "\t\tAll passed!\n";
 
@@ -130,12 +145,16 @@ $genome = $genome_file;
 goto $step;
 
 
+##################################################
+####### Get raw LTR/TIR/Helitron candidates ######
+##################################################
+
 ALL:
 # Get raw TE candidates
 $date=`date`;
 chomp ($date);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
-`perl $EDTA_raw -genome $genome -threads $threads`;
+`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast`;
 die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa" unless -e "$genome.EDTA.raw/$genome.LTR.raw.fa";
 die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa" unless -e "$genome.EDTA.raw/$genome.TIR.raw.fa";
 die "ERROR: Raw MITE results not found in $genome.EDTA.raw/$genome.MITE.raw.fa" unless -e "$genome.EDTA.raw/$genome.MITE.raw.fa";
@@ -144,6 +163,10 @@ $date=`date`;
 chomp ($date);
 print "$date\tObtain raw TE libraries finished.\n";
 
+
+##################################################
+####### Filter LTR/TIR/Helitron candidates #######
+##################################################
 
 FILTER:
 # Filter raw TE candidates and the make stage 1 library
