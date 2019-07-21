@@ -81,17 +81,17 @@ close File;
 
 my %filter;  #filter based on taild (end) coordinates
 foreach my $key (keys %cluster){
-	my ($_, $chr, $start, $end, $mutation, $tsd) = @{$cluster{$key}};
+	my ($info, $chr, $start, $end, $mutation, $tsd) = @{$cluster{$key}};
 	my $tail = "$chr-$end";
 	if (exists $filter{$tail}) {
 		if ($filter{$tail}[4] = $mutation){
-			$filter{$tail} = [$_, $chr, $start, $end, $mutation, $tsd] if $filter{$tail}[2] < $start; #keep the shorter candidate
+			$filter{$tail} = [$info, $chr, $start, $end, $mutation, $tsd] if $filter{$tail}[2] < $start; #keep the shorter candidate
 			}
 		elsif ($filter{$tail}[4] > $mutation){ #keep the candidate with more identitcal TIR
-			$filter{$tail} = [$_, $chr, $start, $end, $mutation, $tsd];
+			$filter{$tail} = [$info, $chr, $start, $end, $mutation, $tsd];
 			}
 		} else {
-		$filter{$tail} = [$_, $chr, $start, $end, $mutation, $tsd];
+		$filter{$tail} = [$info, $chr, $start, $end, $mutation, $tsd];
 		}
 	}
 
