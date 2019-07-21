@@ -94,9 +94,9 @@ $category{'ltr'}="'RLG\\|RLC\\|RLB\\|RLR\\|RLE\\|LTR\\|RLX\\|Gypsy\\|Copia'";
 $category{'nonltr'}="'SINE\\|LINE\\|Penelope'";
 $category{'line'}="LINE";
 $category{'sine'}="SINE";
-$category{'tir'}="'MITE\\|hAT\\|MULE\\|Tourist\\|CACT\\|MLE\\|PILE\\|POLE\\|EnSpm\\|MuDR\\|Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC'";
+$category{'tir'}="'MITE\\|hAT\\|MULE\\|Tourist\\|CACT\\|MLE\\|PILE\\|POLE\\|EnSpm\\|MuDR\\|Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR'";
 $category{'mite'}="MITE";
-$category{'helitron'}="Helitron";
+$category{'helitron'}="'Helitron\\|DHH\\|DHX'";
 $category{'total'}="[0-9]"; #grep any line with numbers
 $category{'classified'}="'Unknown\\|unknown\\/unknown'"; #unknown TEs of all kind
 
