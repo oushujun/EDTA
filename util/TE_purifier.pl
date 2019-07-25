@@ -4,6 +4,7 @@ use FindBin;
 use File::Basename;
 use threads;
 use Thread::Queue;
+use threads::shared;
 
 my $usage = "
 	A script to purify a TE library based on another TE file containing the target contaminant.
@@ -62,6 +63,7 @@ my ($TE1_len, $TE2_len) = (0, 0);
 open TE1, "<$TE1" or die $!;
 open TE2, "<$TE2" or die $!;
 my %TE1;
+my %TE1_cln :shared;
 $/ = "\n>";
 while (<TE1>){
 	chomp;
@@ -75,7 +77,7 @@ while (<TE1>){
 	$TE1_len += $len;
 	$TE1{$id} = $seq;
 	}
-my %TE1_cln = %TE1;
+%TE1_cln = %TE1;
 
 # count $TE2 total length
 while (<TE2>){
@@ -118,10 +120,6 @@ open STAT, ">$TE1-$TE2.stat" or die $!;
 open Seq, ">$TE1-$TE2.fa" or die $!;
 print STAT "TE1_id\tTE1_len\tTE2_len\tTE1_richness\tTE2_richness\tFold_diff\n";
 
-# output unprocessed and clean sequence
-foreach my $id (keys %TE1_cln){
-	print Seq ">$id\n$TE1_cln{$id}\n";
-	}
 
 # multi-threading using queue, put candidate regions into queue for parallel computation
 my $queue = Thread::Queue->new();
@@ -142,6 +140,10 @@ foreach (@threads){
 	$_->join();
 	}
 
+# output unprocessed and clean sequence
+foreach my $id (sort {$a cmp $b} keys %TE1_cln){
+	print Seq ">$id\n$TE1_cln{$id}\n";
+	}
 close STAT;
 close Seq;
 
@@ -156,6 +158,7 @@ sub purifier(){
 		my ($id, $coor) = (@{$_}[0], @{$_}[1]);
 		next unless exists $TE1{$id};
 		my $ori_seq = $TE1{$id};
+		lock %TE1_cln;
 
 		while ($coor =~ s/([0-9]+)-([0-9]+)//){
 			my ($from, $to, $seqlen) = ($1, $2, $2-$1+1);
@@ -205,7 +208,7 @@ sub purifier(){
 				substr ($ori_seq, $from-1, $seqlen) = lc $seq;
 				}
 			}
-		print Seq ">$id\n$ori_seq\n";
+		$TE1_cln{$id} = $ori_seq;
 		}
 	}
 
