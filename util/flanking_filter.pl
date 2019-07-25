@@ -4,7 +4,7 @@ use threads;
 use Thread::Queue;
 
 my $usage = "\nFilter HelitronScanner fasta candidates
-	perl flanking_filter_.pl -genome genome.fa -query candidate.fa [options]
+	perl flanking_filter.pl -genome genome.fa -query candidate.fa [options]
 		-genome	[file]	The multifasta file that used to generate the -query
 		-query	[file]	The candidate TE sequence to be filtered by this script
 		-extlen	[int]	The length of extended flanking sequence in -query. Default: 30 (bp)
@@ -29,15 +29,15 @@ my $threads = 4; #threads to run this program
 
 my $k=0;
 foreach (@ARGV){
-	$genome = $ARGV[$k+1] if /^-genome$/i;
-	$query = $ARGV[$k+1] if /^-query$/i;
-	$ext_len = $ARGV[$k+1] if /^-extlen$/i;
-	$tgt_out = $ARGV[$k+1] if /^-tgt_out$/i;
-	$min_iden = $ARGV[$k+1] if /^-miniden$/i;
-	$min_cov = $ARGV[$k+1] if /^-mincov$/i;
-	$max_ct = $ARGV[$k+1] if /^-maxct$/i;
-	$blastplus = $ARGV[$k+1] if /^-blastplus$/i;
-	$threads = $ARGV[$k+1] if /^-t$|^-threads$/i;
+	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
+	$query = $ARGV[$k+1] if /^-query$/i and $ARGV[$k+1] !~ /^-/;
+	$ext_len = $ARGV[$k+1] if /^-extlen$/i and $ARGV[$k+1] !~ /^-/;
+	$tgt_out = $ARGV[$k+1] if /^-tgt_out$/i and $ARGV[$k+1] !~ /^-/;
+	$min_iden = $ARGV[$k+1] if /^-miniden$/i and $ARGV[$k+1] !~ /^-/;
+	$min_cov = $ARGV[$k+1] if /^-mincov$/i and $ARGV[$k+1] !~ /^-/;
+	$max_ct = $ARGV[$k+1] if /^-maxct$/i and $ARGV[$k+1] !~ /^-/;
+	$blastplus = $ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1] !~ /^-/;
+	$threads = $ARGV[$k+1] if /^-t$|^-threads$/i and $ARGV[$k+1] !~ /^-/;
 	die $usage if /^-h$|^-help$/i;
 	$k++;
 	}
@@ -67,7 +67,7 @@ while (<Query>){
 $/ = "\n";
 close Query;
 
-## multi-threading using queue, put candidate LTRs into queue for parallel computation
+## multi-threading using queue, put TE candidates into queue for parallel computation
 my $queue = Thread::Queue->new();
 my $i = 0;
 while ($i <= $#FA) {
@@ -98,11 +98,12 @@ foreach (@threads){
 
 
 
-## subrotine for helitron candidate analyses
+## subrotine for TE candidate analyses
 sub filter(){
 	while (defined($_ = $queue->dequeue())){
 	my ($name, $seq) = (@{$_}[0], @{$_}[1]);
-	my ($chr, $str, $end) = ($1, $2, $3) if $name =~ /^(.*):([0-9]+)\.\.([0-9]+)/;
+	my ($chr, $str, $end);
+	($chr, $str, $end) = ($1, $2, $3) if $name =~ /^(.*):([0-9]+)\.\.([0-9]+)/;
 	my $loc = "$chr:$str..$end";
 
 	my ($flank5, $flank3, $seq5, $seq3, $ori_seq, $tgt_ste) = ('','','','','','');
@@ -122,7 +123,6 @@ sub filter(){
 	my $end5 = ">end5\\n$flank5"."$seq5";
 	my $end5_len = length "$flank5"."$seq5";
 	my $exec = "${blastplus}blastn -db $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
-#	my $exec = "${blastplus}blastn -subject $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end5 = ();
 	my $try = 0;
 	while ($try < 100){ #try 100 times to guarantee the blast is run correctly
@@ -142,7 +142,6 @@ sub filter(){
 	my $end3 = ">end3\\n$seq3"."$flank3";
 	my $end3_len = length "$seq3"."$flank3";
 	$exec = "${blastplus}blastn -db $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
-#	$exec = "${blastplus}blastn -subject $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end3 = ();
 	$try = 0;
 	while ($try < 100){
@@ -157,13 +156,12 @@ sub filter(){
 		($end3_repeat = "true", $decision = "false") if $end3_count > $max_ct;
 		}
 
-	# count copy number of the 5' and 3' flanking. If $count>=1, then this candidate locates at a TE and should be a true helitron
+	# count copy number of the 5' and 3' flanking. If $count>=1, then this candidate locates at a TE and should be a true TE candidate
 	my $flank_count = "NA";
 	if ($end5_repeat eq "true" and $end3_repeat eq "true"){
 		my $flank = ">flank\\n$flank5"."$flank3";
 		my $flank_len = length "$flank5"."$flank3";
 		$exec = "${blastplus}blastn -db $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
-#		$exec = "${blastplus}blastn -subject $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 		my @blast_flank = ();
 		$try = 0;
 		while ($try < 100){
@@ -176,7 +174,11 @@ sub filter(){
 			my ($iden, $len) = (split)[2,3];
 			$flank_count++ if $iden >= $min_iden and $len >= $flank_len * $min_cov;
 			}
-		$decision = "true" if $flank_count >= 1;
+		if ($flank_count >= 1){
+			if (($end5_count + $end3_count)/(2*$flank_count) < 10000){
+				$decision = "true";
+				}
+			}
 		}
 
 	print Out "$decision\t$end5_count\t$end3_count\t$flank_count\t$chr\t$str\t$end\t$loc\t$tgt_ste\t$flank5\t$seq5\t$seq3\t$flank3\n";
