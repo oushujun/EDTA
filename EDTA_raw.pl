@@ -44,7 +44,8 @@ my $TIR_Learner = "$script_path/bin/TIR-Learner1.15/TIR-Learner_1.15.sh";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
-my $cleanup_gff = "$script_path/util/filter_gff_TIR.pl";
+my $get_ext_seq = "$script_path/util/get_ext_seq.pl";
+#my $cleanup_gff = "$script_path/util/filter_gff_TIR.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
@@ -73,12 +74,13 @@ die "Genome file $genome not exists!\n$usage" unless -s $genome;
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
-die "The program mdust is not found in $mdust!\n" unless -X "${mdust}mdust";
+#die "The program mdust is not found in $mdust!\n" unless -X "${mdust}mdust";
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The MITE_Hunter is not found in $MITE_Hunter!\n" unless -s $MITE_Hunter;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
-die "The script filter_gff_TIR.pl is not found in $cleanup_gff!\n" unless -s $cleanup_gff;
+die "The script get_ext_seq.pl is not found in $get_ext_seq!\n" unless -s $get_ext_seq;
+#die "The script filter_gff_TIR.pl is not found in $cleanup_gff!\n" unless -s $cleanup_gff;
 die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;
 die "The script format_helitronscanner_out.pl is not found in $format_helitronscanner!\n" unless -s $format_helitronscanner;
 die "The script flanking_filter.pl is not found in $flank_filter!\n" unless -s $flank_filter;
@@ -164,33 +166,23 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	} else {
 	print "Identify TIR candidates from scratch.\n\n";
 
-if (0){
-# run TIRvish
-`$genometools suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
-`$genometools tirvish -index $genome -seed 20 -mintirlen 10 -maxtirlen 1000 -mintirdist 10 -maxtirdist 20000 -similar 80 -mintsd 2 -maxtsd 11 -vic 13 -seqids yes > $genome.TIR.gff`;
-`rm $genome.des $genome.esq $genome.lcp $genome.llv $genome.md5 $genome.prj $genome.sds $genome.ssp $genome.suf 2>/dev/null`;
-`perl $cleanup_gff -gff $genome.TIR.gff -ext 30`;
-`perl $call_seq $genome.TIR.gff.list -C $genome > $genome.TIR.ext30.fa`;
-`perl -i -nle 's/>.*\\|/>/; print \$_' $genome.TIR.ext30.fa`;
-`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
-`${mdust}mdust $genome.TIR.ext30.fa.pass.fa > $genome.TIR.ext30.fa.pass.fa.dusted`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
-}
-
-#exit;
-
 $species =~ s/rice/Rice/i;
 $species =~ s/maize/Maize/i;
 $species =~ s/others/others/i;
 print "Species: $species\n";
 
-if ($species =~ /Rice|Maize/i){
-# run TIR-Learner with $genome.TIR.ext30.fa.pass.fa.dusted.cln
+	# run TIR-Learner 1.15
 	`sh $TIR_Learner -g $genome -s $species -t $threads`;
-	`cp TIR-Learner-Result/TIR-Learner_FinalAnn.fa $genome.TIR.raw.fa`;
-	} else {
+	`cp TIR-Learner-Result/TIR-Learner_FinalAnn.fa $genome.TIR`;
+
+	# clean raw predictions with flanking alignment
+	`perl $get_ext_seq $genome $genome.TIR`;
+	`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
+
+	# remove simple repeats and candidates with simple repeats at terminals
+	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa > $genome.TIR.ext30.fa.pass.fa.dusted`;
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.raw.fa`;
-	}
 
 	}
 
@@ -274,7 +266,10 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 `perl $format_helitronscanner -genome $genome -sitefilter 1 -minscore 12 -keepshorter 1 -extlen 30 -extout 1`;
 `perl $flank_filter -genome $genome -query $genome.HelitronScanner.filtered.ext.fa -miniden 90 -mincov 0.9 -maxct 5 -blastplus $blastplus -t $threads`; #more relaxed
 #`perl $flank_filter -genome $genome -query $genome.HelitronScanner.filtered.ext.fa -miniden 80 -mincov 0.8 -maxct 5 -blastplus $blastplus -t $threads`; #more stringent
-`cp $genome.HelitronScanner.filtered.ext.fa.pass.fa $genome.Helitron.raw.fa`;
+
+# remove simple repeats and candidates with simple repeats at terminals
+`${mdust}mdust $genome.HelitronScanner.filtered.ext.fa.pass.fa > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -trf 0 -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted > $genome.Helitron.raw.fa`;
 	}
 
 # copy result files out
