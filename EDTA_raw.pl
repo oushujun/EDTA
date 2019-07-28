@@ -40,9 +40,12 @@ my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
 #my $TIR_Learner = "$script_path/bin/TIR-Learner1.13/TIR-Learner.sh";
-my $TIR_Learner = "$script_path/bin/TIR-Learner1.15/TIR-Learner_1.15.sh";
+#my $TIR_Learner = "$script_path/bin/TIR-Learner1.15/TIR-Learner_1.15.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner1.18/TIR-Learner.sh";
+my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
+my $output_by_list = "$script_path/util/output_by_list.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
 my $get_ext_seq = "$script_path/util/get_ext_seq.pl";
 #my $cleanup_gff = "$script_path/util/filter_gff_TIR.pl";
@@ -78,6 +81,8 @@ die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriev
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The MITE_Hunter is not found in $MITE_Hunter!\n" unless -s $MITE_Hunter;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
+die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
+die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unless -s $rename_tirlearner;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script get_ext_seq.pl is not found in $get_ext_seq!\n" unless -s $get_ext_seq;
 #die "The script filter_gff_TIR.pl is not found in $cleanup_gff!\n" unless -s $cleanup_gff;
@@ -115,7 +120,7 @@ chdir "$genome.EDTA.raw/LTR";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
-if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
+if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	print "Existing result file $genome.LTRlib.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print "Identify LTR retrotransposon candidates from scratch.\n\n";
@@ -172,15 +177,18 @@ $species =~ s/others/others/i;
 print "Species: $species\n";
 
 	# run TIR-Learner 1.15
-	`sh $TIR_Learner -g $genome -s $species -t $threads`;
-	`cp TIR-Learner-Result/TIR-Learner_FinalAnn.fa $genome.TIR`;
+	`sh $TIR_Learner -g $genome -s $species -t $threads -l 5000`;
+	`perl $rename_tirlearner TIR-Learner-Result/TIR-Learner_FinalAnn.fa > $genome.TIR`;
 
 	# clean raw predictions with flanking alignment
 	`perl $get_ext_seq $genome $genome.TIR`;
 	`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
 
+	# recover superfamily info
+	`perl  $output_by_list 1 $genome.TIR 1 $genome.TIR.ext30.fa.pass.fa -FA -MSU0 -MSU1 > $genome.TIR.ext30.fa.pass.fa.ori`;
+
 	# remove simple repeats and candidates with simple repeats at terminals
-	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa > $genome.TIR.ext30.fa.pass.fa.dusted`;
+	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa.ori > $genome.TIR.ext30.fa.pass.fa.dusted`;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.raw.fa`;
 
@@ -222,7 +230,7 @@ if ($overwrite eq 0 and -s "$genome.MITE.raw.fa"){
 	print "Identify MITE candidates from scratch.\n\n";
 
 # run MITE-Hunter
-`perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome`;
+`perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome > /dev/null 2>&1`;
 `cat *_Step8_* > $genome.MITE.raw.fa`;
 `rm $genome $genome.index $genome.nhr $genome.nin $genome.nsq`;
 	}
