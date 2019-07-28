@@ -234,13 +234,11 @@ chdir "$genome.EDTA.combine";
 
 # aggregate clean sublibraries and cluster
 `cat $genome.LTR.fa.stg1 $genome.TIR.fa.stg1 $genome.Helitron.fa.stg1 | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.LTR.TIR.Helitron.fa.stg1.raw`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw.cln2 -threads $threads -minlen 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3`;
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw -threads $threads -minlen 80 -cov 0.95 -iter 3 -blastplus $blast`;
 
 # remove protein-coding sequences
-`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3 -rmdnate 0 -rmline 1 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
-`perl $rename_TE $genome.LTR.TIR.Helitron.fa.stg1.raw.cln3.clean > $genome.LTR.TIR.Helitron.fa.stg1`;
+`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.fa.stg1.raw.cln -rmdnate 0 -rmline 1 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
+`perl $rename_TE $genome.LTR.TIR.Helitron.fa.stg1.raw.cln.clean > $genome.LTR.TIR.Helitron.fa.stg1`;
 
 chdir '..';
 
