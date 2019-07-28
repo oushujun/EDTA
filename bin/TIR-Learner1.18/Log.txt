@@ -1,0 +1,19 @@
+Major updates:
+Version 1.18
+1. Add a checking step for Module 1. Exit when no homology is found between input and database.
+2. Update installation and usage instructions.
+
+Versions 1.16 and 1.17
+1. Add a keras-trained model to classify TIRs for non-rice and non-maize species (Module3_New)
+2. Add TIRvish as a potential TIR search engine.
+
+Version 1.15
+1. Improved parameter reading from command line
+2. Suppress warning messages
+2. Clean up and formatting codes
+
+Version 1.14
+1. Add parameter -l (max length), user defined maximium length of TIR elements.
+2. Add parameter -s (species) , user defined "Maize", "Rice" or "others"; Maize RefLib and Maize model are saved in this package.
+3. Use multiprocessing to extract the sequence from the genome sequence (faster than 1.13)
+4. Module3_New is tested by using maize chromosome 10.  No error is reported.
