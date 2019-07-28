@@ -125,18 +125,15 @@ print STAT "TE1_id\tTE1_len\tTE2_len\tTE1_richness\tTE2_richness\tFold_diff\n";
 my $queue = Thread::Queue->new();
 foreach my $id (keys %RM){
 	last unless defined $RM{$id};
-	$queue->enqueue([$id, $RM{$id}]);
+	$queue -> enqueue([$id, $RM{$id}]);
 	}
+$queue -> end();
 
-# initiate a number of worker threads
-my @threads = ();
+# initiate a number of worker threads and run
 foreach (1..$threads){
-	push @threads,threads->create(\&purifier);
+	threads->create(\&purifier);
 	}
-foreach (@threads){
-	$queue->enqueue(undef);
-	}
-foreach (@threads){
+foreach (threads -> list()){
 	$_->join();
 	}
 
@@ -158,7 +155,6 @@ sub purifier(){
 		my ($id, $coor) = (@{$_}[0], @{$_}[1]);
 		next unless exists $TE1{$id};
 		my $ori_seq = $TE1{$id};
-		lock %TE1_cln;
 
 		while ($coor =~ s/([0-9]+)-([0-9]+)//){
 			my ($from, $to, $seqlen) = ($1, $2, $2-$1+1);
@@ -166,7 +162,7 @@ sub purifier(){
 			my $target = ">$id:$from..$to\\n$seq";
 
 			# count the size of $target in $TE1
-			my $exec = "${blastplus}blastn -db $TE1 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+			my $exec = "timeout 188s ${blastplus}blastn -db $TE1 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 			my @blast_te1 = ();
 			my $try = 0;
 			while ($try < 100){ #try 100 times to guarantee the blast is run correctly
@@ -182,7 +178,7 @@ sub purifier(){
 				}
 
 			# count the size of $target in $TE2
-			$exec = "${blastplus}blastn -db $TE2 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+			$exec = "timeout 188s ${blastplus}blastn -db $TE2 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 			my @blast_te2 = ();
 			$try = 0;
 			while ($try < 100){ #try 100 times to guarantee the blast is run correctly

@@ -2,6 +2,7 @@
 use strict;
 use threads;
 use Thread::Queue;
+use threads::shared;
 
 my $usage = "\nFilter HelitronScanner fasta candidates
 	perl flanking_filter.pl -genome genome.fa -query candidate.fa [options]
@@ -68,26 +69,31 @@ $/ = "\n";
 close Query;
 
 ## multi-threading using queue, put TE candidates into queue for parallel computation
-my $queue = Thread::Queue->new();
+my %TE_cln :shared;
+my $queue = Thread::Queue -> new();
 my $i = 0;
 while ($i <= $#FA) {
 	last unless defined $FA[$i]->[0];
 	my ($name, $seq) = @{$FA[$i]}[0,1];
-	$queue->enqueue([$name, $seq]);
+	$queue -> enqueue([$name, $seq]);
 	$i++;
 	}
+$queue -> end();
 
-## initiate a number of worker threads
-my @threads = ();
+## initiate a number of worker threads and run
 foreach (1..$threads){
-	push @threads,threads->create(\&filter);
+	threads -> create(\&filter);
 	}
-foreach (@threads){
-	$queue->enqueue(undef);
+foreach (threads -> list()){
+	$_ -> join();
 	}
-foreach (@threads){
-	$_->join();
+
+## output unprocessed and clean sequence
+foreach my $id (sort {$a cmp $b} keys %TE_cln){
+	print Seq ">$id\n$TE_cln{$id}\n";
 	}
+close Out;
+close Seq;
 
 ## fixing the formatting error created by simutaniously writing the same file
 `perl -i -nle 's/>/\\n>/g unless /^>/; print \$_' $query.pass.fa`;
@@ -122,7 +128,7 @@ sub filter(){
 	my $end5_repeat = "false";
 	my $end5 = ">end5\\n$flank5"."$seq5";
 	my $end5_len = length "$flank5"."$seq5";
-	my $exec = "${blastplus}blastn -db $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+	my $exec = "timeout 188s ${blastplus}blastn -db $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end5 = ();
 	my $try = 0;
 	while ($try < 100){ #try 100 times to guarantee the blast is run correctly
@@ -141,7 +147,7 @@ sub filter(){
 	my $end3_repeat = "false";
 	my $end3 = ">end3\\n$seq3"."$flank3";
 	my $end3_len = length "$seq3"."$flank3";
-	$exec = "${blastplus}blastn -db $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+	$exec = "timeout 188s ${blastplus}blastn -db $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end3 = ();
 	$try = 0;
 	while ($try < 100){
@@ -161,7 +167,7 @@ sub filter(){
 	if ($end5_repeat eq "true" and $end3_repeat eq "true"){
 		my $flank = ">flank\\n$flank5"."$flank3";
 		my $flank_len = length "$flank5"."$flank3";
-		$exec = "${blastplus}blastn -db $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+		$exec = "timeout 188s ${blastplus}blastn -db $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 		my @blast_flank = ();
 		$try = 0;
 		while ($try < 100){
@@ -182,9 +188,7 @@ sub filter(){
 		}
 
 	print Out "$decision\t$end5_count\t$end3_count\t$flank_count\t$chr\t$str\t$end\t$loc\t$tgt_ste\t$flank5\t$seq5\t$seq3\t$flank3\n";
-	print Seq ">$chr:$str..$end\n$ori_seq\n" if $decision eq "true";
+	$TE_cln{"$chr:$str..$end"} = $ori_seq if $decision eq "true";
 	}
 	}
-close Out;
-close Seq;
 
