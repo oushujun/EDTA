@@ -17,7 +17,7 @@ print "
 \n\n\n";
 
 ## Input: $genome
-## Output: $genome.TElib.fa
+## Output: $genome.EDTA.TElib.fa
 
 my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-quality structure-based TE library. Usage:
 	perl EDTA.pl [options]
@@ -31,11 +31,14 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 		-protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
 					You may use uniprot_sprot database available from here:
 					ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
+		-curatedlib	[file]	Provided a curated library to keep consistant naming and classification for known TEs.
+					All TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones here.
+					This option is not mandatory. It's totally OK if no file is provided (default).
 		-repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		-blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
 		-trf [path]	The directory containing TRF (default: included in this package)
-		-threads	[int]	Number of theads to run this script (default: 4)
+		-threads|-t	[int]	Number of theads to run this script (default: 4)
 		-help|-h	Display this help info
 \n";
 
@@ -44,10 +47,11 @@ my $genome = '';
 my $species = "others";
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
+my $HQlib = '';
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
-my $EDTA_process = "$script_path/EDTA_processD2.pl";
+my $EDTA_process = "$script_path/EDTA_processF.pl";
 #my $EDTA_process = "$script_path/EDTA_process.pl";
 my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
@@ -69,12 +73,13 @@ foreach (@ARGV){
 	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
 	$step = uc $ARGV[$k+1] if /^-step$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
+	$HQlib = $ARGV[$k+1] if /^-curatedlib$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmodeler = $ARGV[$k+1] if /^-repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
 	$blast = $ARGV[$k+1] if /^-blast$/i and $ARGV[$k+1] !~ /^-/;
 	$protlib = $ARGV[$k+1] if /^-protlib/i and $ARGV[$k+1] !~ /^-/;
 	$trf = $ARGV[$k+1] if /^-trf$/i and $ARGV[$k+1] !~ /^-/;
-	$threads = $ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1] !~ /^-/;
+	$threads = $ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
 	die $usage if /^-help$|^-h$/i;
 	$k++;
 	}
@@ -87,7 +92,7 @@ print "$date\tDependency checking:\n";
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
 #die "The program mdust is not found in $mdust!\n" unless -s $mdust;
 die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
-die "The script EDTA_process.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
+die "The script EDTA_processF.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
@@ -136,6 +141,15 @@ die "mdust is not working on the current system. Please reinstall it in this fol
 	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" unless -X "${mdust}mdust";
 
 print "\t\tAll passed!\n";
+
+# check $HQlib
+if ($HQlib ne ''){
+	if (-s $HQlib){
+	print "Custom library $HQlib is provided via -curatedlib. Please make sure this is a manually curated library but not machine generated.\n";
+	} else {
+	print "The custom library $HQlib you specified is not found!\n";
+	}
+	}
 
 # make a softlink to the genome
 my $genome_file = basename($genome);
@@ -214,18 +228,28 @@ if (1){
 # clean up coding sequences in the stage 2 library
 `perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.others.fa.stg2 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
 
-# final rounds of redundancy removal and make final library
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.others.fa.stg2.clean -threads $threads -minlene 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.others.fa.stg2.cln`;
-`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.others.fa.stg2.cln -threads $threads -minlene 80 -cov 0.95 -blastplus $blast > $genome.LTR.TIR.Helitron.others.fa.stg2.cln2`;
+# final 2 rounds of redundancy removal and make final EDTA library
+`perl $cleanup_nested -in $genome.LTR.TIR.Helitron.others.fa.stg2.clean -threads $threads -minlene 80 -cov 0.95 -iter 2 -blastplus $blast`;
 
-# rename all TEs in the final library
-`perl $rename_TE $genome.LTR.TIR.Helitron.others.fa.stg2.cln2 > $genome.TElib.fa`;
+# rename all TEs in the EDTA library
+`perl $rename_TE $genome.LTR.TIR.Helitron.others.fa.stg2.clean.cln > $genome.EDTA.TElib.fa`;
 
 # check results
-die "ERROR: Final TE library not found in $genome.TElib.fa" unless -s "$genome.TElib.fa";
-`cp $genome.TElib.fa ../`;
+die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
+`cp $genome.EDTA.TElib.fa ../`;
+
+# remove known TEs in the EDTA library
+if ($HQlib ne ''){
+	`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
+	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.combo.fa`;
+	`cp $genome.EDTA.TElib.novel.fa $genome.EDTA.TElib.combo.fa ../`;
+	}
+
 $date=`date`;
 chomp ($date);
-print "$date\tEDTA final stage finished! Check out the final TE library: $genome.TElib.fa\n\n";
+print "$date\tEDTA final stage finished! Check out the final EDTA TE library: $genome.EDTA.TElib.fa\n";
+print "\tComparing to the curated library you provided, this are the novel TEs EDTA found: $genome.EDTA.TElib.novel.fa
+	And this is the combined library you may use for whole-genome TE annotation: $genome.EDTA.TElib.combo.fa\n" if $HQlib ne '';
 
 
