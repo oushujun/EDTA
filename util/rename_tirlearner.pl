@@ -27,6 +27,9 @@ while (<>){
 		}
 	my ($name, $superfam, $tsd) = ('NA', 'TIR', 'NA');
 	($name, $superfam, $tsd) = ($1, $2, $3) if $id =~ /^(.*)_(D.*)_TIR.*TSD:([ATCGNX_]+)_[0-9]+.*/i; #renamed TIR-Learner output
+	#e.g.: TIR-Learner_11_8901442_8902889_DTM_TIR:GGAAAAAGTA_TACTTTTTCC_100.0_TSD:TTTACTTTT_TCTACTTTT_88.89-+-1448
+	($name, $superfam, $tsd) = ($1, $2, $3) if $id =~ /^(.*):[0-9mM]+:.*_(D[A-Z]+).*TSD:([ATCGNX_]+)_[0-9]+.*/i;
+	#e.g.: 10:16642857:16643502:8m1M4m1M3m1M:CTCTCATG_DTA_200-+-TIR:TAGGGGTGAA_TCCACCCCTA_90.0_TSD:CTCTCATG_CTCTCATG_100.0
 	if ($name ne 'NA'){
 		print ">$name#$class/$superfam TSD:$tsd\n$seq\n";
 		} else {
