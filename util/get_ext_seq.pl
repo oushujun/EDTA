@@ -15,7 +15,7 @@ while (<Seq>){
 	next unless /^>/;
 	s/>//g;
 	my ($chr, $from, $to);
-	($chr, $from, $to) = ($1, $2, $4) if /^(\S+)[:_]([0-9]+)(_|\.\.)([0-9]+)/; #>Chr10:3119406..3119688 or >Chr10_3119406_3119688
+	($chr, $from, $to) = ($1, $2, $3) if /^(\S+)[:_\-]+([0-9]+)[_\.\:\-]+([0-9]+)/; #eg.: Chr10:3119406..3119688; Chr10_3119406_3119688; Chr10:3119406:3119688
 	my ($from_ext, $to_ext) = ($from - $extlen, $to + $extlen);
 	$from_ext = 1 if $from_ext < 1;
 	print Out "$chr:$from..$to\t$chr:$from_ext..$to_ext\n";
