@@ -145,9 +145,9 @@ print "\t\tAll passed!\n";
 # check $HQlib
 if ($HQlib ne ''){
 	if (-s $HQlib){
-	print "Custom library $HQlib is provided via -curatedlib. Please make sure this is a manually curated library but not machine generated.\n";
+	print "\n\tCustom library $HQlib is provided via -curatedlib. Please make sure this is a manually curated library but not machine generated.\n";
 	} else {
-	print "The custom library $HQlib you specified is not found!\n";
+	print "\n\tERROR: The custom library $HQlib you specified is not found!\n";
 	}
 	}
 
@@ -206,7 +206,6 @@ print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive
 # Make the final working directory
 `mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
 chdir "$genome.EDTA.final";
-if (1){
 `rm -rf *`;
 
 # RepeatMask the genome with the cleanned stage 1 library
@@ -217,7 +216,6 @@ if (1){
 # Scan the repeatmasked genome with RepeatModeler for any remaining TEs
 `${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
 `${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome.masked 2>/dev/null`;
-}
 
 # rename RepeatModeler candidates and make stage 2 library
 `cat RM_*/round-*/family-*fa | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
