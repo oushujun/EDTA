@@ -39,8 +39,6 @@ my $script_path = $FindBin::Bin;
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-#my $TIR_Learner = "$script_path/bin/TIR-Learner1.13/TIR-Learner.sh";
-#my $TIR_Learner = "$script_path/bin/TIR-Learner1.15/TIR-Learner_1.15.sh";
 my $TIR_Learner = "$script_path/bin/TIR-Learner1.18/TIR-Learner.sh";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
@@ -48,11 +46,9 @@ my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
 my $get_ext_seq = "$script_path/util/get_ext_seq.pl";
-#my $cleanup_gff = "$script_path/util/filter_gff_TIR.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
-#my $mdust = "$script_path/bin/mdust/";
 my $mdust = "";
 my $blastplus = ''; #path to the blastn program
 
@@ -77,7 +73,6 @@ die "Genome file $genome not exists!\n$usage" unless -s $genome;
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
-#die "The program mdust is not found in $mdust!\n" unless -X "${mdust}mdust";
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The MITE_Hunter is not found in $MITE_Hunter!\n" unless -s $MITE_Hunter;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
@@ -85,7 +80,6 @@ die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s 
 die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unless -s $rename_tirlearner;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script get_ext_seq.pl is not found in $get_ext_seq!\n" unless -s $get_ext_seq;
-#die "The script filter_gff_TIR.pl is not found in $cleanup_gff!\n" unless -s $cleanup_gff;
 die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;
 die "The script format_helitronscanner_out.pl is not found in $format_helitronscanner!\n" unless -s $format_helitronscanner;
 die "The script flanking_filter.pl is not found in $flank_filter!\n" unless -s $flank_filter;
@@ -140,6 +134,7 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	}
 
 # copy result files out
+`cp $genome.LTRlib.fa $genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
 chdir '../..';
 
@@ -171,14 +166,14 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	} else {
 	print "Identify TIR candidates from scratch.\n\n";
 
-$species =~ s/rice/Rice/i;
-$species =~ s/maize/Maize/i;
-$species =~ s/others/others/i;
-print "Species: $species\n";
+	$species =~ s/rice/Rice/i;
+	$species =~ s/maize/Maize/i;
+	$species =~ s/others/others/i;
+	print "Species: $species\n";
 
 	# run TIR-Learner 1.15
 	`sh $TIR_Learner -g $genome -s $species -t $threads -l 5000`;
-	`perl $rename_tirlearner TIR-Learner-Result/TIR-Learner_FinalAnn.fa > $genome.TIR`;
+	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
 	# clean raw predictions with flanking alignment
 	`perl $get_ext_seq $genome $genome.TIR`;
