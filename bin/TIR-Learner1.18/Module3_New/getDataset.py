@@ -47,7 +47,8 @@ def getSeqFragment(arglist):
             s1=s1+n1
             s2=n2+s2
             s=s1+s2
-        f.write(">"+rec.description+"\n"+s+"\n")
+        if all(i in ["A","T","C","G","N"] for i in list(s)):
+            f.write(">"+rec.description+"\n"+s+"\n")
     f.close()
 
 if __name__ == '__main__':

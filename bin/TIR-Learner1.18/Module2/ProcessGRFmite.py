@@ -38,12 +38,12 @@ def RenameFasta(contigFile,genomeName):
    # names=pd.read_table(contigFile,header=None)
     l_name=list(names[0].astype(str))
     for name in l_name:
-        cp="cp %s/candidate.fasta %s"%(name,genomeName+spliter+name+spliter+"GRFmite.fa") #shujun
+        cp="cp %s/candidate.fasta %s"%(name,genomeName+spliter+name+spliter+"GRFmite.fa")
         os.system(cp)
-        rm="rm -r %s"%(name) #shujun
+        rm="rm -r %s"%(name)
         os.system(rm)
- #       rm = "rm %s"%(genomeName+spliter+name+".fa")
-  #      os.system(rm)
+        rm = "rm %s"%(genomeName+spliter+name+".fa")
+        os.system(rm)
 
 def TArepeats(s):
     t=s.upper().count("T")
@@ -102,8 +102,8 @@ if __name__ == '__main__':
 
 mv = "mv *.fasta ../temp/"
 os.system(mv)
-#mv ="mv *GRFmite.fa ../temp/"
-#os.system(mv)
+mv ="mv *GRFmite.fa ../temp/"
+os.system(mv)
 cp = "cp *-p ../temp/"
 os.system(cp)
 
