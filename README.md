@@ -28,7 +28,8 @@ Activate the EDTA program:
 
     conda activate EDTA
 
-### Form head to toe ### (you got a genome and you want to get a high-quality TE library):
+### Form head to toe
+*You got a genome and you want to get a high-quality TE library:*
     
     perl EDTA.pl [options]
       -genome	[File]	The genome FASTA
@@ -48,7 +49,8 @@ Activate the EDTA program:
       -help|-h	Display this help info
 
 
-### Divide and conquer ### (you want to run different components of EDTA separately to MAYBE shortern the time):
+### Divide and conquer
+*You want to run different components of EDTA separately to MAYBE shortern the time*:
 
 1.The Head (you got a genome and you want to get raw libraries for different TE (sub)classes):
 
