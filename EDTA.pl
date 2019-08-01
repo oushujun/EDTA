@@ -28,11 +28,12 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 						filter: start from raw TEs to the end.
 						final: start from filtered TEs to finalizing the run.
 		-overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-		-protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
-					You may use uniprot_sprot database available from here:
-					ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
+		-protlib [File] Protein-coding aa sequences to be removed from TE candidates.
+				Default lib: alluniRefprexp082813 (plant))
+				You may use uniprot_sprot database available from here:
+				ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
 		-curatedlib	[file]	Provided a curated library to keep consistant naming and classification for known TEs.
-					All TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones here.
+					TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones.
 					This option is not mandatory. It's totally OK if no file is provided (default).
 		-repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
@@ -52,13 +53,11 @@ my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
 my $EDTA_process = "$script_path/EDTA_processF.pl";
-#my $EDTA_process = "$script_path/EDTA_process.pl";
 my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
 my $cleanup_nested = "$script_path/util/cleanup_nested.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
 my $rename_TE = "$script_path/util/rename_TE.pl";
-#my $mdust = "$script_path/bin/mdust/mdust";
 my $mdust = "";
 my $GRF = "";
 my $repeatmodeler = "";
@@ -90,7 +89,6 @@ print "$date\tDependency checking:\n";
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
-#die "The program mdust is not found in $mdust!\n" unless -s $mdust;
 die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
 die "The script EDTA_processF.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
@@ -238,7 +236,7 @@ die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$gen
 
 # remove known TEs in the EDTA library
 if ($HQlib ne ''){
-	`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib ../$HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.combo.fa`;
 	`cp $genome.EDTA.TElib.novel.fa $genome.EDTA.TElib.combo.fa ../`;

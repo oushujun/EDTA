@@ -18,7 +18,7 @@ use File::Basename;
 #	$genome.LTR.TIR.Helitron.fa.stg1
 
 my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates and generate the stage 1 library
-	perl EDTA_process.pl [options]
+	perl EDTA_processF.pl [options]
 		-genome	[File]	The genome FASTA
 		-ltr	[File]	The raw LTR library FASTA
 		-tir	[File]	The raw TIR library FASTA
@@ -30,7 +30,7 @@ my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates
 		-protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
 					You may use uniprot_sprot database available from here:
 					ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
-		-threads	[int]	Number of theads to run this script
+		-threads|-t	[int]	Number of theads to run this script
 		-help|-h	Display this help info
 \n";
 
