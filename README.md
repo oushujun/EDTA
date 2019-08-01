@@ -22,6 +22,8 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
+### Note
+    If you want to use the maize TIR classifier, you need to unzip the file ./EDTA/bin/TIR-Learner1.19/Module3/Maize_model.sav.gz. It's over 100 Mb and I simply don't know how to upload this large file to GitHub without having it zipped.
 
 ## EDTA Usage
 Activate the EDTA program:

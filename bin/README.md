@@ -7,7 +7,7 @@
 
 [MITE-Hunter](http://target.iplantcollaborative.org/mite_hunter.html) is a program for discovering MITEs from genomic sequences. `MITE-Hunter2` was downloaded from [TARGeT](http://target.iplantcollaborative.org/mite_hunter/). The codes were further modified for ease of installation and execution.
 
-[TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice) is an open-source ensemble method for TIR transposable element annotation. `TIR-Learner1.9_osj` is a pipeline version converted from [TIR-Learner-Rice](https://github.com/weijiaweijia/TIR-Learner-Rice).
+[TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice) is an open-source ensemble method for TIR transposable element annotation. `TIR-Learner1.19` is a pipeline version converted from [TIR-Learner-Rice](https://github.com/weijiaweijia/TIR-Learner-Rice). The [GenericRepeatFinder](https://github.com/bioinfolabmu/GenericRepeatFinder) is used in TIR-Learner as the search engine.
 
 [HelitronScanner](https://sourceforge.net/projects/helitronscanner/) is a Java program to identify *Helitron* transposons in genome sequences. `HelitronScanner` v1.1 was downloaded from [HelitronScanner](https://sourceforge.net/projects/helitronscanner/).
 
@@ -23,6 +23,8 @@
 	Han Y, Wessler SR. MITE-Hunter: a program for discovering miniature inverted-repeat transposable elements from genomic sequences. Nucleic Acids Res. 2010;38:e199.
 	
 	Su W, Gu X, Peterson T. TIR-Learner, a New Ensemble Method for TIR Transposable Element Annotation, Provides Evidence for Abundant New Transposable Elements in the Maize Genome. Mol Plant. 2019;12:447–60.
+	
+	Shi J, Liang C. Generic Repeat Finder: a high-sensitivity tool for genome-wide de novo repeat detection [Internet]. Plant Physiology. 2019. p. 00386.2019. Available from: http://dx.doi.org/10.1104/pp.19.00386
 	
 	Xiong W, He L, Lai J, Dooner HK, Du C. HelitronScanner uncovers a large overlooked cache of Helitron transposons in many plant genomes. Proc Natl Acad Sci U S A. 2014;111:10263–8.
 	
