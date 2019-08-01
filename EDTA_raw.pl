@@ -130,7 +130,7 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 # run LTR_retriever
 `cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 `perl $LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno`;
-`for i in *.mod.*; do mv \$i \$(echo \$i|sed 's/\\.mod\\././'); done`;
+`for i in *.mod.*; do mv \$i \$(echo \$i|sed 's/\\.mod\\././'); done > /dev/null 2>&1`;
 	}
 
 # copy result files out
