@@ -25,7 +25,7 @@ my $usage = "\nObtain raw TE libraries using various structure-based programs
 		-blastplus      [path]  Path to the blastn program. Defalut: read from \$ENV
 		-mdust	[program]	The mdust program. Default: included in this package.
 		-overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-		-threads	[int]	Number of theads to run this script
+		-threads|-t	[int]	Number of theads to run this script
 		-help|-h	Display this help info
 \n";
 
@@ -39,7 +39,7 @@ my $script_path = $FindBin::Bin;
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-my $TIR_Learner = "$script_path/bin/TIR-Learner1.18/TIR-Learner.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner1.19/TIR-Learner.sh";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
@@ -61,7 +61,7 @@ foreach (@ARGV){
 	$blastplus = $ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1] !~ /^-/;
 	$mdust = $ARGV[$k+1] if /^-mdust$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
-	$threads = $ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1] !~ /^-/;
+	$threads = $ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
 	die $usage if /^-help$|^-h$/i;
 	$k++;
   }
@@ -171,7 +171,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	$species =~ s/others/others/i;
 	print "Species: $species\n";
 
-	# run TIR-Learner 1.15
+	# run TIR-Learner
 	`sh $TIR_Learner -g $genome -s $species -t $threads -l 5000`;
 	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
