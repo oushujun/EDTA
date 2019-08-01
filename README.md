@@ -22,15 +22,13 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
-### Note
-    If you want to use the maize TIR classifier, you need to unzip the file ./EDTA/bin/TIR-Learner1.19/Module3/Maize_model.sav.gz. It's over 100 Mb and I simply don't know how to upload this large file to GitHub without having it zipped.
 
 ## EDTA Usage
 Activate the EDTA program:
 
     conda activate EDTA
 
-Form head to toe (you got a genome and you want to get a high-quality TE library):
+### Form head to toe ### (you got a genome and you want to get a high-quality TE library):
     
     perl EDTA.pl [options]
       -genome	[File]	The genome FASTA
@@ -50,7 +48,7 @@ Form head to toe (you got a genome and you want to get a high-quality TE library
       -help|-h	Display this help info
 
 
-Divide and conquer (you want to run different components of EDTA separately to MAYBE shortern the time):
+### Divide and conquer ### (you want to run different components of EDTA separately to MAYBE shortern the time):
 
 1.The Head (you got a genome and you want to get raw libraries for different TE (sub)classes):
 
