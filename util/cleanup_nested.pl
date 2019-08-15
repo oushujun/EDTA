@@ -52,7 +52,6 @@ die "ERROR: blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${b
 
 open IN, "<$IN" or die $!;
 open STAT, ">$IN.stat" or die $!;
-open CLN, ">$IN.cln" or die $!;
 
 my %seq :shared;
 $/ = "\n>";
@@ -68,6 +67,7 @@ close IN;
 # itreatively remove redundant sequences and nested insertions
 my $queue;
 for (my $i=0; $i<$iter; $i++){
+	print "Clean up nested insertions and redundancy. Working on iteration $i\n";
 	# write seq to a file and make blast db
 	open Seq, ">$IN.iter$i" or die $!;
 	foreach my $id (sort {$a cmp $b} keys %seq){
@@ -95,9 +95,11 @@ for (my $i=0; $i<$iter; $i++){
 	}
 
 # output clean sequence
+open CLN, ">$IN.cln" or die $!;
 foreach my $id (sort {$a cmp $b} keys %seq){
 	print CLN ">$id\n$seq{$id}\n";
 	}
+close CLN;
 close STAT;
 
 
@@ -129,7 +131,7 @@ sub condenser(){
 				print STAT "$subject\tIter$i\tCleaned. $sbj_start..$sbj_end covering $cov of $query for identity $iden%\n";
 				$seq{$subject} = $sbj_seq_new; #update sequence, overwrite the current sequence
 				} else {
-				print STAT "$subject\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning.\n";
+				print STAT "$subject\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $query\n";
 				delete $seq{$subject}; #delete this sequence if new seq is too short
 				}
 			}
