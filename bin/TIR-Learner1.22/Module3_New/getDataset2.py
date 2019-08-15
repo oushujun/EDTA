@@ -17,7 +17,6 @@ parser.add_argument("-p", "--path", help="Source code path", required=True)
 parser.add_argument("-t", "--processer", help="Number of processer", required=True)
 parser.add_argument("-d", "--currentD", help="Path of current directory", required=True)
 parser.add_argument("-g", "--genomeFile",help="Path to the genome file", required=True)
-parser.add_argument("-c", "--callseq",help="Path to the call_seq_by_list.pl script", required=True) #shujun
 args = parser.parse_args()#pylint: disable=invalid-name
 
 genome_Name = args.genomeName
@@ -25,7 +24,6 @@ path=args.path
 t=args.processer
 dir=args.currentD
 genomeFile=args.genomeFile
-callseq=args.callseq
 
 targetDir=dir+"/"+genome_Name+"/"
 os.chdir(targetDir)
@@ -160,7 +158,7 @@ def GetSeq(argList): #shujun
     listName=argList[1]
     outName=argList[2]
    # get_seq = "perl ~/las/git_bin/EDTA/util/call_seq_by_list.pl %s -C %s -header 1 > %s" % (listName, genomeFile, outName)
-    get_seq = "perl %s %s -C %s -header 1 > %s" % (callseq, listName, genomeFile, outName)
+    get_seq = "perl %s/Module3_New/call_seq_by_list.pl %s -C %s -header 1 > %s" % (path, listName, genomeFile, outName)
     subprocess.run(['/bin/bash', '-c', get_seq])
     clean_head = "perl -i -nle 's/^>.*\|/>/; print $_' %s" % (outName)
     subprocess.run(['/bin/bash', '-c', clean_head])
