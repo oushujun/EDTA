@@ -6,6 +6,7 @@ eg1. perl call_seq_by_LOC.pl array_list itself >result	##call LOC sequence withi
 eg2. perl call_seq_by_LOC.pl array_list -C your_database up_2000 >result	##call sequence of upper 2000 bp region in the list, from the provided database
 
 Update history:
+	v2.4	output sequences without headers
 	v2.3	output a list of entirely excluded sequences
 	v2.2	support -ex. Exclude the sequence information provided by list and output the rest. Can use with -cov
 	v2.1	support - direction. If the locus position is upside down, eg. Chr1:2..1, it would be treated as negative strand request	Shujun Ou 2014/8/19
@@ -25,6 +26,7 @@ Update history:
 
 my $position='';
 my $range='itself'; ##defalut
+my $header=1; #1, output sequence headers (default); 0, no headers
 my $length=0; ### default get the LOC seq itself
 my $rmvoid=0; #0 for output empty sequences anyways; 1 for output only non-empty sequences
 my $exclude=0; #0 for output sequence specified by list (default); 1 for exclude sequence specified by list
@@ -49,6 +51,7 @@ foreach my $para (@ARGV){
 		} ##default range
 	$genome=$ARGV[$i+1] if $para=~/^-C$/i;
 	$rmvoid=1 if $para=~/^-rmvoid$/i;
+	$header=$ARGV[$i+1] if $para=~/^-header$/i;
 	$coverage=$ARGV[$i+1] if $para=~/^-cov$/i;
 	$purge=$ARGV[$i+1] if $para=~/^-purge$/i;
 	$exclude=1 if $para=~/^-ex$/i;
@@ -132,7 +135,10 @@ foreach my $line (@list){
 			$seq=reverse $seq; ### get a reverse sequence
 			($start, $stop)=($stop, $start);
 			}
-		print ">$chr:$start..$stop|$loc\n$seq\n" unless ($seq=~/^\s+$/ and $rmvoid==1); ###print out target sequence
+		unless ($seq=~/^\s+$/ and $rmvoid==1){ ###print out target sequence
+			print ">$chr:$start..$stop|$loc\n" if $header == 1;
+			print "$seq\n";
+			}
 		}
 	my $cov;
 	if ($exclude==1){
@@ -142,9 +148,11 @@ foreach my $line (@list){
 			if (($stp-length $seq)/$stp >= $coverage){
 				print Exclude "$chr_pre\n";
 				} elsif ($purge==1){
-				print ">$chr_pre\n$seq\n";
+				print ">$chr_pre\n" if $header==1;
+				print "$seq\n";
 				} else {
-				print ">$chr_pre\n$genome{$chr_pre}\n";
+				print ">$chr_pre\n" if $header==1;
+				print "$genome{$chr_pre}\n";
 				}
 
 #			if ($purge==1){
@@ -177,9 +185,11 @@ foreach my $line (@list){
 		if (($stp-length $seq)/$stp >= $coverage){
 			print Exclude "$chr_pre\n";
 			} elsif ($purge==1){
-			print ">$chr_pre\n$seq\n";
+			print ">$chr_pre\n" if $header==1;
+			print "$seq\n";
 			} else {
-			print ">$chr_pre\n$genome{$chr_pre}\n";
+			print ">$chr_pre\n" if $header==1;
+			print "$genome{$chr_pre}\n";
 			}
 #		if ($purge==1){
 #			print ">$chr\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
@@ -188,7 +198,10 @@ foreach my $line (@list){
 #			print ">$chr\n$genome{$chr}\n" unless ($stp-length $seq)/$stp >= $coverage;
 #			}
 		foreach my $chr (keys %genome){
-			print ">$chr\n$genome{$chr}\n" unless exists $chr{$chr};
+			unless (exists $chr{$chr}) {
+				print ">$chr\n" if $header==1;
+				print "$genome{$chr}\n";
+				}
 			}
 		}
 
