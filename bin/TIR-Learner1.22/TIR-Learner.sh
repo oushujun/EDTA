@@ -271,7 +271,9 @@ python3 $path/Module2/ProcessGRFmite.py -g $genomeFile -name $genomeName -p $pat
 cp -r $genomeName/*-p temp/
 
 echo "Module 3, Step 3: Get dataset"
-python3 $path/Module3_New/getDataset2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" > /dev/null 2>&1
+#python3 $path/Module3_New/getDataset2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" > /dev/null 2>&1
+python3 $path/Module3_New/getDataset2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" 2> /dev/null
+#python3 $path/Module3_New/getDataset2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New"
 
 echo "Module 3, Step 4: Check TIR/TSD"
 python3 $path/Module3_New/CheckTIRTSD_M3.py -name $genomeName -p $path -t $t -d $dir"/Module3_New"
