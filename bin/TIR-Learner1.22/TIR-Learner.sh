@@ -11,7 +11,7 @@
 # conda activate TIR-Learner
 # conda install -y -c anaconda scikit-learn=0.19.0
 # conda install -y -c anaconda biopython pandas glob2 python=3.6
-# conda install -y -c bioconda blast=2.5.0
+# conda install -y -c bioconda blast
 # conda install -y -c conda-forge multiprocess regex tensorflow=1.14.0 keras=2.2.4
 
 #############
@@ -261,7 +261,6 @@ cd "$dir/Module3_New/"
 echo "############################################################ Module 3 Begin ###########################################################"
 
 echo "Module 3, Step 1: Split Genome and Run GRF program to find Inverted Repeats"
-#mv $genomeName/* $genomeName/old > /dev/null 2>&1
 rm ./$genomeName/* > /dev/null 2>&1
 makeblastdb -in $genomeFile -out $genomeFile"-+-db" -parse_seqids -dbtype nucl
 python3 $path/Module2/RunGRF.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" -grfp $grfp -l $len
@@ -272,9 +271,7 @@ python3 $path/Module2/ProcessGRFmite.py -g $genomeFile -name $genomeName -p $pat
 cp -r $genomeName/*-p temp/
 
 echo "Module 3, Step 3: Get dataset"
-#python3 $path/Module3_New/getDataset.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" > /dev/null 2>&1
-#python3 $path/Module3_New/getDataset.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New"
-python3 $path/Module3_New/getDataset2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" -c $dir"/Module3_New/call_seq_by_list.pl" > /dev/null 2>&1
+python3 $path/Module3_New/getDataset2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" > /dev/null 2>&1
 
 echo "Module 3, Step 4: Check TIR/TSD"
 python3 $path/Module3_New/CheckTIRTSD_M3.py -name $genomeName -p $path -t $t -d $dir"/Module3_New"
