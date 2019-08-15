@@ -25,7 +25,7 @@ my $usage = "\nObtain raw TE libraries using various structure-based programs
 		-blastplus      [path]  Path to the blastn program. Defalut: read from \$ENV
 		-mdust	[program]	The mdust program. Default: included in this package.
 		-overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-		-threads|-t	[int]	Number of theads to run this script
+		-threads|-t	[int]	Number of theads to run this script. Default: 4
 		-help|-h	Display this help info
 \n";
 
@@ -34,12 +34,13 @@ my $genome = '';
 my $species = 'others';
 my $type = 'all';
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
+my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-my $TIR_Learner = "$script_path/bin/TIR-Learner1.19/TIR-Learner.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner1.22/TIR-Learner.sh";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
@@ -66,7 +67,9 @@ foreach (@ARGV){
 	$k++;
   }
 
-print "Check files and dependencies, prepare working directories.\n\n";
+my $date=`date`;
+chomp ($date);
+print STDERR "$date\tEDTA_raw: Check files and dependencies, prepare working directories.\n\n";
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
@@ -107,17 +110,21 @@ $genome = $genome_file;
 
 if ($type eq "ltr" or $type eq "all"){
 
-print "Start to find LTR candidates.\n\n";
+$date=`date`;
+chomp ($date);
+print STDERR "$date\tStart to find LTR candidates.\n\n";
 
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/LTR";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
+$date=`date`;
+chomp ($date);
 if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
-	print "Existing result file $genome.LTRlib.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.LTRlib.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	print "Identify LTR retrotransposon candidates from scratch.\n\n";
+	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
 # run LTRharvest
 `$genometools suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
@@ -139,11 +146,13 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 chdir '../..';
 
 # check results
+$date=`date`;
+chomp ($date);
 die "Error: LTR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.LTR.raw.fa";
 if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
-	print "Finish finding LTR candidates.\n\n";
+	print STDERR "$date\tFinish finding LTR candidates.\n\n";
 	} else {
-	print "Warning: The LTR result file has 0 bp!\n\n";
+	print STDERR "$date\tWarning: The LTR result file has 0 bp!\n\n";
 	}
 
 }
@@ -154,25 +163,29 @@ if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
 
 if ($type eq "tir" or $type eq "all"){
 
-print "Start to find TIR candidates.\n\n";
+$date=`date`;
+chomp ($date);
+print STDERR "$date\tStart to find TIR candidates.\n\n";
 
-# enter the working directory and create genome softlink
+# enter the working directory, filter out short sequences and create genome softlink
 chdir "$genome.EDTA.raw/TIR";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
+$date=`date`;
+chomp ($date);
 if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
-	print "Existing result file $genome.TIR.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.TIR.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	print "Identify TIR candidates from scratch.\n\n";
+	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
 
 	$species =~ s/rice/Rice/i;
 	$species =~ s/maize/Maize/i;
 	$species =~ s/others/others/i;
-	print "Species: $species\n";
+	print STDERR "Species: $species\n";
 
 	# run TIR-Learner
-	`sh $TIR_Learner -g $genome -s $species -t $threads -l 5000`;
+	`sh $TIR_Learner -g $genome -s $species -t $threads -l $maxint`;
 	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
 	# clean raw predictions with flanking alignment
@@ -196,10 +209,10 @@ chdir '../..';
 # check results
 die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.raw.fa";
 if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
-	print "Finish finding TIR candidates.\n\n";
+	print STDERR "Finish finding TIR candidates.\n\n";
 	} else {
 	`touch "$genome.EDTA.raw/$genome.TIR.raw.fa"`;
-	print "Warning: The TIR result file has 0 bp!\n\n";
+	print STDERR "Warning: The TIR result file has 0 bp!\n\n";
 	}
 
 }
@@ -211,7 +224,9 @@ if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
 
 if ($type eq "mite" or $type eq "all"){
 
-print "Start to find MITE candidates.\n\n";
+$date=`date`;
+chomp ($date);
+print STDERR "$date\tStart to find MITE candidates.\n\n";
 
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/MITE";
@@ -219,10 +234,12 @@ chdir "$genome.EDTA.raw/MITE";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
+$date=`date`;
+chomp ($date);
 if ($overwrite eq 0 and -s "$genome.MITE.raw.fa"){
-	print "Existing result file $genome.MITE.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.MITE.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	print "Identify MITE candidates from scratch.\n\n";
+	print STDERR "$date\tIdentify MITE candidates from scratch.\n\n";
 
 # run MITE-Hunter
 `perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome > /dev/null 2>&1`;
@@ -235,11 +252,13 @@ if ($overwrite eq 0 and -s "$genome.MITE.raw.fa"){
 chdir '../..';
 
 # check results
+$date=`date`;
+chomp ($date);
 die "Error: MITE results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.MITE.raw.fa";
 if (-s "$genome.EDTA.raw/$genome.MITE.raw.fa"){
-	print "Finish finding MITE candidates.\n\n";
+	print STDERR "$date\tFinish finding MITE candidates.\n\n";
 	} else {
-	print "Warning: The MITE result file has 0 bp!\n\n";
+	print STDERR "$date\tWarning: The MITE result file has 0 bp!\n\n";
 	}
 
 }
@@ -250,17 +269,21 @@ if (-s "$genome.EDTA.raw/$genome.MITE.raw.fa"){
 
 if ($type eq "helitron" or $type eq "all"){
 
-print "Start to find Helitron candidates.\n\n";
+$date=`date`;
+chomp ($date);
+print STDERR "$date\tStart to find Helitron candidates.\n\n";
 
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/Helitron";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
+$date=`date`;
+chomp ($date);
 if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
-	print "Existing result file $genome.Helitron.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.Helitron.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	print "Identify Helitron candidates from scratch.\n\n";
+	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
 # run HelitronScanner
 `sh $HelitronScanner $genome $threads`;
@@ -280,14 +303,18 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 chdir '../..';
 
 # check results
+$date=`date`;
+chomp ($date);
 die "Error: Helitron results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.Helitron.raw.fa";
 if (-s "$genome.EDTA.raw/$genome.Helitron.raw.fa"){
-	print "Finish finding Helitron candidates.\n\n";
+	print STDERR "$date\tFinish finding Helitron candidates.\n\n";
 	} else {
-	print "Warning: The Helitron result file has 0 bp!\n\n";
+	print STDERR "$date\tWarning: The Helitron result file has 0 bp!\n\n";
 	}
 
 }
 
-print "Execution of EDTA_raw.pl is finished!\n\n";
+$date=`date`;
+chomp ($date);
+print STDERR "$date\tExecution of EDTA_raw.pl is finished!\n\n";
 
