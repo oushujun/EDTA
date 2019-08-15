@@ -30,9 +30,8 @@ my $usage="\n\tTo test the annotation performance of TE libraries by comparing t
 		-unknown	[0|1]	Include unknown annotations to the testing category. This should be used when 
 					the test library has no classification and you assume they all belong to the
 					target category specified by -cat. Default: 0 (not include unknowns)
-		-salvage	[0|1]	Salvage the current data, not to do new counts. (default, not to salvage=0)
 		-rand	[int]	A randum number used to identify the current run. (default: generate automatically)
-				If -salvage 1, then you need to specify the random number of the run you want to salvage.
+		-threads|-t	[ind]	Number of threads to run this program. Default: 4
 \n";
 
 my $script_path = dirname(__FILE__);
@@ -42,8 +41,8 @@ my $std_out='';
 my $tst_out='';
 my $category='total'; #TE category for testing, default total (all TEs)
 my $unknown="0"; #0, not include unknown annotation in -tst, especially when -tst contains only 1 category (strict). 1 will include unknown..
-my $salvage=0;
 my $rand=int(rand(1000000));
+my $threads = 4;
 
 my $includeN=0; #0 will not include N in total length of the genome, 1 will include N
 
@@ -55,8 +54,8 @@ foreach (@ARGV){
 	$includeN=$ARGV[$k+1] if /^-N$/i;
 	$category=lc $ARGV[$k+1] if /^-cat$/i;
 	$unknown=$ARGV[$k+1] if /^-unknown$/i;
-	$salvage=$ARGV[$k+1] if /^-salvage$/i;
 	$rand=$ARGV[$k+1] if /^-rand$/i;
+	$threads=$ARGV[$k+1] if /^-threads$|^-t$/i;
 	$k++;
 	}
 
@@ -77,7 +76,6 @@ $tst_out="$tstout_base.rand$rand";
 ## get whole genome range
 open FASTA, "<$genome" or die $usage;
 open All, ">$genome.list" or die $usage;
-open Out, ">$tst_out.$category.lib.report" or die $usage;
 
 $/="\n>";
 while (<FASTA>){
@@ -100,15 +98,14 @@ $category{'ltr'}="'RLG\\|RLC\\|RLB\\|RLR\\|RLE\\|LTR\\|RLX\\|Gypsy\\|Copia'";
 $category{'nonltr'}="'SINE\\|LINE\\|Penelope\\|RIT\\|RIL\\|RST'";
 $category{'line'}="'LINE\\|RIL\\|RIT'";
 $category{'sine'}="'SINE\\|RST'";
-$category{'tir'}="'MITE\\|hAT\\|MULE\\|Tourist\\|CACT\\|MLE\\|PILE\\|POLE\\|EnSpm\\|MuDR\\|Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR\\|DTX'";
+$category{'tir'}="'TIR\\|MITE\\|hAT\\|MULE\\|Tourist\\|CACT\\|MLE\\|PILE\\|POLE\\|EnSpm\\|MuDR\\|Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR\\|DTX\\|DTR\\|DTE\\|Merlin\\|DTP\\|DTB'";
 $category{'mite'}="MITE";
 $category{'helitron'}="'Helitron\\|DHH\\|DHX'";
 $category{'total'}="[0-9]"; #grep any line with numbers
-$category{'classified'}="'Unknown\\|unknown\\/unknown'"; #unknown TEs of all kind
+$category{'classified'}="'Unknown\\|unknown\\/unknow'"; #unknown TEs of all kind
 
 die "The specified catetory $category is not found in our database!\n" unless exists $category{$category};
 
-if ($salvage == 0){
 ## get all classified regions
 if ($category eq "classified"){
 	`grep -v -P '$category{$category}' $std_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - > $std_out.$category.cvg`;
@@ -127,13 +124,12 @@ if ($category eq "classified"){
 `perl $script_path/util/combine_overlap.pl $std_out.$category.cvg $std_out.$category.cvg.cbi`;
 `perl $script_path/util/combine_overlap.pl  $tst_out.$category.cvg $tst_out.$category.cvg.cbi`;
 
-`perl $script_path/util/substract.pl $tst_out.$category.cvg.cbi $std_out.$category.cvg.cbi`;
-`perl $script_path/util/substract.pl $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi`;
-`perl $script_path/util/substract.pl $std_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
+`perl $script_path/util/substract_parallel.pl $tst_out.$category.cvg.cbi $std_out.$category.cvg.cbi $threads`;
+`perl $script_path/util/substract_parallel.pl $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi $threads`;
+`perl $script_path/util/substract_parallel.pl $std_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi $threads`;
 `cat $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi > ${std_out}_$tst_out.$category-cmb`;
 `perl $script_path/util/combine_overlap.pl  ${std_out}_$tst_out.$category-cmb ${std_out}_$tst_out.$category-cmb.cbi`;
-`perl $script_path/util/substract.pl $genome.list ${std_out}_$tst_out.$category-cmb.cbi`;
-}
+`perl $script_path/util/substract_parallel.pl $genome.list ${std_out}_$tst_out.$category-cmb.cbi $threads`;
 
 ## FP - false positive
 my $FP=`perl $script_path/util/count_mask.pl $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi`;
@@ -158,6 +154,8 @@ my $prec=$TP/($TP+$FP);
 my $FDR=1-$prec;
 my $F1=2*$TP/(2*$TP+$FP+$FN);
 
+## output results
+open Out, ">$tst_out.$category.lib.report" or die $usage;
 print Out "
 Genome:			$genome
 Standard annotation:	$std_out
