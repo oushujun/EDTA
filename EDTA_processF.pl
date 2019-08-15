@@ -78,10 +78,10 @@ foreach (@ARGV){
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
-die "LTR raw library file $LTRraw not exists!\n$usage" unless -e $LTRraw;
-die "TIR raw library file $TIRraw not exists!\n$usage" unless -e $TIRraw;
-die "MITE raw library file $MITEraw not exists!\n$usage" unless -e $MITEraw;
-die "Helitron raw library file $Helitronraw not exists!\n$usage" unless -e $Helitronraw;
+die "LTR raw library file $LTRraw not exists!\n$usage" unless -s $LTRraw;
+die "TIR raw library file $TIRraw not exists!\n$usage" unless -s $TIRraw;
+die "MITE raw library file $MITEraw not exists!\n$usage" unless -s $MITEraw;
+die "Helitron raw library file $Helitronraw not exists!\n$usage" unless -s $Helitronraw;
 die "The script TE_purifier.pl is not found in $TE_purifier!\n" unless -s $TE_purifier;
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
@@ -128,8 +128,6 @@ sub RMclean() {
 	}
 
 
-if (1){
-
 ##### Make stg0 and HQ0 files
 
 ###########################
@@ -168,8 +166,6 @@ if (1){
 `perl -nle \'print \$_ and next unless /^>/; my \$line=(split)[0]; \$line=~s/\#SUB_//; print \"\$line\#DNA\/Helitron\"\' $genome.Helitron.raw.fa | perl $rename_TE - > $genome.Helitron.raw.fa.renamed`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.Helitron.raw.fa.renamed > $genome.Helitron.fa.stg0`;
 
-}
-
 
 #################################
 ###### Advanced filterings ######
@@ -203,8 +199,6 @@ for (my $i=1; $i<=$maxit; $i++){
 	$HEL = "$HEL.HQ$i";
 	}
 
-#exit;
-
 # aggregate clean sublibraries and cluster
 `cat $genome.LTR.fa.stg0 $genome.TIR.fa.stg0.*HQ$maxit $genome.Helitron.fa.stg0.*HQ$maxit | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.LTR.TIR.Helitron.fa.stg1.raw`;
 `perl $cleanup_nested -in $genome.LTR.TIR.Helitron.fa.stg1.raw -threads $threads -minlen 80 -cov 0.95 -iter 3 -blastplus $blast`;
@@ -214,3 +208,4 @@ for (my $i=1; $i<=$maxit; $i++){
 `perl $rename_TE $genome.LTR.TIR.Helitron.fa.stg1.raw.cln.clean > $genome.LTR.TIR.Helitron.fa.stg1`;
 
 chdir '..';
+
