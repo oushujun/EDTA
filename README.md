@@ -18,7 +18,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
     conda install -y -c conda-forge perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4
     conda install -y -c cyclus java-jdk
     conda install -y -c biocore blast-legacy
-    conda install -y -c bioconda cd-hit repeatmodeler muscle mdust repeatmasker
+    conda install -y -c bioconda cd-hit repeatmodeler muscle mdust repeatmasker blast=2.5.0
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
