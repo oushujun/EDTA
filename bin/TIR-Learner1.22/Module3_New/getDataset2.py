@@ -2,6 +2,9 @@ import multiprocessing
 from multiprocessing import Pool
 import argparse
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #mute all tensorflow info, warnings, and error msgs. #shujun
+#os.environ["KMP_AFFINITY"] = "compact" #mute all OpenMP warnings. #shujun
+os.environ["KMP_WARNINGS"] = '0' #mute all OpenMP warnings. #shujun
 from Bio import SeqIO
 import numpy as np
 from tensorflow.python.keras.utils import to_categorical
@@ -10,6 +13,7 @@ from tensorflow.python.keras.models import load_model
 import subprocess
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+tf.logging.set_verbosity(tf.logging.ERROR)
 
 parser = argparse.ArgumentParser()#pylint: disable=invalid-name
 parser.add_argument("-name", "--genomeName", help="Genome Name", required=True)
@@ -129,36 +133,37 @@ if __name__ == '__main__':
    pool.join()
 
 
-def GetFastaFromFile(argList):
-    line=argList[0]
-    listName=argList[1]
+def GetListFromFile(file):
+    listName=file+spliter+"200.list" #shujun
+    records=list(SeqIO.parse(file,"fasta"))
+    lines=[rec.id for rec in records]
     o = open(listName,"a+")
-    infor=line
-    entry=infor.split(":")[0]
-    p1 = int(infor.split(":")[1])
-    p2 = int(infor.split(":")[2])
-    fam=infor.split("_")[-1]
-    if (p1 < p2):
-        if (p1>200):
-            p_start = p1-200
+    for infor in lines: #shujun
+        entry=infor.split(":")[0]
+        p1 = int(infor.split(":")[1])
+        p2 = int(infor.split(":")[2])
+        fam=infor.split("_")[-1]
+        if (p1 < p2):
+            if (p1>200):
+                p_start = p1-200
+            else:
+                p_start=1
+            p_end = p2 + 200
         else:
-            p_start=1
-        p_end = p2 + 200
-    else:
-        if (p2 > 200):
-            p_start = p2-200
-        else:
-            p_start = 1
-        p_end = p1+200
-    o.write(genome_Name+spliter+entry+spliter+str(p1)+spliter+str(p2)+spliter+str(p_start)+spliter+str(p_end)+"_"+fam+"_200" + "\t" + entry + ":" + str(p_start) + ".." + str(p_end) + "\n")
+            if (p2 > 200):
+                p_start = p2-200
+            else:
+                p_start = 1
+            p_end = p1+200
+        o.write(genome_Name+spliter+entry+spliter+str(p1)+spliter+str(p2)+spliter+str(p_start)+spliter+str(p_end)+"_"+fam+"_200" + "\t" + entry + ":" + str(p_start) + ".." + str(p_end) + "\n")
+    o.close() #shujun
 
 
-def GetSeq(argList): #shujun
+def GetFastaFromList(argList): #shujun
     genomeFile=argList[0]
     listName=argList[1]
     outName=argList[2]
-   # get_seq = "perl ~/las/git_bin/EDTA/util/call_seq_by_list.pl %s -C %s -header 1 > %s" % (listName, genomeFile, outName)
-    get_seq = "perl %s/Module3_New/call_seq_by_list.pl %s -C %s -header 1 > %s" % (path, listName, genomeFile, outName)
+    get_seq = "perl %s/Module3_New/call_seq_by_list2.pl %s -C %s -header 1 -out %s" % (path, listName, genomeFile, outName)
     subprocess.run(['/bin/bash', '-c', get_seq])
     clean_head = "perl -i -nle 's/^>.*\|/>/; print $_' %s" % (outName)
     subprocess.run(['/bin/bash', '-c', clean_head])
@@ -167,19 +172,10 @@ def GetSeq(argList): #shujun
 if __name__ == '__main__':
     files=os.listdir(".")
     prefiles=[i for i in files if i.split(spliter)[-1]=="predi.fa"]
-    for prediction in prefiles:
-        records=list(SeqIO.parse(prediction,"fasta"))
-        listName=prediction+spliter+"200.list" #shujun
-        lines=[rec.id for rec in records]
-        argList1=[[i,listName] for i in lines] #shujun
-        pool = multiprocessing.Pool(int(t))
-        pool.map(GetFastaFromFile,argList1)
-        pool.close()
-        pool.join()
-    argList2=[[genomeFile,prefiles[i]+spliter+"200.list",prefiles[i]+spliter+"200"] for i in range(0,len(prefiles))] #shujun
+    argList=[[genomeFile,prefiles[i]+spliter+"200.list",prefiles[i]+spliter+"200"] for i in range(0,len(prefiles))] #shujun
     pool = multiprocessing.Pool(int(t))
-    pool.map(GetSeq,argList2) #shujun
+    pool.map(GetListFromFile,prefiles) #shujun
+    pool.map(GetFastaFromList,argList) #shujun
     pool.close()
     pool.join()
-
 
