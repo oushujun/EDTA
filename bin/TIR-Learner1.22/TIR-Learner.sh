@@ -92,7 +92,8 @@ echo "############################################################ Pre-Processin
 python3 $path/pre.py -g $genomeFile -name $genomeName
 
 ## mkdir temp
-if [ $species == "Maize" ] || [ $species == "Rice" ]; then
+#if [ $species == "Maize" ] || [ $species == "Rice" ]; then
+if [ $species = "Maize" ] || [ $species = "Rice" ]; then
 
 for i in Module1 Module2 Module3; do [ -d $i ] || mkdir $i; done
 

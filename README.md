@@ -28,7 +28,7 @@ Activate the EDTA program:
 
     conda activate EDTA
 
-### Form head to toe
+### From head to toe
 *You got a genome and you want to get a high-quality TE library:*
     
     perl EDTA.pl [options]
