@@ -1,0 +1,98 @@
+import subprocess
+import multiprocessing
+from multiprocessing import Pool
+import argparse
+import os
+from Bio import SeqIO
+import pandas as pd
+import glob #shujun
+
+
+parser = argparse.ArgumentParser()#pylint: disable=invalid-name
+parser.add_argument("-g", "--genomeFile", help="Genome file in fasta format", required=True)
+parser.add_argument("-name", "--genomeName", help="Genome Name", required=True)
+parser.add_argument("-p", "--path", help="Source code path", required=True)
+parser.add_argument("-d", "--currentD", help="Path of current directory", required=True)
+parser.add_argument("-t", "--processer", help="Number of processer", required=True)
+
+args = parser.parse_args()#pylint: disable=invalid-name
+
+genome_file = args.genomeFile
+genome_Name = args.genomeName
+path=args.path
+t=args.processer
+dir=args.currentD
+
+targetDir=dir+"/"+genome_Name+"/"
+spliter="-+-"
+
+
+#arglist(genomefile,selectfile)
+def GetFastaFromFile(argList):
+    genomedb=argList[0]
+    selectfile=argList[1]
+    line=argList[2]
+#    f=open(selectfile,"r+")
+    outname=selectfile+".fa"
+    o = open(outname,"a+")
+#    lines=f.readlines()
+    if len(lines)!=0:
+#        for line in lines:
+        infor=line.split("\t")[0]
+        entry=infor.split("_")[-15]
+        p1 = int(infor.split("_")[-14])
+        p2 = int(infor.split("_")[-13])
+        if (p1 < p2):
+            if (p1>200):
+                p_start = p1-200
+            else:
+                p_start=1
+            p_end = p2 + 200
+
+        else:
+            if (p2 > 200):
+                p_start = p2-200
+            else:
+                p_start = 1
+            p_end = p1+200
+        seq1 = subprocess.check_output("blastdbcmd -db '%s' -entry '%s' -range '%s'-'%s' -outfmt %s" % (genomedb, entry, int(p_start), int(p_end),"%s"), shell=True)
+        seq1 = seq1.decode("utf-8")
+        out_seq1 = ''
+        split = seq1.split('\n')
+        for sp in split:
+            if any([i.isdigit() for i in sp]):
+                continue
+            out_seq1 += sp
+        o.write(">"+line.split("\t")[0]+spliter+entry+spliter+str(p1)+spliter+str(p2)+spliter+str(p_start)+spliter+str(p_end) + "\n" + str(out_seq1) + "\n")
+       #f.close()
+       # o.close()
+
+# #
+# #
+def getNonHomo(argList):
+    allSeq = argList[0]
+    homoseq=argList[1]
+    records_all=list(SeqIO.parse(allSeq,"fasta"))
+    homoseq=list(SeqIO.parse(homoseq,"fasta"))
+    homoID=[rec.id.split(spliter)[0] for rec in homoseq]
+    SeqIO.write((rec for rec in records_all if rec.id not in homoID), allSeq+"_nonHomo.fa","fasta")
+
+
+if __name__ == '__main__':
+    os.chdir(targetDir)
+    fileList=os.listdir(".")
+    fileList=[i for i in fileList if i[-2:]=="80"]
+    genomedb=genome_file+spliter+"db"
+    for selectfile in fileList:
+        f=open(selectfile,"r+")
+        lines=f.readlines()
+        argList=[[genomedb,selectfile, line] for line in lines]
+        pool = multiprocessing.Pool(int(t))
+        pool.map(GetFastaFromFile,argList)
+        pool.close()
+        pool.join()
+
+    cat= "cat *80.fa > %s"%(genome_Name+spliter+"homo.fa")
+    os.system(cat)
+    argList=[genome_Name+"_TIRvish_pro.fa"+spliter+"p",genome_Name+spliter+"homo.fa"]
+    getNonHomo(argList)
