@@ -98,7 +98,7 @@ foreach(keys(%Name_Seq)) {
 	print "BLAST...\n";
 
 	#------------------------------ sometimes using too sensitive search will result in low quality alignment that is difficult to detect TIRs and TSDs
-	system("blastall -i temp_query.fa -d $Database -e $Max_Evalue -p blastn -o temp_blast.out\n");
+	system("timeout 188s blastall -i temp_query.fa -d $Database -e $Max_Evalue -p blastn -o temp_blast.out\n");
 	
 	print "Searching for homologs by PHI ...\n";
 	open(TF, "temp_blast.out")||die"$!\n";
@@ -128,7 +128,7 @@ foreach(keys(%Name_Seq)) {
 			#----------------------------------- use high resolution blast parameters if homologs number is smaller than ReBlast_Num ---------
 			if($Seq_Num < $ReBlast_Num) {
 				print "$Seq_Num < $ReBlast_Num blast again using -G -4 -E -2 -q -3 -r 2 ...\n";
-				system("blastall -i temp_query.fa -d $Database -e $Max_Evalue -p blastn -o temp_blast.out -G -4 -E -2 -q -3 -r 2\n");
+				system("timeout 188s blastall -i temp_query.fa -d $Database -e $Max_Evalue -p blastn -o temp_blast.out -G -4 -E -2 -q -3 -r 2\n");
 				print "Find homologs...\n";
 				system("perl $script_path/IDTE_PHI.pl -i temp_blast.out -q temp_query.fa -D $Database -o $Name -M $Min_Pro -d $Max_Gap -I $ID_Tag -n $Max_Output -e $Max_Evalue -l $Edge_Len -r $Edge_Len\n");
 				$Seq_Num = 0;

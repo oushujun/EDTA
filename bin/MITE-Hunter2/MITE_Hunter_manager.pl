@@ -158,7 +158,7 @@ if($Step_code =~ /4/) {
 	foreach(@Len_Seq_Files) {
 		$File = $_;
 		system("formatdb -i $File -o F -p F\n");
-		system("blastall -i $File -d $File -e 1e-10 -p blastn -o $File.self -m 8 -v 60 -b 60 -a $CPU_Num -F F -G 4 -E 2 -q -3 -r 2\n");
+		system("timeout 188s blastall -i $File -d $File -e 1e-10 -p blastn -o $File.self -m 8 -v 60 -b 60 -a $CPU_Num -F F -G 4 -E 2 -q -3 -r 2\n");
 		system("perl $script_path/MITE_Hunter_worker2.pl -q $File -b $File.self -c 2 -o $File.pre\n"); #shujun
 	}
 	system("cat *.pre.fa > $Output4");
@@ -209,13 +209,13 @@ if($Step_code =~ /5/) {
 		foreach(@Len_Seq_Files) {
 			$File = $_;
 			system("formatdb -i $File -o F -p F\n");
-			system("blastall -i $File -d $File -e 1e-10 -p blastn -o $File.subself -m 8 -v 2000 -b 2000 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
+			system("timeout 188s blastall -i $File -d $File -e 1e-10 -p blastn -o $File.subself -m 8 -v 2000 -b 2000 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
 		}
 		system("cat *.subself > $Output4.self\n");	
 		system("rm temp*\n");
 	}else{
 		system("formatdb -i $Output4 -o F -p F\n");
-		system("blastall -i $Output4 -d $Output4 -e 1e-10 -p blastn -o $Output4.self -m 8 -v 2000 -b 2000 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
+		system("timeout 188s blastall -i $Output4 -d $Output4 -e 1e-10 -p blastn -o $Output4.self -m 8 -v 2000 -b 2000 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
 	}
 	system("perl $script_path/examplar_maker.pl -i $Output4 -b $Output4.self -p 0 -n 2 -o $Output5 -m $Exe_Min_Len -s $Exe_Min_Ide\n"); #shujun
 }
@@ -231,14 +231,14 @@ if($Step_code =~ /6/) {
 if($Step_code =~ /7/) {
 	#------------------------------ self blast followed by examplar_maker.pl to group putative MITEs ---------------------------------
 	system("formatdb -i $Output6 -o F -p F\n");
-	system("blastall -i $Output6 -d $Output6 -e 1e-10 -p blastn -o $Output6.self -m 8 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
+	system("timeout 188s blastall -i $Output6 -d $Output6 -e 1e-10 -p blastn -o $Output6.self -m 8 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num -F F\n");
 	system("perl $script_path/examplar_maker.pl -i $Output6 -b $Output6.self -p 0 -n 2 -o $Output7 -m $Exe_Min_Len -s $Exe_Min_Ide -l 1\n"); #shujun
 }
 
 #-------------------- group into subfamilies -------------------
 if($Step_code =~ /8/) {
 	system("formatdb -i $Output7 -o F -p F\n");
-	system("blastall -i $Output7 -d $Output7 -e 1e-10 -p blastn -o $Output7.self -v 500 -b 500 -m 9 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num\n");
+	system("timeout 188s blastall -i $Output7 -d $Output7 -e 1e-10 -p blastn -o $Output7.self -v 500 -b 500 -m 9 -G 4 -E 2 -q -3 -r 2 -a $CPU_Num\n");
 	system("perl $script_path/MITE_Hunter_worker4.pl -i $Output7 -b $Output7.self -o $Output8\n"); #shujun
 }
 

@@ -23,10 +23,10 @@ if($BLAST eq "none") {
 	print "self blast...\n";
 	if($Protein == 1) {
 		system ("formatdb -i $Input -o F -p T\n");
-		system ("blastall -i $Input -o $Input.self -e 1e-10 -F F -p blastp -d $Input -v 5000 -b 5000 -m 9\n");
+		system ("timeout 188s blastall -i $Input -o $Input.self -e 1e-10 -F F -p blastp -d $Input -v 5000 -b 5000 -m 9\n");
 	}else{
 		system ("formatdb -i $Input -o F -p F\n");
-		system ("blastall -i $Input -o $Input.self -e 1e-10 -F F -p blastn -d $Input -v 5000 -b 5000 -m 9 -G -4 -E -2 -q -3 -r 2\n");		
+		system ("timeout 188s blastall -i $Input -o $Input.self -e 1e-10 -F F -p blastn -d $Input -v 5000 -b 5000 -m 9 -G -4 -E -2 -q -3 -r 2\n");		
 	}
 }
 
