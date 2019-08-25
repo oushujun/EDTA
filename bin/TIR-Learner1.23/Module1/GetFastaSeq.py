@@ -1,47 +1,54 @@
-import subprocess
 import multiprocessing
 from multiprocessing import Pool
 import argparse
 import os
 from Bio import SeqIO
-import pandas as pd
+import numpy as np
+import subprocess
 
 parser = argparse.ArgumentParser()#pylint: disable=invalid-name
-parser.add_argument("-g", "--genomeFile", help="Genome file in fasta format", required=True)
 parser.add_argument("-name", "--genomeName", help="Genome Name", required=True)
 parser.add_argument("-p", "--path", help="Source code path", required=True)
 parser.add_argument("-t", "--processer", help="Number of processer", required=True)
 parser.add_argument("-d", "--currentD", help="Path of current directory", required=True)
+parser.add_argument("-g", "--genomeFile",help="Path to the genome file", required=True)
 args = parser.parse_args()#pylint: disable=invalid-name
 
-genomeFile = args.genomeFile
 genome_Name = args.genomeName
 path=args.path
 t=args.processer
 dir=args.currentD
+genomeFile=args.genomeFile
 
 targetDir=dir+"/"+genome_Name+"/"
-
+os.chdir(targetDir)
 spliter="-+-"
 
 
-os.chdir(targetDir)
-
-
 def GetListFromFile(file):
+    listName=file+spliter+"200.list" #shujun
+    records=list(SeqIO.parse(file,"fasta"))
     f=open(file,"r+")
     lines=f.readlines()
-    listName=file+spliter+".list" #shujun
     o = open(listName,"a+")
-    if len(lines)!=0:
-        for line in lines: #shujun
-            entry=line.split("\t")[0]
-            p1 = int(line.split("\t")[3])
-            p2 = int(line.split("\t")[4])
-            family=line.split("\t")[2]
-            infor=line.split("\t")[8]
-            o.write("%s_%s_%s_%s_%s_%s" % (genome_Name,entry, p1, p2,family,infor[0:-1])+ "\t" + entry + ":" + str(p1) + ".." + str(p2) + "\n")
-        o.close() #shujun
+    for line in lines: #shujun
+        p1 = int(line.split("\t")[8])
+        p2 = int(line.split("\t")[9])
+        entry=line.split("\t")[1]
+        if (p1 < p2):
+            if (p1>200):
+                p_start = p1-200
+            else:
+                p_start=1
+            p_end = p2 + 200
+        else:
+            if (p2 > 200):
+                p_start = p2-200
+            else:
+                p_start = 1
+            p_end = p1+200
+        o.write(genome_Name+spliter+entry+spliter+str(p1)+spliter+str(p2)+spliter+str(p_start)+spliter+str(p_end)+ "\t" + entry + ":" + str(p_start) + ".." + str(p_end) + "\n")
+    o.close() #shujun
 
 
 def GetFastaFromList(argList): #shujun
@@ -56,14 +63,10 @@ def GetFastaFromList(argList): #shujun
 
 if __name__ == '__main__':
     files=os.listdir(".")
-    f="%s_FinalAnn.gff3"%(genome_Name)
-    fileList=[f]
-    argList=[[genomeFile,fileList[i]+spliter+".list",fileList[i][0:-5]+".fa"] for i in range(0,len(fileList))] #shujun
+    fileList=[i for i in files if i[-3:]=="csv"]
+    argList=[[genomeFile, fileList[i]+spliter+"200.list",fileList[i][:-4]+".fa"] for i in range(0,len(fileList))] #shujun
     pool = multiprocessing.Pool(int(t))
     pool.map(GetListFromFile,fileList) #shujun
     pool.map(GetFastaFromList,argList) #shujun
     pool.close()
     pool.join()
-
-
-

@@ -92,8 +92,7 @@ echo "############################################################ Pre-Processin
 python3 $path/pre.py -g $genomeFile -name $genomeName
 
 ## mkdir temp
-#if [ $species == "Maize" ] || [ $species == "Rice" ]; then
-if [ $species = "Maize" ] || [ $species = "Rice" ]; then
+if [ $species == "Maize" ] || [ $species == "Rice" ]; then
 
 for i in Module1 Module2 Module3; do [ -d $i ] || mkdir $i; done
 
@@ -128,7 +127,8 @@ fi
 rm test.select.csv
 
 echo "Module 1, Step 3: Making blastDB and get candidate sequences"
-python3 $path/Module1/GetSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module1"
+#python3 $path/Module1/GetSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module1"
+python3 $path/Module1/GetFastaSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module1"
 
 echo "Module 1, Step 4: Check TIR and TSD"
 python3 $path/Module1/CheckTIRTSD.py -name $genomeName -p $path -t $t -d $dir"/Module1"
@@ -170,7 +170,8 @@ python3 $path/Module2/Blast_ref.py -name $genomeName -p $path -t $t -d $dir"/Mod
 cp $genomeName/*80 temp/
 
 echo "Module 2, Step 4: Get sequences from 80% similarity"
-python3 $path/Module2/GetSeq_M2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module2"
+#python3 $path/Module2/GetSeq_M2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module2"
+python3 $path/Module2/GetFastaSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module2"
 
 echo "Module 2, Step 5: Check TIR and TSD"
 python3 $path/Module2/CheckTIRTSD_M2.py -name $genomeName -p $path -t $t -d $dir"/Module2"
@@ -198,12 +199,15 @@ cd $dir"/Module3/"
 mv ../Module2/$genomeName/*_nonHomo.fa $genomeName/
 
 echo "Module 3, Step 1: Get dataset"
-python3 $path/Module3/getDataset.py -name $genomeName -p $path -t $t -d $dir"/Module3"
-cp $genomeName/*.csv temp/
-cp $genomeName/*nonHomo.fa temp/
+#python3 $path/Module3/getDataset.py -name $genomeName -p $path -t $t -d $dir"/Module3"
+#cp $genomeName/*.csv temp/
+#cp $genomeName/*nonHomo.fa temp/
 
 echo "Module 3, Step 2: ML prediction"
 python3 $path/Module3/ML_Ensemble.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3" -s $species
+python3 $path/Module3/GetFastaSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3"
+export OMP_NUM_THREADS=1
+#python3 $path/Module3/getDataset2.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3"
 
 echo "Module 3, Step 3: Check TIR/TSD"
 python3 $path/Module3/CheckTIRTSD_M3.py -name $genomeName -p $path -t $t -d $dir"/Module3"

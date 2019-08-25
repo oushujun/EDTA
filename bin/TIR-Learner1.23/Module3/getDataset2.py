@@ -60,8 +60,8 @@ def getSeqFragment(arglist):
 
 if __name__ == '__main__':
     files=os.listdir(".")
-    files=[i for i in files if i.split(spliter)[-1]=="p"]
-    output=[file+spliter+"toPre.fa" for file in files]
+    files=[i for i in files if i[-10:]=="nonHomo.fa"]
+    output=[file[:-3]+spliter+"toPre.fa" for file in files]
     featureSize=200
     lists=[[files[i],output[i],200] for i in range(0,len(files))]
     pool = multiprocessing.Pool(int(t))

@@ -55,15 +55,15 @@ def GetFastaFromFile(argsList):
     o.write(">"+genomeName+spliter+entry+spliter+str(p1)+spliter+str(p2)+spliter+str(p_start)+spliter+str(p_end)+spliter+family + "\n" + str(out_seq1) + "\n")
 
 
-if __name__ == '__main__':
-    f=open("%sModule3.gff3"%(genome_Name+spliter),"r+")
-    lines=f.readlines()
-    l=[[i,genome_Name,genome_file] for i in lines]
-    pool = multiprocessing.Pool(int(t))
-    pool.map(GetFastaFromFile,l)
-    pool.close()
-    pool.join()
-
+#if __name__ == '__main__':
+#    f=open("%sModule3.gff3"%(genome_Name+spliter),"r+")
+#    lines=f.readlines()
+#    l=[[i,genome_Name,genome_file] for i in lines]
+#    pool = multiprocessing.Pool(int(t))
+#    pool.map(GetFastaFromFile,l)
+#    pool.close()
+#    pool.join()
+#
 
 def getLTR(rec):
     s = str(rec.seq)

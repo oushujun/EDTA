@@ -27,55 +27,42 @@ spliter="-+-"
 
 os.chdir(targetDir)
 
-#arglist(genomefile,selectfile)
-def GetFastaFromFile(argList):
-    genomedb=argList[0]
-    line=argList[1]
-    outname=argList[2]
-    gName=argList[3]
-   # o = open(outname,"w")
-    o = open(outname,"a+") #shujun
-    entry=line.split("\t")[0]
-    p1 = int(line.split("\t")[3])
-    p2 = int(line.split("\t")[4])
-    family=line.split("\t")[2]
-    infor=line.split("\t")[8]
-    seq1 = subprocess.check_output("blastdbcmd -db '%s' -entry '%s' -range '%s'-'%s' -outfmt %s" % (genomedb, entry, int(p1), int(p2), "%s"), shell=True)
-    seq1 = seq1.decode("utf-8")
-    out_seq1 = ''
-    split = seq1.split('\n')
-    for sp in split:
-        if any([i.isdigit() for i in sp]):
-            continue
-        out_seq1 += sp
-   # o.write(">%s_%s_%s_%s_%s_%s" % (gName,entry, p1, p2,family,infor) + "\n" + str(out_seq1) + "\n")
-    if (len(out_seq1.split(" "))>1):
-        out_seq1=out_seq1.split(" ")[-1]
-    o.write(">%s_%s_%s_%s_%s_%s" % (gName,entry, p1, p2,family,infor) + str(out_seq1) + "\n") #shujun
+
+
+def GetListFromFile(file):
+    lines=file.readlines()
+    listName=file+spliter+".list" #shujun
+    o = open(listName,"a+")
+    if len(lines)!=0:
+        for line in lines: #shujun
+            entry=line.split("\t")[0]
+            p1 = int(line.split("\t")[3])
+            p2 = int(line.split("\t")[4])
+            family=line.split("\t")[2]
+            infor=line.split("\t")[8]
+            o.write("%s_%s_%s_%s_%s_%s" % (gName,entry, p1, p2,family,infori[0:-1])+ "\t" + entry + ":" + str(p1) + ".." + str(p2) + "\n")
+        o.close() #shujun
+
+
+def GetFastaFromList(argList): #shujun
+    genomeFile=argList[0]
+    listName=argList[1]
+    outName=argList[2]
+    get_seq = "perl %s/Module3_New/call_seq_by_list2.pl %s -C %s -header 1 -out %s" % (path, listName, genomeFile, outName)
+    subprocess.run(['/bin/bash', '-c', get_seq])
+    clean_head = "perl -i -nle 's/^>.*\|/>/; print $_' %s" % (outName)
+    subprocess.run(['/bin/bash', '-c', clean_head])
 
 
 if __name__ == '__main__':
-    genomedb=genome_file+spliter+"db"
-#    f="%s_FinalAnn.gff3"%(genome_Name+"_combine"+"/"+genome_Name)
+    files=os.listdir(".")
     f="%s_FinalAnn.gff3"%(genome_Name)
-    outName=f[0:-5]+".fa"
-    file=open(f,"r+")
-    lines=file.readlines()
-    argList=[[genomedb,i,outName,genome_Name] for i in lines]
-    pool = multiprocessing.Pool(int(t))
-    pool.map(GetFastaFromFile,argList)
+    fileList=[f]
+    argList=[[genomeFile,fileList[i]+spliter+".list",fileList[i][0:-5]+".fa"] for i in range(0,len(fileList)] #shujun
+    pool.map(GetListFromFile,fileList) #shujun
+    pool.map(GetFastaFromList,argList) #shujun
     pool.close()
     pool.join()
-
-#    f="%s_FinalAnn_Clint.gff3"%(genome_Name)
-#    outName=f[0:-5]+".fa"
-#    file=open(f,"r+")
-#    lines=file.readlines()
-#    argList=[[genomedb,i,outName,genome_Name] for i in lines]
-#    pool = multiprocessing.Pool(16)
-#    pool.map(GetFastaFromFile,argList)
-#    pool.close()
-#    pool.join()
 
 
 

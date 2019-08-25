@@ -118,18 +118,18 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
     
-    files=os.listdir(".")
-    fastafile=[i for i in files if i[-10:]=="nonHomo.fa"]
-    prefiles=[j[:-3]+spliter+"toPre.csv"+spliter+"predi.csv" for j in fastafile]
-    for prediction in prefiles:
-        f = pd.read_csv(prediction, header=0, sep=",")
-        for i in ["DTA","DTC","DTH","DTM","DTT"]:
-            sub=f.loc[f["prediction"]==i]
-            preNamelist=list(sub["ID"])
-            lists=[[genome_file+spliter+"db", prediction,line] for line in preNamelist]
-            pool = multiprocessing.Pool(int(t))
-            pool.map(GetFastaFromFile,lists)
-            pool.close()
-            pool.join()
-            
+#    files=os.listdir(".")
+#    fastafile=[i for i in files if i[-10:]=="nonHomo.fa"]
+#    prefiles=[j[:-3]+spliter+"toPre.csv"+spliter+"predi.csv" for j in fastafile]
+#    for prediction in prefiles:
+#        f = pd.read_csv(prediction, header=0, sep=",")
+#        for i in ["DTA","DTC","DTH","DTM","DTT"]:
+#            sub=f.loc[f["prediction"]==i]
+#            preNamelist=list(sub["ID"])
+#            lists=[[genome_file+spliter+"db", prediction,line] for line in preNamelist]
+#            pool = multiprocessing.Pool(int(t))
+#            pool.map(GetFastaFromFile,lists)
+#            pool.close()
+#            pool.join()
+#            
 

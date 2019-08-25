@@ -71,7 +71,7 @@ for i in ["Module1","Module2","Module3"]:
     cp = "cp %s/%s/%sLow ."%(i, genome_Name, genome_Name+spliter+i+spliter)
     os.system(cp)
 
-print("######################################### Removing Entries with Homology in Flanking Sequences ######################################")
+#print("######################################### Removing Entries with Homology in Flanking Sequences ######################################")
 
 def removeIRFhomo(file,removelist,outputname):
     f=pd.read_csv(file,header=None,sep="\t")
@@ -92,7 +92,7 @@ for dataset in ["Module1","Module2","Module3"]:
     print("%s retained in %s"%(str(keep.shape[0]),dataset))
     cp ="cp %sClean.gff3 ./%s_combine"%(genome_Name+spliter+dataset+spliter,genome_Name)
     os.system(cp)
-print("############################################################ Finished Flanking Check ################################################")
+#print("############################################################ Finished Flanking Check ################################################")
 
 
 def removeDupinSingle(file):

@@ -81,12 +81,12 @@ def getLTR(rec):
    # os.system(rm)
 
 
-if __name__ == '__main__':
-    records = list(SeqIO.parse(genome_Name+spliter+"M2F200.fa", "fasta"))
-    pool = multiprocessing.Pool(int(t))
-    pool.map(getLTR, records)
-    pool.close()
-    pool.join()
+#if __name__ == '__main__':
+#    records = list(SeqIO.parse(genome_Name+spliter+"M2F200.fa", "fasta"))
+#    pool = multiprocessing.Pool(int(t))
+#    pool.map(getLTR, records)
+#    pool.close()
+#    pool.join()
 
 def Remove(file):
     f=open(file,"r+")
@@ -99,17 +99,20 @@ def Remove(file):
        rm="rm %s 2>/dev/null"%(file) #shujun
        os.system(rm)
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
+#
+#    files=os.listdir(".")
+#    filelist=[i for i in files if i[-4:]==".tsv"]
+#    pool = multiprocessing.Pool(int(t))
+#    pool.map(Remove,filelist)
+#    pool.close()
+#    pool.join()
+#
+#cat = "cat *.tsv > %sModule2%sLow"%(genome_Name+spliter,spliter)
+#os.system(cat)
+##rm = "rm *.tsv"
+#rm = "rm *.tsv seq1_* seq2_* 2>/dev/null" #shujun
+#os.system(rm)
 
-    files=os.listdir(".")
-    filelist=[i for i in files if i[-4:]==".tsv"]
-    pool = multiprocessing.Pool(int(t))
-    pool.map(Remove,filelist)
-    pool.close()
-    pool.join()
-
-cat = "cat *.tsv > %sModule2%sLow"%(genome_Name+spliter,spliter)
-os.system(cat)
-#rm = "rm *.tsv"
-rm = "rm *.tsv seq1_* seq2_* 2>/dev/null" #shujun
-os.system(rm)
+f=open("%sModule2%sLow"%(genome_Name+spliter,spliter),"w")
+f.write("#Skip")

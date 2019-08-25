@@ -46,6 +46,8 @@ files=os.listdir(".")
 p_files=[i for i in files if i.split(spliter)[0]==genome_Name and i.split(spliter)[-1]=="p" and i.split(spliter)[-2]=="GRFmite.fa"]
 grf_files=[i for i in files if i.split(spliter)[0]==genome_Name and i[-10:]=="GRFmite.fa"]
 
+getContigNames(genome_file, genome_Name)
+
 if (len(p_files)>0):
     n=0
     for i in p_files:
