@@ -204,6 +204,7 @@ cp $genomeName/*.csv temp/
 cp $genomeName/*nonHomo.fa temp/
 
 echo "Module 3, Step 2: ML prediction"
+[ -f $path/Module3/Maize_model.sav ] || gunzip -c $path/Module3/Maize_model.sav.gz > $path/Module3/Maize_model.sav
 python3 $path/Module3/ML_Ensemble.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3" -s $species
 python3 $path/Module3/GetFastaSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3"
 export OMP_NUM_THREADS=1
