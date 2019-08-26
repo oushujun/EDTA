@@ -241,14 +241,22 @@ if ($overwrite eq 0 and -s "$genome.MITE.raw.fa"){
 	} else {
 	print STDERR "$date\tIdentify MITE candidates from scratch.\n\n";
 
+print STDERR "$date\tWarning: Because MITE-Hunter is too slow and only contribute limited new TIR candidates, it is taken down temporary until a better solution is found.\n\n";
+if (0) { #debug line
 # run MITE-Hunter
 `perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome > /dev/null 2>&1`;
 `cat *_Step8_* > $genome.MITE.raw.fa`;
 `rm $genome $genome.index $genome.nhr $genome.nin $genome.nsq`;
+} #debug line
 	}
 
 # copy result files out
-`cp $genome.MITE.raw.fa ../$genome.MITE.raw.fa`;
+#`cp $genome.MITE.raw.fa ../$genome.MITE.raw.fa`;
+if (-s "../$genome.TIR.raw.fa") { #debug line
+	`cp ../$genome.TIR.raw.fa ../$genome.MITE.raw.fa`; #debug line
+	} else { #debug line
+	print STDERR "As a temporary fix, the TIR-Learner is used to mock the MITE-Hunter result. Please run -type tir first.\n\n"; #debug line
+	} #debug line
 chdir '../..';
 
 # check results
