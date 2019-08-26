@@ -2,6 +2,7 @@ Major updates:
 Vesion 1.23
 1. Replace all blastdbcmd commands with call_seq_by_list.pl. TIR-Learner is independent of blast versions
 2. Remove the flanking sequence checking function in all modules to improve speed.
+3. Fix the shell syntax error (line 95)
 
 Versions 1.21 and 1.22
 1. Replace blastdbcmd with call_seq_by_list.pl for much stable and faster performance
