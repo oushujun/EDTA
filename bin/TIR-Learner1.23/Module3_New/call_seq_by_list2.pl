@@ -88,6 +88,7 @@ while (<Genome>){
 	s/^\s+//;
 	my ($chr, $seq)=(split /\n/, $_, 2);
 	$chr=~s/\s+$//;
+	$chr=(split /\s+/, $chr)[0];
 	$seq=~s/\s+//g;
 	$genome{$chr}=$seq;
 	}
