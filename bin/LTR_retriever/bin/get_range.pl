@@ -79,8 +79,9 @@ if ($LTR==1 && $genome==0){
 
 if ($LTR==1 && $genome==1){
 	my @id=`grep \\> $ARGV[2]`;
+	my @rev_id = reverse @id;
 	my $i=0;
-	foreach (@id){
+	foreach (@id, @rev_id){
 		chomp;
 		s/>//g;
 		s/\s+//g;
@@ -116,7 +117,8 @@ if ($LTR==1){
 #start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)
 
 	$chr=$chr{"$element_start..$element_end"} if $genome==0;
-	if ($genome==1 and !$chr) {
+#	if ($genome==1 and !$chr) {
+	if ($genome==1) {
 		if (exists $chr{$seq_ID}){
 			$chr=$chr{$seq_ID};
 			} else {

@@ -70,7 +70,7 @@ foreach (keys %TE){
 	my ($gypsy, $copia,$pos_strand, $neg_strand)=@{$TE{$_}}[1,2,3,4];
 	my ($family, $strand)=("unknown", "?");
 	$family="Gypsy" if ($gypsy>$copia and $copia/$gypsy<0.3);
-	$family="Copia" if ($copia>$gypsy and $gypsy/$copia<0.3);
+	$family="Copia" if ($copia>$gypsy and $gypsy/$copia<0.9); #improvement suggested by @zhangrengang
 	$strand="+" if ($pos_strand>$neg_strand and $neg_strand/$pos_strand<0.4);
 	$strand="-" if ($neg_strand>$pos_strand and $pos_strand/$neg_strand<0.4);
 

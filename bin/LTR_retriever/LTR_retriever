@@ -4,10 +4,11 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
+my $version="v2.7";
 my $help="
-###########################
-###### LTR_retriever ######
-###########################
+##########################
+### LTR_retriever $version ###
+##########################
 
 A program for accurate identification of LTR-RTs from outputs of LTRharvest and LTR_FINDER,
 	generates non-redundant LTR-RT library for genome annotations.
@@ -123,7 +124,6 @@ my $TEhmm="$script_path/database/TEfam.hmm";
 my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
 my $step = "Init"; #start the program from a particular step. Default: Init (from the beginning).
 my $threads=4;
-my $version="v2.6";
 #my $scn=''; #store screen output information
 
 my $k=0;

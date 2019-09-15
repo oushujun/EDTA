@@ -4,6 +4,7 @@ LTR_retriever is a command line program (in Perl) for accurate identification of
 
 By default, the program will generate whole-genome LTR-RT annotation and the LTR Assembly Index (LAI) for evaluations of the assembly continuity of the input genome. Users can also run LAI separately (see `Usage`).
 
+
 ### Installation ###
 
 #### Quick installation using conda ####
@@ -11,14 +12,14 @@ By default, the program will generate whole-genome LTR-RT annotation and the LTR
 You may use conda to quickly install all dependencies and LTR_retriever is then good to go:
 
 	conda create -n LTR_retriever
-	source activate LTR_retriever
-	conda install -c conda-forge perl perl-text-soundex
-	conda install -c bioconda cd-hit
-	conda install -c bioconda/label/cf201901 repeatmasker
+	conda activate LTR_retriever
+	conda install -y -c conda-forge perl perl-text-soundex
+	conda install -y -c bioconda cd-hit repeatmasker
 	git clone https://github.com/oushujun/LTR_retriever.git
 	./LTR_retriever/LTR_retriever -h
 
 Note: if you experience RepeatMasker errors, you may want to read [#43](https://github.com/oushujun/LTR_retriever/issues/43) to fix the library bug.
+
 
 #### Standard installation ####
 
@@ -48,7 +49,7 @@ Two types of inputs are needed for LTR_retriever
 1. Genomic sequence
 2. LTR-RT candidates
 
-LTR_retriever takes multiple LTR-RT candidate inputs including the screen output of LTRharvest and the screen output of LTR_FINDER. For outputs of other LTR identification programs, you may convert them to LTRharvest-like format and feed them to LTR_retriever. Users need to obtain the input file(s) from the aforementioned programs before running LTR_retriever. Either a single input source or a combination of multiple inputs are acceptable. For more details and examples please see the manual.
+LTR_retriever takes multiple LTR-RT candidate inputs including the screen output of LTRharvest and the screen output of LTR_FINDER. For outputs of other LTR identification programs, you may convert them to LTRharvest-like format and feed them to LTR_retriever (with `-inharvest`). Users need to obtain the input file(s) from the aforementioned programs before running LTR_retriever. Either a single input source or a combination of multiple inputs are acceptable. For more details and examples please see the manual.
 
 It's sufficient and recommended to just provide LTR_retriever with LTRharvest and LTR_FINDER results. However, if you want to analyze results from LTR_STRUC, MGEScan 3.0.0, and LtrDetector, you can use the following scripts to convert their outputs to the LTRharvest format, then feed LTR_retriever with `-inharvest`. You may concatenate multiple LTRharvest format inputs into one file. For instructions, run:
 
@@ -56,7 +57,7 @@ It's sufficient and recommended to just provide LTR_retriever with LTRharvest an
 	perl /your_path_to/LTR_retriever/bin/convert_MGEScan3.0.pl
 	perl /your_path_to/LTR_retriever/bin/convert_ltrdetector.pl
 
-Click to download executables for [LTR_FINDER](https://code.google.com/archive/p/ltr-finder/) and [LTRharvest](http://genometools.org/pub/binary_distributions/). For recommended parameters, please read the Manual.
+Click to download executables for [LTR_FINDER_parallel](https://github.com/oushujun/LTR_FINDER_parallel) and [LTRharvest](http://genometools.org/pub/binary_distributions/). For recommended parameters, please read the Manual.
 
 ### Outputs ###
 
@@ -77,13 +78,22 @@ The output of LTR_retriever includes:
 
 ### Usage ###
 
+Good practice: It's highly recommended to use short and simple sequence names. For example, use letters, numbers, and _ to generate unique names shorter than 15 bits.
+
+To obtain raw input files with LTRharvest and LTR_FINDER_parallel:
+
+	/your_path_to/gt suffixerator -db genome.fa -indexname genome.fa -tis -suf -lcp -des -ssp -sds -dna
+	/your_path_to/gt ltrharvest -index genome.fa -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > genome.fa.harvest.scn
+	/your_path_to/LTR_FINDER_parallel -seq genome.fa -threads 10 -harvest_out -size 1000000 -time 300
+	cat genome.fa.harvest.scn genome.fa.finder.combine.scn > genome.fa.rawLTR.scn
+
 To run LTR_retriever:
 
-	/your_path_to/LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
+	/your_path_to/LTR_retriever -genome genome.fa -inharvest genome.fa.rawLTR.scn -threads 10 [options]
 
 To run LAI:
 
-	/your_path_to/LAI -genome genome.fa -intact intact.pass.list -all genome.out [options]
+	/your_path_to/LAI -genome genome.fa -intact genome.fa.pass.list -all genome.fa.out [options]
 
 For more details about the usage and parameter settings, please see the help pages by running:
 

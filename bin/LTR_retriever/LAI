@@ -46,7 +46,7 @@ my $monoploid=''; #A list of sequence names from the same monoploid (1x) for plo
 my $genome='';
 my $intact='';
 my $all='';
-my $version="beta3.1";
+my $version="beta3.2";
 
 my $k=0;
 foreach (@ARGV){
@@ -70,6 +70,10 @@ foreach (@ARGV){
 $mode="quick mode" if $quick==1;
 $mode="rapid mode" if $qquick==1;
 die "Input file(s) not exist!\n$usage" unless -s "$genome" and -s "$intact" and -s "$all";
+my $all_file = basename($all);
+`ln -s $all $all_file` unless -e $all_file;
+$all = $all_file;
+
 
 print "
 ######################################

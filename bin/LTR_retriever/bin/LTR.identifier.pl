@@ -2,6 +2,7 @@
 use strict;
 use threads;
 use Thread::Queue;
+use threads::shared;
 use File::Basename;
 
 my $usage="
@@ -74,7 +75,7 @@ open List, "<$List" or die "ERROR: No candidate list file!\n$usage";
 open FA, "<$FA" or die "ERROR: No candidate sequence file!\n$usage";
 
 ##Store LTR information in hash
-my %info;
+my %scn :shared;
 my $head='';
 while (<List>){
 	next if /^\s+$/;
@@ -84,8 +85,8 @@ while (<List>){
 		next;
 		}
 	my ($start, $end, $len, $ls, $le, $ll, $rs, $re, $rl, $sim, $id)=split;
-	$info{"$start..$end"}=[split]; #store in %info
-	$info{"$start..$end"}[9]*=0.01 if $info{"$start..$end"}[9] ne "NA"; #convert % to decimal
+	$scn{"$start..$end"}=shared_clone([split]); #store in %scn
+	$scn{"$start..$end"}[9]*=0.01 if $scn{"$start..$end"}[9] ne "NA"; #convert % to decimal
 	}
 close List;
 
@@ -99,81 +100,63 @@ if (defined $ANNO){
 		my ($id, $superfam, $fam, $strand)=(split)[0,1,2,3];
 		#Chr1:106472..118130|Chr1:106522..118080
 		$id=~s/.*\|.*:([0-9]+\.\.[0-9]+)$/$1/;
-		$info{$id}[12]=$strand;
-		$info{$id}[17]=$superfam;
-		$info{$id}[18]=$fam;
+		$scn{$id}[12]=$strand;
+		$scn{$id}[17]=$superfam;
+		$scn{$id}[18]=$fam;
 		}
 	close ANNO;
 	}
 
-##Store sequence information
-my @FA;
+#Store sequence information and push candidates into multithreading queue
+my $queue=Thread::Queue->new();
+$/ = "\n>";
 while (<FA>){
 	chomp;
-	my $name=$_;
-	next unless $name=~s/^>//;#first line of the FASTA file should start with ">", otherwise next
-	my $seq=<FA>;
-	next if $seq=~/>/;#next line should be sequence and should not contain ">", otherwise next
+	s/>//g;
+	my ($name, $seq) = (split /\n/, $_, 2);
 	next unless defined $seq;
 	next if $seq eq '';
 	$seq=~s/\s+//g;
 	$seq=uc $seq;
-	push @FA, [$name, $seq];
+	$queue->enqueue([$name, $seq]);
 	}
 close FA;
+$/ = "\n";
+$queue -> end();
 
 ##open scn.adj file and print out the header
 open SCN, ">$List.adj" or die "ERROR: $!";
 print SCN "#LTR boundary fine-grain adjustment and annotation have been performed by LTR_retriever (Shujun Ou, oushujun\@msu.edu)\n$head";
 
-##multi-threading using queue, put candidate LTRs into queue for parallel computation
-my $queue=Thread::Queue->new();
-my $i=0;
-while ($i<=$#FA) {
-	last unless defined $FA[$i]->[0];
-	my ($name, $seq)=@{$FA[$i]}[0,1];
-	my ($chr, $seq_start, $seq_end, $ltr_start, $ltr_end);
-	($chr, $seq_start, $seq_end, $ltr_start, $ltr_end)=($1, $2, $3, $5, $6) if $name=~/^(\S+):([0-9]+)..([0-9]+)\|(\S+):([0-9]+)..([0-9]+)/;
-	my $id="$ltr_start..$ltr_end";
-	next if $id eq '';
-	$queue->enqueue([$name, $seq, \@{$info{$id}}]);
-	delete $info{$id};
-	$i++;
-	}
-
-#initiate a number of worker threads
-my @threads=();
+##Run the work queue with multiple threads
 foreach (1..$threads){
-	push @threads,threads->create(\&Identifier);
+	threads -> create(\&Identifier);
 	}
-
-foreach (@threads){
-	$queue->enqueue(undef);
-	}
-
-foreach (@threads){
-	$_->join();
+foreach (threads -> list()){
+	$_ -> join();
 	}
 
 ##print out entries that could not pass initial screening criteria to scn.adj
-foreach my $key (sort{$a cmp $b}(keys %info)){
-	foreach (0..$#{$info{$key}}){
-		print SCN "$info{$key}[$_]  ";
+foreach my $key (sort{$a cmp $b}(keys %scn)){
+	foreach (0..$#{$scn{$key}}){
+		print SCN "$scn{$key}[$_]  ";
 		}
 	print SCN "\n";
 	}
 close SCN;
 
+
 ##subrotine for LTR structural analyses
 sub Identifier() {
 	while (defined($_ = $queue->dequeue())){
 ##Structural analysis, main program
-	my ($name, $seq, @info)=(@{$_}[0], @{$_}[1], @{@{$_}[2]});
+	my ($name, $seq)=(@{$_}[0], @{$_}[1]);
 	my $decision="raw"; #conclusion of whether the element is a LTR
 	my ($chr, $seq_start, $seq_end, $ltr_start, $ltr_end);
 	($chr, $seq_start, $seq_end, $ltr_start, $ltr_end)=($1, $2, $3, $5, $6) if $name=~/^(\S+):([0-9]+)..([0-9]+)\|(\S+):([0-9]+)..([0-9]+)/;  #eg: Chr4:10009589..10017157|Chr4:10009609..10017137 or 10.dna.chromosome.ch:100016935..100026312|10.dna.chromosome.ch:100016935..100026312
 	my $id="$ltr_start..$ltr_end";
 	next if $id eq '';
+	my @info = @{$scn{$id}};
 
 ##Coarse boundary correction - after correction, coordinates may still have 1-2 bp shifted from the real case
 	my $ltr=substr $seq, $ltr_start-$seq_start, $ltr_end-$ltr_start+1;
@@ -470,17 +453,15 @@ sub Identifier() {
 			}
 		}
 
-	print "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$info[9]\t$info[12]\t$info[18]\t$info[17]\t$info[19]\n";#last four variables: strand/family/superfamily/age
-	print "\tAdjust: $adjust\tlLTR: $ll\trLTR: $rl\n";
-	print "\tAlignment regions: $s_start, $s_end, $q_start, $q_end\n";
-	print "\tLTR coordinates: $ltr1_s, $ltr1_e, $ltr2_s, $ltr2_e\n";
-	print "\tTSD-LTR overlap: $overlap\n";
-	print "\tBoundary missing: $bond_miss\n\n";
-
-	foreach (0..$#info){
-		print SCN "$info[$_]  ";
-		}
-	print SCN "\n";
+	#last four variables: strand/family/superfamily/age
+	my $defalse = "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$info[9]\t$info[12]\t$info[18]\t$info[17]\t$info[19]
+	Adjust: $adjust\tlLTR: $ll\trLTR: $rl
+	Alignment regions: $s_start, $s_end, $q_start, $q_end
+	LTR coordinates: $ltr1_s, $ltr1_e, $ltr2_s, $ltr2_e
+	TSD-LTR overlap: $overlap
+	Boundary missing: $bond_miss\n\n";
+	print $defalse;
+	$scn{$id} = shared_clone([@info]);
 	}
 }
 
