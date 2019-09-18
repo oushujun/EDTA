@@ -38,7 +38,7 @@ foreach (@ARGV){
 	$coverage=$ARGV[$k+1] if /^-cov$/i and $ARGV[$k+1] !~ /^-/;
 	$minlen=$ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1] !~ /^-/;
 	$iter=$ARGV[$k+1] if /^-iter$/i and $ARGV[$k+1] !~ /^-/;
-	$blastplus=$ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1] !~ /^-/;
+	$blastplus=$ARGV[$k+1] if /^-blastplus$/i and defined $ARGV[$k+1] and $ARGV[$k+1] !~ /^-/;
 	$threads=$ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
 	$k++;
 	}
@@ -46,6 +46,7 @@ foreach (@ARGV){
 # checks
 die "\nERROR: Input sequence file is not exist!\n$usage" unless -s $IN;
 die "\nERROR: The -iter parameter receives non-integer input!\n$usage" unless $iter =~ /^[0-9]+$/;
+$blastplus = "" unless defined $blastplus;
 $blastplus=`which blastn 2>/dev/null` if $blastplus eq '';
 $blastplus=~s/blastn\n//;
 die "ERROR: blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
