@@ -52,7 +52,7 @@ Activate the EDTA program:
 ### Divide and conquer
 *You want to run different components of EDTA separately to MAYBE shortern the time*:
 
-1.The Head (you got a genome and you want to get raw libraries for different TE (sub)classes):
+1.Get raw libraries from a genome (specify `-type ltr|tir|mite|helitron` in different runs)
 
     perl EDTA_raw.pl [options]
       -genome	[File]	The genome FASTA
@@ -62,24 +62,9 @@ Activate the EDTA program:
       -threads|-t	[int]	Number of theads to run this script
       -help|-h	Display this help info
 
-2.The body (you got raw TE candidates from various programs and you want to filter them using EDTA):
+2.Finish the rest of the EDTA analysis (specify `-overwrite 0` and it will automatically pick up existing results in the work folder)
 
-    perl EDTA_processF.pl [options]
-      -genome	[File]	The genome FASTA
-      -ltr	[File]	The raw LTR library FASTA
-      -tir	[File]	The raw TIR library FASTA
-      -mite	[File]	The raw MITE library FASTA
-      -helitron	[File]	The raw Helitron library FASTA
-      -mindiff	[float]	The minimum fold difference in richness between main TE and contaminants
-      -protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
-			You may use uniprot_sprot database available from here:
-			ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
-      -threads|-t	[int]	Number of theads to run this script
-      -help|-h	Display this help info
-
-3.Toes (you got the filtered stage 1 TE library from step 2 and you want to finalize them):
-
-    In the same folder of step 2, run `EDTA.pl` by specifying the `-step final` parameter.
+    perl EDTA.pl [options]
 
 
 ## Benchmarking
@@ -110,5 +95,5 @@ eg.
 You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con).
 
 ## Issues
-EDTA is a very young experimental program that is under active development. If you have any issues with installation and usage, please don't hesitate to [open an issue](https://github.com/oushujun/EDTA/issues) or submit your pull request.
+EDTA is a very young experimental program that is under active development. If you have any issues with installation and usage, please don't hesitate to [open an issue](https://github.com/oushujun/EDTA/issues) or submit your pull request. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
