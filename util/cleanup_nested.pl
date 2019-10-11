@@ -59,6 +59,7 @@ $/ = "\n>";
 while (<IN>){
 	s/>//g;
 	my ($id, $seq) = (split /\n/, $_, 2);
+	$id =~ s/\s+.*//;
 	$seq =~ s/\s+//g;
 	$seq{$id} = $seq;
 	}
