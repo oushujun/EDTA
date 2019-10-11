@@ -31,7 +31,7 @@ my $usage="\n\tTo test the annotation performance of TE libraries by comparing t
 					the test library has no classification and you assume they all belong to the
 					target category specified by -cat. Default: 0 (not include unknowns)
 		-rand	[int]	A randum number used to identify the current run. (default: generate automatically)
-		-threads|-t	[ind]	Number of threads to run this program. Default: 4
+		-threads|-t	[int]	Number of threads to run this program. Default: 4
 \n";
 
 my $script_path = dirname(__FILE__);
@@ -95,9 +95,9 @@ close All;
 ## Define TE categories. Categories are case insensitive, but hash keys of %category are all lowercases. Each category are specified in the format of "'cate1\\|cate2'". Don't forget ''.
 my %category;
 $category{'ltr'}="'RLG\\|RLC\\|RLB\\|RLR\\|RLE\\|LTR\\|RLX\\|Gypsy\\|Copia'";
-$category{'nonltr'}="'SINE\\|LINE\\|Penelope\\|RIT\\|RIL\\|RST'";
-$category{'line'}="'LINE\\|RIL\\|RIT'";
-$category{'sine'}="'SINE\\|RST'";
+$category{'nonltr'}="'SINE\\|LINE\\|Penelope\\|RIT\\|RIL\\|RST\\|RIX\\|RSX'";
+$category{'line'}="'LINE\\|RIL\\|RIT\\|RIX'";
+$category{'sine'}="'SINE\\|RST\\|RSX'";
 $category{'tir'}="'TIR\\|MITE\\|hAT\\|MULE\\|Tourist\\|CACT\\|MLE\\|PILE\\|POLE\\|EnSpm\\|MuDR\\|Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR\\|DTX\\|DTR\\|DTE\\|Merlin\\|DTP\\|DTB'";
 $category{'mite'}="MITE";
 $category{'helitron'}="'Helitron\\|DHH\\|DHX'";
