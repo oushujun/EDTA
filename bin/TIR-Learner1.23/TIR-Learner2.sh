@@ -267,7 +267,7 @@ cd "$dir/Module3_New/"
 echo "############################################################ Module 3 Begin ###########################################################"
 
 echo "Module 3, Step 1: Split Genome and Run GRF program to find Inverted Repeats"
-rm ./$genomeName/*
+rm ./$genomeName/* > /dev/null 2>&1
 makeblastdb -in $genomeFile -out $genomeFile"-+-db" -parse_seqids -dbtype nucl
 python3 $path/Module2/RunGRF.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" -grfp $grfp -l $len
 cp -r $genomeName/$genomeName* temp/
@@ -295,7 +295,7 @@ echo "############################################################ Module 3 Fini
 echo "Get Final GFF"
 python3 $path/Module3_New/CombineAll.py -name $genomeName -p $path -t $t -d $dir"/Module3_New"
 mv *.gff3 $genomeName
-rm *Low
+rm *Low > /dev/null 2>&1
 
 echo "Get fasta file"
 python3  $path/Module3/GetAllSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New"
@@ -303,7 +303,7 @@ python3  $path/Module3/GetAllSeq.py -g $genomeFile -name $genomeName -p $path -t
 [ -d TIR-Learner-Result ] || mkdir TIR-Learner-Result
 mv $genomeName/*FinalAnn.gff3 TIR-Learner-Result/
 mv $genomeName/*FinalAnn.fa TIR-Learner-Result/
-rm -r $genomeName"_combine"
+rm -r $genomeName"_combine" > /dev/null 2>&1
 rm $genomeFile-+-db.nin $genomeFile-+-db.nsd $genomeFile-+-db.nsq $genomeFile-+-db.nhr $genomeFile-+-db.nog $genomeFile-+-db.nsi #shujun
 
 cp -r TIR-Learner-Result $dir
