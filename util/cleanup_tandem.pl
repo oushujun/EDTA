@@ -3,7 +3,7 @@ use strict;
 use File::Basename;
 
 my $usage="
-        Usage: perl cleanup.pl -f sample.fa [options] > sample.cln.fa 
+        Usage: perl cleanup_tandem.pl -f sample.fa [options] > sample.cln.fa 
 	Options:
 		-misschar	[n|l]	Define the letter representing unknown sequences; default: n. l: recognize lower case letters
 		-Nscreen	[0|1]	Enable (1) or disable (0) the -nc parameter; default: 1
@@ -62,7 +62,7 @@ foreach (@ARGV){
 	$k++;
 	}
 
-die $usage unless -e $file;
+die "\n\tInput file \"$file\" not found!\n\n$usage" unless -e $file;
 
 my %tandem;
 my $tandem='';
