@@ -3,7 +3,7 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.5";
+my $version = "v1.6";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -25,10 +25,12 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 	perl EDTA.pl [options]
 		-genome	[File]	The genome FASTA
 		-species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-		-step	[all|filter|final] Specify which steps you want to run EDTA.
+		-step	[all|filter|final|post] Specify which steps you want to run EDTA.
 						all: run the entire pipeline (default)
 						filter: start from raw TEs to the end.
 						final: start from filtered TEs to finalizing the run.
+						post: perform annotation/analysis after TE library construction.
+		-intact	[0|1]	Output intact TEs (1) or not (0, default).
 		-overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
 		-protlib [File] Protein-coding aa sequences to be removed from TE candidates.
 				Default lib: alluniRefprexp082813 (plant))
@@ -39,6 +41,10 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 					This option is not mandatory. It's totally OK if no file is provided (default).
 		-sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
 					This step is very slow and MAYBE able to recover some TEs.
+		-fulllength	[0|1]	Output (1) all full length TEs. They could be overlapping and/or nested. Default: 0.
+		-anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
+		-evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
+		-exclude	[file]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
 		-repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		-blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
@@ -52,6 +58,7 @@ my $genome = '';
 my $species = "others";
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
+my $intact = 0; #0, no intact TE output. 1, generate intact TE outputs.
 my $HQlib = '';
 my $sensitive = 0; #0, will not run RepeatModeler to get remaining TEs (default). 1, run RepeatModeler
 my $threads = 4;
@@ -77,6 +84,7 @@ foreach (@ARGV){
 	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
 	$step = uc $ARGV[$k+1] if /^-step$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
+	$intact = $ARGV[$k+1] if /^-intact$/i and $ARGV[$k+1] !~ /^-/;
 	$HQlib = $ARGV[$k+1] if /^-curatedlib$/i and $ARGV[$k+1] !~ /^-/;
 	$sensitive = $ARGV[$k+1] if /^-sensitive$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmodeler = $ARGV[$k+1] if /^-repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
@@ -172,10 +180,9 @@ ALL:
 $date=`date`;
 chomp ($date);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
-`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast`;
+`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -intact $intact -threads $threads -mdust $mdust -blastplus $blast`;
 die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa" unless -s "$genome.EDTA.raw/$genome.LTR.raw.fa";
 die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa" unless -s "$genome.EDTA.raw/$genome.TIR.raw.fa";
-die "ERROR: Raw MITE results not found in $genome.EDTA.raw/$genome.MITE.raw.fa" unless -s "$genome.EDTA.raw/$genome.MITE.raw.fa";
 die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa" unless -s "$genome.EDTA.raw/$genome.Helitron.raw.fa";
 $date=`date`;
 chomp ($date);
@@ -191,7 +198,7 @@ FILTER:
 $date=`date`;
 chomp ($date);
 print "$date\tPerform EDTA basic and advcanced filterings for raw TE candidates and generate the stage 1 library: \n\n";
-`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -mite $genome.EDTA.raw/$genome.MITE.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blast -threads $threads -protlib $protlib`;
+`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blast -threads $threads -protlib $protlib`;
 die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1" unless -s "$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1";
 $date=`date`;
 chomp ($date);
@@ -225,13 +232,19 @@ if ($sensitive == 1){
 	`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq`;
 
 	# rename RepeatModeler candidates and make stage 2 library
-	`cat RM_*/round-*/family-*fa | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
-	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
-	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
-	`cat $genome.RepeatModeler.fa.stg1 $genome.LTR.TIR.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
+	`cat RM_*/round-*/consensi.fa.classified | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
+#	`cat RM_*/round-*/family-*fa | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
+	if (-s "$genome.RepeatModeler.raw.fa"){
+		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
+		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
+		`cat $genome.RepeatModeler.fa.stg1 $genome.LTR.TIR.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
 
-	# clean up coding sequences in the stage 2 library
-	`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.others.fa.stg2 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
+		# clean up coding sequences in the stage 2 library
+		`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.others.fa.stg2 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
+		} else {
+		print "\t\t\t\tRepeatModeler is finished, but no consensi.fa.classified files found.\n\n";
+		`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
+		}
 	} else {
 	print "\t\t\t\tSkip the RepeatModeler step (-sensitive 0).\nRun EDTA.pl -step final -sensitive 1 if you want to use RepeatModeler.\n\n";
 	`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
