@@ -4,7 +4,7 @@
 ## Introduction
 This package is developed for automated whole-genome *de-novo* TE annotation and benchmarking the annotation performance of TE libraries.
 
-For the initial search of TE candidates, [LTRharvest](http://genometools.org/), [LTR_FINDER_parallel](https://github.com/oushujun/LTR_FINDER_parallel), and [LTR_retriever](https://github.com/oushujun/LTR_retriever) are incorporated in this package to identify LTR retrotransposons; [GenericRepeatFinder](https://github.com/bioinfolabmu/GenericRepeatFinder), [TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice), and [MITE-Hunter](http://target.iplantcollaborative.org/mite_hunter.html) are incorporated in this package to identify TIR transposons (a subclass of DNA transposons); [HelitronScanner](https://sourceforge.net/projects/helitronscanner/) is incorporated in this package to identify *Helitron* transposons (a subclass of DNA transposons); and finally [RepeatModeler](https://github.com/rmhubley/RepeatModeler) is used to identify any TEs missed by these structure-based programs (such as SINEs and LINEs).
+For the initial search of TE candidates, [LTRharvest](http://genometools.org/), [LTR_FINDER_parallel](https://github.com/oushujun/LTR_FINDER_parallel), and [LTR_retriever](https://github.com/oushujun/LTR_retriever) are incorporated in this package to identify LTR retrotransposons; [GenericRepeatFinder](https://github.com/bioinfolabmu/GenericRepeatFinder), [TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice) is incorporated in this package to identify TIR transposons (a subclass of DNA transposons including MITEs); [HelitronScanner](https://sourceforge.net/projects/helitronscanner/) is incorporated in this package to identify *Helitron* transposons (a subclass of DNA transposons); [RepeatModeler](https://github.com/rmhubley/RepeatModeler) is used to identify any TEs missed by the aforementioned structure-based programs (such as SINEs and LINEs); and finally [TEsorter](https://github.com/zhangrengang/TEsorter) is incorporated in this package and utilized to remove gene fragments in the final TE library.
 
 The EDTA package was designed to filter out false discoveries in raw TE candidates and generate a high-quality non-redundant TE library for whole-genome TE annotations. Selection of initial search programs were based on benckmarkings on the annotation performance using a manually curated TE library in the rice genome.
 
@@ -13,15 +13,19 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 ## Installation
     conda create -n EDTA
     conda activate EDTA
-    conda install -y -c anaconda biopython pandas glob2 python=3.6
-    conda install -y -c anaconda scikit-learn=0.19.0
-    conda install -y -c conda-forge perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4
-    conda install -y -c cyclus java-jdk
-    conda install -y -c biocore blast-legacy=2.2.22
-    conda install -y -c bioconda cd-hit repeatmodeler muscle mdust repeatmasker
+    conda install -n EDTA -y -c anaconda biopython pandas glob2 python=3.6
+    conda install -n EDTA -y -c anaconda scikit-learn=0.19.0
+    conda install -n EDTA -y -c conda-forge perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4
+    conda install -n EDTA -y -c cyclus java-jdk
+    conda install -n EDTA -y -c biocore blast-legacy=2.2.22
+    conda install -n EDTA -y -c bioconda cd-hit repeatmodeler muscle mdust repeatmasker
+    python2 -m pip install --user numpy==1.14.3 biopython pp psutil
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
+### Alternative installation with Docker
+More information: https://hub.docker.com/r/kapeel/edta
+    docker pull kapeel/edta
 
 ## EDTA Usage
 Activate the EDTA program:
@@ -50,7 +54,7 @@ Activate the EDTA program:
 
 
 ### Divide and conquer
-*You want to run different components of EDTA separately to MAYBE shortern the time*:
+*Identify raw TE libraries separately to shortern the time*:
 
 1.Get raw libraries from a genome (specify `-type ltr|tir|mite|helitron` in different runs)
 
@@ -64,7 +68,7 @@ Activate the EDTA program:
 
 2.Finish the rest of the EDTA analysis (specify `-overwrite 0` and it will automatically pick up existing results in the work folder)
 
-    perl EDTA.pl [options]
+    perl EDTA.pl -overwrite 0 [options]
 
 
 ## Benchmarking
@@ -96,4 +100,5 @@ You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/dat
 
 ## Issues
 EDTA is a very young experimental program that is under active development. If you have any issues with installation and usage, please don't hesitate to [open an issue](https://github.com/oushujun/EDTA/issues) or submit your pull request. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
+
 
