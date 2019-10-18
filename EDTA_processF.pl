@@ -11,7 +11,6 @@ use File::Basename;
 ## Input:
 #	$genome.LTR.raw.fa
 #	$genome.TIR.raw.fa
-#	$genome.MITE.raw.fa
 #	$genome.Helitron.raw.fa
 
 ## Output:
@@ -22,7 +21,6 @@ my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates
 		-genome	[File]	The genome FASTA
 		-ltr	[File]	The raw LTR library FASTA
 		-tir	[File]	The raw TIR library FASTA
-		-mite	[File]	The raw MITE library FASTA
 		-helitron	[File]	The raw Helitron library FASTA
 		-mindiff	[float]	The minimum fold difference in richness between main TE and contaminants
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
@@ -38,7 +36,6 @@ my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates
 my $genome = '';
 my $LTRraw = '';
 my $TIRraw = '';
-my $MITEraw = '';
 my $Helitronraw = '';
 
 # pre-defined
@@ -65,7 +62,6 @@ foreach (@ARGV){
 	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
 	$LTRraw = $ARGV[$k+1] if /^-ltr$/i and $ARGV[$k+1] !~ /^-/;
 	$TIRraw = $ARGV[$k+1] if /^-tir/i and $ARGV[$k+1] !~ /^-/;
-	$MITEraw = $ARGV[$k+1] if /^-mite/i and $ARGV[$k+1] !~ /^-/;
 	$Helitronraw = $ARGV[$k+1] if /^-helitron/i and $ARGV[$k+1] !~ /^-/;
 	$mindiff = $ARGV[$k+1] if /^-mindiff/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker/i and $ARGV[$k+1] !~ /^-/;
@@ -80,7 +76,6 @@ foreach (@ARGV){
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
 die "LTR raw library file $LTRraw not exists!\n$usage" unless -s $LTRraw;
 die "TIR raw library file $TIRraw not exists!\n$usage" unless -s $TIRraw;
-die "MITE raw library file $MITEraw not exists!\n$usage" unless -s $MITEraw;
 die "Helitron raw library file $Helitronraw not exists!\n$usage" unless -s $Helitronraw;
 die "The script TE_purifier.pl is not found in $TE_purifier!\n" unless -s $TE_purifier;
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
@@ -105,7 +100,6 @@ $genome = $genome_file;
 chdir "$genome.EDTA.combine";
 `ln -s ../$LTRraw $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
 `ln -s ../$TIRraw $genome.TIR.raw.fa` unless -s "$genome.TIR.raw.fa";
-`ln -s ../$MITEraw $genome.MITE.raw.fa` unless -s "$genome.MITE.raw.fa";
 `ln -s ../$Helitronraw $genome.Helitron.raw.fa` unless -s "$genome.Helitron.raw.fa";
 
 
@@ -139,23 +133,13 @@ sub RMclean() {
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.raw.fa.renamed > $genome.LTR.fa.stg0`;
 
 
-###################################
-######  Process TIR and MITE ######
-###################################
-
-# convert names into RepeatMasker readible names, seperate MITE (<600bp) and TIR elements
-`perl $rename_tirlearner $genome.TIR.raw.fa | perl $rename_TE - > $genome.TIR.raw.fa.renamed`;
-`perl -nle \'s/MITEhunter//; print \$_ and next unless /^>/; my \$id = (split)[0]; print \"\${id}#MITE/unknown\"\' $genome.MITE.raw.fa | perl $rename_TE - > $genome.MITE.raw.fa.renamed`;
+###########################
+######  Process TIR  ######
+###########################
 
 # clean up tandem repeats and short seq with cleanup_tandem.pl
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.TIR.raw.fa.renamed > $genome.TIR_1.fa.stg0`;
-
-# remove MITEs existed in TIR-Learner results, clean up tandem repeats and short seq with cleanup_tandem.pl
-&RMclean("$genome.TIR_1.fa.stg0", "$genome.MITE.raw.fa.renamed", 80, 1);
-`mv $genome.MITE.raw.fa.renamed.cln $genome.MITE.fa.stg0`;
-
-# aggregate TIR-Learner and MITE-Hunter results together
-`cat $genome.TIR_1.fa.stg0 $genome.MITE.fa.stg0 | perl $rename_tirlearner - > $genome.TIR.fa.stg0`;
+`perl $rename_tirlearner $genome.TIR.raw.fa | perl $rename_TE - > $genome.TIR.raw.fa.renamed`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.TIR.raw.fa.renamed > $genome.TIR.fa.stg0`;
 
 
 ##############################
