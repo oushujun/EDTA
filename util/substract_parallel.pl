@@ -4,9 +4,10 @@ use threads;
 use Thread::Queue;
 use threads::shared;
 
-#usage: perl sustract.pl minuend.list subtrahend.list thread_num
+#usage: perl substract_parallel.pl minuend.list subtrahend.list thread_num
 #Author: Shujun Ou (oushujun@msu.edu), 08/02/2019
 
+my $usage = "\n\tperl substract_parallel.pl minuend.list subtrahend.list thread_num\n\n";
 
 ## read thread number
 my $threads = 4;
@@ -15,8 +16,8 @@ if (defined $ARGV[2]){
 	}
 
 ## minuend − subtrahend = difference
-open Minuend, "<$ARGV[0]" or die $!;
-open Subtrahend, "<$ARGV[1]" or die $!;
+open Minuend, "<$ARGV[0]" or die $usage;
+open Subtrahend, "<$ARGV[1]" or die $usage;
 open Diff, ">$ARGV[0]-$ARGV[1]" or die $!;
 
 my %substr;
