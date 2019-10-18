@@ -95,9 +95,6 @@ foreach my $id (sort {$a cmp $b} keys %TE_cln){
 close Out;
 close Seq;
 
-## fixing the formatting error created by simutaniously writing the same file
-`perl -i -nle 's/>/\\n>/g unless /^>/; print \$_' $query.pass.fa`;
-
 ## remove database
 `rm $genome.nhr $genome.nin $genome.nsq 2> /dev/null`;
 
