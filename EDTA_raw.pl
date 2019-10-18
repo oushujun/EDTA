@@ -14,14 +14,14 @@ use File::Basename;
 ## Output:
 #	$genome.LTR.raw.fa
 #	$genome.TIR.raw.fa
-#	$genome.MITE.raw.fa
 #	$genome.Helitron.raw.fa
 
 my $usage = "\nObtain raw TE libraries using various structure-based programs
 	perl EDTA_raw.pl [options]
 		-genome	[File]	The genome FASTA
 		-species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-		-type	[ltr|tir|mite|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
+		-type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
+		-intact	[0|1]	Specify if output intact elements (1) or not (0, default).
 		-blastplus      [path]  Path to the blastn program. Defalut: read from \$ENV
 		-mdust	[program]	The mdust program. Default: included in this package.
 		-overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
@@ -35,14 +35,19 @@ my $species = 'others';
 my $type = 'all';
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
+my $intact = 0; #0, no intact TE output. 1, generate intact TE outputs.
 my $threads = 4;
 my $script_path = $FindBin::Bin;
+my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
+my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
-my $TIR_Learner = "$script_path/bin/TIR-Learner1.23/TIR-Learner2.sh";
+my $get_range = "$script_path/util/get_range.pl";
+#my $TIR_Learner = "$script_path/bin/TIR-Learner1.24/TIR-Learner2.sh";
+#my $TIR_Learner = "$script_path/bin/TIR-Learner1.26/TIR-Learner2.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner2/TIR-Learner2.0.sh";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
-my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
@@ -50,7 +55,7 @@ my $get_ext_seq = "$script_path/util/get_ext_seq.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
-my $mdust = "";
+my $mdust = '';
 my $blastplus = ''; #path to the blastn program
 
 # read parameters
@@ -59,6 +64,7 @@ foreach (@ARGV){
 	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
 	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
 	$type = lc $ARGV[$k+1] if /^-type$/i and $ARGV[$k+1] !~ /^-/;
+	$intact = $ARGV[$k+1] if /^-intact$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus = $ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1] !~ /^-/;
 	$mdust = $ARGV[$k+1] if /^-mdust$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
@@ -73,11 +79,12 @@ print STDERR "$date\tEDTA_raw: Check files and dependencies, prepare working dir
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
+die "The TEsorter is not found in $TEsorter!\n" unless -s $TEsorter;
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
-die "The MITE_Hunter is not found in $MITE_Hunter!\n" unless -s $MITE_Hunter;
+die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
 die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unless -s $rename_tirlearner;
@@ -90,6 +97,9 @@ $blastplus=`which blastn 2>/dev/null` if $blastplus eq '';
 $blastplus=~s/blastn\n//;
 die "makeblastdb is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
 die "blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
+$mdust=`which mdust 2>/dev/null` if $mdust eq '';
+$mdust=~s/mdust\n//;
+die "mdust is not exist in the mdust path $mdust!\n" unless -X "${mdust}mdust";
 
 # make a softlink to the genome
 my $genome_file = basename($genome);
@@ -100,7 +110,6 @@ $genome = $genome_file;
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
 `mkdir $genome.EDTA.raw/LTR` unless -e "$genome.EDTA.raw/LTR" && -d "$genome.EDTA.raw/LTR";
 `mkdir $genome.EDTA.raw/TIR` unless -e "$genome.EDTA.raw/TIR" && -d "$genome.EDTA.raw/TIR";
-`mkdir $genome.EDTA.raw/MITE` unless -e "$genome.EDTA.raw/MITE" && -d "$genome.EDTA.raw/MITE";
 `mkdir $genome.EDTA.raw/Helitron` unless -e "$genome.EDTA.raw/Helitron" && -d "$genome.EDTA.raw/Helitron";
 
 
@@ -126,6 +135,7 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	} else {
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
+goto Test;
 # run LTRharvest
 `$genometools suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
 `$genometools ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
@@ -138,9 +148,46 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 `cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 `perl $LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno`;
 `for i in *.mod.*; do mv \$i \$(echo \$i|sed 's/\\.mod\\././'); done > /dev/null 2>&1`;
+`mv $genome.mod $genome` if -s "$genome.mod";
+
+# get intact LTR elements
+if ($intact eq 1){
+	`perl $get_range 1 $genome.rawLTR.scn $genome -f -g -max_ratio 50`;
+	`cat $genome.rawLTR.scn.full | sort -fu > $genome.rawLTR.scn.full.uniq`;
+	`perl $call_seq $genome.rawLTR.scn.full.uniq -C $genome > $genome.LTR`;
+	`perl -i -nle 's/\\|.*//; print \$_' $genome.LTR`;
+	`perl $get_ext_seq $genome $genome.LTR`;
+	`perl $flank_filter -genome $genome -query $genome.LTR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
+
+        # recover superfamily info
+	`perl $output_by_list 1 $genome.LTR 1 $genome.LTR.ext30.fa.pass.fa -FA -MSU0 -MSU1 > $genome.LTR.ext30.fa.pass.fa.ori`;
+
+	# remove simple repeats and candidates with simple repeats at terminals
+	`${mdust}mdust $genome.LTR.ext30.fa.pass.fa.ori > $genome.LTR.ext30.fa.pass.fa.dusted`;
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -trf 0 -cleanN 1 -cleanT 1 -f $genome.LTR.ext30.fa.pass.fa.dusted > $genome.LTR.ext30.fa.pass.fa.dusted.cln`;
+
+	# annotate and remove non-LTR candidates
+	`python2 $TEsorter $genome.LTR.ext30.fa.pass.fa.dusted.cln -p $threads`;
+Test:
+	`perl $cleanup_misclas $genome.LTR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+	`mv $genome.LTR.ext30.fa.pass.fa.dusted.cln.cln $genome.LTR.intact.fa`;
+	`mv $genome.LTR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.LTR.intact.fa.anno.list`;
+
+	# copy result out
+	`cp $genome.LTR.intact.fa $genome.LTR.intact.fa.anno.list ../`;
 	}
 
+`rm $genome`;
+	}
+
+# remove non-LTR sequence
+#`python2 $TEsorter $genome.LTRlib.fa -p $threads`;
+#`awk '{if (\$2!="pararetrovirus" && \$2!="LTR")print \$0}' $genome.LTRlib.fa.rexdb.cls.tsv > $genome.LTRlib.fa.rexdb.cls.tsv.nonLTR`;
+#`perl $output_by_list 1 $genome.LTRlib.fa 1 $genome.LTRlib.fa.rexdb.cls.tsv.nonLTR -ex -FA > $genome.LTRlib.fa.cln`;
+
 # copy result files out
+#`cp $genome.LTRlib.fa.cln $genome.LTR.raw.fa`;
+#`cp $genome.LTRlib.fa.cln ../$genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa $genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
 chdir '../..';
@@ -179,6 +226,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	} else {
 	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
 
+goto Test;
 	$species =~ s/rice/Rice/i;
 	$species =~ s/maize/Maize/i;
 	$species =~ s/others/others/i;
@@ -188,6 +236,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	`sh $TIR_Learner -g $genome -s $species -t $threads -l $maxint`;
 	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
+Test:
 	# clean raw predictions with flanking alignment
 	`perl $get_ext_seq $genome $genome.TIR`;
 	`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
@@ -198,7 +247,18 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	# remove simple repeats and candidates with simple repeats at terminals
 	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa.ori > $genome.TIR.ext30.fa.pass.fa.dusted`;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
-	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.raw.fa`;
+
+	# annotate and remove non-TIR candidates
+	`python2 $TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln -p $threads`;
+	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.raw.fa`;
+
+	# get intact TIR elements
+	if ($intact eq 1){
+		`cp $genome.TIR.raw.fa $genome.TIR.intact.fa`;
+		`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.fa.anno.list`;
+		`cp $genome.TIR.intact.fa $genome.LTR.intact.fa.anno.list ../`;
+		}
 
 	}
 
@@ -217,53 +277,6 @@ if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
 
 }
 
-
-###########################
-######  MITE-Hunter  ######
-###########################
-
-if ($type eq "mite" or $type eq "all"){
-
-$date=`date`;
-chomp ($date);
-print STDERR "$date\tStart to find MITE candidates.\n\n";
-
-# enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/MITE";
-`rm -rf genome*`;
-`ln -s ../../$genome $genome` unless -s $genome;
-
-# Try to recover existing results
-$date=`date`;
-chomp ($date);
-if ($overwrite eq 0 and -s "$genome.MITE.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.MITE.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
-	} else {
-	print STDERR "$date\tIdentify MITE candidates from scratch.\n\n";
-
-print STDERR "$date\tWarning: Because MITE-Hunter is too slow and only contribute limited new TIR candidates, it is taken down temporary until a better solution is found.\n\n";
-
-# run MITE-Hunter
-`perl $MITE_Hunter -l 2 -w 1000 -L 80 -m 1 -S 12345678 -c $threads -i $genome > /dev/null 2>&1`;
-`cat *_Step8_* > $genome.MITE.raw.fa`;
-`rm $genome $genome.index $genome.nhr $genome.nin $genome.nsq`;
-	}
-
-# copy result files out
-`cp $genome.MITE.raw.fa ../$genome.MITE.raw.fa`;
-chdir '../..';
-
-# check results
-$date=`date`;
-chomp ($date);
-die "Error: MITE results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.MITE.raw.fa";
-if (-s "$genome.EDTA.raw/$genome.MITE.raw.fa"){
-	print STDERR "$date\tFinish finding MITE candidates.\n\n";
-	} else {
-	print STDERR "$date\tWarning: The MITE result file has 0 bp!\n\n";
-	}
-
-}
 
 #############################
 ###### HelitronScanner ######
@@ -297,7 +310,19 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 
 # remove simple repeats and candidates with simple repeats at terminals
 `${mdust}mdust $genome.HelitronScanner.filtered.ext.fa.pass.fa > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -trf 0 -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted > $genome.Helitron.raw.fa`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -trf 0 -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted | perl -nle 's/^(>.*)\$/\$1#DNA\\/Helitron/; print \$_' > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln`;
+
+# annotate and remove non-Helitron candidates
+`python2 $TEsorter $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln -p $threads`;
+`perl $cleanup_misclas $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+`mv $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.cln $genome.Helitron.raw.fa`;
+
+# get intact Helitrons
+if ($intact eq 1){
+	`cp $genome.Helitron.raw.fa $genome.Helitron.intact.fa`;
+	`cp $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.fa.anno.list`;
+	`cp $genome.Helitron.intact.fa $genome.Helitron.intact.fa.anno.list ../`;
+	}
 	}
 
 # copy result files out
@@ -319,4 +344,5 @@ if (-s "$genome.EDTA.raw/$genome.Helitron.raw.fa"){
 $date=`date`;
 chomp ($date);
 print STDERR "$date\tExecution of EDTA_raw.pl is finished!\n\n";
+
 
