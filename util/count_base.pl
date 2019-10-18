@@ -18,6 +18,7 @@ while (<File>){
 	my $N_count=$seq=~tr/Nn//;
 	my $chr_len=length $seq;
 	$length+=$chr_len;
+	next unless $chr_len>0;
 	my $chr_mis=$N_count/$chr_len;
 	print "$id\t$chr_len\t$N_count\t$chr_mis\n" if $seperate==1;
 	$N_length+=$N_count;
