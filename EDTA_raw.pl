@@ -44,9 +44,8 @@ my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
 my $get_range = "$script_path/util/get_range.pl";
-#my $TIR_Learner = "$script_path/bin/TIR-Learner1.24/TIR-Learner2.sh";
-#my $TIR_Learner = "$script_path/bin/TIR-Learner1.26/TIR-Learner2.sh";
-my $TIR_Learner = "$script_path/bin/TIR-Learner2/TIR-Learner2.0.sh";
+my $rename_LTR = "$script_path/util/rename_LTR.pl";
+my $TIR_Learner = "$script_path/bin/TIR-Learner2.4/TIR-Learner2.4.sh";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
@@ -57,6 +56,7 @@ my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
 my $mdust = '';
 my $blastplus = ''; #path to the blastn program
+my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
 
 # read parameters
 my $k=0;
@@ -85,6 +85,7 @@ die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FIND
 die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
+die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
 die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unless -s $rename_tirlearner;
@@ -135,7 +136,6 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	} else {
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
-goto Test;
 # run LTRharvest
 `$genometools suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
 `$genometools ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
@@ -152,6 +152,7 @@ goto Test;
 
 # get intact LTR elements
 if ($intact eq 1){
+	if (0){ #old, overly inclusive module
 	`perl $get_range 1 $genome.rawLTR.scn $genome -f -g -max_ratio 50`;
 	`cat $genome.rawLTR.scn.full | sort -fu > $genome.rawLTR.scn.full.uniq`;
 	`perl $call_seq $genome.rawLTR.scn.full.uniq -C $genome > $genome.LTR`;
@@ -161,20 +162,32 @@ if ($intact eq 1){
 
         # recover superfamily info
 	`perl $output_by_list 1 $genome.LTR 1 $genome.LTR.ext30.fa.pass.fa -FA -MSU0 -MSU1 > $genome.LTR.ext30.fa.pass.fa.ori`;
+	}
+
+	# get full-length LTR from pass.list
+	`awk '{if (\$1 !~ /#/) print \$1"\\t"\$1}' $genome.pass.list | perl $call_seq - -C $genome > $genome.LTR.intact.fa.ori`;
+	`perl -i -nle 's/\\|.*//; print \$_' $genome.LTR.intact.fa.ori`;
 
 	# remove simple repeats and candidates with simple repeats at terminals
-	`${mdust}mdust $genome.LTR.ext30.fa.pass.fa.ori > $genome.LTR.ext30.fa.pass.fa.dusted`;
-	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -trf 0 -cleanN 1 -cleanT 1 -f $genome.LTR.ext30.fa.pass.fa.dusted > $genome.LTR.ext30.fa.pass.fa.dusted.cln`;
+	`${mdust}mdust $genome.LTR.intact.fa.ori > $genome.LTR.intact.fa.ori.dusted`;
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.intact.fa.ori.dusted > $genome.LTR.intact.fa.ori.dusted.cln`;
 
+	if ($beta2 == 1){
 	# annotate and remove non-LTR candidates
-	`python2 $TEsorter $genome.LTR.ext30.fa.pass.fa.dusted.cln -p $threads`;
-Test:
-	`perl $cleanup_misclas $genome.LTR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
-	`mv $genome.LTR.ext30.fa.pass.fa.dusted.cln.cln $genome.LTR.intact.fa`;
-	`mv $genome.LTR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.LTR.intact.fa.anno.list`;
+	`python2 $TEsorter $genome.LTR.intact.fa.ori.dusted.cln -p $threads`;
+	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
+	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.fa`;
+	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.fa.anno.list`;
+	`cp $genome.LTR.intact.fa.anno.list ../`;
+	} else {
+	`mv $genome.LTR.intact.fa.ori.dusted.cln $genome.LTR.intact.fa`;
+	}
 
-	# copy result out
-	`cp $genome.LTR.intact.fa $genome.LTR.intact.fa.anno.list ../`;
+	# generate annotated output and gff
+	`perl $rename_LTR $genome $genome.LTR.intact.fa $genome.defalse > $genome.LTR.intact.fa.anno`;
+	`mv $genome.LTR.intact.fa.anno $genome.LTR.intact.fa`;
+	`cp $genome.LTR.intact.fa $genome.LTR.intact.fa.gff3 ../`;
+
 	}
 
 `rm $genome`;
@@ -226,7 +239,6 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	} else {
 	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
 
-goto Test;
 	$species =~ s/rice/Rice/i;
 	$species =~ s/maize/Maize/i;
 	$species =~ s/others/others/i;
@@ -236,7 +248,6 @@ goto Test;
 	`sh $TIR_Learner -g $genome -s $species -t $threads -l $maxint`;
 	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
-Test:
 	# clean raw predictions with flanking alignment
 	`perl $get_ext_seq $genome $genome.TIR`;
 	`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
@@ -246,18 +257,28 @@ Test:
 
 	# remove simple repeats and candidates with simple repeats at terminals
 	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa.ori > $genome.TIR.ext30.fa.pass.fa.dusted`;
-	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
 
+	if ($beta2 == 1){
 	# annotate and remove non-TIR candidates
 	`python2 $TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln -p $threads`;
 	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.raw.fa`;
+	} else {
+	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.raw.fa`;
+	}
 
 	# get intact TIR elements
 	if ($intact eq 1){
+		# get gff
+		`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$s, \$e) = (split)[0,3,4]; print "\$_\\t\$chr:\$s..\$e"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 10 - 1 $genome.TIR.raw.fa -MSU0 -MSU1 > $genome.TIR.intact.fa.gff`;
+
 		`cp $genome.TIR.raw.fa $genome.TIR.intact.fa`;
+		`cp $genome.TIR.intact.fa $genome.TIR.intact.fa.gff ../`;
+		if ($beta2 == 1){
 		`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.fa.anno.list`;
-		`cp $genome.TIR.intact.fa $genome.LTR.intact.fa.anno.list ../`;
+		`cp $genome.LTR.intact.fa.anno.list ../`;
+		}
 		}
 
 	}
@@ -310,18 +331,25 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 
 # remove simple repeats and candidates with simple repeats at terminals
 `${mdust}mdust $genome.HelitronScanner.filtered.ext.fa.pass.fa > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -trf 0 -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted | perl -nle 's/^(>.*)\$/\$1#DNA\\/Helitron/; print \$_' > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted | perl -nle 's/^(>.*)\$/\$1#DNA\\/Helitron/; print \$_' > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln`;
 
+if ($beta2 == 1){
 # annotate and remove non-Helitron candidates
 `python2 $TEsorter $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln -p $threads`;
 `perl $cleanup_misclas $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 `mv $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.cln $genome.Helitron.raw.fa`;
+} else {
+`cp $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln $genome.Helitron.raw.fa`;
+}
 
 # get intact Helitrons
 if ($intact eq 1){
 	`cp $genome.Helitron.raw.fa $genome.Helitron.intact.fa`;
+	`cp $genome.Helitron.intact.fa ../`;
+	if ($beta2 == 1){
 	`cp $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.fa.anno.list`;
-	`cp $genome.Helitron.intact.fa $genome.Helitron.intact.fa.anno.list ../`;
+	`cp $genome.Helitron.intact.fa.anno.list ../`;
+	}
 	}
 	}
 
