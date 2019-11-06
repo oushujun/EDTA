@@ -5,6 +5,8 @@ use Thread::Queue;
 use threads::shared;
 #Shujun Ou (shujun.ou.1@gmail.com) 03/26/2019
 #Update: 07/26/2019
+#Update: 10/26/2019
+#Update: 11/04/2019
 
 my $usage = "\n
 Iteratively clean up nested TE insertions and remove redundancy.
@@ -13,14 +15,15 @@ Further info:
 	Each sequence will be used as query to search the entire file.
 	For a subject sequence containing >95% of the query sequence, the matching part in the subject will be removed.
 	After removal, subject sequences shorter than the threadshold will be diacarded.
-	User can define the number of rounds of iterations. 4-5 rounds should be enough to remove most nested insertions.
+	The number of rounds of iterations is automatically decided (usually less than 8). User can also define this.
 
 Usage:
 perl cleanup_nested.pl -in file.fasta [options]
-	-in	[file]	Input LTR sequence file in FASTA format
+	-in	[file]	Input sequence file in FASTA format
 	-cov	[float]	Minimum coverage of the query sequence to be considered as nesting. Default: 0.95
 	-minlen	[int]	Minimum length of the clean sequence to retain. Default: 80 (bp)
-	-iter	[int]	Numbers of iteration to remove redundency. Default: 5
+	-miniden	[int]	Minimum identity of the clean sequence to retain. Default: 80 (%)
+	-iter	[int]	Numbers of iteration to remove redundency. Default: automatic
 	-blastplus [path]	Path to the blastn and makeblastdb program.
 	-threads|-t	[int]	Threads to run this script. Default: 4
 \n";
@@ -28,7 +31,9 @@ perl cleanup_nested.pl -in file.fasta [options]
 my $IN = "";
 my $coverage = 0.95; #if a subject sequence covers >95% of a query sequence, the matching part in the subject sequence will be removed.
 my $minlen = 80; #minimal length >=80bp, otherwise discard the sequence
-my $iter = 5;
+my $min_iden = 80; #minimal identity >=80%, otherwise discard the sequence
+my $iter = 1;
+my $user_iter = 0;
 my $blastplus = ""; #the path to blastn
 my $threads = 4;
 
@@ -37,7 +42,8 @@ foreach (@ARGV){
 	$IN=$ARGV[$k+1] if /^-in$/i and $ARGV[$k+1] !~ /^-/;
 	$coverage=$ARGV[$k+1] if /^-cov$/i and $ARGV[$k+1] !~ /^-/;
 	$minlen=$ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1] !~ /^-/;
-	$iter=$ARGV[$k+1] if /^-iter$/i and $ARGV[$k+1] !~ /^-/;
+	$min_iden=$ARGV[$k+1] if /^-miniden$/i and $ARGV[$k+1] !~ /^-/;
+	$user_iter=$ARGV[$k+1] if /^-iter$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus=$ARGV[$k+1] if /^-blastplus$/i and defined $ARGV[$k+1] and $ARGV[$k+1] !~ /^-/;
 	$threads=$ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
 	$k++;
@@ -68,6 +74,8 @@ close IN;
 
 # itreatively remove redundant sequences and nested insertions
 my $queue;
+my $num_stat = 0;
+$iter = $user_iter if $user_iter != 0;
 for (my $i=0; $i<$iter; $i++){
 	print "Clean up nested insertions and redundancy. Working on iteration $i\n";
 	# write seq to a file and make blast db
@@ -94,6 +102,17 @@ for (my $i=0; $i<$iter; $i++){
 		$_->join();
 		}
 	`rm $IN.iter$i.nhr $IN.iter$i.nin $IN.iter$i.nsq`;
+
+	# automatically increase iteration based on the stat result
+	my $curr_stat = `wc -l "$IN.stat"`;
+	$curr_stat = (split /\s+/, $curr_stat)[0];
+	if ($num_stat == $curr_stat){
+		print "Saturated at iter$i, automatically stop.\n\n";
+		last;
+		} else {
+		$num_stat = $curr_stat;
+		$iter++ if $user_iter == 0;
+		}
 	}
 
 # output clean sequence
@@ -119,6 +138,8 @@ sub condenser(){
 			my ($query, $subject, $iden, $len, $sbj_start, $sbj_end) = (split)[0,1,2,3,8,9];
 			next unless exists $seq{$subject};
 			next if $query eq $subject and $iden == 100;
+			next unless defined $length and $length > 0;
+			next if $iden < $min_iden;
 			my $cov = $len/$length;
 			next unless $cov >= $coverage;
 			($sbj_start, $sbj_end) = ($sbj_end, $sbj_start) if $sbj_start > $sbj_end;
