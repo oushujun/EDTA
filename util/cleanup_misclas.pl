@@ -54,7 +54,7 @@ foreach my $id (keys %seq){
 	print Cln_seq ">$id\n$seq{$id}\n";
 	my ($ori_cla, $ori_superfam) = ($1, $2) if $id =~ /#(.*)\/(.*)$/;
 	$ori_cla = "TIR" if $ori_superfam =~ /^DT/;
-	$ori_cla = "Helitron" if $ori_superfam eq 'Helitron';
+	($ori_cla, $ori_superfam) = ("Helitron", "unknown") if $ori_superfam eq 'Helitron';
 	print Cln_clas "$id\t$ori_cla\t$ori_superfam\tunknown\tnone\t?\tnone\n";
 	}
 
