@@ -36,7 +36,7 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 					TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones.
 					This option is not mandatory. It's totally OK if no file is provided (default).
 		-sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
-					This step is very slow and MAYBE able to recover some TEs.
+					This step is very slow and MAY help to recover some TEs.
 		-anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
 		-evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
 					This step is slow and does not affect the annotation result.
