@@ -18,8 +18,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
     conda install -n EDTA -y -c conda-forge perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4
     conda install -n EDTA -y -c cyclus java-jdk
     conda install -n EDTA -y -c biocore blast-legacy=2.2.22
-    conda install -n EDTA -y -c bioconda cd-hit repeatmodeler muscle mdust repeatmasker
-    python2 -m pip install --user numpy==1.14.3 biopython pp psutil
+    conda install -n EDTA -y -c bioconda cd-hit repeatmodeler muscle mdust repeatmasker=4.0.9_p2
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
@@ -38,17 +37,22 @@ Activate the EDTA program:
     perl EDTA.pl [options]
       -genome	[File]	The genome FASTA
       -species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-      -step	[all|filter|final] Specify which steps you want to run EDTA.
+      -step	[all|filter|final|anno] Specify which steps you want to run EDTA.
 				all: run the entire pipeline (default)
 				filter: start from raw TEs to the end.
 				final: start from filtered TEs to finalizing the run.
+				anno: perform whole-genome annotation/analysis after TE library construction.
       -overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-      -protlib [File] Protein-coding aa sequences to be removed from TE candidates. (default lib: alluniRefprexp082813 (plant))
-				You may use uniprot_sprot database available from here:
-				ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/
+      -cds	[File]	Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
       -curatedlib	[file]	Provided a curated library to keep consistant naming and classification for known TEs.
 				All TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones here.
 				This option is not mandatory. It's totally OK if no file is provided (default).
+      -sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
+				This step is very slow and MAY help to recover some TEs.
+      -anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
+      -evaluate	[0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
+				This step is slow and does not affect the annotation result.
+      -exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
       -threads|-t	[int]	Number of theads to run this script (default: 4)
       -help|-h	Display this help info
 
@@ -99,6 +103,6 @@ eg.
 You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con).
 
 ## Issues
-EDTA is a very young experimental program that is under active development. If you have any issues with installation and usage, please don't hesitate to [open an issue](https://github.com/oushujun/EDTA/issues) or submit your pull request. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
+If you have any issues with installation and usage, please don't hesitate to [open an issue](https://github.com/oushujun/EDTA/issues) or submit your pull request. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 
