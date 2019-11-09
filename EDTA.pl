@@ -30,7 +30,6 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 						filter: start from raw TEs to the end.
 						final: start from filtered TEs to finalizing the run.
 						anno: perform whole-genome annotation/analysis after TE library construction.
-		-fulllength	[0|1]	Output all fulllength TEs (1) or not (0, default). They could be overlapping and/or nested.
 		-overwrite	[0|1]	If previous raw TE results are found, decide to overwrite (1, rerun) or not (0, default).
 		-cds	[File]	Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
 		-curatedlib	[File]	Provided a curated library to keep consistant naming and classification for known TEs.
@@ -45,7 +44,7 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 		-repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		-blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
-		-trf [path]	The directory containing TRF (default: included in this package)
+		-trf [path]	The directory containing TRF (default: read from ENV)
 		-threads|-t	[int]	Number of theads to run this script (default: 4)
 		-help|-h	Display this help info
 \n";
@@ -55,7 +54,6 @@ my $genome = '';
 my $species = "others";
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
-my $intact = 0; #0, no full-length TE output. 1, generate full-length TE outputs.
 my $HQlib = '';
 my $cds = ''; #a fasta file containing cds of this genome.
 my $sensitive = 0; #0, will not run RepeatModeler to get remaining TEs (default). 1, run RepeatModeler
@@ -65,7 +63,6 @@ my $exclude = ''; #a bed file exclude from TE annotation
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
-#my $EDTA_process = "$script_path/EDTA_processF.pl";
 my $EDTA_process = "$script_path/EDTA_processI.pl";
 my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
 my $cleanup_TE = "$script_path/util/cleanup_TE.pl";
@@ -94,7 +91,6 @@ foreach (@ARGV){
 	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
 	$step = uc $ARGV[$k+1] if /^-step$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
-	$intact = $ARGV[$k+1] if /^-fulllength$/i and $ARGV[$k+1] !~ /^-/;
 	$HQlib = $ARGV[$k+1] if /^-curatedlib$/i and $ARGV[$k+1] !~ /^-/;
 	$cds = $ARGV[$k+1] if /^-cds$/i and $ARGV[$k+1] !~ /^-/;
 	$sensitive = $ARGV[$k+1] if /^-sensitive$/i and $ARGV[$k+1] !~ /^-/;
@@ -154,12 +150,10 @@ my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow d
 die "The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
 # trf
-$trf="$script_path/bin/TRF/trf409.legacylinux64" if $trf eq ''; #default path to the trf program
-`$trf 2>/dev/null`;
-$trf="$script_path/bin/TRF/trf409.macosx" if $?==32256;
+$trf=`which trf 2>/dev/null` if $trf eq '';
+$trf=~s/\n$//;
 `$trf 2>/dev/null`;
 die "Error: No Tandem Repeat Finder is working on the current system.
-	Both trf409.macosx and trf409.legacylinux64 were tested, and failed.
 	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
 # GRF
 $GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #default path to the GRF program 
@@ -230,7 +224,7 @@ chomp ($date);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -intact $intact -threads $threads -mdust $mdust -blastplus $blast`;
+`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast`;
 
 # check results and report status
 die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa" unless -s "$genome.EDTA.raw/$genome.LTR.raw.fa";
@@ -298,7 +292,7 @@ if ($sensitive == 1){
 #	`cat RM_*/round-*/family-*fa | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
 	if (-s "$genome.RepeatModeler.raw.fa"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
-		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
+		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
 		`cat $genome.RepeatModeler.fa.stg1 $genome.LTR.TIR.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
 
 		# clean up coding sequences in the stage 2 library
@@ -326,7 +320,7 @@ if ($cds ne ''){
 	$cds = "$cds.mod.noTE";
 
 	# remove cds in the EDTA library
-	if (-s "$cds.mod.noTE"){
+	if (-s "$cds"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 		} else {
@@ -340,7 +334,7 @@ if ($cds ne ''){
 	}
 
 # Final rounds of redundancy removal and make final EDTA library
-`perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlene 80 -cov 0.95 -blastplus $blast`;
+`perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlene 80 -cov 0.95 -blastplus $blast 2>/dev/null`;
 
 # rename all TEs in the EDTA library
 `perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
@@ -430,7 +424,7 @@ if ($anno == 1){
 
 		# extract whole-genome TE and perform all-v-all blast, then summarize the results
 		`awk '{if (\$5~/[0-9]+/ && \$1>300 && \$7-\$6>80) print \$11"\t"\$5":"\$6".."\$7}' $genome.EDTA.TEanno.out | perl $call_seq - -C $genome > $genome.EDTA.TE.fa`;
-		`perl $cleanup_nested -in $genome.EDTA.TE.fa -threads $threads -minlene 80 -cov 0.95 -blastplus $blast`;
+		`perl $cleanup_nested -in $genome.EDTA.TE.fa -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blast 2>/dev/null`;
 		`for i in nested all redun; do perl $count_nested -in $genome.EDTA.TE.fa.stat -cat \$i > $genome.EDTA.TE.fa.stat.\$i.sum & done`;
 
 		# check results and report status
