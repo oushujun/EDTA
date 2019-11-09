@@ -5,11 +5,11 @@
 
 [LTR_retriever](https://github.com/oushujun/LTR_retriever) is a highly accurate and sensitive program for identification of LTR retrotransposons. `LTR_retriever` v2.6 was downloaded from [LTR_retriever](https://github.com/oushujun/LTR_retriever).
 
+[Generic Repeat Finder](https://github.com/bioinfolabmu/GenericRepeatFinder) is a C++ program package for detecting terminal inverted repeats (TIRs), terminal direct repeats (TDRs), interspersed repeats, miniature inverted repeat transposable elements (MITEs), and long terminal repeat (LTR) transposons in genomes.
+
 [TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice) is an open-source ensemble method for TIR transposable element annotation. `TIR-Learner1.19` is a pipeline version converted from [TIR-Learner-Rice](https://github.com/weijiaweijia/TIR-Learner-Rice). The [GenericRepeatFinder](https://github.com/bioinfolabmu/GenericRepeatFinder) is used in TIR-Learner as the search engine.
 
 [HelitronScanner](https://sourceforge.net/projects/helitronscanner/) is a Java program to identify *Helitron* transposons in genome sequences. `HelitronScanner` v1.1 was downloaded from [HelitronScanner](https://sourceforge.net/projects/helitronscanner/).
-
-[Tandem Repeats Finder (TRF)](https://tandem.bu.edu/trf/trf.html) is a program to locate and display tandem repeats in DNA sequences. `TRF` v4.09 was downloaded from [TRF](https://tandem.bu.edu/trf/trf.html).
 
 [TEsorter](https://github.com/zhangrengang/TEsorter) is a program for accurate classification of TEs.
 
@@ -26,7 +26,5 @@
 	
 	Xiong W, He L, Lai J, Dooner HK, Du C. HelitronScanner uncovers a large overlooked cache of Helitron transposons in many plant genomes. Proc Natl Acad Sci U S A. 2014;111:10263–8.
 	
-	Benson G. Tandem repeats finder: a program to analyze DNA sequences. Nucleic Acids Res. 1999;27:573–80.
-
 	Zhang R.-G., Wang Z.-X., Ou S. and Li G.-Y. (2019). TEsorter: lineage-level classification of transposable elements using conserved protein domains. bioRxiv: 800177.
 
