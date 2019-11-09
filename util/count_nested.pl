@@ -25,7 +25,7 @@ while (<IN>){
 	s/\.$//;
 	next if (/Discarded/ and $cat eq "nested");
 	next if (/Cleaned/ and $cat eq "redun");
-	my ($type1, $type2) = ($1, $2) if /\|([a-z\/]+)\s+.*\|([a-z\/]+)\s+/i;
+	my ($type1, $type2) = ($1, $2) if /[\||#]([a-z\/]+)\s+.*[\||#]([a-z\/]+)\s+/i;
 	next unless defined $type1 and defined $type2;
 	$types{$type1} = $type1;
 	if (exists $stat{"$type1-$type2"}){
