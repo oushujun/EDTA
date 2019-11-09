@@ -7,7 +7,8 @@ import numpy as np
 import subprocess
 import glob
 import pandas as pd
-
+from os import path
+import os.path
 
 parser = argparse.ArgumentParser()#pylint: disable=invalid-name
 parser.add_argument("-name", "--genomeName", help="Genome Name", required=True)
@@ -18,7 +19,7 @@ parser.add_argument("-g", "--genomeFile",help="Path to the genome file", require
 args = parser.parse_args()#pylint: disable=invalid-name
 
 genome_Name = args.genomeName
-path=args.path
+pathi=args.path
 t=args.processer
 dir=args.currentD
 genomeFile=args.genomeFile
@@ -60,7 +61,7 @@ def GetFastaFromList(argList): #shujun
     genomeFile=argList[0]
     listName=argList[1]
     outName=argList[2]
-    get_seq = "perl %s/Module3_New/call_seq_by_list2.pl %s -C %s -header 1 -out %s" % (path, listName, genomeFile, outName)
+    get_seq = "perl %s/Module3_New/call_seq_by_list2.pl %s -C %s -header 1 -out %s" % (pathi, listName, genomeFile, outName)
     subprocess.run(['/bin/bash', '-c', get_seq])
     clean_head = "perl -i -nle 's/^>.*\|/>/; print $_' %s" % (outName)
     subprocess.run(['/bin/bash', '-c', clean_head])
@@ -69,10 +70,11 @@ def GetFastaFromList(argList): #shujun
 def getNonHomo(argList):
     allSeq = argList[0]
     homoseq=argList[1]
-    records_all=list(SeqIO.parse(allSeq,"fasta"))
-    homoseq=list(SeqIO.parse(homoseq,"fasta"))
-    homoID=[rec.id.split(spliter)[0] for rec in homoseq]
-    SeqIO.write((rec for rec in records_all if rec.id not in homoID), allSeq[:-4]+"_nonHomo.fa","fasta")
+    if (path.isfile(homoseq)==True and path.isfile(allSeq)==True):
+        records_all=list(SeqIO.parse(allSeq,"fasta"))
+        homoseq=list(SeqIO.parse(homoseq,"fasta"))
+        homoID=[rec.id.split(spliter)[0] for rec in homoseq]
+        SeqIO.write((rec for rec in records_all if rec.id not in homoID), allSeq[:-4]+"_nonHomo.fa","fasta")
 
 
 if __name__ == '__main__':
