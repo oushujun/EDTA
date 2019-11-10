@@ -24,6 +24,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 
 ### Alternative installation with Docker
 More information: https://hub.docker.com/r/kapeel/edta
+
     docker pull kapeel/edta
 
 ## EDTA Usage
