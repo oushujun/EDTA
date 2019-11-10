@@ -4,7 +4,7 @@
 ## Introduction
 This package is developed for automated whole-genome *de-novo* TE annotation and benchmarking the annotation performance of TE libraries.
 
-For the initial search of TE candidates, [LTRharvest](http://genometools.org/), [LTR_FINDER_parallel](https://github.com/oushujun/LTR_FINDER_parallel), and [LTR_retriever](https://github.com/oushujun/LTR_retriever) are incorporated in this package to identify LTR retrotransposons; [GenericRepeatFinder](https://github.com/bioinfolabmu/GenericRepeatFinder), [TIR-Learner](https://github.com/weijiaweijia/TIR-Learner-Rice) is incorporated in this package to identify TIR transposons (a subclass of DNA transposons including MITEs); [HelitronScanner](https://sourceforge.net/projects/helitronscanner/) is incorporated in this package to identify *Helitron* transposons (a subclass of DNA transposons); [RepeatModeler](https://github.com/rmhubley/RepeatModeler) is used to identify any TEs missed by the aforementioned structure-based programs (such as SINEs and LINEs); and finally [TEsorter](https://github.com/zhangrengang/TEsorter) is incorporated in this package and utilized to remove gene fragments in the final TE library.
+<img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true">
 
 The EDTA package was designed to filter out false discoveries in raw TE candidates and generate a high-quality non-redundant TE library for whole-genome TE annotations. Selection of initial search programs were based on benckmarkings on the annotation performance using a manually curated TE library in the rice genome.
 
