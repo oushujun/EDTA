@@ -390,7 +390,7 @@ if ($anno == 1){
 	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out" or -s "$genome.mod.out";
 
 	# exclude regions from TE annotation and make whole-genome TE annotation
-	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 20 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
+	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
 	`mv $genome.out.new $genome.EDTA.TEanno.out`;
 	`perl $make_gff3 $genome.EDTA.TEanno.out`;
 	`mv $genome.EDTA.TEanno.out.gff $genome.EDTA.TEanno.gff`;
@@ -399,7 +399,7 @@ if ($anno == 1){
 	$tot_TE = sprintf("%.2f%%", $tot_TE*100);
 
 	# make low-threshold masked genome for MAKER
-	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 20 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
+	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
 	`mv $genome.new.masked $genome.MAKER.masked`;
 	my $maker_TE = `perl $count_base $genome.MAKER.masked`;
 	$maker_TE = (split /\s+/, $maker_TE)[-1];
