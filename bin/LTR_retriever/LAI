@@ -92,12 +92,12 @@ chomp ($date);
 print "$date\tDependency checking: ";
 #check blastn
 $blast=`which blastn 2>/dev/null` if $blast eq '';
-$blast=~s/blastn\n?//;
+$blast=~s/blastn\n?$//;
 $blast="$blast/" unless $blast=~/\/$/;
 die "blastn is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastn";
 #check makeblastdb
 $blast=`which makeblastdb 2>/dev/null` if $blast eq '';
-$blast=~s/makeblastdb\n//;
+$blast=~s/makeblastdb\n$//;
 die "makeblastdb is not exist in the BLAST+ path $blast!\n" unless -X "${blast}makeblastdb";
 print "Passed!\n";
 
@@ -147,7 +147,7 @@ print "$date\tCalculate LAI:\n";
 `perl -nle 's/^\\s+//; my (\$id, \$age)=(split)[0,11]; \$age=4000000 if \$age eq \"NA\"; next unless \$id=~/:/; \$id=~s/\\.\\./\\t/g; \$id=~s/:/\\t/g; print "\$id\\t\$age"' $intact > $intact.bed`;
 
 #get all LTR sequence annotated in the genome that are no shorter than 80bp
-`awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80)print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
+`awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80 && \$11~/LTR/) print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
 
 #calculate the LAI score
 `perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $all.LAI`;

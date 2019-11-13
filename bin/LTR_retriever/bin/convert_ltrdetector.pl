@@ -29,14 +29,16 @@ my ($from, $to, $chr, $LTR_len, $lLTR_len, $rLTR_len, $lLTR_end, $rLTR_str, $ide
 $from=$to=$LTR_len=$from=$lLTR_end=$lLTR_len=$rLTR_str=$to=$rLTR_len=$identity=$chr=$direction=$TSD=$lTSD=$rTSD=' ';
 $seq_id=-1;
 while (<File>){
-	if (/^Retrotransposon/i){
+	if (/^SeqID/i){
 		$seq_id++;
 		$chr=$list[$seq_id];
 		next;
 		}
-	next if /^Start/i;
+	next if /^\tStart/i;
 
-	($from, $to, $lLTR_end, $rLTR_str, $identity, $lTSD, $rTSD, $direction) = (split)[0,1,3,4,6,7,8,11];
+	#($from, $to, $lLTR_end, $rLTR_str, $identity, $lTSD, $rTSD, $direction) = (split)[0,1,3,4,6,7,8,11];
+	# new version of LTRdetector
+	($from, $to, $lLTR_end, $rLTR_str, $identity, $lTSD, $rTSD, $direction) = (split)[1,2,4,5,7,8,9,12];
 
 	# correct start end coordinate of candidates
 	my ($lTSD_s, $lTSD_e, $rTSD_s, $rTSD_e) = ('NA', 'NA', 'NA', 'NA');
