@@ -5,14 +5,16 @@ use strict;
 #perl rename_LTR.pl genome.fa target_sequence.fa LTR_retriever.defalse
 #Shujun Ou (11/03/2019)
 
+my $usage = "\n\tperl rename_LTR.pl genome.fa target_sequence.fa LTR_retriever.defalse\n\n";
+
 my $genome = $ARGV[0];
 my $seq = $ARGV[1]; #target seq
 my $anno = $ARGV[2]; #annotation of the target seq
 my $annotator = "EDTA";
 
-open FA, "<$ARGV[0]" or die "ERROR: $!";
-open Seq, "<$seq" or die $!;
-open Anno, "<$anno" or die $!;
+open FA, "<$ARGV[0]" or die "ERROR: $usage";
+open Seq, "<$seq" or die $usage;
+open Anno, "<$anno" or die $usage;
 open GFF, ">$seq.gff3" or die "ERROR: $!";
 
 # read genome info and print the gff header
