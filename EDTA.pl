@@ -3,13 +3,14 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.6";
+my $version = "v1.6.2";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
 #v1.3 07/20/2019
 #v1.4 08/07/2019
 #v1.5 08/14/2019
+#v1.6 11/09/2019
 
 print "
 ########################################################
@@ -41,6 +42,7 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 		-evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
 					This step is slow and does not affect the annotation result.
 		-exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
+		-force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit (default); 1, use rice TEs to continue.
 		-repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		-blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
@@ -60,6 +62,7 @@ my $sensitive = 0; #0, will not run RepeatModeler to get remaining TEs (default)
 my $anno = 0; #0, will not annotate whole-genome TE (default). 1, annotate with RepeatMasker
 my $evaluate = 0; #1 will evaluate the consistancy of the TE annotation
 my $exclude = ''; #a bed file exclude from TE annotation
+my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
@@ -73,6 +76,10 @@ my $count_base = "$script_path/util/count_base.pl";
 my $make_masked = "$script_path/util/make_masked.pl";
 my $make_gff3 = "$script_path/util/make_gff3_with_RMout.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
+my $rice_LTR = "$script_path/database/rice6.9.5.liban.LTR";
+#my $rice_nonLTR = "$script_path/database/rice6.9.5.liban.nonLTR";
+my $rice_TIR = "$script_path/database/rice6.9.5.liban.TIR";
+my $rice_helitron = "$script_path/database/rice6.9.5.liban.Helitron";
 my $rename_TE = "$script_path/util/rename_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
@@ -97,6 +104,7 @@ foreach (@ARGV){
 	$anno = $ARGV[$k+1] if /^-anno$/i and $ARGV[$k+1] !~ /^-/;
 	$evaluate = $ARGV[$k+1] if /^-evaluate$/i and $ARGV[$k+1] !~ /^-/;
 	$exclude = $ARGV[$k+1] if /^-exclude$/i and $ARGV[$k+1] !~ /^-/;
+	$force = $ARGV[$k+1] if /^-force$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmodeler = $ARGV[$k+1] if /^-repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
 	$blast = $ARGV[$k+1] if /^-blast$/i and $ARGV[$k+1] !~ /^-/;
@@ -124,6 +132,10 @@ die "The script count_base.pl is not found in $count_base!\n" unless -s $count_b
 die "The script make_masked.pl is not found in $make_masked!\n" unless -s $make_masked;
 die "The script make_gff3_with_RMout.pl is not found in $make_gff3!\n" unless -s $make_gff3;
 die "The protein-coding sequence library is not found in $protlib!\n" unless -s $protlib;
+die "The rice LTR sequence library is not found in $rice_LTR!\n" unless -s $rice_LTR;
+#die "The rice nonLTR sequence library is not found in $rice_nonLTR!\n" unless -s $rice_nonLTR;
+die "The rice TIR sequence library is not found in $rice_TIR!\n" unless -s $rice_TIR;
+die "The rice Helitron sequence library is not found in $rice_helitron!\n" unless -s $rice_helitron;
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The TEsorter is not found in $TEsorter!\n" unless -s $TEsorter;
@@ -225,6 +237,14 @@ print "$date\tObtain raw TE libraries using various structure-based programs: \n
 
 # Get raw TE candidates
 `perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast`;
+
+# Force to use maize helitron when raw.fa empty
+if ($force eq 1){
+	`cp $rice_LTR $genome.EDTA.raw/$genome.LTR.raw.fa` unless -s "$genome.EDTA.raw/$genome.LTR.raw.fa";
+#	`cp $rice_LTR $genome.EDTA.raw/$genome.nonLTR.raw.fa` unless -s "$genome.EDTA.raw/$genome.nonLTR.raw.fa";
+	`cp $rice_TIR $genome.EDTA.raw/$genome.TIR.raw.fa` unless -s "$genome.EDTA.raw/$genome.TIR.raw.fa";
+	`cp $rice_helitron $genome.EDTA.raw/$genome.Helitron.raw.fa` unless -s "$genome.EDTA.raw/$genome.Helitron.raw.fa";
+	}
 
 # check results and report status
 die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa" unless -s "$genome.EDTA.raw/$genome.LTR.raw.fa";
