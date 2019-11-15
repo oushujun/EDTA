@@ -6,6 +6,8 @@
 #!/usr/bin/perl -w
 use strict;
 
+my $usage = "\n\tperl make_gff3_with_RMout.pl RM.out\n\n";
+die $usage unless -s $ARGV[0];
 my $date=`date -u`;
 chomp ($date);
 open RMout, "sort -sV -k5,5 $ARGV[0]|" or die "ERROR: $!";
