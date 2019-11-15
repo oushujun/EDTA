@@ -52,6 +52,7 @@ my $get_ext_seq = "$script_path/util/get_ext_seq.pl";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
+my $make_gff = "$script_path/util/make_gff_with_intact.pl";
 my $mdust = '';
 my $blastplus = ''; #path to the blastn program
 my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
@@ -91,6 +92,7 @@ die "The script get_ext_seq.pl is not found in $get_ext_seq!\n" unless -s $get_e
 die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;
 die "The script format_helitronscanner_out.pl is not found in $format_helitronscanner!\n" unless -s $format_helitronscanner;
 die "The script flanking_filter.pl is not found in $flank_filter!\n" unless -s $flank_filter;
+die "The script make_gff_with_intact.pl is not found in $make_gff!\n" unless -s $make_gff;
 $blastplus=`which blastn 2>/dev/null` if $blastplus eq '';
 $blastplus=~s/blastn\n//;
 die "makeblastdb is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
@@ -264,7 +266,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 
 	# get intact TIR elements
 	# get gff
-	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$s, \$e) = (split)[0,3,4]; print "\$_\\t\$chr:\$s..\$e"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 10 - 1 $genome.TIR.raw.fa -MSU0 -MSU1 > $genome.TIR.intact.fa.gff`;
+	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$s, \$e) = (split)[0,3,4]; print "\$_\\t\$chr:\$s..\$e"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 10 - 1 $genome.TIR.raw.fa -MSU0 -MSU1 | awk '{\$10=""; print \$0}' | perl -nle 's/\\s+/\\t/g; print \$_' >  $genome.TIR.intact.fa.gff`;
 
 	`cp $genome.TIR.raw.fa $genome.TIR.intact.fa`;
 	`cp $genome.TIR.intact.fa $genome.TIR.intact.fa.gff ../`;
@@ -334,9 +336,10 @@ if ($beta2 == 1){
 `cp $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln $genome.Helitron.raw.fa`;
 }
 
-# get intact Helitrons
+# get intact Helitrons and gff
 `cp $genome.Helitron.raw.fa $genome.Helitron.intact.fa`;
-`cp $genome.Helitron.intact.fa ../`;
+`perl $make_gff $genome.Helitron.intact.fa`;
+`cp $genome.Helitron.intact.fa $genome.Helitron.intact.fa.gff ../`;
 if ($beta2 == 1){
 	`cp $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.fa.anno.list`;
 	`cp $genome.Helitron.intact.fa.anno.list ../`;
