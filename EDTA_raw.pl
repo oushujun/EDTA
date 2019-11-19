@@ -55,6 +55,7 @@ my $flank_filter = "$script_path/util/flanking_filter.pl";
 my $make_gff = "$script_path/util/make_gff_with_intact.pl";
 my $mdust = '';
 my $blastplus = ''; #path to the blastn program
+my $trf = ''; #path to trf
 my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
 
 # read parameters
@@ -100,6 +101,11 @@ die "blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplu
 $mdust=`which mdust 2>/dev/null` if $mdust eq '';
 $mdust=~s/mdust\n//;
 die "mdust is not exist in the mdust path $mdust!\n" unless -X "${mdust}mdust";
+$trf=`which trf 2>/dev/null` if $trf eq '';
+$trf=~s/\n$//;
+`$trf 2>/dev/null`;
+die "Error: No Tandem Repeat Finder is working on the current system.
+        Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
 
 # make a softlink to the genome
 my $genome_file = basename($genome);
@@ -168,7 +174,7 @@ if (0){ #old, overly inclusive module
 
 # remove simple repeats and candidates with simple repeats at terminals
 `${mdust}mdust $genome.LTR.intact.fa.ori > $genome.LTR.intact.fa.ori.dusted`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.intact.fa.ori.dusted > $genome.LTR.intact.fa.ori.dusted.cln`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.LTR.intact.fa.ori.dusted > $genome.LTR.intact.fa.ori.dusted.cln`;
 
 if ($beta2 == 1){
 	# annotate and remove non-LTR candidates
@@ -253,7 +259,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 
 	# remove simple repeats and candidates with simple repeats at terminals
 	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa.ori > $genome.TIR.ext30.fa.pass.fa.dusted`;
-	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
 
 	if ($beta2 == 1){
 	# annotate and remove non-TIR candidates
@@ -325,7 +331,7 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 
 # remove simple repeats and candidates with simple repeats at terminals
 `${mdust}mdust $genome.HelitronScanner.filtered.ext.fa.pass.fa > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted`;
-`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted | perl -nle 's/^(>.*)\$/\$1#DNA\\/Helitron/; print \$_' > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln`;
+`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted | perl -nle 's/^(>.*)\$/\$1#DNA\\/Helitron/; print \$_' > $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln`;
 
 if ($beta2 == 1){
 # annotate and remove non-Helitron candidates
