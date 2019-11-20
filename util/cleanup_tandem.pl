@@ -69,7 +69,7 @@ $trf_path=~s/\n$//;
 `$trf_path 2>/dev/null`;
 die "Error: No Tandem Repeat Finder is working on the current system.
 	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
-
+die "\n\tTandem Repeat Finder not found!\n\n$usage" unless $trf_path ne '';
 die "\n\tInput file \"$file\" not found!\n\n$usage" unless -e $file;
 
 my %tandem;

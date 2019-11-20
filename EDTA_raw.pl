@@ -106,6 +106,7 @@ $trf=~s/\n$//;
 `$trf 2>/dev/null`;
 die "Error: No Tandem Repeat Finder is working on the current system.
         Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
+die "\n\tTandem Repeat Finder not found!\n\n" unless $trf ne '';
 
 # make a softlink to the genome
 my $genome_file = basename($genome);

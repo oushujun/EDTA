@@ -167,6 +167,7 @@ $trf=~s/\n$//;
 `$trf 2>/dev/null`;
 die "Error: No Tandem Repeat Finder is working on the current system.
 	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
+die "\n\tTandem Repeat Finder not found!\n\n" unless $trf ne '';
 # GRF
 $GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #default path to the GRF program 
 `$GRF 2>/dev/null`;
