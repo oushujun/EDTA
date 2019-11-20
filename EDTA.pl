@@ -354,7 +354,7 @@ if ($cds ne ''){
 	}
 
 # Final rounds of redundancy removal and make final EDTA library
-`perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlene 80 -cov 0.95 -blastplus $blast 2>/dev/null`;
+`perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blast 2>/dev/null`;
 
 # rename all TEs in the EDTA library
 `perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
