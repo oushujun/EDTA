@@ -52,7 +52,7 @@ die "The query file $query is not found!\n$usage" unless -e $query;
 open Query, "<$query" or die $usage;
 open Out, ">$query.cov${min_cov}iden$min_iden.tabout";
 open Seq, ">$query.pass.fa";
-print Out "#Decision\t5'count\t3'count\tflank_count\tChr\tStart\tEnd\tLOC\t5'flank\t5'seq\t3'seq\t3'flank\n";
+print Out "#Decision\t5'count\t3'count\tflank_count\tChr\tStart\tEnd\tLOC\tflanking\t5'flank\t5'seq\t3'seq\t3'flank\n";
 
 ## Store sequence information
 my @FA;
