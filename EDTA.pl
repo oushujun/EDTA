@@ -81,6 +81,7 @@ my $rice_LTR = "$script_path/database/rice6.9.5.liban.LTR";
 my $rice_TIR = "$script_path/database/rice6.9.5.liban.TIR";
 my $rice_helitron = "$script_path/database/rice6.9.5.liban.Helitron";
 my $rename_TE = "$script_path/util/rename_TE.pl";
+my $rename_RM = "$script_path/util/rename_RM_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
 my $mdust = "";
@@ -309,7 +310,8 @@ if ($sensitive == 1){
 	`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq`;
 
 	# rename RepeatModeler candidates and make stage 2 library
-	`cat RM_*/round-*/consensi.fa.classified | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
+	`perl $rename_RM RM_*/consensi.fa.classified > $genome.RepeatModeler.raw.fa`;
+#	`cat RM_*/round-*/consensi.fa.classified | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
 #	`cat RM_*/round-*/family-*fa | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
 	if (-s "$genome.RepeatModeler.raw.fa"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
