@@ -3,7 +3,7 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.6.4";
+my $version = "v1.6.5";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -82,6 +82,7 @@ my $rice_TIR = "$script_path/database/rice6.9.5.liban.TIR";
 my $rice_helitron = "$script_path/database/rice6.9.5.liban.Helitron";
 my $rename_TE = "$script_path/util/rename_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
+my $buildSummary = "$script_path/util/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
 my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
 my $mdust = "";
 my $GRF = "";
@@ -138,6 +139,7 @@ die "The rice TIR sequence library is not found in $rice_TIR!\n" unless -s $rice
 die "The rice Helitron sequence library is not found in $rice_helitron!\n" unless -s $rice_helitron;
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
+die "The script buildSummary.pl is not found in $buildSummary!\n" unless -s $buildSummary;
 die "The TEsorter is not found in $TEsorter!\n" unless -s $TEsorter;
 
 # makeblastdb
@@ -415,9 +417,12 @@ if ($anno == 1){
 	`mv $genome.out.new $genome.EDTA.TEanno.out`;
 	`perl $make_gff3 $genome.EDTA.TEanno.out`;
 	`mv $genome.EDTA.TEanno.out.gff $genome.EDTA.TEanno.gff`;
-	my $tot_TE = `perl $count_base $genome.new.masked`;
-	$tot_TE = (split /\s+/, $tot_TE)[-1];
-	$tot_TE = sprintf("%.2f%%", $tot_TE*100);
+	`perl $buildSummary -maxDiv 40 $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum`;
+	my $tot_TE = `grep Total $genome.EDTA.TEanno.sum|grep %|awk '{print \$4}'`;
+	chomp $tot_TE;
+#	my $tot_TE = `perl $count_base $genome.new.masked`;
+#	$tot_TE = (split /\s+/, $tot_TE)[-1];
+#	$tot_TE = sprintf("%.2f%%", $tot_TE*100);
 
 	# make low-threshold masked genome for MAKER
 	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
@@ -433,8 +438,9 @@ if ($anno == 1){
 	chomp ($date);
 	print "$date\tTE annotation using the EDTA library has finished! Check out:\n";
 	print "\t\t\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff\n";
+	print "\t\t\t\tWhole-genome TE annotation summary: $genome.EDTA.TEanno.sum\n";
 	print "\t\t\t\tLow-threshold TE masking for MAKER gene annotation (masked: $maker_TE): $genome.MAKER.masked\n\n";
-	`cp $genome.MAKER.masked $genome.EDTA.TEanno.gff ../`;
+	`cp $genome.MAKER.masked $genome.EDTA.TEanno.gff $genome.EDTA.TEanno.sum ../`;
 
 	# evaluate the annotation consistency
 	if ($evaluate == 1){
