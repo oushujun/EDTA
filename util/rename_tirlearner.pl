@@ -31,6 +31,10 @@ while (<>){
 	($name, $superfam, $tsd) = ($1, $2, $3) if $id =~ /^(.*):[0-9mM]+:.*_(D[A-Z]+).*TSD:([ATCGNX_]+)_[0-9]+.*/i;
 	#e.g.: 10:16642857:16643502:8m1M4m1M3m1M:CTCTCATG_DTA_200-+-TIR:TAGGGGTGAA_TCCACCCCTA_90.0_TSD:CTCTCATG_CTCTCATG_100.0
 	if ($name ne 'NA'){
+		if ($name =~ /^(.*)_([0-9]+)_([0-9]+)/){
+			my ($chr, $start, $end) = ($1, $2, $3);
+			$name = "$chr:$start..$end" if defined $chr;
+			}
 		print ">$name#$class/$superfam TSD:$tsd\n$seq\n";
 		} else {
 		($name, $superfam) = ($1, $2) if $id =~ /^(.*)#.*\/(D.*)/;
