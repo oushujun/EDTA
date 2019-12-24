@@ -152,6 +152,7 @@ sub Identifier() {
 ##Structural analysis, main program
 	my ($name, $seq)=(@{$_}[0], @{$_}[1]);
 	my $decision="raw"; #conclusion of whether the element is a LTR
+print "my $decision=raw;\n"; #debug
 	my ($chr, $seq_start, $seq_end, $ltr_start, $ltr_end);
 	($chr, $seq_start, $seq_end, $ltr_start, $ltr_end)=($1, $2, $3, $5, $6) if $name=~/^(\S+):([0-9]+)..([0-9]+)\|(\S+):([0-9]+)..([0-9]+)/;  #eg: Chr4:10009589..10017157|Chr4:10009609..10017137 or 10.dna.chromosome.ch:100016935..100026312|10.dna.chromosome.ch:100016935..100026312
 	my $id="$ltr_start..$ltr_end";
@@ -167,13 +168,18 @@ sub Identifier() {
 
 	my $exec="${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
 	my @Blast=();
-	for (my $try=0; $try<100; $try++){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 100 times to guarantee the blast is run correctly
+	my $try=0;
+#	while ($try<100){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 100 times to guarantee the blast is run correctly
+	for (my $try=0; $try<100; $try++){
 		@Blast=qx(bash -c '$exec' 2> /dev/null) if defined $ltr;
 		last if $? == 0;
+#		$try++;
 		}
 
+print "@Blast "; #debug
 	my ($div, $aln_len, $sim, $mismatch, $q_start, $q_end, $s_start, $s_end, $ls, $le, $rs, $re, $ll, $rl, $cor_adj)=(0,0,0,1,0,0,0,0,0,0,0,0,0,0,0);
 	my $adjust="NO";
+print "$decision=false if \$#Blast $#Blast==0;\n"; # debug
 	$decision="false" if $#Blast==0;
 
 	if ($#Blast>0){
@@ -181,6 +187,7 @@ sub Identifier() {
 	my $aln_diff = 0;
 	for (my $i=1; defined $Blast[$i+1]; $i++){
 		$Blast[$i]=~s/^\s+//;
+print "$decision=false if $i>8;\n"; # debug
 		$decision="false" if $i>8;
 		last if $i>8;
 		($sim, $aln_len, $mismatch, $q_start, $q_end, $s_start, $s_end)=(split /\s+/,  $Blast[$i])[2,3,4,6,7,8,9];
@@ -198,7 +205,8 @@ sub Identifier() {
 			last;
 			}
 		}
-
+print "$s_start, $s_end, $q_start, $q_end, $ls, $le, $rs, $re, $aln_diff\n";
+print "$decision=false if $pair==0;\n"; # debug
 	$decision="false" if $pair==0;
 ##element age estimation by T=K/2u, where K stands for divergence rate, and u is mutation rate (per bp per ya)
 ###Use the Jukes-Cantor formula K= -3/4*ln(1-4*d/3) to adjust K for non-coding sequences, where d is estimated from identity ($sim) excluding indels.
@@ -246,6 +254,7 @@ sub Identifier() {
 		$info[7]=$re+$cor_adj;
 		$info[8]=$rl;
 		} else {
+print "$decision=false unless abs($ll-$rl)<=$length_diff and $s_end<$q_start;\n"; # debug
 		$adjust="NO";
 		$ll=$rl=$ls=$le=$rs=$re="NA";
 		$decision="false";
@@ -265,6 +274,7 @@ sub Identifier() {
 	my $bond_miss=0;
 	foreach my $bond ($up1_seq, $do1_seq, $up2_seq, $do2_seq){
 		$bond_miss++ while $bond=~/[nN\-]/gi;
+print "$decision=~s/raw/false/ and last if $bond_miss>=$boundary_N;\n"; #debug
 		$decision=~s/raw/false/ and last if $bond_miss>=$boundary_N;
 		$bond_miss=0;
 		}
@@ -286,6 +296,7 @@ sub Identifier() {
 	$bd=~s/(l3[ATGCN\-?:]+\s+l4[ATCGN\-?:]+\s+)r3[ATGCN\-?:]+\s+r4[ATCGN\-?:]+\s+HT-align:[0|1]\s+/$1/i;
 
 	if ($ac=~/aligned/i or $bd=~/aligned/i){
+print "$decision=false unless $ac=~/aligned/i or $bd=~/aligned/i;\n"; # debug
 		$decision="false";
 		} else {
 		$decision=~s/raw/pass/;
@@ -437,11 +448,17 @@ sub Identifier() {
 	my $internal=($ltr1_e+1)."..".($ltr2_s-1);
 	my $overlap=99; #initial value
 	$overlap=abs($ltr1_s-$TSD_le-1)+ abs($TSD_rs-$ltr2_e-1) if (defined $TSD_le and defined $ltr1_s);
+print "$decision=false if ($info[12] eq ? and lc $info[18] eq unknown and uc $info[17] eq NA and $overlap>0);\n"; #debug
 	$decision="false" if ($info[12] eq "?" and lc $info[18] eq "unknown" and uc $info[17] eq "NA" and $overlap>0); #?+unknown+NA+runin = false
+print "$decision=false if ($motif !~ /TGCA/i and $overlap>0 and abs($info[8])<$minlen);\n"; #debug #Nmtf+runin+LTR length<100=false
 	$decision="false" if ($motif !~ /TGCA/i and $overlap>0 and abs($info[8])<$minlen); #Nmtf+runin+LTR length<100=false
+print "$decision=false if ($motif !~ /TGCT|TACA|TACT|TGGA|TGGT|TATA|TGTA|TGCC|TGCA/i and $info[12] eq ? and lc $info[18] eq unknown and uc $info[17] eq NA);\n"; #debug
 	$decision="false" if ($motif !~ /TGCT|TACA|TACT|TGGA|TGGT|TATA|TGTA|TGCC|TGCA/i and $info[12] eq "?" and lc $info[18] eq "unknown" and uc $info[17] eq "NA");
+print "$decision=false if ($TSD_ctrl==1 and $TSD=~/NA/);\n"; #debug
 	$decision="false" if ($TSD_ctrl==1 and $TSD=~/NA/);
+print "$decision=false if ($motif !~ /TGCA/i and length $probTSD ne 5 and $info[12] eq ? and lc $info[18] eq unknown and uc $info[17] eq NA);\n"; #debug
 	$decision="false" if ($motif !~ /TGCA/i and length $probTSD ne 5 and $info[12] eq "?" and lc $info[18] eq "unknown" and uc $info[17] eq "NA");
+print "$decision=false if uc $info[17] eq NOTLTR;\n"; #debug
 	$decision="false" if uc $info[17] eq "NOTLTR";
 
 	if ($boundary_ctrl and lc $decision eq "pass"){
