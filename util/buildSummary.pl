@@ -55,6 +55,8 @@ Displays the version of the program
 
 =item -maxDiv #
 
+=item -genome_size #
+
 =item -species <species_name>
 
 =item -genome <*.tsv or *.2bit>
@@ -139,7 +141,8 @@ my @getopt_args = (
                     '-species=s',
                     '-genome=s',
                     '-maxDiv=s',
-                    '-minDiv=s'
+                    '-minDiv=s',
+                    '-genome_size=s'
 );
 
 my %options = ();
@@ -163,6 +166,10 @@ my $minDiv;
 my $maxDiv;
 $minDiv = $options{'minDiv'} if ( defined $options{'minDiv'} );
 $maxDiv = $options{'maxDiv'} if ( defined $options{'maxDiv'} );
+
+# Total genome length
+my $totalSeqLen = 0;
+$totalSeqLen = $options{'genome_size'} if ( defined $options{'genome_size'} );
 
 my $taxDB;
 my $repDB;
@@ -429,7 +436,8 @@ while ( <IN> ) {
 close IN;
 
 # Total genome length
-my $totalSeqLen = 0;
+#my $totalSeqLen = 0;
+if ($totalSeqLen == 0){
 if ( defined $options{'genome'} ) {
   if ( defined $options{'useAbsoluteGenomeSize'} ) {
     foreach my $seq ( keys( %seqUnambigSizes ) ) {
@@ -455,6 +463,7 @@ else {
   foreach my $seq ( keys( %seqs ) ) {
     $totalSeqLen += $seqs{$seq};
   }
+}
 }
 
 #
