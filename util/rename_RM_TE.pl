@@ -1,6 +1,8 @@
-#!/usr/bin/perl -wuse strict;
+#!/usr/bin/perl -w
+use strict;
+# rename RepeatModeler consensus families, contributed by Zhigui Bao (#baozg)
 
-my $usage = "";
+my $usage = "perl rename_RM_TE.pl RM_*/consensi.fa.classified > RepeatModeler.TE.raw.fa";
 my $fasta = $ARGV[0];
 
 my %hash=("DNA/hAT"=>"DNA/DTA",
