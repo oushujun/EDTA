@@ -3,7 +3,7 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.6.5";
+my $version = "v1.7.0";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -11,6 +11,7 @@ my $version = "v1.6.5";
 #v1.4 08/07/2019
 #v1.5 08/14/2019
 #v1.6 11/09/2019
+#v1.7 12/25/2019
 
 print "
 ########################################################
@@ -84,6 +85,13 @@ my $rename_TE = "$script_path/util/rename_TE.pl";
 my $rename_RM = "$script_path/util/rename_RM_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $buildSummary = "$script_path/util/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
+my $bed2gff = "$script_path/util/bed2gff.pl";
+my $gff2bed = "$script_path/util/gff2bed.pl";
+my $get_frag = "$script_path/util/get_frag.pl";
+my $keep_nest = "$script_path/util/keep_nest.pl";
+my $combine_overlap = "$script_path/util/combine_overlap.pl";
+my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
+my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
 my $mdust = "";
 my $GRF = "";
@@ -141,6 +149,13 @@ die "The rice Helitron sequence library is not found in $rice_helitron!\n" unles
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The script buildSummary.pl is not found in $buildSummary!\n" unless -s $buildSummary;
+die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
+die "The script gff2bed.pl is not found in $gff2bed!\n" unless -s $gff2bed;
+die "The script get_frag.pl is not found in $get_frag!\n" unless -s $get_frag;
+die "The script keep_nest.pl is not found in $keep_nest!\n" unless -s $keep_nest;
+die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -s $combine_overlap;
+die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
+die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The TEsorter is not found in $TEsorter!\n" unless -s $TEsorter;
 
 # makeblastdb
@@ -242,21 +257,33 @@ print "$date\tObtain raw TE libraries using various structure-based programs: \n
 # Get raw TE candidates
 `perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast`;
 
-# Force to use maize helitron when raw.fa empty
+chdir "$genome.EDTA.raw";
+
+# Force to use rice TEs when raw.fa is empty
 if ($force eq 1){
-	`cp $rice_LTR $genome.EDTA.raw/$genome.LTR.raw.fa` unless -s "$genome.EDTA.raw/$genome.LTR.raw.fa";
-#	`cp $rice_LTR $genome.EDTA.raw/$genome.nonLTR.raw.fa` unless -s "$genome.EDTA.raw/$genome.nonLTR.raw.fa";
-	`cp $rice_TIR $genome.EDTA.raw/$genome.TIR.raw.fa` unless -s "$genome.EDTA.raw/$genome.TIR.raw.fa";
-	`cp $rice_helitron $genome.EDTA.raw/$genome.Helitron.raw.fa` unless -s "$genome.EDTA.raw/$genome.Helitron.raw.fa";
+	`cp $rice_LTR $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
+#	`cp $rice_LTR $genome.nonLTR.raw.fa` unless -s "$genome.nonLTR.raw.fa";
+	`cp $rice_TIR $genome.TIR.raw.fa` unless -s "$genome.TIR.raw.fa";
+	`cp $rice_helitron $genome.Helitron.raw.fa` unless -s "$genome.Helitron.raw.fa";
 	}
 
 # check results and report status
-die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa" unless -s "$genome.EDTA.raw/$genome.LTR.raw.fa";
-die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa" unless -s "$genome.EDTA.raw/$genome.TIR.raw.fa";
-die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa" unless -s "$genome.EDTA.raw/$genome.Helitron.raw.fa";
+die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa" unless -s "$genome.LTR.raw.fa";
+die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa" unless -s "$genome.TIR.raw.fa";
+die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa" unless -s "$genome.Helitron.raw.fa";
+
+# combine intact TEs
+`cat $genome.LTR.intact.fa $genome.TIR.intact.fa $genome.Helitron.intact.fa > $genome.EDTA.intact.fa`;
+`cat $genome.LTR.intact.fa.gff3 $genome.TIR.intact.fa.gff $genome.Helitron.intact.fa.gff | perl $gff2bed - structural > $genome.EDTA.intact.bed`;
+`perl $bed2gff $genome.EDTA.intact.bed`;
+`mv $genome.EDTA.intact.bed.gff $genome.EDTA.intact.gff`;
+`cp $genome.EDTA.intact.gff ../`;
+
 $date=`date`;
 chomp ($date);
-print "$date\tObtain raw TE libraries finished.\n\n";
+print "$date\tObtain raw TE libraries finished.
+\t\t\t\tAll intact TEs found by EDTA: $genome.EDTA.intact.fa\t$genome.EDTA.intact.gff\n\n";
+chdir "..";
 
 
 ##################################################
@@ -313,8 +340,6 @@ if ($sensitive == 1){
 
 	# rename RepeatModeler candidates and make stage 2 library
 	`perl $rename_RM RM_*/consensi.fa.classified > $genome.RepeatModeler.raw.fa`;
-#	`cat RM_*/round-*/consensi.fa.classified | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
-#	`cat RM_*/round-*/family-*fa | perl -nle \'print \$_ and next unless /^>/; my \$name=(split)[2]; print \">\$name\"\' > $genome.RepeatModeler.raw.fa`;
 	if (-s "$genome.RepeatModeler.raw.fa"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
@@ -354,7 +379,7 @@ if ($cds ne ''){
 		}
 
 	} else {
-	print "\t\t\t\tSkipping the CDS cleaning step (-cds [File]) since no CDS file is provided.\n\n";
+	print "\t\t\t\tSkipping the CDS cleaning step (-cds [File]) since no CDS file is provided or it's empty.\n\n";
 	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
 	}
 
@@ -380,12 +405,23 @@ if ($HQlib ne ''){
 	`mv $genome.EDTA.TElib.fa $genome.EDTA.TElib.ori.fa`;
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
 	`cp $genome.EDTA.TElib.novel.fa $genome.EDTA.TElib.fa ../`;
+
+	# reclassify intact TEs with known TEs
+	`ln -s ../$genome.EDTA.raw/$genome.EDTA.intact.fa`;
+	`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib ../$HQlib $genome.EDTA.intact.fa 2>/dev/null`;
+	`perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
+	`perl $rename_by_list ../$genome.EDTA.raw/$genome.EDTA.intact.bed $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.bed`;
+	`perl $bed2gff $genome.EDTA.intact.bed`;
+	`mv $genome.EDTA.intact.bed.gff $genome.EDTA.intact.gff`;
+	`cp $genome.EDTA.intact.gff ../`; #replace the intact gff that has no lib family info
 	}
 
 # report status
 $date=`date`;
 chomp ($date);
-print "$date\tEDTA final stage finished! Check out the final EDTA TE library: $genome.EDTA.TElib.fa\n";
+print "$date\tEDTA final stage finished! You may check out:
+		\t\tThe final EDTA TE library: $genome.EDTA.TElib.fa\n";
+print "		\t\tFamily names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff\n" if $HQlib ne '';
 print "\tComparing to the curated library you provided, this are the novel TEs EDTA found: $genome.EDTA.TElib.novel.fa
 	The high-quality library you provided has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
 chdir "..";
@@ -416,15 +452,27 @@ if ($anno == 1){
 
 	# exclude regions from TE annotation and make whole-genome TE annotation
 	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
-	`mv $genome.out.new $genome.EDTA.TEanno.out`;
-	`perl $make_gff3 $genome.EDTA.TEanno.out`;
-	`mv $genome.EDTA.TEanno.out.gff $genome.EDTA.TEanno.gff`;
-	`perl $buildSummary -maxDiv 40 $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum`;
+	`mv $genome.out.new $genome.EDTA.RM.out`;
+	`perl $make_gff3 $genome.EDTA.RM.out`;
+	`mv $genome.EDTA.RM.out.gff $genome.EDTA.RM.gff`;
+
+	# combine homology-based and strutrual-based annotation
+	`perl $gff2bed $genome.EDTA.RM.gff homology > $genome.EDTA.RM.bed`;
+	`cp ../$genome.EDTA.final/$genome.EDTA.intact.bed ./`;
+	`perl $combine_overlap $genome.EDTA.intact.bed $genome.EDTA.intact.bed.cmb 5`;
+	`perl $keep_nest $genome.EDTA.intact.bed $genome.EDTA.RM.bed $threads`;
+	`perl $keep_nest $genome.EDTA.RM.bed $genome.EDTA.intact.bed.cmb $threads`;
+	`sort -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.TEanno.bed`;
+	`perl $bed2gff $genome.EDTA.TEanno.bed`;
+	`mv $genome.EDTA.TEanno.bed.gff $genome.EDTA.TEanno.gff`;
+
+	# make summary table for the annotation
+	my $genome_size = `perl $count_base $genome`;
+	$genome_size = (split /\s+/, $genome_size)[1] - (split /\s+/, $genome_size)[2];
+	`perl -nle 'my (\$chr, \$s, \$e, undef, \$supfam, undef, \$anno)=(split); next if \$supfam=~/target_site_duplication|long_terminal_repeat/i; \$anno=~s/ID=//; \$anno=~s/;.*//; print "10000 0.001 0.001 0.001 \$chr \$s \$e NA NA \$anno \$supfam"' $genome.EDTA.TEanno.bed > $genome.EDTA.TEanno.out`;
+	`perl $buildSummary -maxDiv 40 -genome_size $genome_size $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum 2>/dev/null`;
 	my $tot_TE = `grep Total $genome.EDTA.TEanno.sum|grep %|awk '{print \$4}'`;
 	chomp $tot_TE;
-#	my $tot_TE = `perl $count_base $genome.new.masked`;
-#	$tot_TE = (split /\s+/, $tot_TE)[-1];
-#	$tot_TE = sprintf("%.2f%%", $tot_TE*100);
 
 	# make low-threshold masked genome for MAKER
 	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
