@@ -57,7 +57,7 @@ while (<List>){
 	my $chr_ori=$chr;
 	print GFF "$chr\t$annotator\trepeat_region\t$element_start\t$element_end\t.\t$strand\t.\tID=repeat_region$i\n";
 	print GFF "$chr\t$annotator\ttarget_site_duplication\t$lTSD\t.\t$strand\t.\tParent=repeat_region$i\n" unless $TSD eq "NA";
-	print GFF "$chr\t$annotator\tLTR_retrotransposon\t$lLTR_start\t$rLTR_end\t.\t$strand\t.\tID=$id;Parent=repeat_region$i;motif=$motif;tsd=$TSD;ltr_identity=$sim;seq_number=$seq_flag{$chr_ori}\n";
+	print GFF "$chr\t$annotator\tLTR/$supfam\t$lLTR_start\t$rLTR_end\t.\t$strand\t.\tID=$id;Parent=repeat_region$i;motif=$motif;tsd=$TSD;ltr_identity=$sim;seq_number=$seq_flag{$chr_ori}\n";
 	print GFF "$chr\t$annotator\tlong_terminal_repeat\t$lLTR_start\t$lLTR_end\t.\t$strand\t.\tParent=$id\n";
 	print GFF "$chr\t$annotator\tlong_terminal_repeat\t$rLTR_start\t$rLTR_end\t.\t$strand\t.\tParent=$id\n";
 	print GFF "$chr\t$annotator\ttarget_site_duplication\t$rTSD\t.\t$strand\t.\tParent=repeat_region$i\n" unless $TSD eq "NA";
