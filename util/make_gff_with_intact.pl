@@ -21,7 +21,7 @@ while (<ID>){
 	$element_length = $element_end - $element_start + 1;
 	next if $element_length < 80;
 	$strand = ".";
-        print GFF "$chr\t$annotator\t$TE_class\t$element_start\t$element_end\t.\t$strand\t.\t$TE_ID\n";
+        print GFF "$chr\t$annotator\t$TE_class\t$element_start\t$element_end\t.\t$strand\t.\tID=$TE_ID#$TE_class\n";
         }
 close ID;
 close GFF;
