@@ -256,7 +256,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
 
 	# recover superfamily info
-	`perl  $output_by_list 1 $genome.TIR 1 $genome.TIR.ext30.fa.pass.fa -FA -MSU0 -MSU1 > $genome.TIR.ext30.fa.pass.fa.ori`;
+	`perl $output_by_list 1 $genome.TIR 1 $genome.TIR.ext30.fa.pass.fa -FA -MSU0 -MSU1 > $genome.TIR.ext30.fa.pass.fa.ori`;
 
 	# remove simple repeats and candidates with simple repeats at terminals
 	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa.ori > $genome.TIR.ext30.fa.pass.fa.dusted`;
@@ -271,9 +271,8 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.raw.fa`;
 	}
 
-	# get intact TIR elements
-	# get gff
-	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$s, \$e) = (split)[0,3,4]; print "\$_\\t\$chr:\$s..\$e"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 10 - 1 $genome.TIR.raw.fa -MSU0 -MSU1 | awk '{\$10=""; print \$0}' | perl -nle 's/\\s+/\\t/g; print \$_' >  $genome.TIR.intact.fa.gff`;
+	# get gff of intact TIR elements
+	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$method, \$supfam, \$s, \$e, \$anno) = (split)[0,1,2,3,4,8]; my \$class='DNA'; \$class='MITE' if \$e-\$s+1 <= 600; \$anno = "ID=\$chr:\$s..\$e#\$class/\$supfam;\$anno"; print "\$chr \$method \$class/\$supfam \$s \$e . . . \$anno \$chr:\$s..\$e"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3| perl $output_by_list 10 - 1 $genome.TIR.raw.fa -MSU0 -MSU1 | awk '{\$10=""; print \$0}' | perl -nle 's/\\s+/\\t/g; print \$_' > $genome.TIR.intact.fa.gff`;
 
 	`cp $genome.TIR.raw.fa $genome.TIR.intact.fa`;
 	`cp $genome.TIR.intact.fa $genome.TIR.intact.fa.gff ../`;
