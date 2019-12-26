@@ -64,6 +64,7 @@ while (<Anno>){
 	$rTSD=~s/\.\./\t/;
 	$element_start=(split /\s+/, $lTSD)[0];
 	$element_end=(split /\s+/, $rTSD)[1];
+	my $id = "$chr:$lLTR_start..$rLTR_end#LTR/$supfam";
 	if ($TSD eq "NA"){
 		$element_start=$lLTR_start;
 		$element_end=$rLTR_end;
@@ -71,9 +72,9 @@ while (<Anno>){
 	my $chr_ori=$chr;
 	my $gff = "$chr\t$annotator\trepeat_region\t$element_start\t$element_end\t.\t$strand\t.\tID=repeat_region$i\n";
 	$gff .= "$chr\t$annotator\ttarget_site_duplication\t$lTSD\t.\t$strand\t.\tParent=repeat_region$i\n" unless $TSD eq "NA";
-	$gff .= "$chr\t$annotator\tLTR_retrotransposon\t$lLTR_start\t$rLTR_end\t.\t$strand\t.\tID=LTR_retrotransposon$i;Parent=repeat_region$i;motif=$motif;tsd=$TSD;ltr_identity=$sim;seq_number=$seq_flag{$chr_ori}\n";
-	$gff .= "$chr\t$annotator\tlong_terminal_repeat\t$lLTR_start\t$lLTR_end\t.\t$strand\t.\tParent=LTR_retrotransposon$i\n";
-	$gff .= "$chr\t$annotator\tlong_terminal_repeat\t$rLTR_start\t$rLTR_end\t.\t$strand\t.\tParent=LTR_retrotransposon$i\n";
+	$gff .= "$chr\t$annotator\tLTR/$supfam\t$lLTR_start\t$rLTR_end\t.\t$strand\t.\tID=$id;Parent=repeat_region$i;motif=$motif;tsd=$TSD;ltr_identity=$sim;seq_number=$seq_flag{$chr_ori}\n";
+	$gff .= "$chr\t$annotator\tlong_terminal_repeat\t$lLTR_start\t$lLTR_end\t.\t$strand\t.\tParent=$id\n";
+	$gff .= "$chr\t$annotator\tlong_terminal_repeat\t$rLTR_start\t$rLTR_end\t.\t$strand\t.\tParent=$id\n";
 	$gff .= "$chr\t$annotator\ttarget_site_duplication\t$rTSD\t.\t$strand\t.\tParent=repeat_region$i\n" unless $TSD eq "NA";
 	$gff .= "###\n";
 
@@ -89,6 +90,7 @@ while (<Seq>){
 	s/>//g;
 	my ($id, $seq) = (split /\n/, $_, 2);
 	$id =~ s/\s+.*//;
+	$id =~ s/#.*//;
 	$seq =~ s/\s+//g;
 	my ($chr, $lLTR_start, $rLTR_end);
 	($chr, $lLTR_start, $rLTR_end) = ($1, $2, $3) if $id =~ /^(.*):([0-9]+)..([0-9]+)$/;
