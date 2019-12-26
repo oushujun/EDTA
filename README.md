@@ -56,14 +56,14 @@ Activate the EDTA program:
 
 
 ### Divide and conquer
-*Identify raw TE libraries separately to shortern the time*:
+*Identify intact elements of a paticular TE type*:
 
-1.Get raw libraries from a genome (specify `-type ltr|tir|mite|helitron` in different runs)
+1.Get raw libraries from a genome (specify `-type ltr|tir|helitron` in different runs)
 
     perl EDTA_raw.pl [options]
       -genome	[File]	The genome FASTA
       -species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-      -type	[ltr|tir|mite|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
+      -type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
       -overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
       -threads|-t	[int]	Number of theads to run this script
       -help|-h	Display this help info
@@ -74,7 +74,7 @@ Activate the EDTA program:
 
 
 ## Benchmarking
-If you got a TE library and want to compare it's annotation performance to other methods, you can:
+If you developed a new TE method/got a TE library and want to compare it's annotation performance to the methods we have tested, you can:
 
 1.annotate the rice genome with your test library:
 
@@ -96,11 +96,16 @@ eg.
 
     perl lib-test.pl -genome rice_genome.fasta -std ./EDTA/database/Rice_MSU7.fasta.std6.9.5.out -tst rice_genome.fasta.test.out -cat LTR
 
+## Citation
+Please cite our paper if you find EDTA is useful:
+Ou S., Su W., Liao Y., Chougule K., Ware D., Peterson T., Jiang N.✉, Hirsch C. N.✉ and Hufford M. B.✉ (2019). Benchmarking Transposable Element Annotation Methods for Creation of a Streamlined, Comprehensive Pipeline. [Genome Biol. 20(1): 275.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1905-y)
+
+Please also cite the software packages that were used in EDTA, listed in the [EDTA/bin](https://github.com/oushujun/EDTA/tree/master/bin) directory.
 
 ## Other resources
 You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con).
 
 ## Issues
-If you have any issues with installation and usage, please don't hesitate to [open an issue](https://github.com/oushujun/EDTA/issues) or submit your pull request. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
+If you have any issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 
