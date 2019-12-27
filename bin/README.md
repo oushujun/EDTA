@@ -17,14 +17,16 @@
 	Ellinghaus D, Kurtz S, Willhoeft U. LTRharvest, an efficient and flexible software for de novo detection of LTR retrotransposons. BMC Bioinformatics. 2008;9:18.
 	
 	Xu Z, Wang H. LTR_FINDER: an efficient tool for the prediction of full-length LTR retrotransposons. Nucleic Acids Res. 2007;35:W265–8.
+
+	Ou S, Jiang N. LTR_FINDER_parallel: parallelization of LTR_FINDER enabling rapid identification of long terminal repeat retrotransposons. Mob DNA 2019;10(1):48.
 	
 	Ou S, Jiang N. LTR_retriever: A Highly Accurate and Sensitive Program for Identification of Long Terminal Repeat Retrotransposons. Plant Physiol. 2018;176:1410–22.
 	
 	Su W, Gu X, Peterson T. TIR-Learner, a New Ensemble Method for TIR Transposable Element Annotation, Provides Evidence for Abundant New Transposable Elements in the Maize Genome. Mol Plant. 2019;12:447–60.
 	
-	Shi J, Liang C. Generic Repeat Finder: a high-sensitivity tool for genome-wide de novo repeat detection [Internet]. Plant Physiology. 2019. p. 00386.2019. Available from: http://dx.doi.org/10.1104/pp.19.00386
-	
+	Shi J, Liang C. Generic Repeat Finder: A High-Sensitivity Tool for Genome-Wide De Novo Repeat Detection. Plant Physiol. 2019;180(4):1803-1815.
+
 	Xiong W, He L, Lai J, Dooner HK, Du C. HelitronScanner uncovers a large overlooked cache of Helitron transposons in many plant genomes. Proc Natl Acad Sci U S A. 2014;111:10263–8.
 	
-	Zhang R.-G., Wang Z.-X., Ou S. and Li G.-Y. (2019). TEsorter: lineage-level classification of transposable elements using conserved protein domains. bioRxiv: 800177.
+	Zhang R-G, Wang Z-X, Ou S, Li G-Y. TEsorter: lineage-level classification of transposable elements using conserved protein domains. bioRxiv. 2019:800177.
 
