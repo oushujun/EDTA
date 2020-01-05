@@ -213,7 +213,6 @@ die "mdust is not working on the current system. Please reinstall it in this fol
 	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" unless -X "${mdust}mdust";
 
 print "\t\t\t\tAll passed!\n";
-exit;
 
 # make a softlink to the user-provided files
 my $genome_file = basename($genome);
