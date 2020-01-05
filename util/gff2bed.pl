@@ -28,6 +28,7 @@ while (<GFF>){
 	$class = "Helitron" if $type =~ /Helitron|DHH/i;
 	$class = $1 if $type =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 	$info = "ID=$info" if $method eq "homology";
+	$info =~ s/;Method=.*//; #remove method info at the end of the annotation
 	next if $type eq "repeat_region";
 	next unless defined $id and defined $start;
 	print "$id\t$start\t$end\t$class\t$type\t$dir\t$info;Method=$method\n";

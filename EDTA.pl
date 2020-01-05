@@ -402,7 +402,7 @@ if ($cds ne ''){
 			`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\t\$id" if defined \$id' $genome.EDTA.intact.gff.removed >> $genome.EDTA.intact.fa.masked.cleanup.rmlist`;
 			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
 			`mv $genome.EDTA.intact.gff.new $genome.EDTA.intact.gff`; #update intact.gff
-			`perl $gff2bed $genome.EDTA.intact.gff homology > $genome.EDTA.intact.bed`; #update intact.bed
+			`perl $gff2bed $genome.EDTA.intact.gff structural > $genome.EDTA.intact.bed`; #update intact.bed
 			}
 		} else {
 		print STDERR "\t\t\t\tWarning: No CDS left after clean up ($cds.mod.noTE empty). Will not clean CDS in the raw lib.\n\n";

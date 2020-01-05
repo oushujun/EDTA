@@ -57,7 +57,7 @@ $cds = "$cds.mod";
 # 2nd attempt to identify TEs in CDS based on repeatedness
 `${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds.rmTE.code $rawlib 2>/dev/null`;
 `awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE.code 1 - -FA >> $cds.TE`; #CDS seqs appears >=10 times in masking the TE rawlib are considered TEs and removed from the CDS file
-`awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE.code 1 - -FA -ex >> $cds.rmTE2`;
+`awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE.code 1 - -FA -ex > $cds.rmTE2`;
 
 # 3rd attempt, mask remaining TE seqs in cds with identified TE seqs
 if (-s "$cds.TE"){
