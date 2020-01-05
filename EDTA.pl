@@ -3,7 +3,7 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.7.0";
+my $version = "v1.7.1";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -85,6 +85,7 @@ my $rename_TE = "$script_path/util/rename_TE.pl";
 my $rename_RM = "$script_path/util/rename_RM_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $buildSummary = "$script_path/util/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
+my $filter_gff = "$script_path/util/filter_gff.pl";
 my $bed2gff = "$script_path/util/bed2gff.pl";
 my $gff2bed = "$script_path/util/gff2bed.pl";
 my $get_frag = "$script_path/util/get_frag.pl";
@@ -92,6 +93,7 @@ my $keep_nest = "$script_path/util/keep_nest.pl";
 my $combine_overlap = "$script_path/util/combine_overlap.pl";
 my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
+my $output_by_list = "$script_path/util/output_by_list.pl";
 my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
 my $mdust = "";
 my $GRF = "";
@@ -149,6 +151,7 @@ die "The rice Helitron sequence library is not found in $rice_helitron!\n" unles
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The script buildSummary.pl is not found in $buildSummary!\n" unless -s $buildSummary;
+die "The script filter_gff.pl is not found in $filter_gff!\n" unless -s $filter_gff;
 die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
 die "The script gff2bed.pl is not found in $gff2bed!\n" unless -s $gff2bed;
 die "The script get_frag.pl is not found in $get_frag!\n" unless -s $get_frag;
@@ -156,29 +159,39 @@ die "The script keep_nest.pl is not found in $keep_nest!\n" unless -s $keep_nest
 die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -s $combine_overlap;
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
+die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
 die "The TEsorter is not found in $TEsorter!\n" unless -s $TEsorter;
 
 # makeblastdb
 $blast=`which makeblastdb 2>/dev/null` if $blast eq '';
 $blast=~s/makeblastdb\n//;
+$blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "makeblastdb is not exist in the BLAST+ path $blast!\n" unless -X "${blast}makeblastdb";
 # blastn
 $blast=`which blastn 2>/dev/null` if $blast eq '';
 $blast=~s/blastn\n//;
+$blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "blastn is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastn";
 # blastx
 $blast=`which blastx 2>/dev/null` if $blast eq '';
 $blast=~s/blastx\n//;
+$blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "blastx is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastx";
 # RepeatMasker
 my $rand=int(rand(1000000));
 $repeatmasker=`which RepeatMasker 2>/dev/null` if $repeatmasker eq '';
 $repeatmasker=~s/RepeatMasker\n//;
+$repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
 die "RepeatMasker is not exist in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
 die "The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
+# RepeatModeler
+$repeatmodeler=`which RepeatModeler 2>/dev/null` if $repeatmodeler eq '';
+$repeatmodeler=~s/RepeatModeler\n//;
+$repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
+die "RepeatModeler is not exist in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
 # trf
 $trf=`which trf 2>/dev/null` if $trf eq '';
 $trf=~s/\n$//;
@@ -195,11 +208,12 @@ die "Error: The Generic Repeat Finder (GRF) is not working on the current system
 # mdust
 $mdust=`which mdust 2>/dev/null` if $mdust eq '';
 $mdust=~s/mdust\n//;
+$mdust="$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "mdust is not working on the current system. Please reinstall it in this folder $mdust.
 	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" unless -X "${mdust}mdust";
 
 print "\t\t\t\tAll passed!\n";
-
+exit;
 
 # make a softlink to the user-provided files
 my $genome_file = basename($genome);
@@ -325,6 +339,9 @@ chdir "$genome.EDTA.final";
 `cp ../$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1 ./`;
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
+`cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./`;
+`cp ../$genome.EDTA.raw/$genome.EDTA.intact.bed ./`;
+`cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff ./`;
 
 # identify remaining TEs in the genome
 if ($sensitive == 1){
@@ -366,13 +383,28 @@ if ($cds ne ''){
 	print "$date\tRemove CDS in the EDTA library:\n\n";
 
 	# cleanup CDS with TEsorter
-	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -t $threads`;
+	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa`;
 	$cds = "$cds.mod.noTE";
 
 	# remove cds in the EDTA library
 	if (-s "$cds"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
+		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -f $genome.EDTA.intact.fa.masked > $genome.EDTA.intact.fa`;
+
+		# remove gene seq in intact TEs
+		if (-s "$genome.EDTA.intact.fa.masked.cleanup"){
+			`grep -v -P "Only|head|tail" $genome.EDTA.intact.fa.masked.cleanup | awk '{if (\$2>=0.8) print \$1}' |sort -u | awk '{print "Parent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.fa.masked.cleanup.rmlist`;
+			`perl $output_by_list 1 $genome.EDTA.intact.fa 2 $genome.EDTA.intact.fa.masked.cleanup.rmlist -ex -FA > $genome.EDTA.intact.fa.rmTE`;
+			`mv $genome.EDTA.intact.fa.rmTE $genome.EDTA.intact.fa`; #update intact.fa
+
+			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
+			`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\t\$id" if defined \$id' $genome.EDTA.intact.gff.removed >> $genome.EDTA.intact.fa.masked.cleanup.rmlist`;
+			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
+			`mv $genome.EDTA.intact.gff.new $genome.EDTA.intact.gff`; #update intact.gff
+			`perl $gff2bed $genome.EDTA.intact.gff homology > $genome.EDTA.intact.bed`; #update intact.bed
+			}
 		} else {
 		print STDERR "\t\t\t\tWarning: No CDS left after clean up ($cds.mod.noTE empty). Will not clean CDS in the raw lib.\n\n";
 		`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
@@ -407,12 +439,11 @@ if ($HQlib ne ''){
 	`cp $genome.EDTA.TElib.novel.fa $genome.EDTA.TElib.fa ../`;
 
 	# reclassify intact TEs with known TEs
-	`ln -s ../$genome.EDTA.raw/$genome.EDTA.intact.fa`;
 	`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib ../$HQlib $genome.EDTA.intact.fa 2>/dev/null`;
 	`perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
-	`perl $rename_by_list ../$genome.EDTA.raw/$genome.EDTA.intact.bed $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.bed`;
-	`perl $bed2gff $genome.EDTA.intact.bed`;
-	`mv $genome.EDTA.intact.bed.gff $genome.EDTA.intact.gff`;
+	`perl $rename_by_list $genome.EDTA.intact.bed $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.bed.rename`;
+	`perl $bed2gff $genome.EDTA.intact.bed.rename`;
+	`mv $genome.EDTA.intact.bed.rename.gff $genome.EDTA.intact.gff`; #update intact.gff
 	`cp $genome.EDTA.intact.gff ../`; #replace the intact gff that has no lib family info
 	}
 
