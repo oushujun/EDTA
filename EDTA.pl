@@ -15,7 +15,7 @@ my $version = "v1.7.2";
 
 print "
 ########################################################
-##### Extensive de-novo TE Annotator (EDTA) $version    ####
+##### Extensive de-novo TE Annotator (EDTA) $version  ####
 ##### Shujun Ou (shujun.ou.1\@gmail.com)             ####
 ########################################################
 \n\n\n";

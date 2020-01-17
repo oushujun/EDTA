@@ -37,6 +37,9 @@ Installation:
 
     docker pull kapeel/edta
 
+Usage:
+
+    docker run kapeel/edta -genome genome.fa [other parameters]
 
 ## EDTA Usage (regular installation)
 Activate the EDTA program:
