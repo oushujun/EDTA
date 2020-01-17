@@ -5,16 +5,16 @@ use File::Basename;
 
 ########################################################
 ##### Perform initial searches for TE candidates    ####
-##### Shujun Ou (shujun.ou.1@gmail.com, 05/31/2019) ####
+##### Shujun Ou (shujun.ou.1@gmail.com, 01/16/2020) ####
 ########################################################
 
 ## Input:
 #	$genome
 
 ## Output:
-#	$genome.LTR.raw.fa
-#	$genome.TIR.raw.fa
-#	$genome.Helitron.raw.fa
+#	$genome.LTR.raw.fa, $genome.LTR.intact.fa, $genome.LTR.intact.fa.gff3
+#	$genome.TIR.raw.fa, $genome.TIR.intact.fa, $genome.TIR.intact.fa.gff
+#	$genome.Helitron.raw.fa, $genome.Helitron.intact.fa, $genome.Helitron.intact.fa.gff
 
 my $usage = "\nObtain raw TE libraries using various structure-based programs
 	perl EDTA_raw.pl [options]
@@ -36,7 +36,6 @@ my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
 my $threads = 4;
 my $script_path = $FindBin::Bin;
-my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
@@ -53,6 +52,7 @@ my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
 my $make_gff = "$script_path/util/make_gff_with_intact.pl";
+my $TEsorter = ''; #path to the TEsorter program
 my $mdust = '';
 my $blastplus = ''; #path to the blastn program
 my $trf = ''; #path to trf
@@ -64,6 +64,7 @@ foreach (@ARGV){
 	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
 	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
 	$type = lc $ARGV[$k+1] if /^-type$/i and $ARGV[$k+1] !~ /^-/;
+	$TEsorter = $ARGV[$k+1] if /^-tesorter$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus = $ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1] !~ /^-/;
 	$mdust = $ARGV[$k+1] if /^-mdust$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
@@ -78,7 +79,6 @@ print STDERR "$date\tEDTA_raw: Check files and dependencies, prepare working dir
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
-die "The TEsorter is not found in $TEsorter!\n" unless -s $TEsorter;
 die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
@@ -94,13 +94,22 @@ die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $Helitro
 die "The script format_helitronscanner_out.pl is not found in $format_helitronscanner!\n" unless -s $format_helitronscanner;
 die "The script flanking_filter.pl is not found in $flank_filter!\n" unless -s $flank_filter;
 die "The script make_gff_with_intact.pl is not found in $make_gff!\n" unless -s $make_gff;
+# TEsorter
+$TEsorter=`which TEsorter 2>/dev/null` if $TEsorter eq '';
+$TEsorter=~s/TEsorter\n//;
+$TEsorter="$TEsorter/" if $TEsorter ne '' and $TEsorter !~ /\/$/;
+die "TEsorter is not exist in the TEsorter path $TEsorter!\n" unless -X "${TEsorter}TEsorter";
+# makeblastdb, blastn
 $blastplus=`which blastn 2>/dev/null` if $blastplus eq '';
 $blastplus=~s/blastn\n//;
+$blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 die "makeblastdb is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
 die "blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
+# mdust
 $mdust=`which mdust 2>/dev/null` if $mdust eq '';
 $mdust=~s/mdust\n//;
 die "mdust is not exist in the mdust path $mdust!\n" unless -X "${mdust}mdust";
+# trf
 $trf=`which trf 2>/dev/null` if $trf eq '';
 $trf=~s/\n$//;
 `$trf 2>/dev/null`;
@@ -179,7 +188,7 @@ if (0){ #old, overly inclusive module
 
 if ($beta2 == 1){
 	# annotate and remove non-LTR candidates
-	`python2 $TEsorter $genome.LTR.intact.fa.ori.dusted.cln -p $threads`;
+	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln -p $threads`;
 	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
 	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.fa`;
 	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.fa.anno.list`;
@@ -197,7 +206,7 @@ if ($beta2 == 1){
 	}
 
 # remove non-LTR sequence
-#`python2 $TEsorter $genome.LTRlib.fa -p $threads`;
+#`${TEsorter}TEsorter $genome.LTRlib.fa -p $threads`;
 #`awk '{if (\$2!="pararetrovirus" && \$2!="LTR")print \$0}' $genome.LTRlib.fa.rexdb.cls.tsv > $genome.LTRlib.fa.rexdb.cls.tsv.nonLTR`;
 #`perl $output_by_list 1 $genome.LTRlib.fa 1 $genome.LTRlib.fa.rexdb.cls.tsv.nonLTR -ex -FA > $genome.LTRlib.fa.cln`;
 
@@ -264,7 +273,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 
 	if ($beta2 == 1){
 	# annotate and remove non-TIR candidates
-	`python2 $TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln -p $threads`;
+	`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln -p $threads`;
 	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.raw.fa`;
 	} else {
@@ -335,7 +344,7 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 
 if ($beta2 == 1){
 # annotate and remove non-Helitron candidates
-`python2 $TEsorter $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln -p $threads`;
+`${TEsorter}TEsorter $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln -p $threads`;
 `perl $cleanup_misclas $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 `mv $genome.HelitronScanner.filtered.ext.fa.pass.fa.dusted.cln.cln $genome.Helitron.raw.fa`;
 } else {

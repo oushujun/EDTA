@@ -10,11 +10,11 @@ my $script_path = $FindBin::Bin;
 my $cds = "";
 my $rawlib = ""; #gene sequences in this file will be removed
 my $minlen = 300; #minimal cds length to be retained
-my $TEsorter = "$script_path/../bin/TEsorter/TEsorter.py";
 my $output_by_list = "$script_path/output_by_list.pl";
 my $cleanup = "$script_path/cleanup_tandem.pl";
 my $name_code_decode = "$script_path/name_code_decode.pl";
 my $threads = 4;
+my $TEsorter = "";
 my $repeatmasker = "";
 
 # read parameters
@@ -41,7 +41,7 @@ $cds = $cds_file;
 $cds = "$cds.mod";
 
 # 1st attempt to find TEs in CDS with TEsorter
-`python2 $TEsorter $cds -p $threads`;
+`${TEsorter}TEsorter $cds -p $threads`;
 
 # make an initial TE list
 `cat $cds.rexdb.cls.tsv > $cds.TE.list`;

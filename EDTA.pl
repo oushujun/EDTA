@@ -3,7 +3,7 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.7.1";
+my $version = "v1.7.2";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -94,7 +94,7 @@ my $combine_overlap = "$script_path/util/combine_overlap.pl";
 my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
-my $TEsorter = "$script_path/bin/TEsorter/TEsorter.py";
+my $TEsorter = "";
 my $mdust = "";
 my $GRF = "";
 my $repeatmodeler = "";
@@ -117,6 +117,7 @@ foreach (@ARGV){
 	$evaluate = $ARGV[$k+1] if /^-evaluate$/i and $ARGV[$k+1] !~ /^-/;
 	$exclude = $ARGV[$k+1] if /^-exclude$/i and $ARGV[$k+1] !~ /^-/;
 	$force = $ARGV[$k+1] if /^-force$/i and $ARGV[$k+1] !~ /^-/;
+	$TEsorter = $ARGV[$k+1] if /^-tesorter$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmodeler = $ARGV[$k+1] if /^-repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
 	$blast = $ARGV[$k+1] if /^-blast$/i and $ARGV[$k+1] !~ /^-/;
@@ -160,23 +161,19 @@ die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
-die "The TEsorter is not found in $TEsorter!\n" unless -s $TEsorter;
 
-# makeblastdb
+# makeblastdb, blastn, blastx
 $blast=`which makeblastdb 2>/dev/null` if $blast eq '';
 $blast=~s/makeblastdb\n//;
 $blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
-die "makeblastdb is not exist in the BLAST+ path $blast!\n" unless -X "${blast}makeblastdb";
-# blastn
-$blast=`which blastn 2>/dev/null` if $blast eq '';
-$blast=~s/blastn\n//;
-$blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
+die "makeblastdb/blastn/blastx is not exist in the BLAST+ path $blast!\n" unless -X "${blast}makeblastdb";
 die "blastn is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastn";
-# blastx
-$blast=`which blastx 2>/dev/null` if $blast eq '';
-$blast=~s/blastx\n//;
-$blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "blastx is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastx";
+# TEsorter
+$TEsorter=`which TEsorter 2>/dev/null` if $TEsorter eq '';
+$TEsorter=~s/TEsorter\n//;
+$TEsorter="$TEsorter/" if $TEsorter ne '' and $TEsorter !~ /\/$/;
+die "TEsorter is not exist in the TEsorter path $TEsorter!\n" unless -X "${TEsorter}TEsorter";
 # RepeatMasker
 my $rand=int(rand(1000000));
 $repeatmasker=`which RepeatMasker 2>/dev/null` if $repeatmasker eq '';
@@ -268,7 +265,7 @@ chomp ($date);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast`;
+`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast -tesorter $TEsorter`;
 
 chdir "$genome.EDTA.raw";
 
