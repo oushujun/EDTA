@@ -106,13 +106,9 @@ if __name__ == '__main__':
         pool.close()
         pool.join()
 
-#mv = "mv *.fasta ../temp/"
-#os.system(mv)
-#mv ="mv *GRFmite.fa ../temp/"
-#os.system(mv)
 rm = "rm *GRFmite.fa > /dev/null 2>&1" #shujun
 os.system(rm) #shujun
-cp = "cp *-p ../temp/ > /dev/null 2>&1" #shujun
+cp = "rsync --archive *-p ../temp/ > /dev/null 2>&1" #shujun
 os.system(cp)
 
 

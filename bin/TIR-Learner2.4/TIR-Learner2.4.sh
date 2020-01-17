@@ -108,7 +108,7 @@ cd $dir"/Module1"
 [ -d $genomeName ] || mkdir $genomeName
 [ -d temp ] || mkdir temp
 python3 $path/Module1/Blast_Ref.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module1" -s $species
-cp $genomeName/*blast* temp/
+rsync --archive $genomeName/*blast* temp/
 
 echo "Module 1, Step 2: Select 100% coverage entries from Blast results"
 cd $dir"/Module1"
@@ -157,7 +157,7 @@ python3 $path/Module2/ProcessGRFmite.py -g $genomeFile -name $genomeName -p $pat
 
 echo "Module 2, Step 3: GRF result blast reference sequences"
 python3 $path/Module2/Blast_ref.py -name $genomeName -p $path -t $t -d $dir"/Module2" -s $species
-cp $genomeName/*80 temp/
+rsync --archive $genomeName/*80 temp/
 
 echo "Module 2, Step 4: Get sequences from 80% similarity"
 python3 $path/Module2/GetFastaSeq.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module2"
@@ -186,7 +186,7 @@ mv ../Module2/$genomeName/*_nonHomo.fa $genomeName/
 
 echo "Module 3, Step 1: Get dataset and ML prediction"
 python3 $path/Module3/getDataset.py -name $genomeName -p $path -t $t -d $dir"/Module3" -g $genomeFile
-cp $genomeName/*nonHomo.fa temp/
+rsync --archive $genomeName/*nonHomo.fa temp/
 
 echo "Module 2, Step 3: Check TIR/TSD"
 python3 $path/Module3/CheckTIRTSD_M3.py -name $genomeName -p $path -t $t -d $dir"/Module3"
@@ -240,11 +240,11 @@ echo "############################################################ Module 3 Begi
 echo "Module 3, Step 1: Split Genome and Run GRF program to find Inverted Repeats"
 #rm ./$genomeName/*
 python3 $path/Module2/RunGRF.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New" -grfp $grfp -l $len
-cp -r $genomeName/$genomeName* temp/
+rsync --archive $genomeName/$genomeName* temp/
 
 echo "Module 3, Step 2: Process GRF results"
 python3 $path/Module2/ProcessGRFmite.py -g $genomeFile -name $genomeName -p $path -t $t -d $dir"/Module3_New"
-cp -r $genomeName/*-p temp/
+rsync --archive $genomeName/*-p temp/
 
 echo "Module 3, Step 3: Get dataset"
 export OMP_NUM_THREADS=1
