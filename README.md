@@ -13,24 +13,38 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 ## Installation
     conda create -n EDTA
     conda activate EDTA
-    python2 -m pip install --user numpy==1.14.3 biopython==1.74 pp
     conda config --env --add channels anaconda --add channels conda-forge --add channels biocore --add channels bioconda --add channels cyclus
-    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust repeatmasker=4.0.9_p2 blast-legacy java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 trf
+    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast-legacy java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
-### Alternative installation with Docker
-More information: https://hub.docker.com/r/kapeel/edta
+
+## Alternative installation using [the EDTA image](https://hub.docker.com/r/kapeel/edta)
+
+### The [Singularity](https://sylabs.io/docs/) method (good for HPC users)
+Installation:
+
+    singularity build --sandbox EDTA.sif docker://kapeel/edta
+
+Usage:
+
+    singularity exec {path}/EDTA.sif /EDTA/EDTA.pl -genome genome.fa [other parameters]
+
+	{path} is the path you build the EDTA singularity image
+
+### The [Docker](https://www.docker.com/) method (good for root users)
+Installation:
 
     docker pull kapeel/edta
 
-## EDTA Usage
+
+## EDTA Usage (regular installation)
 Activate the EDTA program:
 
     conda activate EDTA
 
 ### From head to toe
-*You got a genome and you want to get a high-quality TE library:*
+*You got a genome and you want to get a high-quality TE annotation:*
     
     perl EDTA.pl [options]
       -genome	[File]	The genome FASTA
@@ -53,7 +67,6 @@ Activate the EDTA program:
       -exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
       -threads|-t	[int]	Number of theads to run this script (default: 4)
       -help|-h	Display this help info
-
 
 ### Divide and conquer
 *Identify intact elements of a paticular TE type*:
