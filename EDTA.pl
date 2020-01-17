@@ -3,7 +3,7 @@ use strict;
 use FindBin;
 use File::Basename;
 
-my $version = "v1.7.2";
+my $version = "v1.7.3";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
