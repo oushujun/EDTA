@@ -1,7 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
+use warnings;
 use FindBin;
 use File::Basename;
+use Getopt::Long;
+use Pod::Usage;
 
 my $version = "v1.7.3";
 #v1.0 05/31/2019
@@ -25,35 +28,37 @@ print "
 
 my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-quality structure-based TE library. Usage:
 	perl EDTA.pl [options]
-		-genome	[File]	The genome FASTA
-		-species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-		-step	[all|filter|final|anno] Specify which steps you want to run EDTA.
+		--genome	[File]	The genome FASTA
+		--species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
+		--step	[all|filter|final|anno] Specify which steps you want to run EDTA.
 						all: run the entire pipeline (default)
 						filter: start from raw TEs to the end.
 						final: start from filtered TEs to finalizing the run.
 						anno: perform whole-genome annotation/analysis after TE library construction.
-		-overwrite	[0|1]	If previous raw TE results are found, decide to overwrite (1, rerun) or not (0, default).
-		-cds	[File]	Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
-		-curatedlib	[File]	Provided a curated library to keep consistant naming and classification for known TEs.
+		--overwrite	[0|1]	If previous raw TE results are found, decide to overwrite (1, rerun) or not (0, default).
+		--cds	[File]	Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
+		--curatedlib	[File]	Provided a curated library to keep consistant naming and classification for known TEs.
 					TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones.
 					This option is not mandatory. It's totally OK if no file is provided (default).
-		-sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
+		--sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
 					This step is very slow and MAY help to recover some TEs.
-		-anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
-		-evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
+		--anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
+		--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
 					This step is slow and does not affect the annotation result.
-		-exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
-		-force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit (default); 1, use rice TEs to continue.
-		-repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
-		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
-		-blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
-		-trf [path]	The directory containing TRF (default: read from ENV)
-		-threads|-t	[int]	Number of theads to run this script (default: 4)
-		-help|-h	Display this help info
+		--exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
+		--force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit (default); 1, use rice TEs to continue.
+		--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
+		--repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
+		--blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
+		--check_dependencies Check if dependencies are fullfiled and quit  
+		--trf [path]	The directory containing TRF (default: read from ENV)
+		--threads|-t	[int]	Number of theads to run this script (default: 4)
+		--help|-h	Display this help info
 \n";
 
 # pre-defined
 my $genome = '';
+my $check_dependencies = undef;
 my $species = "others";
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
@@ -102,38 +107,63 @@ my $repeatmasker = "";
 my $blast = "";
 my $trf = "";
 my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
+my $help = undef;
 
 # read parameters
-my $k=0;
-foreach (@ARGV){
-	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
-	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
-	$step = uc $ARGV[$k+1] if /^-step$/i and $ARGV[$k+1] !~ /^-/;
-	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
-	$HQlib = $ARGV[$k+1] if /^-curatedlib$/i and $ARGV[$k+1] !~ /^-/;
-	$cds = $ARGV[$k+1] if /^-cds$/i and $ARGV[$k+1] !~ /^-/;
-	$sensitive = $ARGV[$k+1] if /^-sensitive$/i and $ARGV[$k+1] !~ /^-/;
-	$anno = $ARGV[$k+1] if /^-anno$/i and $ARGV[$k+1] !~ /^-/;
-	$evaluate = $ARGV[$k+1] if /^-evaluate$/i and $ARGV[$k+1] !~ /^-/;
-	$exclude = $ARGV[$k+1] if /^-exclude$/i and $ARGV[$k+1] !~ /^-/;
-	$force = $ARGV[$k+1] if /^-force$/i and $ARGV[$k+1] !~ /^-/;
-	$TEsorter = $ARGV[$k+1] if /^-tesorter$/i and $ARGV[$k+1] !~ /^-/;
-	$repeatmodeler = $ARGV[$k+1] if /^-repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
-	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
-	$blast = $ARGV[$k+1] if /^-blast$/i and $ARGV[$k+1] !~ /^-/;
-	$protlib = $ARGV[$k+1] if /^-protlib/i and $ARGV[$k+1] !~ /^-/;
-	$trf = $ARGV[$k+1] if /^-trf$/i and $ARGV[$k+1] !~ /^-/;
-	$threads = $ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
-	die $usage if /^-help$|^-h$/i;
-	$k++;
-	}
+if ( !GetOptions( 'genome=s'            => \$genome,
+                  'species=s'           => \$species,
+                  'step=s'              => \$step,
+                  'overwrite=i'         => \$overwrite,
+                  'curatedlib=s'        => \$HQlib,
+                  'cds=s'                => \$cds,
+                  'sensitive=s'          => \$sensitive,
+		  'anno=i'               => \$anno,
+		  'evaluate=i'           => \$evaluate,
+		  'exclude=s'            => \$exclude,
+		  'force=i'              => \$force,
+		  'tesorter=s'           => \$TEsorter,
+		  'repeatmodeler=s'      => \$repeatmodeler,
+		  'repeatmasker=s'       => \$repeatmasker,
+		  'blast=s'              => \$blast,
+		  'protlib=s'            => \$protlib,
+  		  'trf=s'                => \$trf,
+		  'threads|t=i'          => \$threads,
+		  'check_dependencies!'  => \$check_dependencies,
+		  'help|h!'              => \$help ) )
+
+{
+    pod2usage( { -message => 'Failed to parse command line',
+                 -verbose => 1,
+                 -exitval => 1 } );
+}
+
+if ($help) {
+    pod2usage( { -verbose => 0,
+                 -exitval => 0,
+                 -message => "$usage\n" } );
+}
+
+if ( ! $genome and (! $check_dependencies) ){
+    pod2usage( {
+           -message => "At least 1 parameter mandatory:\n1) Input fasta file: --genome\n".
+           "$usage\n\n",
+           -verbose => 0,
+           -exitval => 2 } );
+}
+
+
+# check bolean
+if ($overwrite != 0 and $overwrite != 1){ die "The expected value for the overwrite parameter is 0 or 1!\n";}
+if ($sensitive != 0 and $sensitive != 1){ die "The expected value for the sensitive parameter is 0 or 1!\n";}
+if ($anno != 0 and $anno != 1){ die "The expected value for the anno parameter is 0 or 1!\n";}
+if ($evaluate != 0 and $evaluate != 1){ die "The expected value for the evaluate parameter is 0 or 1!\n";}
+if ($force != 0 and $force != 1){ die "The expected value for the force parameter is 0 or 1!\n";}
 
 my $date=`date`;
 chomp ($date);
 print "$date\tDependency checking:\n";
 
 # check files and dependencies
-die "Genome file $genome not exists!\n$usage" unless -s $genome;
 die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
 die "The script EDTA_processF.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
@@ -161,6 +191,11 @@ die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
+print "All dpendencies satisfied\n";
+if ($check_dependencies){
+	print "exit\n";
+	exit;
+}
 
 # makeblastdb, blastn, blastx
 $blast=`which makeblastdb 2>/dev/null` if $blast eq '';
