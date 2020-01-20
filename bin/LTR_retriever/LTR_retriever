@@ -4,7 +4,7 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.8.2";
+my $version="v2.8.3";
 my $help="
 ##########################
 ### LTR_retriever $version ###
@@ -261,11 +261,12 @@ $cdhitpath=~s/cd-hit-est\n//;
 die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" if (!(-X "${cdhitpath}cd-hit-est") and $cdhit);
 die "neither the path of CDHIT nor BLAST is specified!\n" unless (-X "${blast}blastclust" or -X "${cdhitpath}cd-hit-est");
 #trf
-$trf="$script_path/bin/trf409.legacylinux64"; #path to the trf program
+$trf=`which trf 2>/dev/null` if $trf eq '';
+$trf=~s/\n$//;
 `$trf 2>/dev/null`;
-$trf="$script_path/bin/trf409.macosx" if $?==32256;
-`$trf 2>/dev/null`;
-die "Error: No Tandem Repeat Finder is working on the current system. Versions of trf409.macosx and trf409.legacylinux64 have been tested, and failed. Please report it to https://github.com/oushujun/LTR_retriever/issues" if $?==32256;
+die "Error: No Tandem Repeat Finder is working on the current system.
+	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
+die "\n\tTandem Repeat Finder not found!\n\n" unless $trf ne '';
 
 print "All passed!\n";
 
