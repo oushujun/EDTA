@@ -191,7 +191,6 @@ die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
-print "All dpendencies satisfied\n";
 if ($check_dependencies){
 	print "exit\n";
 	exit;
@@ -251,10 +250,56 @@ my $genome_file = basename($genome);
 `ln -s $genome $genome_file` unless -e $genome_file;
 $genome = $genome_file;
 
+# remove sequence annotations (content after the first space in sequence names)
+`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
+
+# check if duplicated sequences found
+my $id_mode = 0; #record the mode of id conversion.
+my $id_len = `grep \\> $genome.mod|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
+$id_len =~ s/\s+$//;
+$id_len = (split /\s+/, $id_len)[-1];
+my $raw_id = `grep \\> $genome.mod|wc -l`;
+my $old_id = `grep \\> $genome.mod|sort -u|wc -l`;
+if ($raw_id > $old_id){
+	$date = `date`;
+	chomp ($date);
+	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
+	}
+
+# try to shortern sequences
+if ($id_len > 15){
+	$date = `date`;
+	chomp ($date);
+	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
+	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
+	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
+	my $new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+	$date = `date`;
+	chomp ($date);
+	if ($old_id == $new_id){
+		$id_mode = 1;
+		`mv $genome.temp $genome.mod`;
+		print "$date\tSeq ID conversion successful!\n\n";
+		} else {
+		print "\t\t\t\tAttempt 2...\n";
+		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.mod > $genome.temp`;
+		$new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+		if ($old_id == $new_id){
+			$id_mode = 2;
+			`mv $genome.temp $genome.mod`;
+			print "$date\tSeq ID conversion successful!\n\n";
+			} else {
+			`rm $genome.temp`;
+			die "$date\tERROR: Fail to convert seq IDs to less than 15 characters! Please provide a genome with shorter seq IDs.\n\n";
+			}
+		}
+	}
+$genome = "$genome.mod";
+
 # check $HQlib
 if ($HQlib ne ''){
 	if (-s $HQlib){
-		print "\n\tCustom library $HQlib is provided via -curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
+		print "\n\tCustom library $HQlib is provided via --curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
 		my $HQlib_file = basename($HQlib);
 		`ls -s $HQlib $HQlib_file` unless -e $HQlib_file;
 		$HQlib = $HQlib_file;
@@ -265,7 +310,7 @@ if ($HQlib ne ''){
 
 if ($cds ne ''){
 	if (-s $cds){
-		print "\n\tA CDS file is provided via -cds. Please make sure there is no TE-related sequences in this file.\n\n";
+		print "\n\tA CDS file is provided via --cds.\n\n";
 		my $cds_file = basename($cds);
 		`ls -s $cds $cds_file` unless -e $cds_file;
 		$cds = $cds_file;
@@ -276,7 +321,7 @@ if ($cds ne ''){
 
 if ($exclude ne ''){
 	if (-s $exclude){
-		print "\n\tA BED file is provided via -exclude. Regions specified by this file will be excluded from TE annotation and masking.\n\n";
+		print "\n\tA BED file is provided via --exclude. Regions specified by this file will be excluded from TE annotation and masking.\n\n";
 		my $exclude_file = basename($exclude);
 		`ls -s $exclude $exclude_file ` unless -e $exclude_file;
 		$exclude = $exclude_file;
@@ -300,7 +345,7 @@ chomp ($date);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw -genome $genome -overwrite $overwrite -species $species -threads $threads -mdust $mdust -blastplus $blast -tesorter $TEsorter`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --threads $threads --mdust $mdust --blastplus $blast --tesorter $TEsorter`;
 
 chdir "$genome.EDTA.raw";
 
