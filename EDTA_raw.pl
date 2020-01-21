@@ -18,14 +18,14 @@ use File::Basename;
 
 my $usage = "\nObtain raw TE libraries using various structure-based programs
 	perl EDTA_raw.pl [options]
-		-genome	[File]	The genome FASTA
-		-species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-		-type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
-		-blastplus      [path]  Path to the blastn program. Defalut: read from \$ENV
-		-mdust	[program]	The mdust program. Default: included in this package.
-		-overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-		-threads|-t	[int]	Number of theads to run this script. Default: 4
-		-help|-h	Display this help info
+		--genome	[File]	The genome FASTA
+		--species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
+		--type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
+		--blastplus      [path]  Path to the blastn program. Defalut: read from \$ENV
+		--mdust	[program]	The mdust program. Default: included in this package.
+		--overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
+		--threads|-t	[int]	Number of theads to run this script. Default: 4
+		--help|-h	Display this help info
 \n";
 
 # pre-defined
@@ -61,15 +61,15 @@ my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
 # read parameters
 my $k=0;
 foreach (@ARGV){
-	$genome = $ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1] !~ /^-/;
-	$species = $ARGV[$k+1] if /^-species$/i and $ARGV[$k+1] !~ /^-/;
-	$type = lc $ARGV[$k+1] if /^-type$/i and $ARGV[$k+1] !~ /^-/;
-	$TEsorter = $ARGV[$k+1] if /^-tesorter$/i and $ARGV[$k+1] !~ /^-/;
-	$blastplus = $ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1] !~ /^-/;
-	$mdust = $ARGV[$k+1] if /^-mdust$/i and $ARGV[$k+1] !~ /^-/;
-	$overwrite = $ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
-	$threads = $ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
-	die $usage if /^-help$|^-h$/i;
+	$genome = $ARGV[$k+1] if /^--genome$/i and $ARGV[$k+1] !~ /^-/;
+	$species = $ARGV[$k+1] if /^--species$/i and $ARGV[$k+1] !~ /^-/;
+	$type = lc $ARGV[$k+1] if /^--type$/i and $ARGV[$k+1] !~ /^-/;
+	$TEsorter = $ARGV[$k+1] if /^--tesorter$/i and $ARGV[$k+1] !~ /^-/;
+	$blastplus = $ARGV[$k+1] if /^--blastplus$/i and $ARGV[$k+1] !~ /^-/;
+	$mdust = $ARGV[$k+1] if /^--mdust$/i and $ARGV[$k+1] !~ /^-/;
+	$overwrite = $ARGV[$k+1] if /^--overwrite$/i and $ARGV[$k+1] !~ /^-/;
+	$threads = $ARGV[$k+1] if /^--threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
+	die $usage if /^--help$|^-h$/i;
 	$k++;
   }
 
@@ -162,8 +162,8 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 # run LTR_retriever
 `cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 `perl $LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno`;
-`for i in *.mod.*; do mv \$i \$(echo \$i|sed 's/\\.mod\\././'); done > /dev/null 2>&1`;
-`mv $genome.mod $genome` if -s "$genome.mod";
+#`for i in *.mod.*; do mv \$i \$(echo \$i|sed 's/\\.mod\\././'); done > /dev/null 2>&1`;
+#`mv $genome.mod $genome` if -s "$genome.mod";
 
 # get intact LTR elements
 if (0){ #old, overly inclusive module
