@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
 use FindBin;
 use File::Basename;
@@ -380,5 +380,3 @@ if (-s "$genome.EDTA.raw/$genome.Helitron.raw.fa"){
 $date=`date`;
 chomp ($date);
 print STDERR "$date\tExecution of EDTA_raw.pl is finished!\n\n";
-
-

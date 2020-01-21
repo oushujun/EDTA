@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use FindBin;
@@ -50,7 +50,7 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 		--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		--repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		--blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
-		--check_dependencies Check if dependencies are fullfiled and quit  
+		--check_dependencies Check if dependencies are fullfiled and quit
 		--trf [path]	The directory containing TRF (default: read from ENV)
 		--threads|-t	[int]	Number of theads to run this script (default: 4)
 		--help|-h	Display this help info
@@ -232,7 +232,7 @@ die "Error: No Tandem Repeat Finder is working on the current system.
 	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
 die "\n\tTandem Repeat Finder not found!\n\n" unless $trf ne '';
 # GRF
-$GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #default path to the GRF program 
+$GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #default path to the GRF program
 `$GRF 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not working on the current system.
 	Please reinstall it in $GRF following instructions in https://github.com/bioinfolabmu/GenericRepeatFinder.

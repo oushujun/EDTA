@@ -1,5 +1,6 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
+use warnings;
 use File::Basename;
 
 #To test the annotation performance of TE libraries by comparing to a reference annotation
@@ -14,7 +15,7 @@ use File::Basename;
 #------------------------------  Whole genome
 #+++++++++++++++++++	   	 Standard lib
 #    ++++++++++++++++++++	 Test lib
-# FN [    TP       ] FP  [ TN ]  
+# FN [    TP       ] FP  [ TN ]
 #
 #Author: Shujun Ou (oushujun@msu.edu), 03/08/2015
 #Update 05/09/2019
@@ -27,7 +28,7 @@ my $usage="\n\tTo test the annotation performance of TE libraries by comparing t
 		-tst	[file]	RepeatMasker .out file of the test library
 		-cat	[string]	Testing TE category. Use one of LTR|nonLTR|LINE|SINE|TIR|MITE|Helitron|Total|Classified
 		-N	[0|1]	Include Ns in total length of the genome. Defaule: 0 (not include Ns).
-		-unknown	[0|1]	Include unknown annotations to the testing category. This should be used when 
+		-unknown	[0|1]	Include unknown annotations to the testing category. This should be used when
 					the test library has no classification and you assume they all belong to the
 					target category specified by -cat. Default: 0 (not include unknowns)
 		-rand	[int]	A randum number used to identify the current run. (default: generate automatically)
@@ -181,4 +182,3 @@ close Out;
 
 ## remove temporary files
 `rm $genome $std_out $tst_out $genome.list $std_out.$category.cvg $tst_out.$category.cvg $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi ${std_out}_$tst_out.$category-cmb ${std_out}_$tst_out.$category-cmb.cbi $genome.list-${std_out}_$tst_out.$category-cmb.cbi`;
-

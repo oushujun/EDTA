@@ -14,7 +14,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
     conda create -n EDTA
     conda activate EDTA
     conda config --env --add channels anaconda --add channels conda-forge --add channels biocore --add channels bioconda --add channels cyclus
-    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast-legacy java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter
+    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast-legacy java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
@@ -48,7 +48,7 @@ Activate the EDTA program:
 
 ### From head to toe
 *You got a genome and you want to get a high-quality TE annotation:*
-    
+
     perl EDTA.pl [options]
       -genome	[File]	The genome FASTA
       -species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
@@ -124,5 +124,3 @@ You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/dat
 
 ## Issues
 If you have any issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
-
-
