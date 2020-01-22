@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $usage = "\nRemove non-TE sequences in repeatmasked sequences (softmask)

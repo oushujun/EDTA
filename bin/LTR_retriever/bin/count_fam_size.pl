@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 #Count the size of each LTR family. A family is determined by the LTR region.

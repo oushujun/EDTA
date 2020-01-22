@@ -1,4 +1,4 @@
-#!usr/bin/perl -w
+#!usr/bin/env perl
 use strict;
 #usage: perl cut.pl seq [-s|-S|-l int]
 

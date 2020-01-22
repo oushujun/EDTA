@@ -3,7 +3,7 @@
 #Author:Shujun OU (shujun.ou.1@gmail.com) 04/14/2019
 
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $usage = "\n\tperl convert.pl genome.fasta LtrDetector.bed.scn > out.scn\n\n";

@@ -7,7 +7,7 @@
 
 
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 open FA, "<$ARGV[0]" or die "ERROR: $!";

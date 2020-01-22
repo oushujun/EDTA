@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
 use threads;
 use Thread::Queue;
@@ -15,6 +15,7 @@ my $try1 = 1; #1, further split to 50 Kb regions if thread killed by timeout. 0,
 my $next = 0; #0, run LTR_FINDER. 1, only summarize results if the .finder folder is retained.
 my $verbose = 0; #0, remove the .finder folder after finished; 1, retain the folder for later use.
 my $threads = 4; #specify thread number to run ltr_finder
+my $annotator = "LTR_FINDER_parallel"; #the annotator name used in gff output
 
 # dependencies
 #my $script_path = dirname(__FILE__);
@@ -27,7 +28,7 @@ my $usage = "
 
 Author: Shujun Ou (shujun.ou.1\@gmail.com)
 Date: 09/19/2018
-Update: 05/25/2019
+Update: 09/27/2019
 
 Usage: perl LTR_FINDER_parallel -seq [file] -size [int] -threads [int]
 Options:	-seq	[file]	Specify the sequence file.
@@ -48,6 +49,7 @@ Options:	-seq	[file]	Specify the sequence file.
 \n";
 
 
+# read user parameters
 my $i=0;
 foreach (@ARGV){
 	$seq_path = $ARGV[$i+1] if /^-seq$/i;
@@ -69,9 +71,13 @@ die $usage unless -s $seq_path;
 my $seq_file = basename($seq_path);
 `ln -s $seq_path $seq_file` unless -s $seq_file;
 
+# read genome in memory
 open SEQ, "<$seq_file" or die $usage;
+open GFF, ">$seq_file.finder.combine.gff3" or die $!;
+print GFF "##gff-version   3\n";
 my %seq; #a hash to store seq name and length info
 my %order; #store seq order in genome
+my $chr_info; #store seq id in genome
 $i=0;
 $/ = "\n>";
 while (<SEQ>){
@@ -79,10 +85,13 @@ while (<SEQ>){
 	my ($id, $seq) = (split /\n/, $_, 2);
 	$seq =~ s/\s+//g;
 	my $len = length $seq;
+	print GFF "##sequence-region   $id 1 $len\n";
+	$chr_info.="#$id\n";
 	$seq{$id} = $len;
 	$order{$id} = $i;
 	$i++;
 	}
+print GFF "$chr_info";
 close SEQ;
 $/="\n";
 
@@ -148,7 +157,9 @@ if ($harvest_format == 0){
 # seq-nr = sequence order\n";
 	}
 
+
 open List, "<$seq_file.list" or die $!;
+my $count = 1; #count repeats in gff
 foreach my $seq (<List>){
 	$seq =~ s/\s+//;
 	my ($base, $order) = ($1, $2) if $seq =~ /(.*)_sub([0-9]+)$/;
@@ -159,6 +170,8 @@ foreach my $seq (<List>){
 		next unless /^\[/;
 		s/^\[\s+[0-9]+\]/\[NA\]/;
 		my ($index, $id, $loc, $ltr_len, $ele_len, $TSR, $PBS, $PPT, $RT, $IN_core, $IN_cterm, $RH, $strand, $score, $sharpness, $sim) = (split);
+
+		#convert coordinates back to the genome scale
 		my @coord = ($loc, $PBS, $PPT, $RT, $IN_core, $IN_cterm, $RH);
 		my $i = -1;
 		foreach (@coord) {
@@ -167,18 +180,33 @@ foreach my $seq (<List>){
 			my ($start, $end) = ($1+$coord_adj, $2+$coord_adj) if /([0-9]+)\-([0-9]+)/;
 			$coord[$i] = "$start-$end";
 			}
+		my ($start, $end) = ($1, $2) if $coord[0] =~ /([0-9]+)\-([0-9]+)/;
+		my ($lltr, $rltr) = ($1, $2) if $ltr_len=~/([0-9]+),([0-9]+)/; 
+		my ($lltr_e, $rltr_s) = ($start+$lltr-1, $end-$rltr+1);
+
+		#output LTRharvest or LTR_FINDER (-w 2) format
 		if ($harvest_format == 0){
 			print Out "[NA]\t$base\t$coord[0]\t$ltr_len\t$ele_len\t$TSR\t$coord[1]\t$coord[2]\t$coord[3]\t$coord[4]\t$coord[5]\t$coord[6]\t$strand\t$score\t$sharpness\t$sim\n";
 			} else {
-			my ($start, $end) = ($1, $2) if $coord[0] =~ /([0-9]+)\-([0-9]+)/;
-			my ($lltr, $rltr) = ($1, $2) if $ltr_len=~/([0-9]+),([0-9]+)/; 
-			my ($lltr_e, $rltr_s) = ($start+$lltr-1, $end-$rltr+1);
 			$sim*=100;
 			print Out "$start $end $ele_len $start $lltr_e $lltr $rltr_s $end $rltr $sim $order{$base} $base\n";
 			}
+
+		#print GFF format
+		my $chr = $base;
+		print GFF "$chr\t$annotator\trepeat_region\t$start\t$end\t.\t$strand\t.\tID=repeat_region$count\n";
+		#print GFF "$chr\t$annotator\ttarget_site_duplication\t$lTSD\t.\t$strand\t.\tParent=repeat_region$count\n" unless $TSD eq "NA";
+		print GFF "$chr\t$annotator\tLTR_retrotransposon\t$start\t$end\t.\t$strand\t.\tID=LTR_retrotransposon$count;Parent=repeat_region$count;tsd=$TSR;ltr_identity=$sim;seq_number=$order{$chr}\n";
+		print GFF "$chr\t$annotator\tlong_terminal_repeat\t$start\t$lltr_e\t.\t$strand\t.\tParent=LTR_retrotransposon$count\n";
+		print GFF "$chr\t$annotator\tlong_terminal_repeat\t$rltr_s\t$end\t.\t$strand\t.\tParent=LTR_retrotransposon$count\n";
+		#print GFF "$chr\t$annotator\ttarget_site_duplication\t$rTSD\t.\t$strand\t.\tParent=repeat_region$count\n" unless $TSD eq "NA";
+		print GFF "###\n";
+
 		}
+	$count++;
 	}
 close List;
 close Scn;
+close GFF;
 `rm -rf ./$seq_file.finder` if $verbose eq 0;
 print localtime() ." Job finished! Check out $seq_file.finder.combine.scn\n";

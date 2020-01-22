@@ -4,7 +4,7 @@
 
 
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $genome=$ARGV[0];

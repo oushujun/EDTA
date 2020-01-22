@@ -1,7 +1,7 @@
 ##Shujun Ou
 ##Usage: perl Six-frame_translate.pl sequence.nt.fa > sequence.aa.fa
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my %codon2aa = qw(

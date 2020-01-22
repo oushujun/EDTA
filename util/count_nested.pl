@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 #Shujun Ou (oushujun@iastate.edu) 08/10/2019
 

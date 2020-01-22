@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 # rename RepeatModeler consensus families, contributed by Zhigui Bao (#baozg)
 

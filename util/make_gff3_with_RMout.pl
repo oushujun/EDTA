@@ -3,7 +3,7 @@
 ##Author: Shujun Ou (oushujun@msu.edu), Department of Horticulture, Michigan State University
 ##Version: 1.0 01-27-2018
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $usage = "\n\tperl make_gff3_with_RMout.pl RM.out\n\n";

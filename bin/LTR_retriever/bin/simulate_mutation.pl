@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $mut_rate="0.02"; #%2 (default) of the genome will be mutated

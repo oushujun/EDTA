@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 # Shujun Ou (shujun.ou.1@gmail.com)
 # 12/24/2019 @ DSM airport

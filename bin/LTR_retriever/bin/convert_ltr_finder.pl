@@ -3,7 +3,7 @@
 #Author:Shujun OU (oushujun@msu.edu) 03/07/2015
 
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 print "#this summary file is created from LTR_finder screen output by convert_ltr_finder.pl (Author: Shujun Ou, email: oushujun\@msu.edu 2/14/2015)

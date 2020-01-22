@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $code = $ARGV[0]; #1, code name with serial numbers; 0, transform  back to original names with $seq.list

@@ -4,7 +4,7 @@
 #Author: Shujun Ou (shujun.ou.1@gmail.com) 04/19/2019
 
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 print "#this summary file is created from MGEScan 3.0.0 LTR candidate list by convert_MGEScan3.0.pl (Author: Shujun Ou, email: shujun.ou.1\@gmail.com 04/19/2019)

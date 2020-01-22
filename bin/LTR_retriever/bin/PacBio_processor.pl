@@ -3,7 +3,7 @@
 #06/30/2016 Shujun Ou (oushujun@msu.edu)
 
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $minLength=500;

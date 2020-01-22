@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $usage = "\n\tperl bed2gff.pl EDTA.TE.combo.bed\n\n";

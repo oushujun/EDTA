@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $usage = "\nFilter sequence based on TEsorter classifications. Unclassified sequences will also be output to the clean file.

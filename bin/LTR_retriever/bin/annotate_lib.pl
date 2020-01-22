@@ -3,7 +3,7 @@
 ##Shujun Ou (oushujun@msu.edu) 06/23/2016
 
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 open List, "<$ARGV[0]" or die "ERROR: $!";

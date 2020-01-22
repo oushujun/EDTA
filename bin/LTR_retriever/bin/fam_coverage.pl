@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $usage = "famcoverage.pl TE_lib RM_output genome_size_bp > TE_fam.size.list\n";

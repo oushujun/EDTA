@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 #usage: perl sustract.pl minuend.list subtrahend.list
 #Author: Shujun Ou (oushujun@msu.edu), 03/08/2015

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 #Usage: this script is developed to output gff3 format of intact LTRs and add classification info to LTR sequences that only have bare msu locus names

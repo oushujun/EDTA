@@ -2,7 +2,7 @@
 ##Usage: perl annotate_gff.pl lib.fa gff > anno.gff
 ##Shujun Ou (oushujun@msu.edu)
 
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 
 my $usage="perl annotate_gff.pl lib.fa gff > anno.gff\n";
