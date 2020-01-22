@@ -23,11 +23,12 @@ version="1.24"
 path=$(dirname "$0") #program path
 dir=$(pwd) #current work directory
 rawFile="" #the genome file with relative path
-grfp="$path/../GenericRepeatFinder/bin/"
+grfp=$(dirname `which grf-main`)
+#grfp="$path/../GenericRepeatFinder/bin/"
 #grfp="~/las/bin/GenericRepeatFinder/bin/"
 species="others" # One of the following "Maize", "Rice" or "others"
 len=5000 # Maximum of element length used in GRF
-t=16 # CPUs
+t=4 # CPUs
 
 ## read parameters and help doc
 helpFunction()

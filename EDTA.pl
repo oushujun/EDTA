@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use FindBin;
@@ -50,7 +50,7 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 		--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		--repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		--blast [path]	The directory containing BLASTx and BLASTn (default: read from ENV)
-		--check_dependencies Check if dependencies are fullfiled and quit  
+		--check_dependencies Check if dependencies are fullfiled and quit
 		--trf [path]	The directory containing TRF (default: read from ENV)
 		--threads|-t	[int]	Number of theads to run this script (default: 4)
 		--help|-h	Display this help info
@@ -100,7 +100,6 @@ my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $TEsorter = "";
-my $mdust = "";
 my $GRF = "";
 my $repeatmodeler = "";
 my $repeatmasker = "";
@@ -191,10 +190,6 @@ die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
-if ($check_dependencies){
-	print "exit\n";
-	exit;
-}
 
 # makeblastdb, blastn, blastx
 $blast=`which makeblastdb 2>/dev/null` if $blast eq '';
@@ -231,19 +226,14 @@ die "Error: No Tandem Repeat Finder is working on the current system.
 	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
 die "\n\tTandem Repeat Finder not found!\n\n" unless $trf ne '';
 # GRF
-$GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #default path to the GRF program 
+$GRF = "$script_path/bin/GenericRepeatFinder/bin/grf-main" if $GRF eq ''; #default path to the GRF program
 `$GRF 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not working on the current system.
 	Please reinstall it in $GRF following instructions in https://github.com/bioinfolabmu/GenericRepeatFinder.
 	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" if $?==32256;
-# mdust
-$mdust=`which mdust 2>/dev/null` if $mdust eq '';
-$mdust=~s/mdust\n//;
-$mdust="$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
-die "mdust is not working on the current system. Please reinstall it in this folder $mdust.
-	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" unless -X "${mdust}mdust";
 
 print "\t\t\t\tAll passed!\n";
+exit if $check_dependencies;
 
 # make a softlink to the user-provided files
 my $genome_file = basename($genome);
@@ -345,7 +335,7 @@ chomp ($date);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --threads $threads --mdust $mdust --blastplus $blast --tesorter $TEsorter`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --threads $threads --blastplus $blast --tesorter $TEsorter`;
 
 chdir "$genome.EDTA.raw";
 

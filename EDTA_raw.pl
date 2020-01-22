@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
 use FindBin;
 use File::Basename;
@@ -21,8 +21,6 @@ my $usage = "\nObtain raw TE libraries using various structure-based programs
 		--genome	[File]	The genome FASTA
 		--species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
 		--type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
-		--blastplus      [path]  Path to the blastn program. Defalut: read from \$ENV
-		--mdust	[program]	The mdust program. Default: included in this package.
 		--overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
 		--threads|-t	[int]	Number of theads to run this script. Default: 4
 		--help|-h	Display this help info
@@ -37,7 +35,6 @@ my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Le
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
-my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
 my $get_range = "$script_path/util/get_range.pl";
@@ -52,6 +49,7 @@ my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
 my $make_gff = "$script_path/util/make_gff_with_intact.pl";
+my $genometools = ''; #path to the genometools program
 my $TEsorter = ''; #path to the TEsorter program
 my $mdust = '';
 my $blastplus = ''; #path to the blastn program
@@ -79,7 +77,6 @@ print STDERR "$date\tEDTA_raw: Check files and dependencies, prepare working dir
 
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
-die "The GenomeTools is not found in $genometools!\n" unless -s $genometools;
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
@@ -94,6 +91,11 @@ die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $Helitro
 die "The script format_helitronscanner_out.pl is not found in $format_helitronscanner!\n" unless -s $format_helitronscanner;
 die "The script flanking_filter.pl is not found in $flank_filter!\n" unless -s $flank_filter;
 die "The script make_gff_with_intact.pl is not found in $make_gff!\n" unless -s $make_gff;
+# GenomeTools
+$genometools=`which gt 2>/dev/null` if $genometools eq '';
+$genometools=~s/gt\n//;
+$genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
+die "gt is not exist in the genometools path $genometools!\n" unless -X "${genometools}gt";
 # TEsorter
 $TEsorter=`which TEsorter 2>/dev/null` if $TEsorter eq '';
 $TEsorter=~s/TEsorter\n//;
@@ -152,8 +154,8 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
 # run LTRharvest
-`$genometools suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
-`$genometools ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
+`${genometools}gt suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
+`${genometools}gt ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
 `rm $genome.des $genome.esq $genome.lcp $genome.llv $genome.md5 $genome.prj $genome.sds $genome.ssp $genome.suf 2>/dev/null`;
 
 # run LTR_FINDER_parallel
@@ -380,5 +382,3 @@ if (-s "$genome.EDTA.raw/$genome.Helitron.raw.fa"){
 $date=`date`;
 chomp ($date);
 print STDERR "$date\tExecution of EDTA_raw.pl is finished!\n\n";
-
-
