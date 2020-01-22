@@ -14,7 +14,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
     conda create -n EDTA
     conda activate EDTA
     conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
-    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast-legacy java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder
+    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast-legacy java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
