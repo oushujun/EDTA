@@ -46,11 +46,8 @@ Usage:
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=15 characters) and simple (i.e, letters, numbers, and underscore).
 
 Optional: 
-
 1. Coding sequence of the species or closely related species [FASTA]. This file helps to purge gene sequences in the TE library.
-
 2. Known gene position of this version of the genome assembly [BED]. Coordinates specified in this file will be whitelisted from TE annotation to avoid over-masking.
-
 3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's fine. It doesn't need to be complete.
 
 
@@ -59,9 +56,7 @@ Expected: A non-redundant TE library: $genome.EDTA.TElib.fa. The curated library
 
 Optional:
 1. Novel TE families: $genome.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).
-
 2. Whole-genome TE annotation: $genome.EDTA.TEanno.gff. This file contains both structurally intact and fragmented TE annotations (`--anno 1` required).
-
 3. Summary of whole-genome TE annotation: $genome.EDTA.TEanno.sum (`--anno 1` required).
 4. Low-threshold TE masking: $genome.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. Annotated gene models should contain TEs and need further filtering (`--anno 1` required).
 5. Annotation inconsistency for simple TEs; $genome.EDTA.TE.fa.stat.redun.sum (`--evaluate 1` required).
@@ -102,7 +97,7 @@ Activate the EDTA program:
 ### Divide and conquer
 *Identify intact elements of a paticular TE type*:
 
-1.Get raw libraries from a genome (specify `-type ltr|tir|helitron` in different runs)
+1. Get raw libraries from a genome (specify `-type ltr|tir|helitron` in different runs)
 
     perl EDTA_raw.pl [options]
       --genome	[File]	The genome FASTA
