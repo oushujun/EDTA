@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
 use FindBin;
 use File::Basename;
@@ -151,4 +151,3 @@ my $HEL = "$genome.Helitron.raw.fa";
 `perl $rename_TE $genome.LTR.TIR.Helitron.fa.stg1.raw.cln.clean > $genome.LTR.TIR.Helitron.fa.stg1`;
 
 chdir '..';
-
