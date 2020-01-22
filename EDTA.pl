@@ -362,7 +362,7 @@ die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.
 $date=`date`;
 chomp ($date);
 print "$date\tObtain raw TE libraries finished.
-\t\t\t\tAll intact TEs found by EDTA: $genome.EDTA.intact.fa\t$genome.EDTA.intact.gff\n\n";
+\t\t\t\tAll intact TEs found by EDTA: \n\t\t\t\t\t$genome.EDTA.intact.fa\n\t\t\t\t\t$genome.EDTA.intact.gff\n\n";
 chdir "..";
 
 
