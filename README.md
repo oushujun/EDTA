@@ -1,5 +1,27 @@
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/ltr_retriever/README.html) [![Anaconda-Server Badge](https://anaconda.org/bioconda/ltr_retriever/badges/license.svg)](https://anaconda.org/bioconda/emblmygff3)
+
 
 # The Extensive *de novo* TE Annotator (EDTA)
+
+## Table of Contents
+
+   * [Introduction](#introduction)
+   * [Installation](#installation)
+      * [Quick installation using conda](#quick-installation-using-conda)
+      * [Quick installation using Singularity](#quick-installation-using-singularity)
+      * [Quick installation using Docker](#quick-installation-using-docker)
+      * [Step by step installation using conda ](#step-by-step-installation-using-conda)
+   * [Inputs](#inputs)
+   * [Outputs](#outputs)
+   * [EDTA usage](#usage)
+      * [From head to toe](#from-head-to-toe)
+      * [Divide and conquer](#divide-and-conquer)
+   * [Benchmarking usage](#benchmarking)
+   * [Citations](#citations)
+   * [Other resources](#other-resources)
+   * [Issues](#issues)
+   * [Acknowledgements](#acknowledgements)
+
 
 ## Introduction
 This package is developed for automated whole-genome *de-novo* TE annotation and benchmarking the annotation performance of TE libraries.
@@ -10,18 +32,15 @@ The EDTA package was designed to filter out false discoveries in raw TE candidat
 
 For benchmarking of a testing TE library, I have provided the curated TE annotation (v6.9.5) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
 
+
 ## Installation
-    conda create -n EDTA
-    conda activate EDTA
-    conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
-    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast-legacy java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools
-    git clone https://github.com/oushujun/EDTA
-    ./EDTA/EDTA.pl
 
+There are four ways to install EDTA. Please choose one.
 
-## Alternative installation using [the EDTA image](https://hub.docker.com/r/kapeel/edta)
+### Quick installation using conda
+    conda install -c https://91587-42372094-gh.circle-artifacts.com/0/tmp/artifacts/packages edta
 
-### The [Singularity](https://sylabs.io/docs/) method (good for HPC users)
+### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
 
     singularity build --sandbox EDTA.sif docker://kapeel/edta
@@ -32,7 +51,7 @@ Usage:
 
 	{path} is the path you build the EDTA singularity image
 
-### The [Docker](https://www.docker.com/) method (good for root users)
+### Quick installation using [Docker](https://www.docker.com/) (good for root users)
 Installation:
 
     docker pull kapeel/edta
@@ -41,8 +60,16 @@ Usage:
 
     docker run kapeel/edta --genome genome.fa [other parameters]
 
+### Step by step installation using conda
+    conda create -n EDTA
+    conda activate EDTA
+    conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
+    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever
+    git clone https://github.com/oushujun/EDTA
+    ./EDTA/EDTA.pl
 
-## Input
+
+## Inputs
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=15 characters) and simple (i.e, letters, numbers, and underscore).
 
 Optional: 
@@ -51,7 +78,7 @@ Optional:
 3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's fine. It doesn't need to be complete.
 
 
-## Output
+## Outputs
 Expected: A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library is included in this file if provided.
 
 Optional:
