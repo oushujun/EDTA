@@ -8,12 +8,12 @@
    * [Introduction](#introduction)
    * [Installation](#installation)
       * [Quick installation using conda](#quick-installation-using-conda)
-      * [Quick installation using Singularity](#quick-installation-using-singularity)
-      * [Quick installation using Docker](#quick-installation-using-docker)
+      * [Quick installation using Singularity](#quick-installation-using-singularity-good-for-hpc-users)
+      * [Quick installation using Docker](#quick-installation-using-docker-good-for-root-users)
       * [Step by step installation using conda ](#step-by-step-installation-using-conda)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
-   * [EDTA usage](#usage)
+   * [EDTA usage](#edta-usage-regular-installation)
       * [From head to toe](#from-head-to-toe)
       * [Divide and conquer](#divide-and-conquer)
    * [Benchmarking usage](#benchmarking)
@@ -162,7 +162,7 @@ eg.
 
     perl lib-test.pl -genome rice_genome.fasta -std ./EDTA/database/Rice_MSU7.fasta.std6.9.5.out -tst rice_genome.fasta.test.out -cat LTR
 
-## Citation
+## Citations
 Please cite our paper if you find EDTA is useful:
 
 Ou S., Su W., Liao Y., Chougule K., Agda J. R. A., Hellinga A. J., Lugo C. S. B., Elliott T. A., Ware D., Peterson T., Jiang N.✉, Hirsch C. N.✉ and Hufford M. B.✉ (2019). Benchmarking Transposable Element Annotation Methods for Creation of a Streamlined, Comprehensive Pipeline. [Genome Biol. 20(1): 275.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1905-y)
