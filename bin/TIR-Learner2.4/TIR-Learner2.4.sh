@@ -116,7 +116,8 @@ cd $dir"/Module1"
 python3 $path/Module1/Fullcov.py  -name $genomeName -p $path -d $dir"/Module1" -s $species
 
 # test if Module 1 Step 2 produces blast results
-cat $dir/Module1/$genomeName/*-select.csv > test.select.csv
+#cat $dir/Module1/$genomeName/*-select.csv > test.select.csv
+for i in $dir/Module1/$genomeName/*-select.csv; do cat $i; done > test.select.csv
 if [ ! -s test.select.csv ]; then
 	echo "
 	ERROR: No sequence is found similar to the TIR database of $species!
