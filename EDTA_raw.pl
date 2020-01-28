@@ -1,7 +1,9 @@
 #!/usr/bin/env perl
 use strict;
+use warnings;
 use FindBin;
 use File::Basename;
+use Pod::Usage;
 
 ########################################################
 ##### Perform initial searches for TE candidates    ####
@@ -19,7 +21,7 @@ use File::Basename;
 my $usage = "\nObtain raw TE libraries using various structure-based programs
 	perl EDTA_raw.pl [options]
 		--genome	[File]	The genome FASTA
-		--species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
+		--species [rice|maize|others]	Specify the species for identification of TIR candidates. Default: others
 		--type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
 		--overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
 		--threads|-t	[int]	Number of theads to run this script. Default: 4
@@ -34,27 +36,28 @@ my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
 my $threads = 4;
 my $script_path = $FindBin::Bin;
-my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
-my $LTR_retriever = "$script_path/bin/LTR_retriever/LTR_retriever";
+my $TIR_Learner = "$script_path/bin/TIR-Learner2.4/TIR-Learner2.4.sh";
+my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
+my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $get_range = "$script_path/util/get_range.pl";
 my $rename_LTR = "$script_path/util/rename_LTR.pl";
-my $TIR_Learner = "$script_path/bin/TIR-Learner2.4/TIR-Learner2.4.sh";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
 my $get_ext_seq = "$script_path/util/get_ext_seq.pl";
-my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
 my $flank_filter = "$script_path/util/flanking_filter.pl";
 my $make_gff = "$script_path/util/make_gff_with_intact.pl";
 my $genometools = ''; #path to the genometools program
 my $TEsorter = ''; #path to the TEsorter program
+my $LTR_retriever = ''; #path to the LTR_retriever program
 my $mdust = '';
 my $blastplus = ''; #path to the blastn program
 my $trf = ''; #path to trf
 my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
+my $help = undef;
 
 # read parameters
 my $k=0;
@@ -67,18 +70,50 @@ foreach (@ARGV){
 	$mdust = $ARGV[$k+1] if /^--mdust$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^--overwrite$/i and $ARGV[$k+1] !~ /^-/;
 	$threads = $ARGV[$k+1] if /^--threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
-	die $usage if /^--help$|^-h$/i;
+	$help = 1 if /^--help$|^-h$/i;
 	$k++;
   }
 
+# check files and parameters
+if ($help){
+	pod2usage( {
+		-verbose => 0,
+		-exitval => 0,
+		-message => "$usage\n" } );
+	}
+
+if (-s $genome){
+	pod2usage( {
+		-message => "At least 1 parameter mandatory:\n1) Input fasta file: --genome\n".
+		"\n$usage\n\n",
+		-verbose => 0,
+		-exitval => 2 } );
+	}
+
+if ($species){
+	$species =~ s/rice/Rice/i;
+	$species =~ s/maize/Maize/i;
+	$species =~ s/others/others/i;
+	die "The expected value for the species parameter is Rice or Maize or others!\n" unless $species eq "Rice" or $species eq "Maize" or $species eq "others";
+	}
+
+if ($type){
+	$type =~ s/LTR/ltr/i;
+	$type =~ s/TIR/tir/i;
+	$type =~ s/Helitron/helitron/i;
+	$type =~ s/All/all/i;
+	die "The expected value for the type parameter is ltr or tir or helitron or all!\n" unless $type eq "ltr" or $type eq "tir" or $type eq "helitron" or $type eq "all";
+	}
+
+die "The expected value for the overwrite parameter is 0 or 1!\n" if $overwrite != 0 and $overwrite != 1;
+die "The expected value for the threads parameter is an integer!\n" if $threads !~ /^[0-9]+$/;
+
 my $date=`date`;
 chomp ($date);
-print STDERR "$date\tEDTA_raw: Check files and dependencies, prepare working directories.\n\n";
+print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
 
 # check files and dependencies
-die "Genome file $genome not exists!\n$usage" unless -s $genome;
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
-die "The LTR_retriever is not found in $LTR_retriever!\n" unless -s $LTR_retriever;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
@@ -96,6 +131,11 @@ $genometools=`which gt 2>/dev/null` if $genometools eq '';
 $genometools=~s/gt\n//;
 $genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
 die "gt is not exist in the genometools path $genometools!\n" unless -X "${genometools}gt";
+# LTR_retriever
+$LTR_retriever=`which LTR_retriever 2>/dev/null` if $LTR_retriever eq '';
+$LTR_retriever=~s/LTR_retriever\n//;
+$LTR_retriever="$LTR_retriever/" if $LTR_retriever ne '' and $LTR_retriever !~ /\/$/;
+die "LTR_retriever is not exist in the LTR_retriever path $LTR_retriever!\n" unless -X "${LTR_retriever}LTR_retriever";
 # TEsorter
 $TEsorter=`which TEsorter 2>/dev/null` if $TEsorter eq '';
 $TEsorter=~s/TEsorter\n//;
@@ -123,6 +163,52 @@ die "\n\tTandem Repeat Finder not found!\n\n" unless $trf ne '';
 my $genome_file = basename($genome);
 `ln -s $genome $genome_file` unless -e $genome_file;
 $genome = $genome_file;
+
+# remove sequence annotations (content after the first space in sequence names)
+`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
+
+# check if duplicated sequences found
+my $id_mode = 0; #record the mode of id conversion.
+my $id_len = `grep \\> $genome.mod|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
+$id_len =~ s/\s+$//;
+$id_len = (split /\s+/, $id_len)[-1];
+my $raw_id = `grep \\> $genome.mod|wc -l`;
+my $old_id = `grep \\> $genome.mod|sort -u|wc -l`;
+if ($raw_id > $old_id){
+	$date = `date`;
+	chomp ($date);
+	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
+	}
+
+# try to shortern sequences
+if ($id_len > 15){
+	$date = `date`;
+	chomp ($date);
+	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
+	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
+	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
+	my $new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+	$date = `date`;
+	chomp ($date);
+	if ($old_id == $new_id){
+		$id_mode = 1;
+		`mv $genome.temp $genome.mod`;
+		print "$date\tSeq ID conversion successful!\n\n";
+		} else {
+		print "\t\t\t\tAttempt 2...\n";
+		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.mod > $genome.temp`;
+		$new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+		if ($old_id == $new_id){
+			$id_mode = 2;
+			`mv $genome.temp $genome.mod`;
+			print "$date\tSeq ID conversion successful!\n\n";
+			} else {
+			`rm $genome.temp`;
+			die "$date\tERROR: Fail to convert seq IDs to less than 15 characters! Please provide a genome with shorter seq IDs.\n\n";
+			}
+		}
+	}
+$genome = "$genome.mod";
 
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
@@ -163,7 +249,7 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 
 # run LTR_retriever
 `cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
-`perl $LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno`;
+`${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno`;
 #`for i in *.mod.*; do mv \$i \$(echo \$i|sed 's/\\.mod\\././'); done > /dev/null 2>&1`;
 #`mv $genome.mod $genome` if -s "$genome.mod";
 
@@ -252,10 +338,6 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	print STDERR "$date\tExisting result file $genome.TIR.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
-
-	$species =~ s/rice/Rice/i;
-	$species =~ s/maize/Maize/i;
-	$species =~ s/others/others/i;
 	print STDERR "Species: $species\n";
 
 	# run TIR-Learner
