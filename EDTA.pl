@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v1.7.5";
+my $version = "v1.7.6";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
