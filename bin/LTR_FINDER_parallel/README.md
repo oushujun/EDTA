@@ -1,11 +1,8 @@
 ## ~ ~ ~ Run LTR_FINDER in parallel ~ ~ ~
-This is a Perl wrapper for [LTR_FINEDR](https://github.com/xzhub/LTR_Finder). All rights reserved to the original author. It's free for non-commercial use. For commercial use, a software agreement is required for LTR_FINDER. LTR_FINDER_parallel is released under open source license CC BY 4.0.
+This is a Perl wrapper for [LTR_FINEDR](https://github.com/xzhub/LTR_Finder). All rights reserved to the original author. Both LTR_FINDER and LTR_FINDER_parallel are released under the MIT License.
 
 
 ### Installation: No need. Just download and run.
-Date: 09/19/2018
-
-Update: 09/27/2019
 
 	Usage: perl LTR_FINDER_parallel -seq [file] -size [int] -threads [int]  
 	Options:
@@ -23,6 +20,7 @@ Update: 09/27/2019
 		-verbose|-v     Retain LTR_FINDER outputs for each sequence piece.
 		-finder [file]  The path to the program LTR_FINDER (default v1.0.7, included in this package).
 		-threads|-t     [int]   Indicate how many CPU/threads you want to run LTR_FINDER.
+		-check_dependencies Check if dependencies are fullfiled and quit
 		-help|-h        Display this help information.
 
 

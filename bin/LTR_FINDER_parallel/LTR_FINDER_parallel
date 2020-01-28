@@ -1,10 +1,13 @@
 #!/usr/bin/env perl
 use strict;
+use warnings;
 use threads;
 use Thread::Queue;
 use File::Basename;
 use FindBin;
+use Pod::Usage;
 
+my $version = "v1.1";
 # customized parameters
 my $seq_path = ""; #specify the sequence file
 my $finder_para = "-w 2 -C -D 15000 -d 1000 -L 7000 -l 100 -p 20 -M 0.85"; #specify ltr_finder parameters. The "-w 2" parameter is required.
@@ -21,14 +24,17 @@ my $annotator = "LTR_FINDER_parallel"; #the annotator name used in gff output
 #my $script_path = dirname(__FILE__);
 my $script_path = $FindBin::Bin;
 my $cut = "$script_path/bin/cut.pl"; #the program to cut sequence
-my $ltr_finder = "$script_path/bin/LTR_FINDER.x86_64-1.0.7/ltr_finder"; #the path to ltr_finder
+my $ltr_finder = ""; #the path to ltr_finder
+my $check_dependencies = undef;
+my $help = undef;
 
 my $usage = "
 ~ ~ ~ Run LTR_FINDER in parallel ~ ~ ~
 
 Author: Shujun Ou (shujun.ou.1\@gmail.com)
 Date: 09/19/2018
-Update: 09/27/2019
+Update: 01/28/2020
+Version: $version
 
 Usage: perl LTR_FINDER_parallel -seq [file] -size [int] -threads [int]
 Options:	-seq	[file]	Specify the sequence file.
@@ -45,6 +51,7 @@ Options:	-seq	[file]	Specify the sequence file.
 		-verbose|-v	Retain LTR_FINDER outputs for each sequence piece.
 		-finder	[file]	The path to the program LTR_FINDER (default v1.0.7, included in this package).
 		-threads|-t	[int]	Indicate how many CPU/threads you want to run LTR_FINDER.
+		-check_dependencies Check if dependencies are fullfiled and quit
 		-help|-h	Display this help information.
 \n";
 
@@ -62,12 +69,36 @@ foreach (@ARGV){
 	$cut = $ARGV[$i+1] if /^-cut$/i;
 	$ltr_finder = $ARGV[$i+1] if /^-finder$/i;
 	$threads = $ARGV[$i+1] if /^-threads$|^-t$/i;
-	die $usage if /^-help$|^-h$/i;
+	$check_dependencies = 1 if /^-check_dependencies$/i;
+	$help = 1 if /^-help$|^-h$/i;
 	$i++;
 	}
 
+# check parameters
+if ($help) {
+    pod2usage( { -verbose => 0,
+                 -exitval => 0,
+                 -message => "$usage\n" } );
+}
+
+$ltr_finder=`which ltr_finder 2>/dev/null` if $ltr_finder eq '';
+$ltr_finder = "$script_path/bin/LTR_FINDER.x86_64-1.0.7/ltr_finder" if $ltr_finder eq ''; #use default ltr_finder if not ENV
+$ltr_finder=~s/ltr_finder\n?//;
+$ltr_finder="$ltr_finder/" if $ltr_finder ne '' and $ltr_finder !~ /\/$/;
+die "LTR_FINDER is not exist in the path $ltr_finder!\n" unless -X "${ltr_finder}ltr_finder";
+print "\nUsing this LTR_FINDER: $ltr_finder\n"; #test
+
+if ( ! $seq_path and (! $check_dependencies) ){
+    pod2usage( {
+           -message => "At least 1 parameter mandatory:\n1) Input fasta file: -seq\n".
+           "$usage\n\n",
+           -verbose => 0,
+           -exitval => 2 } );
+}
+print "Pass!\n";
+exit if $check_dependencies;
+
 # make a softlink to the genome file
-die $usage unless -s $seq_path;
 my $seq_file = basename($seq_path);
 `ln -s $seq_path $seq_file` unless -s $seq_file;
 
@@ -108,7 +139,7 @@ sub worker {
 		chomp $seq;
 		$seq =~ s/\s+//;
 		print localtime() ." CPU".threads -> self() -> tid().": running on $seq\n";
-		`timeout $timeout $ltr_finder $finder_para $seq > $seq.finder.scn`; #set the max running time for a thread as $timeout seconds
+		`timeout $timeout ${ltr_finder}ltr_finder $finder_para $seq > $seq.finder.scn`; #set the max running time for a thread as $timeout seconds
 		if ($? ne 0 and $try1 ne 0){
 			print localtime() ." CPU".threads -> self() -> tid().": $seq timeout, process it with the salvage mode\n";
 			my $in=`perl $script_path/LTR_FINDER_parallel -seq $seq -size 50000 -time 10 -try1 0 -threads 1 -cut $cut -finder $ltr_finder`;
@@ -144,6 +175,7 @@ if ($harvest_format == 0){
 	} else {
 	print Out "#LTR_FINDER_parallel -seq $seq_file -size $size_of_each_piece -time $timeout -try1 $try1 -harvest_out -threads $threads -cut $cut -finder $ltr_finder
 # LTR_FINDER args=$finder_para
+# LTR_FINDER_parallel version=$version
 # predictions are reported in the following way
 # s(ret) e(ret) l(ret) s(lLTR) e(lLTR) l(lLTR) s(rLTR) e(rLTR) l(rLTR) sim(LTRs) seq-nr chr
 # where:
