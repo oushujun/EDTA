@@ -13,7 +13,7 @@
       * [Step by step installation using conda ](#step-by-step-installation-using-conda)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
-   * [EDTA usage](#edta-usage-regular-installation)
+   * [EDTA usage](#edta-usage)
       * [From head to toe](#from-head-to-toe)
       * [Divide and conquer](#divide-and-conquer)
    * [Benchmarking usage](#benchmarking)
@@ -38,7 +38,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 There are four ways to install EDTA. Please choose one.
 
 ### Quick installation using conda
-    conda install -c https://91587-42372094-gh.circle-artifacts.com/0/tmp/artifacts/packages edta
+    conda install -c bioconda edta
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
@@ -64,7 +64,7 @@ Usage:
     conda create -n EDTA
     conda activate EDTA
     conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
-    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever
+    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast java-jdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
 
@@ -91,10 +91,7 @@ Optional:
 7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum (`--evaluate 1` required).
 
 
-## EDTA Usage (regular installation)
-Activate the EDTA program:
-
-    conda activate EDTA
+## EDTA Usage
 
 ### From head to toe
 *You got a genome and you want to get a high-quality TE annotation:*
