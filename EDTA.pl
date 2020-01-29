@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v1.7.6";
+my $version = "v1.7.7";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -142,7 +142,7 @@ if ($help) {
                  -message => "$usage\n" } );
 }
 
-if ( ! $genome and (! $check_dependencies) ){
+if ( (! -s $genome) and (! $check_dependencies) ){
     pod2usage( {
            -message => "At least 1 parameter mandatory:\n1) Input fasta file: --genome\n".
            "$usage\n\n",
@@ -240,21 +240,21 @@ my $genome_file = basename($genome);
 `ln -s $genome $genome_file` unless -e $genome_file;
 $genome = $genome_file;
 
-# remove sequence annotations (content after the first space in sequence names)
-`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
-
 # check if duplicated sequences found
 my $id_mode = 0; #record the mode of id conversion.
-my $id_len = `grep \\> $genome.mod|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
+my $id_len = `grep \\> $genome|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
 $id_len =~ s/\s+$//;
 $id_len = (split /\s+/, $id_len)[-1];
-my $raw_id = `grep \\> $genome.mod|wc -l`;
-my $old_id = `grep \\> $genome.mod|sort -u|wc -l`;
+my $raw_id = `grep \\> $genome|wc -l`;
+my $old_id = `grep \\> $genome|sort -u|wc -l`;
 if ($raw_id > $old_id){
 	$date = `date`;
 	chomp ($date);
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
 	}
+
+# remove sequence annotations (content after the first space in sequence names)
+`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
 
 # try to shortern sequences
 if ($id_len > 15){
@@ -335,7 +335,7 @@ chomp ($date);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --threads $threads --blastplus $blast --tesorter $TEsorter`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --threads $threads --blastplus $blast --tesorter $TEsorter --convert_seq_name 0`;
 
 chdir "$genome.EDTA.raw";
 

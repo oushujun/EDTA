@@ -24,6 +24,7 @@ my $usage = "\nObtain raw TE libraries using various structure-based programs
 		--species [rice|maize|others]	Specify the species for identification of TIR candidates. Default: others
 		--type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
 		--overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
+		--convert_seq_name	[0|1]	Convert long sequence name to <= 15 characters and remove annotations (1, default) or use the original (0)
 		--threads|-t	[int]	Number of theads to run this script. Default: 4
 		--help|-h	Display this help info
 \n";
@@ -33,6 +34,7 @@ my $genome = '';
 my $species = 'others';
 my $type = 'all';
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
+my $convert_name = 1; #0, use original seq names; 1 shorten names.
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
 my $threads = 4;
 my $script_path = $FindBin::Bin;
@@ -69,6 +71,7 @@ foreach (@ARGV){
 	$blastplus = $ARGV[$k+1] if /^--blastplus$/i and $ARGV[$k+1] !~ /^-/;
 	$mdust = $ARGV[$k+1] if /^--mdust$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^--overwrite$/i and $ARGV[$k+1] !~ /^-/;
+	$convert_name = $ARGV[$k+1] if /^--convert_seq_name$/i and $ARGV[$k+1] !~ /^-/;
 	$threads = $ARGV[$k+1] if /^--threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
 	$help = 1 if /^--help$|^-h$/i;
 	$k++;
@@ -82,7 +85,7 @@ if ($help){
 		-message => "$usage\n" } );
 	}
 
-if (-s $genome){
+if (!-s $genome){
 	pod2usage( {
 		-message => "At least 1 parameter mandatory:\n1) Input fasta file: --genome\n".
 		"\n$usage\n\n",
@@ -106,6 +109,7 @@ if ($type){
 	}
 
 die "The expected value for the overwrite parameter is 0 or 1!\n" if $overwrite != 0 and $overwrite != 1;
+die "The expected value for the convert_seq_name parameter is 0 or 1!\n" if $convert_name != 0 and $convert_name != 1;
 die "The expected value for the threads parameter is an integer!\n" if $threads !~ /^[0-9]+$/;
 
 my $date=`date`;
@@ -164,21 +168,22 @@ my $genome_file = basename($genome);
 `ln -s $genome $genome_file` unless -e $genome_file;
 $genome = $genome_file;
 
-# remove sequence annotations (content after the first space in sequence names)
-`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
-
 # check if duplicated sequences found
 my $id_mode = 0; #record the mode of id conversion.
-my $id_len = `grep \\> $genome.mod|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
+my $id_len = `grep \\> $genome|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
 $id_len =~ s/\s+$//;
 $id_len = (split /\s+/, $id_len)[-1];
-my $raw_id = `grep \\> $genome.mod|wc -l`;
-my $old_id = `grep \\> $genome.mod|sort -u|wc -l`;
+my $raw_id = `grep \\> $genome|wc -l`;
+my $old_id = `grep \\> $genome|sort -u|wc -l`;
 if ($raw_id > $old_id){
 	$date = `date`;
 	chomp ($date);
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
 	}
+
+if ($convert_name == 1){
+# remove sequence annotations (content after the first space in sequence names)
+`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
 
 # try to shortern sequences
 if ($id_len > 15){
@@ -209,6 +214,7 @@ if ($id_len > 15){
 		}
 	}
 $genome = "$genome.mod";
+}
 
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
