@@ -1,4 +1,4 @@
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](https://github.com/bioconda/bioconda-recipes/pull/19811) [![Anaconda-Server Badge](https://anaconda.org/bioconda/ltr_retriever/badges/license.svg)](https://github.com/oushujun/EDTA/blob/master/LICENSE)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/edta/README.html) [![Anaconda-Server Badge](https://anaconda.org/bioconda/ltr_retriever/badges/license.svg)](https://github.com/oushujun/EDTA/blob/master/LICENSE)
 
 
 # The Extensive *de novo* TE Annotator (EDTA)
@@ -37,7 +37,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 
 There are four ways to install EDTA. Please choose one.
 
-### Quick installation using conda
+### Quick installation using conda (Linux64)
     conda install -c bioconda edta
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
