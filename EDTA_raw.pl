@@ -246,12 +246,20 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
 # run LTRharvest
-`${genometools}gt suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
-`${genometools}gt ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
-`rm $genome.des $genome.esq $genome.lcp $genome.llv $genome.md5 $genome.prj $genome.sds $genome.ssp $genome.suf 2>/dev/null`;
+if ($overwrite eq 0 and -s "$genome.harvest.scn"){
+	print STDERR "$date\tExisting raw result $genome.harvest.scn found! Will use this for further analyses.\n\n";
+	} else {
+	`${genometools}gt suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
+	`${genometools}gt ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
+	`rm $genome.des $genome.esq $genome.lcp $genome.llv $genome.md5 $genome.prj $genome.sds $genome.ssp $genome.suf 2>/dev/null`;
+}
 
 # run LTR_FINDER_parallel
-`perl $LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;
+if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
+	print STDERR "$date\tExisting raw result $genome.finder.combine.scn found! Will use this for further analyses.\n\n";
+	} else {
+	`perl $LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;
+	}
 
 # run LTR_retriever
 `cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
