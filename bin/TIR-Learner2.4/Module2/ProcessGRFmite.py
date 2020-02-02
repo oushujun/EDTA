@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
 rm = "rm *GRFmite.fa > /dev/null 2>&1" #shujun
 os.system(rm) #shujun
-cp = "rsync --archive *-p ../temp/ > /dev/null 2>&1" #shujun
+cp = "for i in *-p; do cp $i ../temp/; done > /dev/null 2>&1" #shujun
 os.system(cp)
 
 
