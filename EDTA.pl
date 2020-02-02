@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v1.7.8";
+my $version = "v1.7.9";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -232,7 +232,7 @@ die "Error: The Generic Repeat Finder (GRF) is not working on the current system
 	Please reinstall it in $GRF following instructions in https://github.com/bioinfolabmu/GenericRepeatFinder.
 	If you continus to encounter this issue, please report it to https://github.com/oushujun/EDTA/issues\n" if $?==32256;
 
-print "\t\t\t\tAll passed!\n";
+print "\t\t\t\tAll passed!\n\n";
 exit if $check_dependencies;
 
 # make a softlink to the user-provided files
@@ -289,34 +289,34 @@ $genome = "$genome.mod";
 # check $HQlib
 if ($HQlib ne ''){
 	if (-s $HQlib){
-		print "\n\tCustom library $HQlib is provided via --curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
+		print "\tCustom library $HQlib is provided via --curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
 		my $HQlib_file = basename($HQlib);
 		`ls -s $HQlib $HQlib_file` unless -e $HQlib_file;
 		$HQlib = $HQlib_file;
 		} else {
-		die "\n\tERROR: The custom library $HQlib you specified is not found!\n\n";
+		die "\tERROR: The custom library $HQlib you specified is not found!\n\n";
 		}
 	}
 
 if ($cds ne ''){
 	if (-s $cds){
-		print "\n\tA CDS file is provided via --cds.\n\n";
+		print "\tA CDS file is provided via --cds.\n\n";
 		my $cds_file = basename($cds);
 		`ls -s $cds $cds_file` unless -e $cds_file;
 		$cds = $cds_file;
 		} else {
-		die "\n\tERROR: The CDS file $cds you specified is not found!\n\n";
+		die "\tERROR: The CDS file $cds you specified is not found!\n\n";
 		}
 	}
 
 if ($exclude ne ''){
 	if (-s $exclude){
-		print "\n\tA BED file is provided via --exclude. Regions specified by this file will be excluded from TE annotation and masking.\n\n";
+		print "\tA BED file is provided via --exclude. Regions specified by this file will be excluded from TE annotation and masking.\n\n";
 		my $exclude_file = basename($exclude);
 		`ls -s $exclude $exclude_file ` unless -e $exclude_file;
 		$exclude = $exclude_file;
 		} else {
-		die "\n\tERROR: The exclusion BED file $exclude you specified is not found!\n\n";
+		die "\tERROR: The exclusion BED file $exclude you specified is not found!\n\n";
 		}
 	}
 
@@ -436,7 +436,7 @@ if ($sensitive == 1){
 		`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
 		}
 	} else {
-	print "\t\t\t\tSkipping the RepeatModeler step (-sensitive 0).\n\t\t\t\tRun EDTA.pl -step final -sensitive 1 if you want to use RepeatModeler.\n\n";
+	print "\t\t\t\tSkipping the RepeatModeler step (-sensitive 0).\n\t\t\t\tRun EDTA.pl --step final --sensitive 1 if you want to use RepeatModeler.\n\n";
 	`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
 	}
 
