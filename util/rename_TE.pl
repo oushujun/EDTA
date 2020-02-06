@@ -7,6 +7,7 @@ my $fasta = $ARGV[0];
 open FA, "<$fasta" or die "\nInput not found!\n$usage";
 $/ = "\n>";
 my $num = 0;
+$num = $ARGV[1] if defined $ARGV[1];
 my %data;
 while (<FA>){
 	s/>//g;
@@ -15,8 +16,8 @@ while (<FA>){
 	my $name = (split /\s+/, $id)[0];
 	$seq =~ s/\s+//g;
 	my ($fam, $class) = ($1, $2) if $name =~ /^(.*)#(.*)$/;
-	#rename TE as unknown if $class info could not be retrieved
-	$class = "unknown" unless defined $class;
+	#rename TE as NA if $class info could not be retrieved
+	$class = "NA" unless defined $class;
 	#retain LTR-INT info for LTR sequences
 	if ($class =~ /LTR/i){
 		my ($loc, $part) = ('', '');
