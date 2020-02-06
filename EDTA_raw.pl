@@ -182,6 +182,9 @@ if ($raw_id > $old_id){
 	}
 
 if ($convert_name == 1){
+if (-s "$genome.mod"){
+	$genome = "$genome.mod";
+	} else {
 # remove sequence annotations (content after the first space in sequence names)
 `perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
 
@@ -215,6 +218,7 @@ if ($id_len > 15){
 	}
 $genome = "$genome.mod";
 }
+}
 
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
@@ -241,7 +245,7 @@ chdir "$genome.EDTA.raw/LTR";
 $date=`date`;
 chomp ($date);
 if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.LTR.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify -overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.LTR.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
