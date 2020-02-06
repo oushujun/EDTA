@@ -77,7 +77,9 @@ my $queue;
 my $num_stat = 0;
 $iter = $user_iter if $user_iter != 0;
 for (my $i=0; $i<$iter; $i++){
-	print "Clean up nested insertions and redundancy. Working on iteration $i\n";
+	my $date=`date`;
+	chomp ($date);
+	print "$date\tClean up nested insertions and redundancy. Working on iteration $i\n";
 	# write seq to a file and make blast db
 	open Seq, ">$IN.iter$i" or die $!;
 	foreach my $id (sort {$a cmp $b} keys %seq){
