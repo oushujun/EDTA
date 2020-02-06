@@ -43,6 +43,7 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 		--sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
 					This step is very slow and MAY help to recover some TEs.
 		--anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
+		--rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (-anno 1 required). Default: use the EDTA library for annotation.
 		--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
 					This step is slow and does not affect the annotation result.
 		--exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
@@ -66,6 +67,7 @@ my $HQlib = '';
 my $cds = ''; #a fasta file containing cds of this genome.
 my $sensitive = 0; #0, will not run RepeatModeler to get remaining TEs (default). 1, run RepeatModeler
 my $anno = 0; #0, will not annotate whole-genome TE (default). 1, annotate with RepeatMasker
+my $rmout = ''; #a RM .out file for custom homology-based annotation.
 my $evaluate = 0; #1 will evaluate the consistancy of the TE annotation
 my $exclude = ''; #a bed file exclude from TE annotation
 my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
@@ -106,6 +108,7 @@ my $repeatmasker = "";
 my $blast = "";
 my $trf = "";
 my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
+my $reanno = 0; #0, use existing whole-genome RM results (beta); 1, de novo Repeatmasker using the EDTA library (default)
 my $help = undef;
 
 # read parameters
@@ -117,6 +120,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
                   'cds=s'                => \$cds,
                   'sensitive=s'          => \$sensitive,
 		  'anno=i'               => \$anno,
+		  'rmout=s'              => \$rmout,
 		  'evaluate=i'           => \$evaluate,
 		  'exclude=s'            => \$exclude,
 		  'force=i'              => \$force,
@@ -306,6 +310,16 @@ if ($cds ne ''){
 		$cds = $cds_file;
 		} else {
 		die "\tERROR: The CDS file $cds you specified is not found!\n\n";
+		}
+	}
+
+if ($rmout ne ''){
+	if (-s $rmout){
+		print "\tA RepeatMasker .out file is provided via --rmout.\n\n";
+		`ls -s $rmout $genome.out` unless -e "$genome.out";
+		$rmout = "$genome.out";
+		} else {
+		die "\tERROR: The RepeatMasker .out file $rmout you specified is not found!\n\n";
 		}
 	}
 
@@ -539,13 +553,18 @@ if ($anno == 1){
 	# Make the post-library annotation working directory
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
 	chdir "$genome.EDTA.anno";
-	`rm -rf $genome.* 2>/dev/null`;
+#	`rm -rf $genome.* 2>/dev/null`;
 	`cp ../$genome.EDTA.final/$genome.EDTA.TElib.fa ./`;
 	`cp ../$exclude ./` if $exclude ne '';
 	`ln -s ../$genome $genome` unless -e $genome;
 
 	# annotate TEs using RepeatMasker
-	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
+	if ($rmout ne '' and -s "$genome.out"){
+		print STDERR "$date\tA RepeatMasker result file $genome.out is provided! Will use this file without running RepeatMasker.\n\n";
+		} else {
+		print STDERR "$date\tHomology-based annotation of TEs using $genome.EDTA.TElib.fa from scratch.\n\n";
+		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
+		}
 	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out" or -s "$genome.mod.out";
 
 	# exclude regions from TE annotation and make whole-genome TE annotation
