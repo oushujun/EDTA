@@ -1,4 +1,4 @@
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/edta/README.html) [![Anaconda-Server Badge](https://anaconda.org/bioconda/ltr_retriever/badges/license.svg)](https://github.com/oushujun/EDTA/blob/master/LICENSE)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/edta/README.html) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/platforms.svg)](https://anaconda.org/bioconda/edta) [![Anaconda-Server Badge](https://anaconda.org/bioconda/ltr_retriever/badges/license.svg)](https://github.com/oushujun/EDTA/blob/master/LICENSE) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/version.svg)](https://anaconda.org/bioconda/edta)
 
 
 # The Extensive *de novo* TE Annotator (EDTA)
@@ -79,7 +79,7 @@ Optional:
 
 
 ## Outputs
-Expected: A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library is included in this file if provided.
+Expected: A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library is included in this file if provided. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family.
 
 Optional:
 1. Novel TE families: $genome.mod.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).
@@ -112,6 +112,7 @@ Optional:
       --sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
 				This step is very slow and MAY help to recover some TEs.
       --anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
+      --rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (-anno 1 required). Default: use the EDTA library for annotation.
       --evaluate	[0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
 				This step is slow and does not affect the annotation result.
       --exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
@@ -173,4 +174,4 @@ You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/dat
 If you have any issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 ## Acknowledgements
-I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipie as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), and many more others for testing, debugging, and improving the EDTA pipeline.
+I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), and many more others for testing, debugging, and improving the EDTA pipeline.
