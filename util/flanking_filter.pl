@@ -136,6 +136,7 @@ sub filter(){
 	my $end5_count = 0;
 	foreach (@blast_end5){
 		my ($iden, $len) = (split)[2,3];
+		next unless defined $iden;
 		$end5_count++ if $iden >= $min_iden and $len >= $end5_len * $min_cov;
 		($end5_repeat = "true", $decision = "false") if $end5_count > $max_ct;
 		}
@@ -155,6 +156,7 @@ sub filter(){
 	my $end3_count = 0;
 	foreach (@blast_end3){
 		my ($iden, $len) = (split)[2,3];
+		next unless defined $iden;
 		$end3_count++ if $iden >= $min_iden and $len >= $end3_len * $min_cov;
 		($end3_repeat = "true", $decision = "false") if $end3_count > $max_ct;
 		}
@@ -175,6 +177,7 @@ sub filter(){
 		$flank_count = 0;
 		foreach (@blast_flank){
 			my ($iden, $len) = (split)[2,3];
+			next unless defined $iden;
 			$flank_count++ if $iden >= $min_iden and $len >= $flank_len * $min_cov;
 			}
 		if ($flank_count >= 1){
