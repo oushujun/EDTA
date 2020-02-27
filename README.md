@@ -38,7 +38,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 There are four ways to install EDTA. Please choose one.
 
 ### Quick installation using conda (Linux64)
-    conda install -c bioconda edta
+    conda install -c bioconda -c anaconda -c conda-forge edta
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
