@@ -38,7 +38,7 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 There are four ways to install EDTA. Please choose one.
 
 ### Quick installation using conda (Linux64)
-    conda install -c bioconda -c anaconda -c conda-forge edta
+    conda install -c bioconda -c conda-forge edta
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
@@ -58,7 +58,7 @@ Installation:
 
 Usage:
 
-    docker run kapeel/edta --genome genome.fa [other parameters]
+    docker run -v $PWD:/in -w /in kapeel/edta --genome genome.fa [other parameters]
 
 ### Step by step installation using conda
     conda create -n EDTA
@@ -122,7 +122,7 @@ Optional:
 ### Divide and conquer
 *Identify intact elements of a paticular TE type*:
 
-1.Get raw libraries from a genome (specify `-type ltr|tir|helitron` in different runs)
+1.Get raw TEs from a genome (specify `-type ltr|tir|helitron` in different runs)
 
     perl EDTA_raw.pl [options]
       --genome	[File]	The genome FASTA
