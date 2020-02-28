@@ -5,6 +5,8 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #mute all tensorflow info, warnings, and error msgs. #shujun
 #os.environ["KMP_AFFINITY"] = "compact" #mute all OpenMP warnings. #shujun
 os.environ["KMP_WARNINGS"] = '0' #mute all OpenMP warnings. #shujun
+import warnings
+warnings.filterwarnings('ignore',category=FutureWarning) #mute tensorflow warnings #shujun
 from Bio import SeqIO
 import numpy as np
 from tensorflow.python.keras.utils import to_categorical
