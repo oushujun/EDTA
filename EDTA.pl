@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v1.8.2";
+my $version = "v1.8.3";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -44,10 +44,10 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 		--sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
 					This step is very slow and MAY help to recover some TEs.
 		--anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
-		--rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (-anno 1 required). Default: use the EDTA library for annotation.
-		--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
+		--rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (--anno 1 required). Default: use the EDTA library for annotation.
+		--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
 					This step is slow and does not affect the annotation result.
-		--exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
+		--exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (--anno 1 required).
 		--force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit (default); 1, use rice TEs to continue.
 		--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 		--repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
@@ -294,7 +294,7 @@ $genome = "$genome.mod";
 # check $HQlib
 if ($HQlib ne ''){
 	if (-s $HQlib){
-		print "\tCustom library $HQlib is provided via --curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
+		print "\tA custom library $HQlib is provided via --curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
 		my $HQlib_file = basename($HQlib);
 		`ls -s $HQlib $HQlib_file` unless -e $HQlib_file;
 		$HQlib = $HQlib_file;
@@ -305,7 +305,7 @@ if ($HQlib ne ''){
 
 if ($cds ne ''){
 	if (-s $cds){
-		print "\tA CDS file is provided via --cds.\n\n";
+		print "\tA CDS file $cds is provided via --cds. Please make sure this is the DNA sequence of coding regions only.\n\n";
 		my $cds_file = basename($cds);
 		`ls -s $cds $cds_file` unless -e $cds_file;
 		$cds = $cds_file;
@@ -316,9 +316,9 @@ if ($cds ne ''){
 
 if ($rmout ne ''){
 	if (-s $rmout){
-		print "\tA RepeatMasker .out file is provided via --rmout.\n\n";
-		`ls -s $rmout $genome.out` unless -e "$genome.out";
-		$rmout = "$genome.out";
+		print "\tA RepeatMasker .out file $rmout is provided via --rmout.\n\n";
+		$rmout = `realpath $rmout`;
+		chomp $rmout;
 		} else {
 		die "\tERROR: The RepeatMasker .out file $rmout you specified is not found!\n\n";
 		}
@@ -437,8 +437,11 @@ if ($sensitive == 1){
 	`${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome.masked 2>/dev/null`;
 	`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq`;
 
-	# rename RepeatModeler candidates and make stage 2 library
-	`perl $rename_RM RM_*/consensi.fa.classified > $genome.RepeatModeler.raw.fa`;
+	# reclassify RepeatModeler candidates with TEsorter and make stage 2 library
+	`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
+	`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
+	`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
+#	`perl $rename_RM RM_*/consensi.fa.classified > $genome.RepeatModeler.raw.fa`;
 	if (-s "$genome.RepeatModeler.raw.fa"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
@@ -462,13 +465,14 @@ if ($cds ne ''){
 	# report status
 	$date=`date`;
 	chomp ($date);
-	print "$date\tRemove CDS in the EDTA library:\n\n";
 
-	# cleanup CDS with TEsorter
+	# cleanup TE-related sequences in the CDS file with TEsorter
+	print "$date\tClean up TE-related sequences in the CDS file with TEsorter:\n\n";
 	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa`;
 	$cds = "$cds.mod.noTE";
 
-	# remove cds in the EDTA library
+	# remove cds-related sequences in the EDTA library
+	print "\t\t\t\tRemove CDS-related sequences in the EDTA library:\n\n";
 	if (-s "$cds"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
 		`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa 2>/dev/null`;
@@ -493,7 +497,7 @@ if ($cds ne ''){
 		}
 
 	} else {
-	print "\t\t\t\tSkipping the CDS cleaning step (-cds [File]) since no CDS file is provided or it's empty.\n\n";
+	print "\t\t\t\tSkipping the CDS cleaning step (--cds [File]) since no CDS file is provided or it's empty.\n\n";
 	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
 	}
 
@@ -534,9 +538,9 @@ $date=`date`;
 chomp ($date);
 print "$date\tEDTA final stage finished! You may check out:
 		\t\tThe final EDTA TE library: $genome.EDTA.TElib.fa\n";
-print "		\t\tFamily names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff\n" if $HQlib ne '';
-print "\tComparing to the curated library you provided, this are the novel TEs EDTA found: $genome.EDTA.TElib.novel.fa
-	The high-quality library you provided has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
+print "		\t\t\tFamily names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff\n" if $HQlib ne '';
+print "\t\t\t\tComparing to the curated library you provided, this are the novel TEs EDTA found: $genome.EDTA.TElib.novel.fa
+	\t\t\tThe high-quality library you provided has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
 chdir "..";
 
 
@@ -554,14 +558,20 @@ if ($anno == 1){
 	# Make the post-library annotation working directory
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
 	chdir "$genome.EDTA.anno";
-#	`rm -rf $genome.* 2>/dev/null`;
 	`cp ../$genome.EDTA.final/$genome.EDTA.TElib.fa ./`;
 	`cp ../$exclude ./` if $exclude ne '';
 	`ln -s ../$genome $genome` unless -e $genome;
 
 	# annotate TEs using RepeatMasker
-	if ($rmout ne '' and -s "$genome.out"){
-		print STDERR "$date\tA RepeatMasker result file $genome.out is provided! Will use this file without running RepeatMasker.\n\n";
+	if ($rmout ne ''){
+		print STDERR "$date\tA RepeatMasker result file $rmout is provided! Will use this file without running RepeatMasker.\n\n";
+		if (-e "$genome.out"){
+			my $old_rmout = `ls -l $genome.out|perl -nle 'my (\$month, \$day, \$time) = (split)[6,7,8]; \$time =~ s/://; print "\${month}_\${day}_\$time"'`;
+			chomp $old_rmout;
+			print "\t$genome.out is exist in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
+			`mv $genome.out ${genome}_$old_rmout.out`;
+			}
+		`ln -s $rmout $genome.out`;
 		} else {
 		print STDERR "$date\tHomology-based annotation of TEs using $genome.EDTA.TElib.fa from scratch.\n\n";
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
