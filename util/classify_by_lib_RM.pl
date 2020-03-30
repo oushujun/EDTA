@@ -56,7 +56,7 @@ while (<RM>){
 	next if 100 - $div < $min_iden;
 	my $len = $qe - $qs + 1;
 	next if $len < $min_len;
-	$subject =~ s/_I|_LTR$//i; #combine LTR region and internal reigon into one family
+	$subject =~ s/_INT|_LTR$//i; #combine LTR region and internal reigon into one family
 	if (defined $lib{$query}){
 		$lib{$query}{$subject} += $len;
 		} else {

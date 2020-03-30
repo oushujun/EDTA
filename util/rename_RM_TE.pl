@@ -10,7 +10,9 @@ my %hash=("DNA/hAT"=>"DNA/DTA",
           "DNA/PIF-Harbinger"=>"DNA/DTH",
           "DNA/Mutator"=>"DNA/DTM",
           "DNA/Tcl-Mariner"=>"DNA/DTT",
-          "LTR" => "LTR/Unknown",
+          "LTR" => "LTR/unknown",
+          "LINE" => "LINE/unknown",
+          "SINE" => "SINE/unknown",
           "RC/Helitron"=>"DNA/Helitron");
 
 
