@@ -142,7 +142,8 @@ my @getopt_args = (
                     '-genome=s',
                     '-maxDiv=s',
                     '-minDiv=s',
-                    '-genome_size=s'
+                    '-genome_size=s',
+                    '-seq_count=s'
 );
 
 my %options = ();
@@ -169,7 +170,9 @@ $maxDiv = $options{'maxDiv'} if ( defined $options{'maxDiv'} );
 
 # Total genome length
 my $totalSeqLen = 0;
+my $totalSeqNum = 0;
 $totalSeqLen = $options{'genome_size'} if ( defined $options{'genome_size'} );
+$totalSeqNum = $options{'seq_count'} if ( defined $options{'seq_count'} );
 
 my $taxDB;
 my $repDB;
@@ -541,9 +544,10 @@ foreach my $id ( keys %eleStats ) {
   $typeSubType{$type}->{$subType}->{'count'}    += $eleStats{$id}->{'count'};
   $typeSubType{$type}->{$subType}->{'bpmasked'} += $eleStats{$id}->{'bpmasked'};
 }
+$totalSeqNum = scalar( keys( %seqs ) ) unless $totalSeqNum ne 0;
 print "Repeat Classes\n";
 print "==============\n";
-print "Total Sequences: " . scalar( keys( %seqs ) ) . "\n";
+print "Total Sequences: " . $totalSeqNum . "\n";
 print "Total Length: $totalSeqLen bp\n";
 if ( $taxDB ) {
   print "Ancestral Repeats: $ancestralCount ( $ancestralBPMasked bp )\n";
