@@ -399,9 +399,11 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 chdir '../..';
 
 # check results
+$date=`date`;
+chomp ($date);
 die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.raw.fa";
 if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
-	print STDERR "Finish finding TIR candidates.\n\n";
+	print STDERR "$date\tFinish finding TIR candidates.\n\n";
 	} else {
 	`touch "$genome.EDTA.raw/$genome.TIR.raw.fa"`;
 	print STDERR "Warning: The TIR result file has 0 bp!\n\n";
