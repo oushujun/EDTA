@@ -4,10 +4,14 @@ use threads;
 use Thread::Queue;
 use threads::shared;
 
-#usage: perl substract_parallel.pl minuend.list subtrahend.list thread_num
-#Author: Shujun Ou (oushujun@msu.edu), 08/02/2019
+#function: For regions in the subtrahend.list that are nested within or equal to regions in the minuend.list, do;
+#		1. Discard this range if it's the same type with $from, $to (a fragment)
+#		2. Discard this range if it's 80% covering the $from, $to but with different $type (misclassification)
+#		3. Retain this range if the minuent entry is small and has a different $type
+#usage: perl keep_nest.pl minuend.list subtrahend.list thread_num
+#Author: Shujun Ou (shujun.ou.1@gmail.com), 08/02/2019
 
-my $usage = "\n\tperl substract_parallel.pl minuend.list subtrahend.list thread_num\n\n";
+my $usage = "\n\tperl keep_nest.pl minuend.list subtrahend.list thread_num\n\n";
 
 ## read thread number
 my $threads = 4;
@@ -24,7 +28,6 @@ my %substr;
 while (<Subtrahend>){
 	next if /^\s+$/;
 	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
-#print "$chr, $from, $to, $type, $info\n";
 	push @{$substr{$chr}}, [$from, $to, $type, $info];
 	}
 
@@ -80,8 +83,8 @@ sub substract(){
 			next if ($range[1]-$range[0]+1)/($to-$from+1) >= 0.8;
 			# retain this range if the minuent entry is small and has a different $type
 			$diff{"$chr:$range[0]:$range[1]"} = "$chr\t$range[0]\t$range[1]\t$range[2]\t$range[3]";
-#print "$type\t$range[2]\t$range[3]\n" unless defined $range[3];
-print $diff{"$chr:$range[0]:$range[1]"}."=$chr\t$range[0]\t$range[1]\t$range[2]\t$range[3]\n" unless defined $range[3];
+			#print "$type\t$range[2]\t$range[3]\n" unless defined $range[3];
+			print $diff{"$chr:$range[0]:$range[1]"}."=$chr\t$range[0]\t$range[1]\t$range[2]\t$range[3]\n" unless defined $range[3];
 			}
 		}
 	}
