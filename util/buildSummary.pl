@@ -691,7 +691,7 @@ print ""
 ##
 print "Repeat Stats\n";
 print "============\n";
-print "Total Sequences: " . scalar( keys( %seqs ) ) . "\n";
+print "Total Sequences: " . $totalSeqNum . "\n";
 print "Total Length: $totalSeqLen bp\n";
 if ( $taxDB ) {
   print "Ancestral Repeats: $ancestralCount ( $ancestralBPMasked bp )\n";

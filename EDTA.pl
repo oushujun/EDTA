@@ -607,7 +607,7 @@ if ($anno == 1){
 	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
 	`mv $genome.new.masked $genome.MAKER.masked`;
 	my $maker_TE = `perl $count_base $genome.MAKER.masked`;
-	$maker_TE = (split /\s+/, $maker_TE)[-1];
+	$maker_TE = (split /\s+/, $maker_TE)[3];
 	$maker_TE = sprintf("%.2f%%", $maker_TE*100);
 
 	# check results and report status
