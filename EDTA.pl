@@ -364,9 +364,9 @@ if ($force eq 1){
 	}
 
 # check results and report status
-die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa" unless -s "$genome.LTR.raw.fa";
-die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa" unless -s "$genome.TIR.raw.fa";
-die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa" unless -s "$genome.Helitron.raw.fa";
+die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact LTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.LTR.raw.fa";
+die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact TIRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.TIR.raw.fa";
+die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact Helitrons in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.Helitron.raw.fa";
 
 # combine intact TEs
 `cat $genome.LTR.intact.fa $genome.TIR.intact.fa $genome.Helitron.intact.fa > $genome.EDTA.intact.fa`;
@@ -528,8 +528,9 @@ if ($HQlib ne ''){
 	`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib ../$HQlib $genome.EDTA.intact.fa 2>/dev/null`;
 	`perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
 	`perl $rename_by_list $genome.EDTA.intact.bed $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.bed.rename`;
-	`perl $bed2gff $genome.EDTA.intact.bed.rename`;
-	`mv $genome.EDTA.intact.bed.rename.gff $genome.EDTA.intact.gff`; #update intact.gff
+	`mv $genome.EDTA.intact.bed.rename $genome.EDTA.intact.bed`;
+	`perl $bed2gff $genome.EDTA.intact.bed`;
+	`mv $genome.EDTA.intact.bed.gff $genome.EDTA.intact.gff`; #update intact.gff
 	`cp $genome.EDTA.intact.gff ../`; #replace the intact gff that has no lib family info
 	}
 
@@ -588,17 +589,17 @@ if ($anno == 1){
 	`perl $gff2bed $genome.EDTA.RM.gff homology > $genome.EDTA.RM.bed`;
 	`cp ../$genome.EDTA.final/$genome.EDTA.intact.bed ./`;
 	`perl $combine_overlap $genome.EDTA.intact.bed $genome.EDTA.intact.bed.cmb 5`;
+	`perl $get_frag $genome.EDTA.RM.bed $genome.EDTA.intact.bed.cmb $threads`;
 	`perl $keep_nest $genome.EDTA.intact.bed $genome.EDTA.RM.bed $threads`;
-	`perl $keep_nest $genome.EDTA.RM.bed $genome.EDTA.intact.bed.cmb $threads`;
 	`sort -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.TEanno.bed`;
 	`perl $bed2gff $genome.EDTA.TEanno.bed`;
 	`mv $genome.EDTA.TEanno.bed.gff $genome.EDTA.TEanno.gff`;
 
 	# make summary table for the annotation
-	my $genome_size = `perl $count_base $genome`;
-	$genome_size = (split /\s+/, $genome_size)[1] - (split /\s+/, $genome_size)[2];
+	my $genome_info = `perl $count_base $genome`;
+	my ($genome_size, $seq_count) = ((split /\s+/, $genome_info)[1] - (split /\s+/, $genome_info)[2], (split /\s+/, $genome_info)[4]);
 	`perl -nle 'my (\$chr, \$s, \$e, undef, \$supfam, undef, \$anno)=(split); next if \$supfam=~/target_site_duplication|long_terminal_repeat/i; \$anno=~s/ID=//; \$anno=~s/;.*//; print "10000 0.001 0.001 0.001 \$chr \$s \$e NA NA \$anno \$supfam"' $genome.EDTA.TEanno.bed > $genome.EDTA.TEanno.out`;
-	`perl $buildSummary -maxDiv 40 -genome_size $genome_size $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum 2>/dev/null`;
+	`perl $buildSummary -maxDiv 40 -genome_size $genome_size -seq_count $seq_count $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum 2>/dev/null`;
 	my $tot_TE = `grep Total $genome.EDTA.TEanno.sum|grep %|awk '{print \$4}'`;
 	chomp $tot_TE;
 
