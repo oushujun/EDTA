@@ -97,9 +97,9 @@ close All;
 my %category;
 $category{'ltr'}="'RLG\\|RLC\\|RLB\\|RLR\\|RLE\\|LTR\\|RLX\\|Gypsy\\|Copia'";
 $category{'nonltr'}="'SINE\\|LINE\\|Penelope\\|RIT\\|RIL\\|RST\\|RIX\\|RSX'";
-$category{'line'}="'LINE\\|RIL\\|RIT\\|RIX'";
+$category{'line'}="'LINE\\|RIL\\|RIT\\|RIX\\|Penelope'";
 $category{'sine'}="'SINE\\|RST\\|RSX'";
-$category{'tir'}="'TIR\\|MITE\\|hAT\\|MULE\\|MLE\\|MuDR\\|Tourist\\|CACT\\|PILE\\|POLE\\|Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|EnSpm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR\\|DTX\\|DTR\\|DTE\\|Merlin\\|DTP\\|DTB'";
+$category{'tir'}="'TIR\\|MITE\\|hAT\\|hAT-Ac\\|MULE\\|MLE\\|MuDR\\|Tourist\\|CACT\\|PILE\\|POLE\\|Stowaway\\|TcMar-Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|EnSpm\\|CMC-EnSpm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR\\|DTX\\|DTR\\|DTE\\|Merlin\\|DTP\\|DTB'";
 $category{'mite'}="MITE";
 $category{'helitron'}="'Helitron\\|DHH\\|DHX'";
 $category{'total'}="[0-9]"; #grep any line with numbers
