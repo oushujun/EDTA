@@ -9,8 +9,11 @@ my $usage = "\n
 	The RM.out file is generated using a library with family classification to mask the seq.fa file.
 		perl classify_by_lib_RM.pl -seq seq.fa -RM seq.fa.out\n\n";
 
-my $min_iden = 80;
-my $min_len = 80;
+#reclassify based on the 80-80-80 rule
+my $min_iden = 80; #80%
+my $min_len = 80; #80bp
+my $min_cov = 80; #80%
+
 my $seq = '';
 my $RM = '';
 
@@ -75,7 +78,7 @@ foreach my $id (@lib){
 			#$id = "$subjects[0]|$id";
 			$id = "$subjects[0]";
 			}
-		elsif ($subject_len >= $query_len*0.8){
+		elsif ($subject_len >= $query_len*$min_cov/100){
 			#$id = "$subjects[0]|$id";
 			$id = "$subjects[0]";
 			}
