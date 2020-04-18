@@ -38,10 +38,12 @@ while (<Seq>){
 	s/>//g;
 	my ($id, $seq) = (split /\n/, $_, 2);
 	$id = (split /\s+/, $id)[0];
-	$lib{$id} = undef;
-	push @lib, $id;
 	$seq =~ s/\s+//g;
 	$seq{$id} = $seq;
+	my $len = length $seq;
+#	$lib{$id} = undef;
+	$lib{$id} = {'len' => $len};
+	push @lib, $id;
 	}
 close Seq;
 $/ = "\n";
@@ -71,9 +73,13 @@ close RM;
 foreach my $id (@lib){
 	my $ori_id = $id;
 	if (defined $lib{$id}){
+		my $query_len = $lib{$id}{'len'};
+		$lib{$id}{'len'} = 0;
 		my @subjects = sort{$lib{$id}{$b} <=> $lib{$id}{$a}} (keys %{$lib{$id}});
+print "$id\t@subjects \n";
 		my $subject_len = $lib{$id}{$subjects[0]};
-		my ($query_len, $q_class) = (($2 - $1 + 1), $3) if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
+		my $q_class = $3 if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
+#		my ($query_len, $q_class) = (($2 - $1 + 1), $3) if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
 		if ($q_class eq "Helitron"){
 			#$id = "$subjects[0]|$id";
 			$id = "$subjects[0]";
