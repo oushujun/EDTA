@@ -150,4 +150,7 @@ my $HEL = "$genome.Helitron.raw.fa";
 `perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.fa.stg1.raw.cln -rmdnate 0 -rmline 1 -rmprot 1 -protlib $protlib -blast $blast -threads $threads`;
 `perl $rename_TE $genome.LTR.TIR.Helitron.fa.stg1.raw.cln.clean > $genome.LTR.TIR.Helitron.fa.stg1`;
 
+## clean up the folder
+`rm *.masked *.ori.out *.nhr *.nin *.nsq 2>/dev/null`;
+
 chdir '..';
