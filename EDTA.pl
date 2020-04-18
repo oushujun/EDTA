@@ -295,8 +295,10 @@ $genome = "$genome.mod";
 if ($HQlib ne ''){
 	if (-s $HQlib){
 		print "\tA custom library $HQlib is provided via --curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
+		$HQlib = `realpath $HQlib`;
+		chomp $HQlib;
 		my $HQlib_file = basename($HQlib);
-		`ls -s $HQlib $HQlib_file` unless -e $HQlib_file;
+		`ln -s $HQlib $HQlib_file` unless -e $HQlib_file;
 		$HQlib = $HQlib_file;
 		} else {
 		die "\tERROR: The custom library $HQlib you specified is not found!\n\n";
@@ -306,8 +308,10 @@ if ($HQlib ne ''){
 if ($cds ne ''){
 	if (-s $cds){
 		print "\tA CDS file $cds is provided via --cds. Please make sure this is the DNA sequence of coding regions only.\n\n";
+		$cds = `realpath $cds`;
+		chomp $cds;
 		my $cds_file = basename($cds);
-		`ls -s $cds $cds_file` unless -e $cds_file;
+		`ln -s $cds $cds_file` unless -e $cds_file;
 		$cds = $cds_file;
 		} else {
 		die "\tERROR: The CDS file $cds you specified is not found!\n\n";
@@ -417,11 +421,10 @@ print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive
 # Make the final working directory
 `mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
 chdir "$genome.EDTA.final";
-`rm -rf $genome.* 2>/dev/null`;
 `cp ../$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1 ./`;
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
-`cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./`;
+`cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./$genome.EDTA.intact.fa.raw`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.bed ./`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff ./`;
 
@@ -441,7 +444,6 @@ if ($sensitive == 1){
 	`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
 	`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
 	`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
-#	`perl $rename_RM RM_*/consensi.fa.classified > $genome.RepeatModeler.raw.fa`;
 	if (-s "$genome.RepeatModeler.raw.fa"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
@@ -475,19 +477,17 @@ if ($cds ne ''){
 	print "\t\t\t\tRemove CDS-related sequences in the EDTA library:\n\n";
 	if (-s "$cds"){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
-		`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.raw 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
-		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -f $genome.EDTA.intact.fa.masked > $genome.EDTA.intact.fa`;
+		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -f $genome.EDTA.intact.fa.raw.masked > $genome.EDTA.intact.fa.rmCDS`;
 
 		# remove gene seq in intact TEs
-		if (-s "$genome.EDTA.intact.fa.masked.cleanup"){
-			`grep -v -P "Only|head|tail" $genome.EDTA.intact.fa.masked.cleanup | awk '{if (\$2>=0.8) print \$1}' |sort -u | awk '{print "Parent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.fa.masked.cleanup.rmlist`;
-			`perl $output_by_list 1 $genome.EDTA.intact.fa 2 $genome.EDTA.intact.fa.masked.cleanup.rmlist -ex -FA > $genome.EDTA.intact.fa.rmTE`;
-			`mv $genome.EDTA.intact.fa.rmTE $genome.EDTA.intact.fa`; #update intact.fa
-
-			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
-			`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\t\$id" if defined \$id' $genome.EDTA.intact.gff.removed >> $genome.EDTA.intact.fa.masked.cleanup.rmlist`;
-			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
+		if (-s "$genome.EDTA.intact.fa.raw.masked.cleanup"){
+			`grep -v -P "Only|head|tail" $genome.EDTA.intact.fa.raw.masked.cleanup | awk '{if (\$2>=0.8) print \$1}' |sort -u | awk '{print "Parent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist`;
+			`perl $output_by_list 1 $genome.EDTA.intact.fa.rmCDS 2 $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist -ex -FA > $genome.EDTA.intact.fa`; #update intact.fa
+			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
+			`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\t\$id" if defined \$id' $genome.EDTA.intact.gff.removed >> $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist`;
+			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
 			`mv $genome.EDTA.intact.gff.new $genome.EDTA.intact.gff`; #update intact.gff
 			`perl $gff2bed $genome.EDTA.intact.gff structural > $genome.EDTA.intact.bed`; #update intact.bed
 			}
@@ -539,9 +539,9 @@ $date=`date`;
 chomp ($date);
 print "$date\tEDTA final stage finished! You may check out:
 		\t\tThe final EDTA TE library: $genome.EDTA.TElib.fa\n";
-print "		\t\t\tFamily names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff\n" if $HQlib ne '';
-print "\t\t\t\tComparing to the curated library you provided, this are the novel TEs EDTA found: $genome.EDTA.TElib.novel.fa
-	\t\t\tThe high-quality library you provided has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
+print "		\t\tFamily names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff\n" if $HQlib ne '';
+print "\t\t\t\tComparing to the provided library, EDTA found these novel TEs: $genome.EDTA.TElib.novel.fa
+	\t\t\tThe provided library has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
 chdir "..";
 
 
@@ -560,6 +560,7 @@ if ($anno == 1){
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
 	chdir "$genome.EDTA.anno";
 	`cp ../$genome.EDTA.final/$genome.EDTA.TElib.fa ./`;
+	`cp ../$genome.EDTA.final/$genome.EDTA.intact.bed ./`;
 	`cp ../$exclude ./` if $exclude ne '';
 	`ln -s ../$genome $genome` unless -e $genome;
 
@@ -569,7 +570,7 @@ if ($anno == 1){
 		if (-e "$genome.out"){
 			my $old_rmout = `ls -l $genome.out|perl -nle 'my (\$month, \$day, \$time) = (split)[6,7,8]; \$time =~ s/://; print "\${month}_\${day}_\$time"'`;
 			chomp $old_rmout;
-			print "\t$genome.out is exist in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
+			print "\t\t\t\t$genome.out is exist in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
 			`mv $genome.out ${genome}_$old_rmout.out`;
 			}
 		`ln -s $rmout $genome.out`;
@@ -587,7 +588,6 @@ if ($anno == 1){
 
 	# combine homology-based and strutrual-based annotation
 	`perl $gff2bed $genome.EDTA.RM.gff homology > $genome.EDTA.RM.bed`;
-	`cp ../$genome.EDTA.final/$genome.EDTA.intact.bed ./`;
 	`perl $combine_overlap $genome.EDTA.intact.bed $genome.EDTA.intact.bed.cmb 5`;
 	`perl $get_frag $genome.EDTA.RM.bed $genome.EDTA.intact.bed.cmb $threads`;
 	`perl $keep_nest $genome.EDTA.intact.bed $genome.EDTA.RM.bed $threads`;
