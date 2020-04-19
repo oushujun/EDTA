@@ -1,7 +1,8 @@
 Major updates:
 Version 2.5
-1. resolve cat: Argument too long issue
-2. remove intermdediate files
+1. Resolve cat: Argument too long issue
+2. Remove intermdediate files
+3. Skip for the lack of TIR predicitons
 
 Versions 1.21 and 1.22
 1. Replace blastdbcmd with call_seq_by_list.pl for much stable and faster performance

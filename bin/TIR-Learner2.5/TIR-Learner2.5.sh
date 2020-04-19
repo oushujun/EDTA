@@ -19,7 +19,7 @@
 #############
 
 ## pre-set parameters
-version="1.24"
+version="2.5"
 path=$(dirname "$0") #program path
 dir=$(pwd) #current work directory
 rawFile="" #the genome file with relative path

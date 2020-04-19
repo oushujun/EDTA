@@ -109,23 +109,28 @@ if __name__ == '__main__':
 def Predict(file):
     model = load_model(path+'/CNN0912.h5')
     npData=file+spliter+"features.npy"
+    
     prefeature=np.load(npData)
-    predicted_labels = model.predict(np.stack(prefeature))
-    l_class=["DTA","DTC","DTH","DTM","DTT","NonTIR"]
-    y_classes = predicted_labels.argmax(axis=-1)
-    target_integer_encoder = LabelEncoder()
-    target_integer_encoder.fit(l_class)
-    target_integer_encoded = target_integer_encoder.transform(l_class)
-    d={}
-    for i in range(0,len(target_integer_encoded)):
-        d[target_integer_encoded[i]]=l_class[i]
-    preFile=open(file+spliter+"predi.fa","w")
-    records=list(SeqIO.parse(file,"fasta"))
-    y_name=[d[i] for i in y_classes]
-    for i in range (0,len(records)):
-        preFile.write(">"+records[i].id+"_"+y_name[i]+"\n"+str(records[i].seq)+"\n")
-    preFile.close()
+    if (prefeature.shape[0]>=1):
+        predicted_labels = model.predict(np.stack(prefeature))
+        l_class=["DTA","DTC","DTH","DTM","DTT","NonTIR"]
+        y_classes = predicted_labels.argmax(axis=-1)
+        target_integer_encoder = LabelEncoder()
+        target_integer_encoder.fit(l_class)
+        target_integer_encoded = target_integer_encoder.transform(l_class)
+        d={}
+        for i in range(0,len(target_integer_encoded)):
+            d[target_integer_encoded[i]]=l_class[i]
+        preFile=open(file+spliter+"predi.fa","w")
+        records=list(SeqIO.parse(file,"fasta"))
+        y_name=[d[i] for i in y_classes]
+        for i in range (0,len(records)):
+            preFile.write(">"+records[i].id+"_"+y_name[i]+"\n"+str(records[i].seq)+"\n")
+        preFile.close()
+    else:
+        print(file+" has no candidate to be classified")
 
+    
 
 if __name__ == '__main__':
    files=os.listdir(".")
