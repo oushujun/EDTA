@@ -1,0 +1,31 @@
+# TIR-Learner
+# Contributors: Weijia Su (weijia@iastate.edu); Shujun Ou (shujun.ou.1@gmail.com)
+# 07/28/2019
+
+
+# ####################
+# ### Installation ###
+# ####################
+
+conda create -n TIR-Learner
+conda activate TIR-Learner
+conda install -y -c anaconda scikit-learn=0.19.0
+conda install -y -c anaconda biopython pandas glob2 python=3.6
+conda install -y -c bioconda blast
+conda install -y -c conda-forge multiprocess regex tensorflow=1.14.0 keras=2.2.4
+
+
+# #############
+# ### Usage ###
+# #############
+
+Usage: 
+conda activate TIR-Learner
+sh /home/oushujun/las/git_bin/TIR-Learner1.17/TIR-Learner_1.18.sh -g genome.fa -s [Rice|Maize|others] -p [path] -l [int] -t [int]
+	-g	The genome file in multi-FASTA format
+	-s	Specify species: Rice, Maize, or others. Default: others
+	-p	Specify the path to the GRF program
+	-l	Maximum spacer length between the terminal repeat (used in GRF). Default: 5000 (bp)
+	-t	Maximum thread number used in this program. Default: 16
+
+
