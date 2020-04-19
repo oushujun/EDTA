@@ -1,6 +1,7 @@
 Major updates:
 Version 2.5
-1. 
+1. resolve cat: Argument too long issue
+2. remove intermdediate files
 
 Versions 1.21 and 1.22
 1. Replace blastdbcmd with call_seq_by_list.pl for much stable and faster performance
