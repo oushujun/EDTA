@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-use strict;
 use warnings;
+use strict;
 use File::Basename;
 
 #To test the annotation performance of TE libraries by comparing to a reference annotation
