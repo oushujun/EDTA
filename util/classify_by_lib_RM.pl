@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 use Data::Dumper;
 #Shujun Ou (shujun.ou.1@gmail.com)
@@ -41,7 +42,6 @@ while (<Seq>){
 	$seq =~ s/\s+//g;
 	$seq{$id} = $seq;
 	my $len = length $seq;
-#	$lib{$id} = undef;
 	$lib{$id} = {'len' => $len};
 	push @lib, $id;
 	}
@@ -76,16 +76,18 @@ foreach my $id (@lib){
 		my $query_len = $lib{$id}{'len'};
 		$lib{$id}{'len'} = 0;
 		my @subjects = sort{$lib{$id}{$b} <=> $lib{$id}{$a}} (keys %{$lib{$id}});
-print "$id\t@subjects \n";
-		my $subject_len = $lib{$id}{$subjects[0]};
+		my ($topcov, $totcov) = (0, 0);
+		$topcov = $lib{$id}{$subjects[0]}; #coverage of the query by the longest subject hit (%)
+		$topcov = $topcov*100/$query_len;
+
+		$totcov += $lib{$id}{$_} foreach @subjects;
+		$totcov = $totcov*100/$query_len; #total coverage of the query by all subject hits (%)
+
 		my $q_class = $3 if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
-#		my ($query_len, $q_class) = (($2 - $1 + 1), $3) if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
-		if ($q_class eq "Helitron"){
-			#$id = "$subjects[0]|$id";
+		if ($q_class eq "Helitron"){ #rename this disregard coverage if it's a helitron
 			$id = "$subjects[0]";
 			}
-		elsif ($subject_len >= $query_len*$min_cov/100){
-			#$id = "$subjects[0]|$id";
+		elsif ($totcov >= $min_cov and $topcov >= 30){
 			$id = "$subjects[0]";
 			}
 		}
