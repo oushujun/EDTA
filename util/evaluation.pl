@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-use strict;
 use warnings;
+use strict;
 use FindBin;
 
 #Shujun Ou (shujun.ou.1@gmail.com)

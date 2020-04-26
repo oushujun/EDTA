@@ -1,10 +1,12 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
 ##Generate gff3 file from RepeatMasker .out file of LTR_retriever
 ##Usage: perl make_gff3.pl genome.fa.out
 ##Author: Shujun Ou (oushujun@msu.edu), Department of Horticulture, Michigan State University
 ##Version: 1.0 01-27-2018
 
-#!/usr/bin/env perl -w
-use strict;
 
 my $usage = "\n\tperl make_gff3_with_RMout.pl RM.out\n\n";
 die $usage unless -s $ARGV[0];

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-use strict;
 use warnings;
+use strict;
 use FindBin;
 use File::Basename;
 use Getopt::Long;
@@ -509,7 +509,9 @@ if ($cds ne ''){
 
 # check results
 die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
+die "ERROR: Intact TE annotation not found in $genome.EDTA.intact.gff" unless -s "$genome.EDTA.intact.gff";
 `cp $genome.EDTA.TElib.fa ../`;
+`cp $genome.EDTA.intact.gff ../`;
 
 if ($HQlib ne ''){
 	# report status
@@ -518,14 +520,14 @@ if ($HQlib ne ''){
 	print "$date\tCombine the high-quality TE library $HQlib with the EDTA library:\n\n";
 
 	# remove known TEs in the EDTA library
-	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib ../$HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	`mv $genome.EDTA.TElib.fa $genome.EDTA.TElib.ori.fa`;
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
 	`cp $genome.EDTA.TElib.novel.fa $genome.EDTA.TElib.fa ../`;
 
 	# reclassify intact TEs with known TEs
-	`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib ../$HQlib $genome.EDTA.intact.fa 2>/dev/null`;
+	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.intact.fa 2>/dev/null`;
 	`perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
 	`perl $rename_by_list $genome.EDTA.intact.bed $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.bed.rename`;
 	`mv $genome.EDTA.intact.bed.rename $genome.EDTA.intact.bed`;

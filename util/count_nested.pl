@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 #Shujun Ou (oushujun@iastate.edu) 08/10/2019
 

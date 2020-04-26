@@ -1,9 +1,10 @@
 #!/usr/bin/env perl
+use strict;
+use warnings;
+
 # Developed by Yi Liao (yiliao1022@gmail.com, 05/14/2019, UCI)
 # Filter out blast self-alignment and convert blast results to the RECON MSP format.
 
-use strict;
-use warnings;
 
 my $usage = "blastn -outfmt 6 ... | $0 - > blast_msp_recon.txt\n-OR-\n".
     "$0 blasttable.bln > blast_msp_recon.txt\n";

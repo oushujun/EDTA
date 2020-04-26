@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 
 my $usage = "\n\tperl bed2gff.pl EDTA.TE.combo.bed\n\n";

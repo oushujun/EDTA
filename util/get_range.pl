@@ -1,4 +1,5 @@
-#!usr/bin/perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 
 my $usage="to out put some information from the ltrharvest_screen.scn/ltrdigest_tabout.csv/RepeatMasker.out file

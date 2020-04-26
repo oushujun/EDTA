@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 
 #filter DTT candidates with CT***TC**T…A**GA***AG terminal motifs

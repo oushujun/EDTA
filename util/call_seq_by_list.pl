@@ -1,4 +1,5 @@
-#!uer/bin/perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 
 my $usage="\tUsage: perl call_seq_by_list.pl MSU_format_list database(optional, C[custom]) range(optional, itself[default]/up_[int]/down_[int])

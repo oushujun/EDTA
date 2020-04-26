@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-use strict;
 use warnings;
+use strict;
 use FindBin;
 use File::Basename;
 use Pod::Usage;

@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 #Find full length (100%)  exact matches (100%) to the TE library.
 #usage: perl find_flTE.pl genome.fa.out > genome.fa.out.fl
