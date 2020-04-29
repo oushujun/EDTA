@@ -82,12 +82,14 @@ foreach my $id (@lib){
 
 		$totcov += $lib{$id}{$_} foreach @subjects;
 		$totcov = $totcov*100/$query_len; #total coverage of the query by all subject hits (%)
+#		print "$id\t$topcov\t$totcov\n"; #test line
 
 		my $q_class = $3 if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
 		if ($q_class eq "Helitron"){ #rename this disregard coverage if it's a helitron
 			$id = "$subjects[0]";
 			}
-		elsif ($totcov >= $min_cov and $topcov >= 30){
+#		elsif ($totcov >= $min_cov and $topcov >= 30){ #inclusive parameter
+		elsif ($topcov >= $min_cov){
 			$id = "$subjects[0]";
 			}
 		}
