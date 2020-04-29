@@ -46,6 +46,7 @@ while(<LS>){
 	s/^\s+//;
 	chomp;
 	my $loc=(split)[$list_pos];
+	next unless defined $loc;
 	$loc=~s/\|.*$//;
 	$loc=~s/\[.*\]//g;
 	if ($msuL){ #for MSU LOC position recognision 
@@ -62,10 +63,12 @@ while(<DB>){
 	s/>//g;
 	s/^\s+//;
 	my $pos=(split)[$data_pos];
+	next unless defined $pos;
 	if ($pos=~/pos/i){ print $_ }
 	$pos=~s/\[.*\]//g;
 	if ($pos=~/^([0-9]+),.*$/){$pos=$1}
-	my ($p1, $p2)=($1, $2) if $pos=~/(.*)\|(.*)$/;
+	my ($p1, $p2)=(0, 0);
+	($p1, $p2)=($1, $2) if $pos=~/(.*)\|(.*)$/;
 	if ($msuD){
 		$pos=~s/#.*//;
 		$pos=~s/\.+$//;
