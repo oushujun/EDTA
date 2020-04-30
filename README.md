@@ -1,4 +1,4 @@
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/edta/README.html) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/platforms.svg)](https://anaconda.org/bioconda/edta) [![Anaconda-Server Badge](https://anaconda.org/bioconda/ltr_retriever/badges/license.svg)](https://github.com/oushujun/EDTA/blob/master/LICENSE) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/version.svg)](https://anaconda.org/bioconda/edta)
+[![install with bioconda](https://anaconda.org/bioconda/edta/badges/installer/conda.svg)](http://bioconda.github.io/recipes/edta/README.html) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/platforms.svg)](https://anaconda.org/bioconda/edta) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/license.svg)](https://github.com/oushujun/EDTA/blob/master/LICENSE) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/version.svg)](https://anaconda.org/bioconda/edta)
 
 
 # The Extensive *de novo* TE Annotator (EDTA)
@@ -112,10 +112,10 @@ Optional:
       --sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
 				This step is very slow and MAY help to recover some TEs.
       --anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
-      --rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (-anno 1 required). Default: use the EDTA library for annotation.
-      --evaluate	[0|1]	Evaluate (1) classification consistency of the TE annotation. (-anno 1 required). Default: 0.
+      --rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (--anno 1 required). Default: use the EDTA library for annotation.
+      --evaluate	[0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
 				This step is slow and does not affect the annotation result.
-      --exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (-anno 1 required).
+      --exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (--anno 1 required).
       --threads|-t	[int]	Number of theads to run this script (default: 4)
       --help|-h	Display this help info
 
