@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v1.8.4";
+my $version = "v1.8.5";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -427,13 +427,20 @@ chdir "$genome.EDTA.final";
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./$genome.EDTA.intact.fa.raw`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.bed ./`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff ./`;
+`cp ../$exclude ./` if $exclude ne '';
 
 # identify remaining TEs in the genome
 if ($sensitive == 1){
 	print "\t\t\t\tUse RepeatModeler to identify any remaining TEs that are missed by structure-based methods.\n\n";
 	# RepeatMask the genome with the cleanned stage 1 library
 	`ln -s ../$genome $genome` unless -e $genome;
-	`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome 2>/dev/null`;
+	if ($rmout ne ''){
+		print STDERR "$date\tA RepeatMasker result file $rmout is provided! Will use this file without running RepeatMasker.\n\n";
+		`perl $make_masked -genome $genome -rmout $rmout -maxdiv 40 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
+		`mv $genome.new.masked $genome.masked`;
+		} else {
+		`${repeatmasker}RepeatMasker -pa $threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome 2>/dev/null`;
+		}
 
 	# Scan the repeatmasked genome with RepeatModeler for any remaining TEs
 	`${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
@@ -479,12 +486,12 @@ if ($cds ne ''){
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.raw 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
-		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -f $genome.EDTA.intact.fa.raw.masked > $genome.EDTA.intact.fa.rmCDS`;
+		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.raw.masked > $genome.EDTA.intact.fa.rmCDS`;
 
 		# remove gene seq in intact TEs
 		if (-s "$genome.EDTA.intact.fa.raw.masked.cleanup"){
 			`grep -v -P "Only|head|tail" $genome.EDTA.intact.fa.raw.masked.cleanup | awk '{if (\$2>=0.8) print \$1}' |sort -u | awk '{print "Parent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist`;
-			`perl $output_by_list 1 $genome.EDTA.intact.fa.rmCDS 2 $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist -ex -FA > $genome.EDTA.intact.fa`; #update intact.fa
+			`perl $output_by_list 1 $genome.EDTA.intact.fa.raw 2 $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist -ex -FA > $genome.EDTA.intact.fa`; #update intact.fa
 			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
 			`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\t\$id" if defined \$id' $genome.EDTA.intact.gff.removed >> $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist`;
 			`perl $filter_gff $genome.EDTA.intact.gff $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist > $genome.EDTA.intact.gff.new`;
