@@ -88,8 +88,8 @@ foreach my $id (@lib){
 		if ($q_class eq "Helitron"){ #rename this disregard coverage if it's a helitron
 			$id = "$subjects[0]";
 			}
-#		elsif ($totcov >= $min_cov and $topcov >= 30){ #inclusive parameter
-		elsif ($topcov >= $min_cov){
+		elsif ($totcov >= $min_cov and $topcov >= 30){ #inclusive parameter
+#		elsif ($topcov >= $min_cov){
 			$id = "$subjects[0]";
 			}
 		}
