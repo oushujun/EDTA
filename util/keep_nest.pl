@@ -28,8 +28,10 @@ open Diff, ">$ARGV[0]-$ARGV[1]" or die $!;
 my %substr;
 while (<Subtrahend>){
 	next if /^\s+$/;
-	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
-	push @{$substr{$chr}}, [$from, $to, $type, $info];
+	chomp;
+#	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
+	my ($chr, $from, $to, $type)=(split)[0,1,2,11];
+	push @{$substr{$chr}}, [$from, $to, $type, $_];
 	}
 
 ## multi-threading using queue, put candidate regions into queue for parallel computation
@@ -37,10 +39,12 @@ my %diff :shared;
 my $queue = Thread::Queue -> new();
 while (<Minuend>){
 	next if /^\s+$/;
-	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
+	chomp;
+#	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
+	my ($chr, $from, $to, $type)=(split)[0,1,2,11];
 	next unless defined $chr;
 	$diff{"$chr:$from:$to"} = $_; #all minuend info are retained
-	$queue->enqueue([$chr, $from, $to, $type, $info]);
+	$queue->enqueue([$chr, $from, $to, $type]);
 	}
 $queue -> end();
 close Minuend;
@@ -63,9 +67,9 @@ close Diff;
 ## subrotine to perform substraction
 sub substract(){
 	while (defined ($_ = $queue->dequeue())){
-	my ($chr, $from, $to, $type, $info) = (@{$_}[0], @{$_}[1], @{$_}[2], @{$_}[3], @{$_}[4]);
-	foreach my $info (@{$substr{$chr}}){
-		my @range=@{$info}; #[$from, $to, $type, $info]
+	my ($chr, $from, $to, $type) = (@{$_}[0], @{$_}[1], @{$_}[2], @{$_}[3]);
+	foreach my $substr (@{$substr{$chr}}){
+		my @range=@{$substr}; #[$from, $to, $type, $_]
 		# skip this $substr range when its on the left side of $from, $to
 		next if $range[1]<$from;
 		# end the loop when $substr range is on the right side of $from, $to
@@ -73,7 +77,7 @@ sub substract(){
 		# skip when $substr range is overlapping with the start of $from, $to, will let get_frag.pl deal with this
 		next if ($range[0]<$from and $range[1]>=$from);
 		# skip when $substr range is overlapping with the end of $from, $to, will let get_frag.pl deal with this
-		next if ($range[0]>=$to and $range[1]>$to);
+		next if ($range[0]<=$to and $range[1]>$to);
 		# skip when $substr range is covering the entire $from, $to, will let get_frag.pl deal with this
 		next if ($range[0]<$from and $range[1]>$to);
 		# when $substr range is equal to or nested within $from, $to:
@@ -83,9 +87,10 @@ sub substract(){
 			# discard this range if it's 80% covering the $from, $to but with different $type (misclassification)
 			next if ($range[1]-$range[0]+1)/($to-$from+1) >= 0.8;
 			# retain this range if the minuent entry is small and has a different $type
-			$diff{"$chr:$range[0]:$range[1]"} = "$chr\t$range[0]\t$range[1]\t$range[2]\t$range[3]";
+			$diff{"$chr:$range[0]:$range[1]"} = $range[3];
+			#$diff{"$chr:$range[0]:$range[1]"} = "$chr\t$range[0]\t$range[1]\t$range[2]\t$range[3]";
 			#print "$type\t$range[2]\t$range[3]\n" unless defined $range[3];
-			print $diff{"$chr:$range[0]:$range[1]"}."=$chr\t$range[0]\t$range[1]\t$range[2]\t$range[3]\n" unless defined $range[3];
+			#print $diff{"$chr:$range[0]:$range[1]"}."=$chr\t$range[0]\t$range[1]\t$range[2]\t$range[3]\n" unless defined $range[3];
 			}
 		}
 	}
