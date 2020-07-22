@@ -5,9 +5,10 @@ use threads;
 use Thread::Queue;
 use threads::shared;
 
-#function: For regions in the subtrahend.list that are overlapping with regions in the minuend.list, do;
-#		1. Remove the part in the minuend region that are overlapping with the subtrahend region
-#		2. Skip the minuend region that is enclosed in the subtrahend region (this is handeled by the keep_nest.pl script)
+#function: For entries in the subtrahend.list that are overlapping with entries in the minuend.list, do;
+#		1. Discard the minuend entries that are enclosed in subtrahend regions.
+#		    This is handeled by the keep_nest.pl script.
+#		2. Remove the region in the minuend entry that is overlapping with the subtrahend entry
 #		3. Keep the minuend region that is not overlapping with the subtrahend region
 #usage: Modified from substract_parallel.pl
 #	perl get_frag.pl minuend.list subtrahend.list thread_num
@@ -23,15 +24,17 @@ if (defined $ARGV[2]){
 	}
 
 ## minuend − subtrahend = difference
-open Minuend, "<$ARGV[0]" or die $usage;
-open Subtrahend, "<$ARGV[1]" or die $usage;
+open Minuend, "sort -suV $ARGV[0] |" or die $usage;
+open Subtrahend, "sort -suV $ARGV[1] |" or die $usage;
 open Diff, ">$ARGV[0]-$ARGV[1]" or die $!;
 
 my %substr;
 while (<Subtrahend>){
 	next if /^\s+$/;
-	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
-	push @{$substr{$chr}}, [$from, $to, $type, $info];
+	next if /^#/;
+	chomp;
+	my ($chr, $from, $to, $type)=(split)[0,1,2,11];
+	push @{$substr{$chr}}, [$from, $to, $type, $_];
 	}
 
 ## multi-threading using queue, put candidate regions into queue for parallel computation
@@ -39,9 +42,11 @@ my %diff :shared;
 my $queue = Thread::Queue -> new();
 while (<Minuend>){
 	next if /^\s+$/;
-	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
+	next if /^#/;
+	chomp;
+	my ($chr, $from, $to, $type)=(split)[0,1,2,11];
 	next unless defined $chr;
-	$queue->enqueue([$chr, $from, $to, $type, $info]);
+	$queue->enqueue([$chr, $from, $to, $type, $_]);
 	}
 $queue -> end();
 close Minuend;
@@ -65,30 +70,51 @@ close Diff;
 sub substract(){
 	while (defined ($_ = $queue->dequeue())){
 	my $keep=1;
-	my ($chr, $from, $to, $type, $anno) = (@{$_}[0], @{$_}[1], @{$_}[2], @{$_}[3], @{$_}[4]);
+	my ($chr, $from, $to, $type, $entry) = (@{$_}[0], @{$_}[1], @{$_}[2], @{$_}[3], @{$_}[4]);
+	my $info = (split /\s+/, $entry, 4)[3]; #TE info without coordinates
 	Run:
-	foreach my $info (@{$substr{$chr}}){
-		my @range=@{$info};
+	foreach my $substr (@{$substr{$chr}}){
+		my @range=@{$substr}; #[$from, $to, $type, $_]
 		# skip this $substr range when its on the left side of $from, $to
 		next if $range[1]<$from;
+
 		# end the loop when $substr range is on the right side of $from, $to
 		last if $range[0]>$to;
-		# discard this [$from, $to] region when $substr range is covering the entire $from, $to (this is already kept in the keep_nest.pl script)
-		$keep=0 if ($range[0]<=$from and $range[1]>=$to);
-		# keep the region of [$from, $$range[0]-1] when this $substr range is overlapping on the right side of $from, $to
+
+		# if the $substr range is covering the entire [$from, $to], discard this 
+		# [$from, $to] region (this region is taken care of in the keep_nest.pl script)
+		if ($range[0]<=$from and $range[1]>=$to){
+			$keep=0;
+			last;
+			}
+
+		# if the $substr range is enclosed in [$from, $to], keep the difference of [$from, $to]
+		if ($range[0]>=$from and $range[1]<=$to){
+			$range[0]--;
+			$diff{"$chr:$from:$range[0]"} = "$chr\t$from\t$range[0]\t$info" if $range[0]-$from+1 >= $minlen;
+			$from=$range[1]+1;
+			$keep=1;
+			goto Run;
+			}
+
+		# keep the region of [$from, $$range[0]-1] when this $substr range is overlapping 
+		# on the right side of [$from, $to]
 		if ($range[1]>$to){
 			$keep=0;
 			$range[0]--;
-			$diff{"$chr:$from:$range[0]"} = "$chr\t$from\t$range[0]\t$type\t$anno" if $range[0]-$from+1 >= $minlen;
+			$diff{"$chr:$from:$range[0]"} = "$chr\t$from\t$range[0]\t$info" if $range[0]-$from+1 >= $minlen;
+			last;
 			}
-		# change [$from, $to] to  [$range[1]+1, $to] when this $substr range is overlapping on the left side of $from, $to
+
+		# change [$from, $to] to  [$range[1]+1, $to] when this $substr range is overlapping
+		# on the left side of [$from, $to]
 		if ($range[0]<$from){
 			$from=$range[1]+1;
 			$keep=1;
 			goto Run;
 			}
 		}
-	$diff{"$chr:$from:$to"} = "$chr\t$from\t$to\t$type\t$anno" if $keep==1 and $to-$from+1 >= $minlen;
+	$diff{"$chr:$from:$to"} = "$chr\t$from\t$to\t$info" if $keep==1 and $to-$from+1 >= $minlen;
 	$keep=1;
 	}
 	}
