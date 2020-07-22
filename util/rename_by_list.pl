@@ -8,7 +8,7 @@ my $usage = "
 	Replace strings in the target with a conversion list (old, new)
 		perl rename_by_list.pl target list mode[0|1]
 			mode = 0, generic replace (slow)
-			mode = 1, specific for rich .bed files\n\n";
+			mode = 1, specific for gff3 files\n\n";
 
 my $target = $ARGV[0];
 my $list = $ARGV[1];
@@ -23,6 +23,9 @@ while (<List>){
 	chomp;
 	my ($old_id, $new_id) = (split)[0,1];
 	$list{$old_id} = $new_id;
+	$old_id =~ s/#.*//; #make old_id flexible by removing the classification info
+	$new_id =~ s/#.*//;
+	$list{$old_id} = $new_id;
 	}
 close List;
 
@@ -34,9 +37,8 @@ while (<Target>){
 			}
 		}
 	elsif ($mode eq 1){
-		my $id = $2 if /(ID|Parent)=(.*?);/;
+		my $id = $2 if /(Name)=(.*?);/i;
 		my $new = $list{$id} if defined $id and defined $list{$id};
-#print "$id\t$new\n" if defined $new;
 		s/$id/$new/g if defined $new;
 		}
 	print $_;
