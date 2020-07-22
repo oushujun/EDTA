@@ -25,12 +25,16 @@ my %lib = ('DNA', 'DNA', 'MITE', 'DNA', 'Helitron', 'DNA', 'Maverick', 'DNA', 'p
 # read sequence
 $/ = "\n>";
 my %seq;
+my %extra;
 while (<Seq>){
 	s/>//g;
 	my ($id, $seq) = (split /\n/, $_, 2);
-	$id =~ s/\s+.*//;
+	my $extra;
+	($id, $extra) = (split /\s+/, $id, 2);
+	$extra = "NA" unless defined $extra;
 	$seq =~ s/\s+//g;
 	$seq{$id} = $seq;
+	$extra{$id} = $extra;
 	}
 close Seq;
 $/ = "\n";
@@ -46,7 +50,14 @@ while (<Clas>){
 	delete $seq{$id} and next if $ori_superfam ne 'Helitron' and $order eq 'Helitron';
 	delete $seq{$id} and next if $ori_superfam ne 'pararetrovirus' and $order eq 'pararetrovirus';
 	delete $seq{$id} and next if $ori_superfam ne 'Maverick' and $order eq 'Maverick';
-	print Cln_seq ">$id\n$seq{$id}\n" and delete $seq{$id};
+	my $extra = 'NA';
+	$extra = $extra{$id} if defined $extra{$id};
+	if ($extra eq 'NA'){
+		$extra = '';
+		} else {
+		$extra = "\t$extra";
+		}
+	print Cln_seq ">${id}$extra\n$seq{$id}\n" and delete $seq{$id};
 	print Cln_clas "$_\n";
 	}
 
