@@ -1,0 +1,78 @@
+############################################################
+#Sequence ontology for TEs.
+#The first column: case sensitive, exact SO names used by the SO database: http://www.sequenceontology.org
+#The second column: SO IDs used by the database.
+#The third column and further: alias used in everywhere, which are used to make connections with the SO ID. Alias are commer separated with or without spaces. 
+#All commented lines will be ignored.
+#Author: Shujun Ou (shujun.ou.1@gmail.com) 07/02/2020
+############################################################
+
+
+#Sequence_Ontology	SO_ID	Alias
+centromeric_repeat	SO:0001797	centromeric_repeat,Cent,Cent/CentC,CentC,CentM,Centro/tandem
+knob	SO:0002257	knob/knob180,knob/TR-1
+satellite_DNA	SO:0000005	Satellite/rice,satellite,satellite_DNA,minisatellite,microsatellite
+telomeric_repeat	SO:0001496	telomeric_repeat,telomere
+subtelomere	SO:0001997	subtelomere/4-12-1,subtelomere
+low_complexity	SO:0001004	Low_complexity,low_complexity,low_complexity_region
+rDNA_intergenic_spacer_element	SO:0001860	rDNA/spacer
+
+#higher	order
+repeat_region	SO:0000657	Unknown,unknown,unknown/unknown
+retrotransposon	SO:0000180	Class_I,RNA_transposon,retrotransposon
+DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown
+
+#TIR	DNA	transposons
+terminal_inverted_repeat_element	SO:0000208	TIR/unknown,DNA/DTX,DTX,DNAauto/unknown,DNAnona/unknown,DNAauto/PILE,DNAnona/PILE,DNAauto/POLE,DNAnona/POLE,DNA/PILE,MITE/PILE,DNA/POLE,MITE/POLE
+MITE	SO:0000338	MITE,TIR/MITE,MITE/unknown
+CACTA_TIR_transposon	SO:0002285	DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG
+hAT_TIR_transposon	SO:0002279	DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT
+Mutator_TIR_transposon	SO:0002280	DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,DNAauto/MLE,DNAnona/MLE,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,DNA/MLE,MITE/MLE
+PIF_Harbinger_TIR_transposon	SO:0002284	DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist
+Tc1_Mariner_TIR_transposon	SO:0002278	stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1/Mariner,TcMar-Stowaway
+P_TIR_transposon	SO:0001535	P-element,P_element,DNA/DTP
+piggyBac_TIR_transposon	SO:0002283	PiggyBac,DNA/DTB,MITE/DTB
+polinton	SO:0001170	polinton,maverick
+Transib_TIR_transposon	SO:0002282	transib,DNA/DTR,MITE/DTR
+Merlin_TIR_transposon	SO:0002281	Merlin,DNA/DTE,MITE/DTE
+
+#nonTIR	DNA	transposons
+Crypton_YR_transposon	SO:0002277	Crypton,DNA/DYC,DYC
+helitron	SO:0000544	DNAauto/Helitron,DNAnona/Helitron,DNA/Helitron,Helitron
+
+#LTR	retrotransposons
+LTR_retrotransposon	SO:0000186	LTR/unknown,LTR/Solo
+Retrovirus_LTR_retrotransposon	SO:0002267	LTR/retrovirus,retrovirus,LTR/RLR,RLR
+TRIM	SO:0002261	TRIM,LTR/TRIM
+LARD	SO:0002260	LARD,LTR/LARD
+Copia_LTR_retrotransposon	SO:0002264	LTR/Copia,LTR/RLC,RLC,Copia,Ty1
+Gypsy_LTR_retrotransposon	SO:0002265	LTR/Gypsy,LTR/RLG,RLG,Gypsy,Ty3,LTR/CRM
+Bel_Pao_LTR_retrotransposon	SO:0002266	LTR/Bel-Pao,LTR/RLB,Bel-Pao,Bel/Pao
+Endogenous_Retrovirus_LTR_retrotransposon	SO:0002268	LTR/HERV,HERV,LTR/ERV,LTR/RLE,RLE
+
+#nonLTR	retrotransposons
+non_LTR_retrotransposon	SO:0000189	Evirus/ERTBV-A,Evirus/ERTBV-B,Evirus/ERTBV-C,Evirus/ERTBV,pararetrovirus,non_LTR_retrotransposon,non_LTR,nonLTR/unknown
+LINE_element	SO:0000194	LINE/unknown
+R2_LINE_retrotransposon	SO:0002269	LINE/R2,LINE/RIR,nonLTR/RIR,RIR
+Jockey_LINE_retrotransposon	SO:0002271	LINE/Jockey,LINE/RIJ,nonLTR/RIJ,RIJ
+L1_LINE_retrotransposon	SO:0002272	LINE/L1,LINE/RIL,nonLTR/RIL,RIL,LINE-1
+I_LINE_retrotransposon	SO:0002273	LINE/I,LINE/RII,nonLTR/RII
+RTE_LINE_retrotransposon	SO:0002270	LINE/RTE,LINE/RIT,nonLTR/RIT,RIT
+SINE_element	SO:0000206	SINE/unknown,SINE
+tRNA_SINE_retrotransposon	SO:0002274	SINE/tRNA,SINE/RST,nonLTR/RST,RST
+5S_SINE_retrotransposon	SO:0002276	SINE/5S,SINE/RSS,nonLTR/RSS,RSS
+7SL_SINE_retrotransposon	SO:0002275	SINE/7SL,SINE/RSL,nonLTR/RSL,RSL
+YR_retrotransposon	SO:0002286	YR/unknown
+Ngaro_YR_retrotransposon	SO:0002288	YR/Ngaro,YR/RYN,Ngaro,RYN
+DIRS_YR_retrotransposon	SO:0002287	YR/DIRS,YR/RYD,DIRS,RYD
+Viper_YR_retrotransposon	SO:0002289	YR/Viper,YR/RYV,Viper,RYV
+Penelope_retrotransposon	SO:0002290	Penelope,nonLTR/RPP,RPP
+
+#parts
+terminal_inverted_repeat	SO:0000481	terminal_inverted_repeat,TIR
+target_site_duplication	SO:0000434	target_site_duplication,TSD
+primer_binding_site	SO:0005850	primer_binding_site,PBS
+long_terminal_repeat	SO:0000286	long_terminal_repeat,LTR
+U_box	SO:0001788	U_box
+RR_tract	SO:0000435	poly_purine_tract,RR_tract
+
