@@ -93,7 +93,9 @@ while (<Hel2>){
 	my ($id, $seq) = (split /\n/, $_, 2);
 	$seq =~ s/\s+//g;
 	$id =~ s/^.*\|//;
-	my ($chr, $str, $end, $ext_len, $dir, $score) = (split /-/, $id);
+	my ($chr, $str, $end, $ext_len, $dir, $score);
+	($chr, $str, $end, $ext_len, $dir, $score) = ($1, $2, $3, $4, $5, $6) if $id =~ /(.*)\-([0-9]+)\-([0-9]+)\-([0-9]+)\-(forward|reverse)\-([0-9:]+)/;
+	next unless defined $chr;
 	my $loc = "$chr:$str..$end";
 	if ($dir eq "forward"){
 		$dir = "+";
