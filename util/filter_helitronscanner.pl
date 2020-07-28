@@ -132,6 +132,8 @@ foreach (@threads){
 foreach (@threads){
 	$_->join();
 	}
+close Out;
+close Seq;
 
 ## fixing the formatting error created by simutaniously writing the same file
 `perl -i -nle 's/>/\\n>/g unless /^>/; print \$_' $genome.HelitronScanner.filtered.fa`;
@@ -168,6 +170,11 @@ sub filter(){
 	next unless ($tgt_ste eq "TT" or $tgt_ste eq "AT") and $tgt_ste_filter == 1;
 	next if $score_tot < $min_score;
 
+	# filter out candidates if flanking sequences are simple repeat
+	my ($ssr_flank5, $ssr_flank3) = ('NA', 'NA');
+	($ssr_flank5, $ssr_flank3) = (&count_base($flank5), &count_base($flank3));
+	next if $ssr_flank5 eq 'true' or $ssr_flank3 eq 'true';
+
 	# filter out candidates based on repetitiveness of flanking sequence
 	my $decision="true";
 
@@ -178,7 +185,7 @@ sub filter(){
 	my $exec="${blastplus}blastn -subject $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end5=();
 	my $try=0;
-	while ($try<100){ #try 100 times to guarantee the blast is run correctly
+	while ($try<10){ #try 10 times to guarantee the blast is run correctly
 		@blast_end5=qx(bash -c '$exec' 2> /dev/null) if defined $end5;
 		last if $? == 0;
 		$try++;
@@ -189,6 +196,7 @@ sub filter(){
 		$end5_count++ if $iden >= $min_iden and $len >= $end5_len * $min_cov;
 		($end5_repeat = "true", $decision = "false") if $end5_count > 1;
 		}
+	$end5_count = 'NA' unless @blast_end5 > 0;
 
 	# count copy number of the 3' end
 	my $end3_repeat = "false";
@@ -197,7 +205,7 @@ sub filter(){
 	$exec="${blastplus}blastn -subject $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end3=();
 	$try=0;
-	while ($try<100){
+	while ($try<10){
 		@blast_end3=qx(bash -c '$exec' 2> /dev/null) if defined $end3;
 		last if $? == 0;
 		$try++;
@@ -211,6 +219,7 @@ sub filter(){
 			($end3_repeat = "true", $decision = "false") if $end3_count > 1;
 			}
 		}
+	$end3_count = 'NA' unless @blast_end3 > 0;
 
 	# count copy number of the 5' and 3' flanking. If $count>=1, then this candidate locates at a TE and should be a true helitron
 	if ($end5_repeat eq "true" and $end3_repeat eq "true"){
@@ -219,7 +228,7 @@ sub filter(){
 		$exec="${blastplus}blastn -subject $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 		my @blast_flank=();
 		$try=0;
-		while ($try<100){
+		while ($try<10){
 			@blast_flank=qx(bash -c '$exec' 2> /dev/null) if defined $flank;
 			last if $? == 0;
 			$try++;
@@ -234,10 +243,23 @@ sub filter(){
 			}
 		}
 
+	# if flanking blast failed, mark the candidate as false
+	$decision = "false" if $end5_count eq 'NA' or $end3_count eq 'NA';
+
 	print Out "$decision\t$end5_count\t$end3_count\t$chr\t$str\t$end\t$dir\t$loc\t$score_h\t$score_t\t$tgt_ste\t$flank5\t$seq5\t$seq3\t$flank3\n";
 	print Seq ">$chr:$str..$end\t$dir|$tgt_ste|$score\n$helseq\n" if $decision eq "true";
 	}
 	}
-close Out;
-close Seq;
 
+# determine if the given sequence is simple repeat
+sub count_base(){
+	my $seq = lc $_[0];
+	$seq =~ s/[nx]+//gi;
+	my @base = ('a', 't', 'c', 'g');
+	my @count = map { $_ = () = ($seq =~ /$_/gi) } @base; #base count
+	@count = (sort { $b<=>$a } @count); #reverse sort
+	my $dominant_base = ($count[0] + $count[1])/length $seq;
+	my $repeat = "false";
+	$repeat = "true" if $dominant_base >= 0.85;
+	return $repeat;
+	}
