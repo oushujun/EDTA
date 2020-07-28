@@ -166,7 +166,7 @@ sub purifier(){
 			my $exec = "timeout 188s ${blastplus}blastn -db $TE1 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 			my @blast_te1 = ();
 			my $try = 0;
-			while ($try < 100){ #try 100 times to guarantee the blast is run correctly
+			while ($try < 10){ #try 10 times to guarantee the blast is run correctly
 				@blast_te1 = qx(bash -c '$exec' 2> /dev/null) if defined $seq;
 				last if $? == 0;
 				$try++;
@@ -182,7 +182,7 @@ sub purifier(){
 			$exec = "timeout 188s ${blastplus}blastn -db $TE2 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 			my @blast_te2 = ();
 			$try = 0;
-			while ($try < 100){ #try 100 times to guarantee the blast is run correctly
+			while ($try < 10){ #try 10 times to guarantee the blast is run correctly
 				@blast_te2 = qx(bash -c '$exec' 2> /dev/null) if defined $seq;
 				last if $? == 0;
 				$try++;
