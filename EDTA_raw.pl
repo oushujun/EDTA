@@ -268,13 +268,13 @@ chdir "$genome.EDTA.raw/LTR";
 # Try to recover existing results
 chomp ($date = `date`);
 if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.LTR.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.LTR.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
 # run LTRharvest
 if ($overwrite eq 0 and -s "$genome.harvest.scn"){
-	print STDERR "$date\tExisting raw result $genome.harvest.scn found! Will use this for further analyses.\n\n";
+	print STDERR "$date\tExisting raw result $genome.harvest.scn found!\n\t\t\t\tWill use this for further analyses.\n\n";
 	} else {
 	`${genometools}gt suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
 	`${genometools}gt ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
@@ -283,7 +283,7 @@ if ($overwrite eq 0 and -s "$genome.harvest.scn"){
 
 # run LTR_FINDER_parallel
 if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
-	print STDERR "$date\tExisting raw result $genome.finder.combine.scn found! Will use this for further analyses.\n\n";
+	print STDERR "$date\tExisting raw result $genome.finder.combine.scn found!\n\t\t\t\tWill use this for further analyses.\n\n";
 	} else {
 	`perl $LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;
 	}
@@ -372,7 +372,7 @@ chdir "$genome.EDTA.raw/TIR";
 # Try to recover existing results
 chomp ($date = `date`);
 if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.TIR.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.TIR.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
 	print STDERR "Species: $species\n";
@@ -405,7 +405,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 
 	# get gff3 of intact TIR elements
 	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$method, \$supfam, \$s, \$e, \$anno) = (split)[0,1,2,3,4,8]; my \$class='DNA'; \$class='MITE' if \$e-\$s+1 <= 600; my (\$tir, \$iden, \$tsd)=(\$1, \$2/100, \$3) if \$anno=~/TIR:(.*)_([0-9.]+)_TSD:([a-z0-9._]+)_LEN/i; print "\$chr \$s \$e \$chr:\$s..\$e \$class/\$supfam structural \$iden . . . TSD=\$tsd;TIR=\$tir"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 4 - 1 $genome.TIR.raw.fa -MSU0 -MSU1 > $genome.TIR.intact.bed`;
-	`perl $bed2gff $genome.TIR.intact.bed > $genome.TIR.intact.gff3`;
+	`perl $bed2gff $genome.TIR.intact.bed TIR > $genome.TIR.intact.gff3`;
 	`cp $genome.TIR.raw.fa $genome.TIR.intact.fa`;
 	}
 
@@ -442,7 +442,7 @@ chdir "$genome.EDTA.raw/Helitron";
 # Try to recover existing results
 chomp ($date = `date`);
 if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.Helitron.raw.fa found! Will keep this file without rerunning this module.\n\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.Helitron.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
@@ -473,7 +473,7 @@ if ($beta2 == 1){
 # get intact Helitrons and gff3
 `cp $genome.Helitron.raw.fa $genome.Helitron.intact.fa`;
 `perl $make_bed $genome.Helitron.intact.fa > $genome.Helitron.intact.bed`;
-`perl $bed2gff $genome.Helitron.intact.bed > $genome.Helitron.intact.gff3`;
+`perl $bed2gff $genome.Helitron.intact.bed HEL > $genome.Helitron.intact.gff3`;
 	}
 
 # copy result files out
