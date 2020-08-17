@@ -25,7 +25,8 @@ while (<GFF>){
 
 	# get class info for summary categories
 	$class = $sequence_ontology;
-	if ($class =~ /(^LTR_retrotransposon|_LTR_retrotransposon|long_terminal_repeat|TRIM|LARD)/i){
+	$class = 'non_LTR' if $class eq "non_LTR_retrotransposon";
+	if ($class =~ /(LTR_retrotransposon|_LTR_retrotransposon|long_terminal_repeat|TRIM|LARD)/i){
 		$class =~ s/_LTR_retrotransposon//i;
 		$class = "unknown" if $class eq "LTR_retrotransposon";
 		$class = "LTR/$class";
@@ -38,8 +39,8 @@ while (<GFF>){
 		$class = "TIR/$class";
 		$type = "TIR";
 		}
-	if ($class =~ /(non_LTR_retrotransposon|LINE_element|LINE_retrotransposon|SINE_element|SINE_retrotransposon|YR_retrotransposon)/i){
-		$class = "unknown" if $class eq "non_LTR_retrotransposon";
+	if ($class =~ /(non_LTR|LINE_element|LINE_retrotransposon|SINE_element|SINE_retrotransposon|YR_retrotransposon)/i){
+		$class = "unknown" if $class eq "non_LTR";
 		$class =~ s/_retrotransposon//i;
 		$class = "nonLTR/$class";
 		}
@@ -51,8 +52,10 @@ while (<GFF>){
 	$type = "knob" if $sequence_ontology =~ /knob/i;
 	$type = "LINE" if $sequence_ontology =~ /LINE|RIL/i;
 	$type = "SINE" if $sequence_ontology =~ /SINE|RIS/i;
+	$type = "nonLTR" if $sequence_ontology =~ /non_LTR/i;
 	$type = "rDNA" if $sequence_ontology =~ /rDNA/i;
 	$type = "satellite" if $sequence_ontology =~ /satellite/i;
+	$type = "low_complexity" if $sequence_ontology =~ /low_complexity/i;
 	$type = "telomere" if $sequence_ontology =~ /telomer/i;
 	$type = "subtelomere" if $sequence_ontology =~ /subtelomer/i;
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
@@ -72,6 +75,7 @@ while (<GFF>){
 
 	# skip some entries
 	next if $sequence_ontology =~ /(target_site_duplication|primer_binding_site|U_box|RR_tract)/i;
+#print "$_\n" unless defined $TE_class;
 	next if $sequence_ontology eq "repeat_region" and $TE_class =~ /LTR/i;
 	next if $sequence_ontology eq "long_terminal_repeat" and $method =~ /structural/i;
 
