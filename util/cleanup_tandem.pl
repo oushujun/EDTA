@@ -42,7 +42,6 @@ my $max_seed=2000; #maximum period size to report
 my $cleanN=0; #1 will remove $target="n" in output sequence
 my $trf=1; #1 will enable tandem repeat finder (default), 0 will not
 my $cleanT=0; #1 will distard the entire sequence if any terminal sequence (head/tail) contains >= 10 bp of $target="n"; #0 will not do so.
-#my $trf_path="$script_path/../bin/TRF/trf409.legacylinux64"; #Path to the trf program, default Linux version
 my $trf_path='';
 my $file;
 

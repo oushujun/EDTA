@@ -23,6 +23,7 @@ while (<FA>){
 	if ($class =~ /LTR/i){
 		my ($loc, $part) = ('', '');
 		($loc, $part) = ($1, $2) if $fam =~ /^(.*)_(LTR|INT)$/i;
+		$loc = "$loc#$class";
 		if (exists $data{$loc}){
 			$data{$loc} .= ">TE_${num}_$part#$class\n$seq\n";
 			} else {

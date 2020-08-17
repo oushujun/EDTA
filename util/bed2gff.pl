@@ -51,8 +51,8 @@ while (<BED>){
 		$so = "repeat_region";
 		}
 	$extra = '' unless defined $extra;
-	$extra = '' if $extra eq 'NA';
-	if ($extra eq '.'){
+	$extra = '' if $extra eq 'NA' or $extra eq '.';
+	if ($extra eq ''){
 		$extra = '';
 		} else {
 		$extra = ";$extra";

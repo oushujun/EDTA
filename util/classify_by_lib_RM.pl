@@ -77,15 +77,14 @@ foreach my $id (@lib){
 		$lib{$id}{'len'} = 0;
 		my @subjects = sort{$lib{$id}{$b} <=> $lib{$id}{$a}} (keys %{$lib{$id}});
 		my ($topcov, $totcov) = (0, 0);
-		$topcov = $lib{$id}{$subjects[0]}; #coverage of the query by the longest subject hit (%)
-		$topcov = $topcov*100/$query_len;
+#		$topcov = $lib{$id}{$subjects[0]}; #coverage of the query by the longest subject hit (%)
+#		$topcov = $topcov*100/$query_len;
 
 		$totcov += $lib{$id}{$_} foreach @subjects;
 		$totcov = $totcov*100/$query_len; #total coverage of the query by all subject hits (%)
-#		print "$id\t$topcov\t$totcov\n"; #test line
 
 		my $q_class = $3 if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
-		if ($q_class eq "Helitron"){ #rename this disregard coverage if it's a helitron
+		if ($q_class eq "Helitron" and @subjects > 1){ #rename this disregard coverage if it's a helitron
 			$id = "$subjects[0]";
 			}
 		elsif ($totcov >= $min_cov and $topcov >= 30){ #inclusive parameter

@@ -9,7 +9,6 @@ my ($dmr, $out, $max_gap); #$max_gap, gaps between this length (bp) will be join
 $max_gap = 0 unless defined $max_gap;
 die usage() unless @ARGV >= 2;
 open DMR,"sort -suV $dmr |" or die "$!";
-#open DMR,"sort -t \$'\t' -k1,1 -k2n,2 -k3n,3 $dmr |" or die "$!";
 open OUT, ">$out" or die "$!";
 while (my $line = <DMR>){
 	chomp $line;
