@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v1.8.5";
+my $version = "v1.9.0";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -16,6 +16,7 @@ my $version = "v1.8.5";
 #v1.6 11/09/2019
 #v1.7 12/25/2019
 #v1.8 02/09/2020
+#v1.9 07/24/2020
 
 print "
 ########################################################
@@ -113,6 +114,7 @@ my $gff2bed = "$script_path/util/gff2bed.pl";
 my $get_frag = "$script_path/util/get_frag.pl";
 my $keep_nest = "$script_path/util/keep_nest.pl";
 my $combine_overlap = "$script_path/util/combine_overlap.pl";
+my $split_overlap = "$script_path/util/split_overlap.pl";
 my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
@@ -209,6 +211,7 @@ die "The script gff2bed.pl is not found in $gff2bed!\n" unless -s $gff2bed;
 die "The script get_frag.pl is not found in $get_frag!\n" unless -s $get_frag;
 die "The script keep_nest.pl is not found in $keep_nest!\n" unless -s $keep_nest;
 die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -s $combine_overlap;
+die "The script split_overlap.pl is not found in $split_overlap!\n" unless -s $split_overlap;
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
@@ -397,7 +400,7 @@ die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.
 
 # combine intact TEs
 `cat $genome.LTR.intact.fa $genome.TIR.intact.fa $genome.Helitron.intact.fa > $genome.EDTA.intact.fa`;
-`cat $genome.TIR.intact.bed $genome.Helitron.intact.bed | perl $bed2gff - > $genome.EDTA.intact.gff3.raw`;
+`cat $genome.TIR.intact.bed $genome.Helitron.intact.bed | perl $bed2gff - TE_struc > $genome.EDTA.intact.gff3.raw`;
 `cat $genome.LTR.intact.gff3 >> $genome.EDTA.intact.gff3.raw`;
 `sort -sV -k1,1 -k4,4 $genome.EDTA.intact.gff3.raw | grep -v '^#' > $genome.EDTA.intact.gff3; rm $genome.EDTA.intact.gff3.raw`;
 `cp $genome.EDTA.intact.gff3 ../`;
@@ -444,7 +447,6 @@ chdir "$genome.EDTA.final";
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./$genome.EDTA.intact.fa.raw`;
-#`cp ../$genome.EDTA.raw/$genome.EDTA.intact.bed ./`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff3 ./`;
 `cp ../$exclude ./` if $exclude ne '';
 
@@ -468,9 +470,9 @@ if ($sensitive == 1){
 
 	# reclassify RepeatModeler candidates with TEsorter and make stage 2 library
 	`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
-	`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
-	`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
-	if (-s "$genome.RepeatModeler.raw.fa"){
+	if (-s "$genome.RM.consensi.fa"){
+		`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
+		`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
 		`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
 		`cat $genome.RepeatModeler.fa.stg1 $genome.LTR.TIR.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
@@ -496,7 +498,7 @@ if ($cds ne ''){
 	# cleanup TE-related sequences in the CDS file with TEsorter
 	print "$date\tClean up TE-related sequences in the CDS file with TEsorter:\n\n";
 	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa`;
-	$cds = "$cds.mod.noTE";
+	$cds = "$cds.code.noTE";
 
 	# remove cds-related sequences in the EDTA library
 	print "\t\t\t\tRemove CDS-related sequences in the EDTA library:\n\n";
@@ -514,10 +516,9 @@ if ($cds ne ''){
 			`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\t\$id\nName\t\$id" if defined \$id' $genome.EDTA.intact.gff3.removed >> $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist`;
 			`perl $filter_gff $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist > $genome.EDTA.intact.gff3.new`;
 			`mv $genome.EDTA.intact.gff3.new $genome.EDTA.intact.gff3`; #update intact.gff
-	#		`perl $gff2bed $genome.EDTA.intact.gff3 structural > $genome.EDTA.intact.bed`; #update intact.bed
 			}
 		} else {
-		print STDERR "\t\t\t\tWarning: No CDS left after clean up ($cds.mod.noTE empty). Will not clean CDS in the raw lib.\n\n";
+		print STDERR "\t\t\t\tWarning: No CDS left after clean up ($cds.code.noTE empty). Will not clean CDS in the raw lib.\n\n";
 		`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
 		}
 
@@ -582,7 +583,6 @@ if ($anno == 1){
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
 	chdir "$genome.EDTA.anno";
 	`cp ../$genome.EDTA.final/$genome.EDTA.TElib.fa ./`;
-#	`cp ../$genome.EDTA.final/$genome.EDTA.intact.bed ./`;
 	`cp ../$genome.EDTA.final/$genome.EDTA.intact.gff3 ./`;
 	`cp ../$exclude ./` if $exclude ne '';
 	`ln -s ../$genome $genome` unless -e $genome;
@@ -593,7 +593,7 @@ if ($anno == 1){
 		if (-e "$genome.out"){
 			my $old_rmout = `ls -l $genome.out|perl -nle 'my (\$month, \$day, \$time) = (split)[6,7,8]; \$time =~ s/://; print "\${month}_\${day}_\$time"'`;
 			chomp $old_rmout;
-			print "\t\t\t\t$genome.out is exist in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
+			print "\t\t\t\t$genome.out exists in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
 			`mv $genome.out ${genome}_$old_rmout.out`;
 			}
 		`ln -s $rmout $genome.out`;
@@ -606,24 +606,31 @@ if ($anno == 1){
 	# exclude regions from TE annotation and make whole-genome TE annotation
 	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
 	`mv $genome.out.new $genome.EDTA.RM.out`;
-	`perl $RMout2bed $genome.EDTA.RM.out > $genome.EDTA.RM.bed`;
-	`perl $bed2gff $genome.EDTA.RM.bed > $genome.EDTA.RM.gff3`;
-#	`perl $make_gff3 $genome.EDTA.RM.out`;
-#	`mv $genome.EDTA.RM.out.gff3 $genome.EDTA.RM.gff3`;
+	`perl $RMout2bed $genome.EDTA.RM.out > $genome.EDTA.RM.bed`; # a regular enriched bed
+	`perl $bed2gff $genome.EDTA.RM.bed TE_homo > $genome.EDTA.RM.gff3`;
+	`perl $gff2bed $genome.EDTA.RM.gff3 homology > $genome.EDTA.RM.bed`; # add the last column to this bed
 
-	# combine homology-based and strutrual-based annotation
-#	`perl $gff2bed $genome.EDTA.RM.gff3 homology > $genome.EDTA.RM.bed`;
+	# combine homology-based and strutrual-based annotation (partly overlapping)
 	`perl $gff2bed $genome.EDTA.intact.gff3 structural > $genome.EDTA.intact.bed`;
 	`perl $combine_overlap $genome.EDTA.intact.bed $genome.EDTA.intact.bed.cmb 5`;
 	`perl $get_frag $genome.EDTA.RM.bed $genome.EDTA.intact.bed.cmb $threads`;
 	`perl $keep_nest $genome.EDTA.intact.bed $genome.EDTA.RM.bed $threads`;
-	`sort -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.TEanno.bed`;
-	`perl $bed2gff $genome.EDTA.TEanno.bed > $genome.EDTA.TEanno.gff3`;
+	`grep homology $genome.EDTA.intact.bed-$genome.EDTA.RM.bed > $genome.EDTA.intact.bed-$genome.EDTA.RM.bed.homo`;
+	`sort -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed.homo $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.homo.bed`;
+	`perl $bed2gff $genome.EDTA.homo.bed TE_homo > $genome.EDTA.homo.gff3`;
+	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
+	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##Identity: Sequence identity (0-1) between the library sequence and the target region.\\n##ltr_identity: Sequence identity (0-1) between the left and right LTR regions.\\n##tsd: target site duplication.\\n##seqid source sequence_ontology start end score strand phase attributes\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
+	`rm $genome.EDTA.TEanno.gff3.raw`;
 
-	# make summary table for the annotation
+	# make non-overlapping annotation
+	`perl $gff2bed $genome.EDTA.TEanno.gff3 structural > $genome.EDTA.TEanno.bed`;
+	`perl $split_overlap $genome.EDTA.TEanno.bed $genome.EDTA.TEanno.split.bed`;
+	`perl $bed2gff $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.split.gff3`;
+
+	# make summary table for the non-overlapping annotation
 	my $genome_info = `perl $count_base $genome`;
 	my ($genome_size, $seq_count) = ((split /\s+/, $genome_info)[1] - (split /\s+/, $genome_info)[2], (split /\s+/, $genome_info)[4]);
-	`perl -nle 'my (\$chr, \$s, \$e, undef, \$supfam, undef, \$anno)=(split); next if \$supfam=~/target_site_duplication|long_terminal_repeat/i; \$anno=~s/ID=//; \$anno=~s/;.*//; print "10000 0.001 0.001 0.001 \$chr \$s \$e NA NA \$anno \$supfam"' $genome.EDTA.TEanno.bed > $genome.EDTA.TEanno.out`;
+	`perl -nle 'my (\$chr, \$s, \$e, \$anno, \$dir, \$supfam)=(split)[0,1,2,3,8,12]; print "10000 0.001 0.001 0.001 \$chr \$s \$e NA \$dir \$anno \$supfam"' $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.out`;
 	`perl $buildSummary -maxDiv 40 -genome_size $genome_size -seq_count $seq_count $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum 2>/dev/null`;
 	my $tot_TE = `grep Total $genome.EDTA.TEanno.sum|grep %|awk '{print \$4}'`;
 	chomp $tot_TE;
