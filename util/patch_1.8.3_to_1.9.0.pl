@@ -37,9 +37,10 @@ my $count_base = "$script_path/count_base.pl";
 my $buildSummary = "$script_path/buildSummary.pl";
 my $date = '';
 
-print "\nStart to patch old EDTA annotations to the v1.9.0 version...\n";
+print "\nWorking on the genome: ${genome_path}$genome\n";
+print "Start to patch old EDTA annotations to the v1.9.0 version...\n";
 
-#if (0){ # test line
+if (1){ # test line
 ## LTR
 chomp ($date = `date`);
 print "$date\tFixing LTR outputs...\n";
@@ -86,6 +87,7 @@ chdir "$genome.EDTA.raw";
 `sort -sV -k1,1 -k4,4 $genome.EDTA.intact.gff3.raw | grep -v '^#' > $genome.EDTA.intact.gff3; rm $genome.EDTA.intact.gff3.raw`;
 `cp $genome.EDTA.intact.gff3 ../`;
 chdir "../";
+} #test
 
 ## final
 chomp ($date = `date`);
@@ -111,8 +113,7 @@ if (-s "$genome.EDTA.intact.fa.rename.list"){
         `cp $genome.EDTA.intact.gff3 ../`; #replace the intact gff that has no lib family info
  	}
 chdir "../";
-#exit;
-
+#exit; #test
 
 ## Anno
 chomp ($date = `date`);
