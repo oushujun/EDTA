@@ -7,9 +7,11 @@ use strict;
 my ($dmr, $out, $max_gap); #$max_gap, gaps between this length (bp) will be joined
 ($dmr, $out, $max_gap) = @ARGV;
 $max_gap = 0 unless defined $max_gap;
-die usage() unless @ARGV >= 2;
+$out = '' unless defined $out;
+
+die usage() unless @ARGV >= 1;
 open DMR,"sort -suV $dmr |" or die "$!";
-open OUT, ">$out" or die "$!";
+open OUT, ">$out" or die "$!" if $out ne '';
 while (my $line = <DMR>){
 	chomp $line;
 	next if $line =~ /^\s+$/;
@@ -18,7 +20,11 @@ while (my $line = <DMR>){
 	PATH:{ #loop the entire file except the first line
 		$line = <DMR>;
 		if (!$line){
-			print OUT "$chr1\t$stt1\t$end1\t$info1\n"; #print out the last line
+			if ($out ne ''){
+				print OUT "$chr1\t$stt1\t$end1\t$info1\n"; #print out the last line
+				} else {
+				print "$chr1\t$stt1\t$end1\t$info1\n"; #print out the last line
+				}
 			} 
 		else {
 			my ($chr2, $stt2, $end2, $info2) = (split /\s+/, $line, 4);
@@ -30,7 +36,11 @@ while (my $line = <DMR>){
 				redo PATH;
 				}
 			else {
-				print OUT "$chr1\t$stt1\t$end1\t$info1\n";
+				if ($out ne ''){
+					print OUT "$chr1\t$stt1\t$end1\t$info1\n";
+					} else {
+					print "$chr1\t$stt1\t$end1\t$info1\n";
+					}
 				($chr1, $stt1, $end1, $info1) = ($chr2, $stt2, $end2, $info2);
 				redo PATH;
 				}
