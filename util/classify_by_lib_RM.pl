@@ -77,8 +77,8 @@ foreach my $id (@lib){
 		$lib{$id}{'len'} = 0;
 		my @subjects = sort{$lib{$id}{$b} <=> $lib{$id}{$a}} (keys %{$lib{$id}});
 		my ($topcov, $totcov) = (0, 0);
-#		$topcov = $lib{$id}{$subjects[0]}; #coverage of the query by the longest subject hit (%)
-#		$topcov = $topcov*100/$query_len;
+		$topcov = $lib{$id}{$subjects[0]}; #coverage of the query by the longest subject hit (%)
+		$topcov = $topcov*100/$query_len;
 
 		$totcov += $lib{$id}{$_} foreach @subjects;
 		$totcov = $totcov*100/$query_len; #total coverage of the query by all subject hits (%)
