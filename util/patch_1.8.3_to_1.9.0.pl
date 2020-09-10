@@ -97,7 +97,7 @@ chdir "$genome.EDTA.final";
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./$genome.EDTA.intact.fa.raw`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff3 ./`;
 
-my $ls = `ls $genome*masked.cleanup.rmlist`;
+my $ls = `ls $genome*`;
 if ($ls =~ /masked.cleanup.rmlist/){
 	`cat $genome*masked.cleanup.rmlist | perl -nle 's/#.*//; print \$_' > $genome.EDTA.intact.fa.masked.cleanup.rmlist.all`; #update
 	`perl $filter_gff $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.masked.cleanup.rmlist.all > $genome.EDTA.intact.gff3.new`;
