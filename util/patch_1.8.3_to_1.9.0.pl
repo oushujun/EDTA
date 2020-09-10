@@ -21,7 +21,7 @@ $threads = $ARGV[1] if defined $ARGV[1] and $ARGV[1] =~ /^\d+$/;
 #dependencies
 my $script_path = $FindBin::Bin;
 my $filter_gff = "$script_path/filter_gff3.pl";
-my $make_gff3 = "~/las/git_bin/LTR_retriever/bin/make_gff3.pl";
+my $make_gff3 = "$script_path/make_gff3.pl";
 my $output_by_list = "$script_path/output_by_list.pl";
 my $bed2gff = "$script_path/bed2gff.pl";
 my $make_bed = "$script_path/make_bed_with_intact.pl";
