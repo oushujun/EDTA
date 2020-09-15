@@ -484,7 +484,7 @@ if ($sensitive == 1){
 		`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
 		}
 	} else {
-	print "\t\t\t\tSkipping the RepeatModeler step (-sensitive 0).\n\t\t\t\tRun EDTA.pl --step final --sensitive 1 if you want to use RepeatModeler.\n\n";
+	print "\t\t\t\tSkipping the RepeatModeler step (--sensitive 0).\n\t\t\t\tRun EDTA.pl --step final --sensitive 1 if you want to use RepeatModeler.\n\n";
 	`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
 	}
 
@@ -520,11 +520,13 @@ if ($cds ne ''){
 		} else {
 		print STDERR "\t\t\t\tWarning: No CDS left after clean up ($cds.code.noTE empty). Will not clean CDS in the raw lib.\n\n";
 		`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
+		`cp $genome.EDTA.intact.fa.raw $genome.EDTA.intact.fa`;
 		}
 
 	} else {
 	print "\t\t\t\tSkipping the CDS cleaning step (--cds [File]) since no CDS file is provided or it's empty.\n\n";
 	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
+	`cp $genome.EDTA.intact.fa.raw $genome.EDTA.intact.fa`;
 	}
 
 # Final rounds of redundancy removal and make final EDTA library
@@ -550,14 +552,15 @@ if ($HQlib ne ''){
 	`mv $genome.EDTA.TElib.fa $genome.EDTA.TElib.ori.fa`;
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
 	`cp $genome.EDTA.TElib.novel.fa $genome.EDTA.TElib.fa ../`;
-
-	# reclassify intact TEs with known TEs
-	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.intact.fa 2>/dev/null`;
-	`perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
-	`perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
-	`mv $genome.EDTA.intact.gff3.rename $genome.EDTA.intact.gff3`;
-	`cp $genome.EDTA.intact.gff3 ../`; #replace the intact gff that has no lib family info
 	}
+
+# reclassify intact TEs with the TE lib
+`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa 2>/dev/null`;
+`perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
+`perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
+`mv $genome.EDTA.intact.fa.rename $genome.EDTA.intact.fa`;
+`mv $genome.EDTA.intact.gff3.rename $genome.EDTA.intact.gff3`;
+`cp $genome.EDTA.intact.gff3 ../`; #replace the intact gff that has no lib family info
 
 # report status
 chomp ($date = `date`);
