@@ -95,7 +95,7 @@ $/ = "\n";
 
 # Repeatmask TE1 with TE2; make blast db for $TE1 and $TE2
 my $div = 100 - $miniden;
-`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -div $div -lib $TE2 $TE1 2>/dev/null`;
+`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div $div -lib $TE2 $TE1 2>/dev/null`;
 `${blastplus}makeblastdb -in $TE1 -out $TE1 -dbtype nucl 2> /dev/null`;
 `${blastplus}makeblastdb -in $TE2 -out $TE2 -dbtype nucl 2> /dev/null`;
 

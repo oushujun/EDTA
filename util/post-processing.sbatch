@@ -33,7 +33,7 @@ rawlib=$rawlib.noTandem.rename
 
 lib=$rawlib.cln5
 
-/usr/bin/time -v RepeatMasker -pa 36 -q -no_is -norna -nolow -div 40 -lib $lib -cutoff 225 $name
+/usr/bin/time -v RepeatMasker -e ncbi -pa 36 -q -no_is -norna -nolow -div 40 -lib $lib -cutoff 225 $name
 cp -r * $path
 cd $path
 
