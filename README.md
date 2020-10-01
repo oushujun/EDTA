@@ -142,7 +142,7 @@ If you developed a new TE method/got a TE library and want to compare it's annot
 
 1.annotate the rice genome with your test library:
 
-    RepeatMasker -pa 36 -q -no_is -norna -nolow -div 40 -lib custom.TE.lib.fasta -cutoff 225 rice_genome.fasta
+    RepeatMasker -e ncbi -pa 36 -q -no_is -norna -nolow -div 40 -lib custom.TE.lib.fasta -cutoff 225 rice_genome.fasta
 
 2.Test the annotation performance of a particular TE category.
 
