@@ -59,6 +59,8 @@ while (<GFF>){
 	$type = "telomere" if $sequence_ontology =~ /telomer/i;
 	$type = "subtelomere" if $sequence_ontology =~ /subtelomer/i;
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
+	$type = "repeat_region" if $sequence_ontology =~ /repeat_region/i;
+	$type = 'repeat_region' if $sequence_ontology =~ /Unknown/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
 	# get assortive structural info

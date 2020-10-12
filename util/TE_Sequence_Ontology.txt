@@ -25,14 +25,14 @@ DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown
 #TIR	DNA	transposons
 terminal_inverted_repeat_element	SO:0000208	TIR/unknown,DNA/DTX,DTX,DNAauto/unknown,DNAnona/unknown,DNAauto/PILE,DNAnona/PILE,DNAauto/POLE,DNAnona/POLE,DNA/PILE,MITE/PILE,DNA/POLE,MITE/POLE
 MITE	SO:0000338	MITE,TIR/MITE,MITE/unknown
-CACTA_TIR_transposon	SO:0002285	DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG
-hAT_TIR_transposon	SO:0002279	DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT
+CACTA_TIR_transposon	SO:0002285	DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA
+hAT_TIR_transposon	SO:0002279	DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT,TIR/hAT
 Mutator_TIR_transposon	SO:0002280	DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator
-PIF_Harbinger_TIR_transposon	SO:0002284	DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist
-Tc1_Mariner_TIR_transposon	SO:0002278	stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE
+PIF_Harbinger_TIR_transposon	SO:0002284	DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger
+Tc1_Mariner_TIR_transposon	SO:0002278	stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner
 P_TIR_transposon	SO:0001535	P-element,P_element,DNA/DTP
 piggyBac_TIR_transposon	SO:0002283	PiggyBac,DNA/DTB,MITE/DTB
-polinton	SO:0001170	polinton,maverick
+polinton	SO:0001170	polinton,maverick,Maverick
 Transib_TIR_transposon	SO:0002282	transib,DNA/DTR,MITE/DTR
 Merlin_TIR_transposon	SO:0002281	Merlin,DNA/DTE,MITE/DTE
 
