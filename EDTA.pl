@@ -474,13 +474,19 @@ if ($sensitive == 1){
 		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome 2>/dev/null`;
 		}
 
-	# Scan the repeatmasked genome with RepeatModeler for any remaining TEs
-	`${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
-	`${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome.masked 2>/dev/null`;
-	`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq`;
+	chomp ($date = `date`);
+	if ($overwrite eq 0 and -s "$genome.RM.consensi.fa"){
+		print STDERR "$date\tExisting RepeatModeler result file $genome.RM.consensi.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+		} else {
+		`rm -rf ./RM_*/consensi.fa 2>/dev/null`;
+		# Scan the repeatmasked genome with RepeatModeler for any remaining TEs
+		`${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
+		`${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome.masked 2>/dev/null`;
+		`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq`;
+		`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
+		}
 
-	# reclassify RepeatModeler candidates with TEsorter and make stage 2 library
-	`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
+	# filter and reclassify RepeatModeler candidates with TEsorter and make stage 2 library
 	if (-s "$genome.RM.consensi.fa"){
 		`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
 		`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
