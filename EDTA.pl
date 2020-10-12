@@ -222,18 +222,18 @@ die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s 
 
 # GenomeTools
 chomp ($genometools=`which gt 2>/dev/null`) if $genometools eq '';
-$genometools=~s/gt\n?// unless -d $genometools;
+$genometools = dirname($genometools) unless -d $genometools;
 $genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
 die "Error: gt is not found in the genometools path $genometools!\n" unless -X "${genometools}gt";
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
-$LTR_retriever=~s/LTR_retriever\n?// unless -d $LTR_retriever;
+$LTR_retriever = dirname($LTR_retriever) unless -d $LTR_retriever;
 $LTR_retriever="$LTR_retriever/" if $LTR_retriever ne '' and $LTR_retriever !~ /\/$/;
 die "Error: LTR_retriever is not found in the LTR_retriever path $LTR_retriever!\n" unless -X "${LTR_retriever}LTR_retriever";
 # RepeatMasker
 my $rand=int(rand(1000000));
 chomp ($repeatmasker=`which RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
-$repeatmasker=~s/RepeatMasker\n?// unless -d $repeatmasker;
+$repeatmasker = dirname($repeatmasker) unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
@@ -242,26 +242,24 @@ die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_t
 `rm dummy060817.fa.$rand*`;
 # RepeatModeler
 chomp ($repeatmodeler=`which RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
-$repeatmodeler=~s/RepeatModeler\n?// unless -d $repeatmodeler;
+$repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
 $repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
 die "Error: RepeatModeler is not found in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
 # makeblastdb, blastn, blastx
 chomp ($blastplus=`which makeblastdb 2>/dev/null`) if $blastplus eq '';
-$blastplus=~s/makeblastdb\n?//;
-$blastplus=~s/blastn\n?//;
-$blastplus=~s/blastx\n?//;
+$blastplus = dirname($blastplus) unless -d $blastplus;
 $blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 die "Error: makeblastdb is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
 die "Error: blastn is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
 die "Error: blastx is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
 # TEsorter
 chomp ($TEsorter=`which TEsorter 2>/dev/null`) if $TEsorter eq '';
-$TEsorter=~s/TEsorter\n?// unless -d $TEsorter;
+$TEsorter = dirname($TEsorter) unless -d $TEsorter;
 $TEsorter="$TEsorter/" if $TEsorter ne '' and $TEsorter !~ /\/$/;
 die "Error: TEsorter is not found in the TEsorter path $TEsorter!\n" unless -X "${TEsorter}TEsorter";
 # mdust
 chomp ($mdust=`which mdust 2>/dev/null`) if $mdust eq '';
-$mdust=~s/mdust\n?// unless -d $mdust;
+$mdust = dirname($mdust) unless -d $mdust;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
 # trf
 chomp ($trf=`which trf 2>/dev/null`) if $trf eq '';
