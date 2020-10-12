@@ -28,6 +28,7 @@ while (<FA>){
         my $name = (split /\s/, $id)[0];
         $seq =~ s/\s+//g;
         my ($class) = ($1) if $name =~ /^.*#(.*)/;
+	next if $name =~ /mixture/i; #skip sequences that have mixture classifications
         #rename TE as unknown if $class info could not be retrieved
         #retain LTR-INT info for LTR sequences
     my $tag = 0;
