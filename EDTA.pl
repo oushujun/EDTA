@@ -239,7 +239,7 @@ die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n"
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
 die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
-`rm dummy060817.fa.$rand*`;
+`rm dummy060817.fa.$rand* 2>/dev/null`;
 # RepeatModeler
 chomp ($repeatmodeler=`which RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
 $repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
@@ -260,6 +260,7 @@ die "Error: TEsorter is not found in the TEsorter path $TEsorter!\n" unless -X "
 # mdust
 chomp ($mdust=`which mdust 2>/dev/null`) if $mdust eq '';
 $mdust = dirname($mdust) unless -d $mdust;
+$mdust = "$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
 # trf
 chomp ($trf=`which trf 2>/dev/null`) if $trf eq '';
@@ -316,7 +317,7 @@ if ($id_len > 15){
 			`mv $genome.temp $genome.mod`;
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
-			`rm $genome.temp`;
+			`rm $genome.temp 2>/dev/null`;
 			die "$date\tERROR: Fail to convert seq IDs to less than 15 characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
@@ -432,7 +433,7 @@ print "$date\tPerform EDTA advcance filtering for raw TE candidates and generate
 # check results, remove intermediate files, and report status
 die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1" unless -s "$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1";
 chdir "$genome.EDTA.combine";
-`rm ./$genome.LTR.raw* ./$genome.TIR.raw* ./$genome.Helitron.raw* ./$genome.TIR.Helitro* ./$genome.LTR.TIR.Helitron.fa.stg1.*` unless $debug eq 1;
+`rm ./$genome.LTR.raw* ./$genome.TIR.raw* ./$genome.Helitron.raw* ./$genome.TIR.Helitro* ./$genome.LTR.TIR.Helitron.fa.stg1.* 2>/dev/null` unless $debug eq 1;
 chdir "..";
 chomp ($date = `date`);
 print "$date\tEDTA advcance filtering finished.\n\n";
@@ -451,7 +452,7 @@ print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive
 # Make the final working directory
 `mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
 chdir "$genome.EDTA.final";
-`rm ./*` if $overwrite == 1;
+`rm ./* 2>/dev/null` if $overwrite == 1;
 `cp ../$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1 ./`;
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
@@ -480,7 +481,7 @@ if ($sensitive == 1){
 		# Scan the repeatmasked genome with RepeatModeler for any remaining TEs
 		`${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
 		`${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome.masked 2>/dev/null`;
-		`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq`;
+		`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq 2>/dev/null`;
 		`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
 		}
 
@@ -513,7 +514,7 @@ if ($cds ne ''){
 	# cleanup TE-related sequences in the CDS file with TEsorter
 	print "$date\tClean up TE-related sequences in the CDS file with TEsorter:\n\n";
 	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa`;
-	`rm ./$cds ./$cds.code.r*` unless $debug eq 1;
+	`rm ./$cds ./$cds.code.r* 2>/dev/null` unless $debug eq 1;
 	$cds = "$cds.code.noTE";
 
 	# remove cds-related sequences in the EDTA library
@@ -604,7 +605,7 @@ if ($anno == 1){
 	# Make the post-library annotation working directory
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
 	chdir "$genome.EDTA.anno";
-	`rm ./*` if $overwrite == 1;
+	`rm ./* 2>/dev/null` if $overwrite == 1;
 	`cp ../$genome.EDTA.final/$genome.EDTA.TElib.fa ./`;
 	`cp ../$genome.EDTA.final/$genome.EDTA.intact.gff3 ./`;
 	`cp ../$exclude ./` if $exclude ne '';
@@ -643,7 +644,7 @@ if ($anno == 1){
 	`perl $bed2gff $genome.EDTA.homo.bed TE_homo > $genome.EDTA.homo.gff3`;
 	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
 	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##Identity: Sequence identity (0-1) between the library sequence and the target region.\\n##ltr_identity: Sequence identity (0-1) between the left and right LTR regions.\\n##tsd: target site duplication.\\n##seqid source sequence_ontology start end score strand phase attributes\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
-	`rm $genome.EDTA.TEanno.gff3.raw`;
+	`rm $genome.EDTA.TEanno.gff3.raw 2>/dev/null`;
 
 	# make non-overlapping annotation
 	`perl $gff2bed $genome.EDTA.TEanno.gff3 structural > $genome.EDTA.TEanno.bed`;

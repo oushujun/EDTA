@@ -178,6 +178,7 @@ die "Error: blastn is not found in the BLAST+ path $blastplus!\n" unless -X "${b
 # mdust
 chomp ($mdust=`which mdust 2>/dev/null`) if $mdust eq '';
 $mdust = dirname($mdust) unless -d $mdust;
+$mdust = "$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
 # trf
 chomp ($trf=`which trf 2>/dev/null`) if $trf eq '';
