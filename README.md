@@ -38,36 +38,41 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 There are four ways to install EDTA. Please choose one.
 
 ### Quick installation using conda (Linux64)
-    conda install -c bioconda -c conda-forge edta
+`conda install -c bioconda -c conda-forge edta`
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
 
-    singularity build --sandbox EDTA.sif docker://kapeel/edta
+`singularity pull EDTA.sif docker://quay.io/biocontainers/edta:<tag>`
+
+Visit [BioContainers' Quay.io](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags.
 
 Usage:
 
-    singularity exec {path}/EDTA.sif /EDTA/EDTA.pl --genome genome.fa [other parameters]
+`singularity exec {path}/EDTA.sif EDTA.pl --genome genome.fa [other parameters]`
 
-	{path} is the path you build the EDTA singularity image
+Where `{path}` is the path you build the EDTA singularity image
 
 ### Quick installation using [Docker](https://www.docker.com/) (good for root/Mac users)
 Installation:
 
-    docker pull kapeel/edta
+`docker pull quay.io/biocontainers/edta:<tag>`
 
 Usage:
 
-    docker run -v $PWD:/in -w /in kapeel/edta --genome genome.fa [other parameters]
+`docker run -v $PWD:/in -w /in biocontainers/edta:<tag> --genome genome.fa [other parameters]`
+
+Visit [BioContainers' Quay.io](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags.
 
 ### Step by step installation using conda
-    conda create -n EDTA
-    conda activate EDTA
-    conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
-    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast openjdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder numpy=1.16.4
-    git clone https://github.com/oushujun/EDTA
-    ./EDTA/EDTA.pl
-
+```
+conda create -n EDTA
+conda activate EDTA
+conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
+conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast openjdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder numpy=1.16.4
+git clone https://github.com/oushujun/EDTA
+./EDTA/EDTA.pl
+```
 
 ## Inputs
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=15 characters) and simple (i.e, letters, numbers, and underscore).
