@@ -11,6 +11,7 @@
       * [Quick installation using Singularity](#quick-installation-using-singularity-good-for-hpc-users)
       * [Quick installation using Docker](#quick-installation-using-docker-good-for-root-users)
       * [Step by step installation using conda ](#step-by-step-installation-using-conda)
+   * [Testing](#testing)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
    * [EDTA usage](#edta-usage)
@@ -58,7 +59,7 @@ Installation:
 
 Usage:
 
-    docker run -v $PWD:/in -w /in kapeel/edta --genome genome.fa [other parameters]
+    docker run -v $PWD:/in -w /in kapeel/edta EDTA.pl --genome genome.fa [other parameters]
 
 ### Step by step installation using conda
     conda create -n EDTA
@@ -67,6 +68,12 @@ Usage:
     conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast openjdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder numpy=1.16.4
     git clone https://github.com/oushujun/EDTA
     ./EDTA/EDTA.pl
+
+## Testing
+You can test the EDTA pipeline with a 1-Mb toy genome (it takes about 5 mins):
+
+    cd ./EDTA/test
+    perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
 
 
 ## Inputs
