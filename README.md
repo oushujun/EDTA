@@ -9,7 +9,7 @@
    * [Installation](#installation)
       * [Quick installation using conda](#quick-installation-using-conda-linux64)
       * [Quick installation using Singularity](#quick-installation-using-singularity-good-for-hpc-users)
-      * [Quick installation using Docker](#quick-installation-using-docker-good-for-root-mac-users)
+      * [Quick installation using Docker](#quick-installation-using-docker-good-for-rootmac-users)
       * [Step by step installation using conda ](#step-by-step-installation-using-conda)
    * [Testing](#testing)
    * [Inputs](#inputs)
