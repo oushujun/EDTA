@@ -52,8 +52,10 @@ Visit [BioContainers' Quay.io](https://quay.io/repository/biocontainers/edta?tab
 
 Usage:
 
-`export LC_ALL=C
-singularity exec {path}/EDTA.sif EDTA.pl --genome genome.fa [other parameters]`
+```
+export LC_ALL=C
+singularity exec {path}/EDTA.sif EDTA.pl --genome genome.fa [other parameters]
+```
 
 Where `{path}` is the path you build the EDTA singularity image
 
