@@ -7,10 +7,11 @@
 
    * [Introduction](#introduction)
    * [Installation](#installation)
-      * [Quick installation using conda](#quick-installation-using-conda)
+      * [Quick installation using conda](#quick-installation-using-conda-linux64)
       * [Quick installation using Singularity](#quick-installation-using-singularity-good-for-hpc-users)
-      * [Quick installation using Docker](#quick-installation-using-docker-good-for-root-users)
+      * [Quick installation using Docker](#quick-installation-using-docker-good-for-root-mac-users)
       * [Step by step installation using conda ](#step-by-step-installation-using-conda)
+   * [Testing](#testing)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
    * [EDTA usage](#edta-usage)
@@ -38,7 +39,9 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 There are four ways to install EDTA. Please choose one.
 
 ### Quick installation using conda (Linux64)
+
 `conda install -c bioconda -c conda-forge edta`
+
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
@@ -73,6 +76,13 @@ conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast openjdk perl pe
 git clone https://github.com/oushujun/EDTA
 ./EDTA/EDTA.pl
 ```
+
+## Testing
+You can test the EDTA pipeline with a 1-Mb toy genome (it takes about 5 mins):
+
+    cd ./EDTA/test
+    perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
+
 
 ## Inputs
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=15 characters) and simple (i.e, letters, numbers, and underscore).
@@ -179,4 +189,4 @@ You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/dat
 If you have any issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 ## Acknowledgements
-I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), and many more others for testing, debugging, and improving the EDTA pipeline.
+I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), and many more others for testing, debugging, and improving the EDTA pipeline.

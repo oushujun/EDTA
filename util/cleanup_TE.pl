@@ -60,7 +60,11 @@ $cds = "$cds.code";
 # 3rd attempt, mask remaining TE seqs in cds with identified TE seqs
 if (-s "$cds.TE"){
 	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $cds.TE -cutoff 225 $cds.rmTE2`;
-	`perl $cleanup -Nscreen 1 -nc 300 -nc 0.3 -minlen $minlen -maxlen 300000 -cleanN 1 -cleanT 0 -trf 0 -f $cds.rmTE2.masked > $cds.noTE`;
+	if (-s "$cds.rmTE2.masked"){
+		`perl $cleanup -Nscreen 1 -nc 300 -nc 0.3 -minlen $minlen -maxlen 300000 -cleanN 1 -cleanT 0 -trf 0 -f $cds.rmTE2.masked > $cds.noTE`;
+		} else {
+		`cp $cds.rmTE2 $cds.noTE`;
+		}
 	} else {
 	print STDERR "\t\t\t\tWarning: No TE-related CDS found ($cds.TE empty). Will not use the self-cleaning step.\n\n";
 	`cp $cds.rmTE $cds.noTE`;

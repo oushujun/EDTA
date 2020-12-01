@@ -47,6 +47,7 @@ my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Le
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
+my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";
 my $TIR_Learner = "$script_path/bin/TIR-Learner2.5/TIR-Learner2.5.sh";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
@@ -129,6 +130,7 @@ print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\
 
 # check files and dependencies
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
+die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
@@ -146,12 +148,14 @@ die "The script make_bed_with_intact.pl is not found in $make_bed!\n" unless -s 
 
 # GenomeTools
 chomp ($genometools=`which gt 2>/dev/null`) if $genometools eq '';
+$genometools =~ s/\s+$//;
 $genometools = dirname($genometools) unless -d $genometools;
 $genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
 die "Error: gt is not found in the genometools path $genometools!\n" unless -X "${genometools}gt";
 # RepeatMasker
 my $rand=int(rand(1000000));
 chomp ($repeatmasker=`which RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
+$repeatmasker =~ s/\s+$//;
 $repeatmasker = dirname($repeatmasker) unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
@@ -161,22 +165,26 @@ die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_t
 `rm dummy060817.fa.$rand*`;
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
+$LTR_retriever =~ s/\s+$//;
 $LTR_retriever = dirname($LTR_retriever) unless -d $LTR_retriever;
 $LTR_retriever="$LTR_retriever/" if $LTR_retriever ne '' and $LTR_retriever !~ /\/$/;
 die "Error: LTR_retriever is not found in the LTR_retriever path $LTR_retriever!\n" unless -X "${LTR_retriever}LTR_retriever";
 # TEsorter
 chomp ($TEsorter=`which TEsorter 2>/dev/null`) if $TEsorter eq '';
+$TEsorter =~ s/\s+$//;
 $TEsorter = dirname($TEsorter) unless -d $TEsorter;
 $TEsorter="$TEsorter/" if $TEsorter ne '' and $TEsorter !~ /\/$/;
 die "Error: TEsorter is not found in the TEsorter path $TEsorter!\n" unless -X "${TEsorter}TEsorter";
 # makeblastdb, blastn
 chomp ($blastplus=`which makeblastdb 2>/dev/null`) if $blastplus eq '';
+$blastplus =~ s/\s+$//;
 $blastplus = dirname($blastplus) unless -d $blastplus;
 $blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 die "Error: makeblastdb is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
 die "Error: blastn is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
 # mdust
 chomp ($mdust=`which mdust 2>/dev/null`) if $mdust eq '';
+$mdust =~ s/\s+$//;
 $mdust = dirname($mdust) unless -d $mdust;
 $mdust = "$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
@@ -273,12 +281,10 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
 # run LTRharvest
-if ($overwrite eq 0 and -s "$genome.harvest.scn"){
+if ($overwrite eq 0 and -s "$genome.harvest.combine.scn"){
 	print STDERR "$date\tExisting raw result $genome.harvest.scn found!\n\t\t\t\tWill use this for further analyses.\n\n";
 	} else {
-	`${genometools}gt suffixerator -db $genome -indexname $genome -tis -suf -lcp -des -ssp -sds -dna -mirrored 2>/dev/null`;
-	`${genometools}gt ltrharvest -index $genome -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes > $genome.harvest.scn 2>/dev/null`;
-	`rm $genome.des $genome.esq $genome.lcp $genome.llv $genome.md5 $genome.prj $genome.sds $genome.ssp $genome.suf 2>/dev/null`;
+	`perl $LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300`;
 	}
 
 # run LTR_FINDER_parallel
@@ -289,7 +295,7 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 	}
 
 # run LTR_retriever
-`cat $genome.harvest.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
+`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 `${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
 
 # get intact LTR elements
