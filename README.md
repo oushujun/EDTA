@@ -48,7 +48,7 @@ Installation:
 
 `singularity pull EDTA.sif docker://quay.io/biocontainers/edta:<tag>`
 
-Visit [BioContainers' Quay.io](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags.
+Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.4--0).
 
 Usage:
 
@@ -66,9 +66,9 @@ Installation:
 
 Usage:
 
-`docker run -v $PWD:/in -w /in biocontainers/edta:<tag> --genome genome.fa [other parameters]`
+`docker run -v $PWD:/in -w /in biocontainers/edta:<tag> EDTA.pl --genome genome.fa [other parameters]`
 
-Visit [BioContainers' Quay.io](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags.
+Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.4--0).
 
 ### Step by step installation using conda
 ```
@@ -82,10 +82,10 @@ git clone https://github.com/oushujun/EDTA
 
 ## Testing
 You can test the EDTA pipeline with a 1-Mb toy genome (it takes about 5 mins):
-
-    cd ./EDTA/test
-    perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
-
+```
+cd ./EDTA/test
+perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
+```
 
 ## Inputs
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=15 characters) and simple (i.e, letters, numbers, and underscore).
