@@ -104,7 +104,7 @@ Optional:
 2. Whole-genome TE annotation: $genome.mod.EDTA.TEanno.gff. This file contains both structurally intact and fragmented TE annotations (`--anno 1` required).
 3. Summary of whole-genome TE annotation: $genome.mod.EDTA.TEanno.sum (`--anno 1` required).
 4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. Annotated gene models should contain TEs and need further filtering (`--anno 1` required).
-5. Annotation inconsistency for simple TEs; $genome.mod.EDTA.TE.fa.stat.redun.sum (`--evaluate 1` required).
+5. Annotation inconsistency for simple TEs: $genome.mod.EDTA.TE.fa.stat.redun.sum (`--evaluate 1` required).
 6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum (`--evaluate 1` required).
 7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum (`--evaluate 1` required).
 
@@ -179,7 +179,7 @@ eg.
     perl lib-test.pl -genome rice_genome.fasta -std ./EDTA/database/Rice_MSU7.fasta.std6.9.5.out -tst rice_genome.fasta.test.out -cat LTR
 
 ## Citations
-Please cite our paper if you find EDTA is useful:
+Please cite our paper if you find EDTA useful:
 
 Ou S., Su W., Liao Y., Chougule K., Agda J. R. A., Hellinga A. J., Lugo C. S. B., Elliott T. A., Ware D., Peterson T., Jiang N.✉, Hirsch C. N.✉ and Hufford M. B.✉ (2019). Benchmarking Transposable Element Annotation Methods for Creation of a Streamlined, Comprehensive Pipeline. [Genome Biol. 20(1): 275.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1905-y)
 
