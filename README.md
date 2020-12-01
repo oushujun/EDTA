@@ -7,9 +7,9 @@
 
    * [Introduction](#introduction)
    * [Installation](#installation)
-      * [Quick installation using conda](#quick-installation-using-conda)
+      * [Quick installation using conda](#quick-installation-using-conda-linux64)
       * [Quick installation using Singularity](#quick-installation-using-singularity-good-for-hpc-users)
-      * [Quick installation using Docker](#quick-installation-using-docker-good-for-root-users)
+      * [Quick installation using Docker](#quick-installation-using-docker-good-for-root-mac-users)
       * [Step by step installation using conda ](#step-by-step-installation-using-conda)
    * [Testing](#testing)
    * [Inputs](#inputs)
@@ -39,35 +39,43 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 There are four ways to install EDTA. Please choose one.
 
 ### Quick installation using conda (Linux64)
-    conda install -c bioconda edta
+
+`conda install -c bioconda -c conda-forge edta`
+
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
 
-    singularity build --sandbox EDTA.sif docker://kapeel/edta
+`singularity pull EDTA.sif docker://quay.io/biocontainers/edta:<tag>`
+
+Visit [BioContainers' Quay.io](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags.
 
 Usage:
 
-    singularity exec {path}/EDTA.sif /EDTA/EDTA.pl --genome genome.fa [other parameters]
+`singularity exec {path}/EDTA.sif EDTA.pl --genome genome.fa [other parameters]`
 
-	{path} is the path you build the EDTA singularity image
+Where `{path}` is the path you build the EDTA singularity image
 
 ### Quick installation using [Docker](https://www.docker.com/) (good for root/Mac users)
 Installation:
 
-    docker pull kapeel/edta
+`docker pull quay.io/biocontainers/edta:<tag>`
 
 Usage:
 
-    docker run -v $PWD:/in -w /in kapeel/edta EDTA.pl --genome genome.fa [other parameters]
+`docker run -v $PWD:/in -w /in biocontainers/edta:<tag> --genome genome.fa [other parameters]`
+
+Visit [BioContainers' Quay.io](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags.
 
 ### Step by step installation using conda
-    conda create -n EDTA
-    conda activate EDTA
-    conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
-    conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast openjdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder numpy=1.16.4 coreutils
-    git clone https://github.com/oushujun/EDTA
-    ./EDTA/EDTA.pl
+```
+conda create -n EDTA
+conda activate EDTA
+conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
+conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast openjdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder numpy=1.16.4
+git clone https://github.com/oushujun/EDTA
+./EDTA/EDTA.pl
+```
 
 ## Testing
 You can test the EDTA pipeline with a 1-Mb toy genome (it takes about 5 mins):
@@ -181,4 +189,4 @@ You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/dat
 If you have any issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 ## Acknowledgements
-I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), and many more others for testing, debugging, and improving the EDTA pipeline.
+I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), and many more others for testing, debugging, and improving the EDTA pipeline.
