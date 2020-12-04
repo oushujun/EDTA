@@ -384,7 +384,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	print STDERR "Species: $species\n";
 
 	# run TIR-Learner
-	`sh $TIR_Learner -g $genome -s $species -t $threads -l $maxint`;
+	`bash $TIR_Learner -g $genome -s $species -t $threads -l $maxint`;
 	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
 	# clean raw predictions with flanking alignment
