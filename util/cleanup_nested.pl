@@ -4,29 +4,31 @@ use strict;
 use threads;
 use Thread::Queue;
 use threads::shared;
+use Data::Dumper;
 #Shujun Ou (shujun.ou.1@gmail.com) 03/26/2019
 #Update: 07/26/2019
 #Update: 10/26/2019
 #Update: 11/04/2019
+#Update: 12/02/2020 by Sergei Ryazansky
 
 my $usage = "\n
 Iteratively clean up nested TE insertions and remove redundancy.
 
 Further info:
-	Each sequence will be used as query to search the entire file.
-	For a subject sequence containing >95% of the query sequence, the matching part in the subject will be removed.
-	After removal, subject sequences shorter than the threadshold will be diacarded.
-	The number of rounds of iterations is automatically decided (usually less than 8). User can also define this.
+Each sequence will be used as query to search the entire file.
+For a subject sequence containing >95% of the query sequence, the matching part in the subject will be removed.
+After removal, subject sequences shorter than the threadshold will be diacarded.
+The number of rounds of iterations is automatically decided (usually less than 8). User can also define this.
 
 Usage:
 perl cleanup_nested.pl -in file.fasta [options]
-	-in	[file]	Input sequence file in FASTA format
-	-cov	[float]	Minimum coverage of the query sequence to be considered as nesting. Default: 0.95
-	-minlen	[int]	Minimum length of the clean sequence to retain. Default: 80 (bp)
-	-miniden	[int]	Minimum identity of the clean sequence to retain. Default: 80 (%)
-	-iter	[int]	Numbers of iteration to remove redundency. Default: automatic
-	-blastplus [path]	Path to the blastn and makeblastdb program.
-	-threads|-t	[int]	Threads to run this script. Default: 4
+-in	[file]	Input sequence file in FASTA format
+-cov	[float]	Minimum coverage of the query sequence to be considered as nesting. Default: 0.95
+-minlen	[int]	Minimum length of the clean sequence to retain. Default: 80 (bp)
+-miniden	[int]	Minimum identity of the clean sequence to retain. Default: 80 (%)
+-iter	[int]	Numbers of iteration to remove redundency. Default: automatic
+-blastplus [path]	Path to the blastn and makeblastdb program.
+-threads|-t	[int]	Threads to run this script. Default: 4
 \n";
 
 my $IN = "";
@@ -48,7 +50,7 @@ foreach (@ARGV){
 	$blastplus=$ARGV[$k+1] if /^-blastplus$/i and defined $ARGV[$k+1] and $ARGV[$k+1] !~ /^-/;
 	$threads=$ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
 	$k++;
-	}
+}
 
 # checks
 die "\nERROR: Input sequence file is not exist!\n$usage" unless -s $IN;
@@ -62,6 +64,7 @@ open IN, "<$IN" or die $!;
 open STAT, ">$IN.stat" or die $!;
 
 my %seq :shared;
+my %touched_seq :shared; # here we will save all subject sequences that were modified after removing nested sequence
 $/ = "\n>";
 while (<IN>){
 	s/>//g;
@@ -69,7 +72,8 @@ while (<IN>){
 	$id =~ s/\s+.*//;
 	$seq =~ s/\s+//g;
 	$seq{$id} = $seq;
-	}
+	$touched_seq{$id} = 0;
+}
 $/ = "\n";
 close IN;
 
@@ -85,7 +89,8 @@ for (my $i=0; $i<$iter; $i++){
 	open Seq, ">$IN.iter$i" or die $!;
 	foreach my $id (sort {$a cmp $b} keys %seq){
 		print Seq ">$id\n$seq{$id}\n";
-		}
+		$touched_seq{$id}=0;
+	}
 	close Seq;
 	`${blastplus}makeblastdb -in $IN.iter$i -dbtype nucl`;
 
@@ -94,17 +99,17 @@ for (my $i=0; $i<$iter; $i++){
 	foreach my $id (keys %seq){
 		last unless defined $seq{$id};
 		$queue -> enqueue([$id, $i, "$IN.iter$i"]);
-		}
+	}
 	$queue -> end();
 
 	# initiate a number of worker threads and run
 	foreach (1..$threads){
 		threads->create(\&condenser);
-		}
+	}
 	foreach (threads -> list()){
 		$_->join();
-		}
-	`rm $IN.iter$i.nhr $IN.iter$i.nin $IN.iter$i.nsq`;
+	}
+	`rm $IN.iter$i.nhr $IN.iter$i.nin $IN.iter$i.nsq $IN.iter$i.ndb $IN.iter$i.not $IN.iter$i.ntf $IN.iter$i.nto 2>/dev/null`;
 
 	# automatically increase iteration based on the stat result
 	my $curr_stat = `wc -l "$IN.stat"`;
@@ -112,56 +117,112 @@ for (my $i=0; $i<$iter; $i++){
 	if ($num_stat == $curr_stat){
 		print "Saturated at iter$i, automatically stop.\n\n";
 		last;
-		} else {
+	} else {
 		$num_stat = $curr_stat;
 		$iter++ if $user_iter == 0;
-		}
 	}
+}
 
 # output clean sequence
 open CLN, ">$IN.cln" or die $!;
 foreach my $id (sort {$a cmp $b} keys %seq){
 	print CLN ">$id\n$seq{$id}\n";
-	}
+}
 close CLN;
 close STAT;
 
 
 # subrotine for the condenser
 sub condenser(){
-        while (defined($_ = $queue->dequeue())){
-                my ($id, $i, $db) = (@{$_}[0], @{$_}[1], @{$_}[2]);
-                next unless exists $seq{$id};
+	while (defined($_ = $queue->dequeue())){
+		my ($id, $i, $db) = (@{$_}[0], @{$_}[1], @{$_}[2]);
+		next unless exists $seq{$id};
+		next if $touched_seq{$id} == 1;
 		my $seq = ">$id\n$seq{$id}\n";
 		my $length = length $seq{$id};
 		my $exec="timeout 188s ${blastplus}blastn -query <(echo -e \"$seq\") -db $db -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 		my @Blast=();
+		my %merged_hsps;
+		my %merged_hsps_size; # collection of summing size of non-overlapped HSPs for cheching the coverage
 		@Blast=qx(bash -c '$exec' 2> /dev/null);
+		# collect BLAST HSPs into the hash
 		foreach (@Blast){
 			my ($query, $subject, $iden, $len, $sbj_start, $sbj_end) = (split)[0,1,2,3,8,9];
 			next unless exists $seq{$subject};
-			next if $query eq $subject and $iden == 100;
+			next if $query eq $subject;
+			next if $touched_seq{$query} == 1; # skip the iteration if the query sequency was already modified (including discarded)
+			next if $touched_seq{$subject} == 1; # skip the iteration if the subject sequence was already modified
 			next unless defined $length and $length > 0;
 			next if $iden < $min_iden;
-			my $cov = $len/$length;
-			next unless $cov >= $coverage;
+			next if $len < $minlen; # the length of HSPs should be more 80 bp
 			($sbj_start, $sbj_end) = ($sbj_end, $sbj_start) if $sbj_start > $sbj_end;
-			my ($sbj_seq, $sbj_seq_p1, $sbj_seq_p2, $sbj_seq_new) = ($seq{$subject}, '', '', '');
-			next unless defined $sbj_seq;
-			my $sbj_len = length $sbj_seq;
-			$sbj_seq_p1 = substr $sbj_seq, 1, $sbj_start if $sbj_start > 1;
-			$sbj_seq_p2 = substr $sbj_seq, $sbj_end if $sbj_end < $sbj_len;
-			$sbj_seq_new = "$sbj_seq_p1"."$sbj_seq_p2";
-			my $sbj_len_new = length $sbj_seq_new;
-			if ($sbj_len_new >= $minlen){
-				print STAT "$subject\tIter$i\tCleaned. $sbj_start..$sbj_end covering $cov of $query for identity $iden%\n";
-				$seq{$subject} = $sbj_seq_new; #update sequence, overwrite the current sequence
+			push @{$merged_hsps{$subject}}, [$sbj_start, $sbj_end];
+		}
+		# merge all overlapped HSPs and calculating the total covering by HSPs of subjects on the query
+		my $merged = 0; # number of overlapping HSPs
+		map {
+			my $sbj = $_;
+			# merging
+			my ($ref1, $ref2) = &merger(@{$merged_hsps{$sbj}});
+			@{$merged_hsps{$sbj}} = @$ref1;
+			$merged = $$ref2;
+			# total coverage by HSPs
+			map {
+				my ($start,$end) = ($_->[0],$_->[1]);
+				$merged_hsps_size{$sbj} += $end - $start + 1;
+			} @{$merged_hsps{$sbj}};
+		} keys %merged_hsps;
+
+		# removing the regions from the subject that are inserted into the query
+		map {
+			my $sbj = $_;
+			my $seq_new = $seq{$sbj};
+			my $poss = ''; # positions of the non-overlapped rHSPs egions that will be removed from the subject
+			my $cov = $merged_hsps_size{$sbj}/$length;
+
+			if ($cov  >= $coverage) {
+				# replace bases of HSPs regions to R (aka Remove); this masking is nessary since the same sequence is
+				# scanned several times, for each non-overlaped merged HSPs regions.
+				for my $hsp (@{$merged_hsps{$sbj}}) {
+					my ($start, $end) = ($hsp->[0], $hsp->[1]);
+					$poss = $poss . $start. "..".$end . ",";
+					my $len = $end - $start + 1;
+					substr($seq_new, $start-1, $len) = "R" x $len;
+				}
+				$seq_new =~ s/R//g;
+				my $sbj_len_new = length $seq_new;
+				if ($sbj_len_new >= $minlen){
+					print STAT "$sbj\tIter$i\tCleaned. $poss covering $cov of $id; merged $merged\n";
+					$seq{$sbj} = $seq_new; #update sequence, overwrite the current sequence
+					$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
 				} else {
-				print STAT "$subject\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $query\n";
-				delete $seq{$subject}; #delete this sequence if new seq is too short
+					print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; merged $merged\n";
+					delete $seq{$sbj}; #delete this sequence if new seq is too short
+					$touched_seq{$sbj} = 1; # this subject sequence was modifed (removed), and we will not deal with it any more in the current iteration
 				}
 			}
+		} keys %merged_hsps_size;
+	}
+}
+
+sub merger() {
+	my @hsps = @_;
+	my $merged = 0;
+	my @intervals = sort {
+		$a->[0] <=> $b->[0] || $a->[1] <=> $b->[1]
+	} @hsps;
+	my @merged;
+	my $current = $intervals[0];
+	for my $i (1..$#intervals) {
+		if ($intervals[$i][0] > $current->[1]) {
+			push @merged, $current;
+			$current = $intervals[$i];
+		} else {
+			$merged++;
+			next unless $intervals[$i][1] > $current->[1];
+			$current->[1] = $intervals[$i][1];
 		}
 	}
-
-
+	push @merged, $current;
+	return (\@merged, \$merged);
+}
