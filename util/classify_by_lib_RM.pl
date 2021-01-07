@@ -8,7 +8,7 @@ use Data::Dumper;
 my $usage = "\n
 	Reclassify sequence based on RepeatMasker .out file
 	The RM.out file is generated using a library with family classification to mask the seq.fa file.
-		perl classify_by_lib_RM.pl -seq seq.fa -RM seq.fa.out\n\n";
+		perl classify_by_lib_RM.pl -seq seq.fa -RM seq.fa.out -cov 80 -len 80 -iden 80\n\n";
 
 #reclassify based on the 80-80-80 rule
 my $min_iden = 80; #80%
@@ -22,6 +22,9 @@ my $k = 0;
 foreach (@ARGV){
 	$seq = $ARGV[$k+1] if /^-seq$/i;
 	$RM = $ARGV[$k+1] if /^-RM$/i;
+	$min_cov = $ARGV[$k+1] if /^-cov$/i;
+	$min_len = $ARGV[$k+1] if /^-len$/i;
+	$min_iden = $ARGV[$k+1] if /^-iden$/i;
 	die $usage if /^-h$|^-help$|^--help$/i;
 	$k++;
 	}
@@ -56,7 +59,7 @@ while (<RM>){
 	my ($q_class, $q_fam, $s_fam) = ("NA", "NA", "NA");
 	($s_class, $s_fam) = ($1, $2) if $s_class =~ /^(.*)\/(.*)$/;
 	($q_class, $q_fam) = ($1, $2) if $query =~ /#(.*)\/(.*)$/;
-	next if $q_class ne $s_class;
+	next if $q_class ne $s_class and $q_class ne "NA";
 	next if $q_class eq "DNA" and $q_fam =~ /Helitron|DHH/ and $s_fam !~ /Helitron|DHH/;
 	next if 100 - $div < $min_iden;
 	my $len = $qe - $qs + 1;
@@ -83,7 +86,8 @@ foreach my $id (@lib){
 		$totcov += $lib{$id}{$_} foreach @subjects;
 		$totcov = $totcov*100/$query_len; #total coverage of the query by all subject hits (%)
 
-		my $q_class = $3 if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
+		my $q_class = "NA";
+		$q_class = $3 if $id =~ /:([0-9]+)\.\.([0-9]+)#[a-z]+\/([a-z]+)$/i;
 		if ($q_class eq "Helitron" and @subjects > 1){ #rename this disregard coverage if it's a helitron
 			$id = "$subjects[0]";
 			}
