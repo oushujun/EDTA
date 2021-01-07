@@ -26,16 +26,18 @@ while (<IN>){
 	s/\.$//;
 	next if (/Discarded/ and $cat eq "nested");
 	next if (/Cleaned/ and $cat eq "redun");
-	my ($type1, $type2) = ($1, $2) if /[\||#]([a-z\/]+)\s+.*[\||#]([a-z\/]+)\s+/i;
+	my ($type1, $type2) = ($1, $2) if /[\||#]([0-9a-z\/_]+)\s+.*[\||#]([0-9a-z\/_]+)(;|\s+)/i;
 	next unless defined $type1 and defined $type2;
-	$types{$type1} = $type1;
-	if (exists $stat{"$type1-$type2"}){
-		$stat{"$type1-$type2"}++;
-		} else {
-		$stat{"$type1-$type2"} = 1;
-		}
+	$types{$type1}++;
+	$types{$type2}++;
+	$stat{"$type1-$type2"}++;
 	}
 close IN;
+
+# remove single-event categories
+while (my ($key, $value) = each (%types)) {
+	delete $types{$key} if $value <= 1;
+	}
 
 my @types = sort {$a cmp $b} keys %types;
 local $" = "\t";
