@@ -1,9 +1,7 @@
-# adapt from https://github.com/Kapeel/edta_docker/blob/master/Dockerfile
+## adapt from https://github.com/Kapeel/edta_docker/blob/master/Dockerfile
 FROM continuumio/miniconda3
 
-#RUN apt-get install libgomp1
 RUN conda config --add channels defaults
-RUN conda config --add channels anaconda
 RUN conda config --add channels bioconda
 RUN conda config --add channels conda-forge
 RUN conda config --add channels r
