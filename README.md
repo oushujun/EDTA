@@ -101,13 +101,15 @@ Usage:
 <details>
 <summary>Other container source...</summary>
 
-`singularity pull EDTA.sif docker://quay.io/biocontainers/edta:1.9.5`
+1. `singularity pull EDTA.sif docker://quay.io/biocontainers/edta:1.9.5`
 
-Or
-
-`docker pull quay.io/biocontainers/edta:1.9.5`
+2. `docker pull quay.io/biocontainers/edta:1.9.5`
 
 Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.5--0).
+
+3. Compile using your local docker with the Dockerfile in this package:
+
+`docker build ./EDTA/`
 </details>
 
 <details>
