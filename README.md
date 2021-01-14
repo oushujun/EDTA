@@ -40,14 +40,17 @@ There are many ways to install EDTA. You just need to find the one that is worki
 ### Quick installation using conda (Linux64)
 
 Download the latest EDTA:
+
 `git clone https://github.com/oushujun/EDTA.git`
+
 Find the yml file in the folder and run:
+
 `conda env create -f EDTA.yml`
 
 <details>
-<summar>Other possible ways...</summary>
+<summary>Other possible ways...</summary>
 <br>
-It is strongly recommended to ceate a dedicated environment for EDTA:
+First, it is strongly recommended to ceate a dedicated environment for EDTA:
 
 `conda create -n EDTA`
 
@@ -64,6 +67,7 @@ More specifications helps to find the right dependencies:
 Use [mamba](https://github.com/mamba-org/mamba) to acclerate the installation:
 
 `conda install -c conda-forge mamba`
+
 `mamba install -c conda-forge -c bioconda edta python=3.6 tensorflow=1.14 'h5py<3'`
 </details>
 
@@ -82,38 +86,37 @@ export LC_ALL=C
 singularity exec {path}/EDTA.sif EDTA.pl --genome genome.fa [other parameters]
 ```
 
-Where `{path}` is the path you build the EDTA singularity image
+Where `{path}` is the path you build the EDTA singularity image.
 
 ### Quick installation using [Docker](https://www.docker.com/) (good for root/Mac users)
 Installation:
 
 `docker pull docker://oushujun/edta:<tag>`
 
-Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 1.9.5).`
+Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 1.9.5).
 
 Usage:
 
 `docker run -v $PWD:/in -w /in biocontainers/edta:<tag> EDTA.pl --genome genome.fa [other parameters]`
 
-Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.4--0).
-
 <details>
-<summary>Other container source:</summary>
+<summary>Other container source...</summary>
 <br>
-`singularity pull EDTA.sif docker://quay.io/biocontainers/edta:<tag>`
+`singularity pull EDTA.sif docker://quay.io/biocontainers/edta:\<tag\>`
 
 Or
 
-`docker pull quay.io/biocontainers/edta:<tag>`
+`docker pull quay.io/biocontainers/edta:\<tag\>`
 
-Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.4--0).
+Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.5--0).
 </details>
 
 <details>
 <summary>Some downsides of using containers...</summary>
 <br>
-1. It is tricky (for me) to specify files with a path to run EDTA.
-2. Also it is tricky to specify paths to dependency programs (i.e., repeatmasker, repeatmodeler).
+1. It is tricky (for me) to specify files with a path to run EDTA. Softlinked files are considered "with path". So please copy all the files to your work directory to run Singularity/docker containers of EDTA.
+
+2. Similarily, it is tricky to specify paths to dependency programs (i.e., repeatmasker, repeatmodeler).
 </details>
 
 
