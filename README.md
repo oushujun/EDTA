@@ -100,6 +100,7 @@ Usage:
 
 <details>
 <summary>Other container source...</summary>
+
 `singularity pull EDTA.sif docker://quay.io/biocontainers/edta:1.9.5`
 
 Or
@@ -111,6 +112,7 @@ Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) re
 
 <details>
 <summary>Some downsides of using containers...</summary>
+
 1. It is tricky (for me) to specify files with a path to run EDTA. Softlinked files are considered "with path". So please copy all the files to your work directory to run Singularity/docker containers of EDTA.
 
 2. Similarily, it is tricky to specify paths to dependency programs (i.e., repeatmasker, repeatmodeler).
