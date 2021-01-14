@@ -10,7 +10,6 @@
       * [Quick installation using conda](#quick-installation-using-conda-linux64)
       * [Quick installation using Singularity](#quick-installation-using-singularity-good-for-hpc-users)
       * [Quick installation using Docker](#quick-installation-using-docker-good-for-rootmac-users)
-      * [Step by step installation using conda ](#step-by-step-installation-using-conda)
    * [Testing](#testing)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
@@ -36,19 +35,45 @@ For benchmarking of a testing TE library, I have provided the curated TE annotat
 
 ## Installation
 
-There are four ways to install EDTA. Please choose one.
+There are many ways to install EDTA. You just need to find the one that is working for your system. If you are not using macOs, you may try the conda appraoch before the Singularity apprapch.
 
 ### Quick installation using conda (Linux64)
 
+Download the latest EDTA:
+`git clone https://github.com/oushujun/EDTA.git`
+Find the yml file in the folder and run:
+`conda env create -f EDTA.yml`
+
+<details>
+<summar>Other possible ways...</summary>
+<br>
+It is strongly recommended to ceate a dedicated environment for EDTA:
+
+`conda create -n EDTA`
+
+Then use the following ways to install EDTA. One successful way is sufficient.
+
+The 'simplest' (and slowest) way:
+
 `conda install -c bioconda -c conda-forge edta`
+
+More specifications helps to find the right dependencies:
+
+`conda install -c conda-forge -c bioconda edta python=3.6 tensorflow=1.14 'h5py<3'`
+
+Use [mamba](https://github.com/mamba-org/mamba) to acclerate the installation:
+
+`conda install -c conda-forge mamba`
+`mamba install -c conda-forge -c bioconda edta python=3.6 tensorflow=1.14 'h5py<3'`
+</details>
 
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
+ 
+`singularity pull EDTA.sif docker://oushujun/edta:<tag>`
 
-`singularity pull EDTA.sif docker://quay.io/biocontainers/edta:<tag>`
-
-Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.4--0).
+Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 1.9.5).
 
 Usage:
 
@@ -62,7 +87,9 @@ Where `{path}` is the path you build the EDTA singularity image
 ### Quick installation using [Docker](https://www.docker.com/) (good for root/Mac users)
 Installation:
 
-`docker pull quay.io/biocontainers/edta:<tag>`
+`docker pull docker://oushujun/edta:<tag>`
+
+Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 1.9.5).`
 
 Usage:
 
@@ -70,15 +97,25 @@ Usage:
 
 Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.4--0).
 
-### Step by step installation using conda
-```
-conda create -n EDTA
-conda activate EDTA
-conda config --env --add channels anaconda --add channels conda-forge --add channels bioconda
-conda install -n EDTA -y cd-hit repeatmodeler muscle mdust blast openjdk perl perl-text-soundex multiprocess regex tensorflow=1.14.0 keras=2.2.4 scikit-learn=0.19.0 biopython pandas glob2 python=3.6 tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder numpy=1.16.4
-git clone https://github.com/oushujun/EDTA
-./EDTA/EDTA.pl
-```
+<details>
+<summary>Other container source:</summary>
+<br>
+`singularity pull EDTA.sif docker://quay.io/biocontainers/edta:<tag>`
+
+Or
+
+`docker pull quay.io/biocontainers/edta:<tag>`
+
+Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.4--0).
+</details>
+
+<details>
+<summary>Some downsides of using containers...</summary>
+<br>
+1. It is tricky (for me) to specify files with a path to run EDTA.
+2. Also it is tricky to specify paths to dependency programs (i.e., repeatmasker, repeatmodeler).
+</details>
+
 
 ## Testing
 You can test the EDTA pipeline with a 1-Mb toy genome (it takes about 5 mins):
