@@ -49,7 +49,6 @@ Find the yml file in the folder and run:
 
 <details>
 <summary>Other possible ways...</summary>
-<br>
 First, it is strongly recommended to ceate a dedicated environment for EDTA:
 
 `conda create -n EDTA`
