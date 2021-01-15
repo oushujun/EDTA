@@ -121,7 +121,8 @@ sub filter(){
 
 	# filter out candidates if flanking sequences are simple repeat
 	my ($ssr_flank5, $ssr_flank3) = ('NA', 'NA');
-	($ssr_flank5, $ssr_flank3) = (&count_base($flank5), &count_base($flank3));
+	$ssr_flank5 = &count_base($flank5) if length $flank5 > 0;
+	$ssr_flank3 = &count_base($flank3) if length $flank3 > 0;
 	next if $ssr_flank5 eq 'true' or $ssr_flank3 eq 'true';
 
 	# filter out candidates based on repetitiveness of flanking sequence
