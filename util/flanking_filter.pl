@@ -25,7 +25,8 @@ my $ext_len = 30; #extend 30 bp on each end
 my $tgt_out = 15; #output taget site with this length on each terminal
 my $min_iden = 80; #minimum identity for flanking sequence alignment (%)
 my $min_cov = 0.8; #minimum coverage for flanking sequence alignment that counts as full match
-my $max_ct = 1; #maximum allowed copy number for flanking sequence. Either side exceeding this number will expire the candidate
+my $max_ct = 1; #maximum allowed copy number for flanking sequence. Either side exceeding this number will expire the candidate unless the joint flanking is also repetitive (column 4)
+my $max_ct_flank = 50000; #maximum allowed copy number for flanking. Either side exceeding this number will expire the candidate with no conditions.
 my $blastplus = ''; #path to the blastn program
 my $threads = 4; #threads to run this program
 
@@ -132,10 +133,10 @@ sub filter(){
 	my $end5_repeat = "false";
 	my $end5 = ">end5\\n$flank5"."$seq5";
 	my $end5_len = length "$flank5"."$seq5";
-	my $exec = "timeout 188s ${blastplus}blastn -db $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+	my $exec = "timeout 163s ${blastplus}blastn -db $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end5 = ();
 	my $try = 0;
-	while ($try < 10){ #try 10 times to guarantee the blast is run correctly
+	while ($try < 3){ #try 3 times to guarantee the blast is run correctly
 		@blast_end5 = qx(bash -c '$exec' 2> /dev/null) if defined $end5;
 		last if $? == 0;
 		$try++;
@@ -153,10 +154,10 @@ sub filter(){
 	my $end3_repeat = "false";
 	my $end3 = ">end3\\n$seq3"."$flank3";
 	my $end3_len = length "$seq3"."$flank3";
-	$exec = "timeout 188s ${blastplus}blastn -db $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+	$exec = "timeout 163s ${blastplus}blastn -db $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end3 = ();
 	$try = 0;
-	while ($try < 10){
+	while ($try < 3){
 		@blast_end3 = qx(bash -c '$exec' 2> /dev/null) if defined $end3;
 		last if $? == 0;
 		$try++;
@@ -175,10 +176,10 @@ sub filter(){
 	if ($end5_repeat eq "true" and $end3_repeat eq "true"){
 		my $flank = ">flank\\n$flank5"."$flank3";
 		my $flank_len = length "$flank5"."$flank3";
-		$exec = "timeout 188s ${blastplus}blastn -db $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+		$exec = "timeout 163s ${blastplus}blastn -db $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 		my @blast_flank = ();
 		$try = 0;
-		while ($try < 10){
+		while ($try < 3){
 			@blast_flank = qx(bash -c '$exec' 2> /dev/null) if defined $flank;
 			last if $? == 0;
 			$try++;
@@ -190,7 +191,7 @@ sub filter(){
 			$flank_count++ if $iden >= $min_iden and $len >= $flank_len * $min_cov;
 			}
 		if ($flank_count >= 1){
-			if (($end5_count + $end3_count)/(2*$flank_count) < 10000){
+			if (($end5_count + $end3_count)/(2*$flank_count) < 10000 and $end5_count < $max_ct_flank and $end3_count < $max_ct_flank){
 				$decision = "true";
 				}
 			}
