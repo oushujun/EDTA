@@ -429,7 +429,7 @@ FILTER:
 
 # report status
 chomp ($date = `date`);
-print "$date\tPerform EDTA advcance filtering for raw TE candidates and generate the stage 1 library: \n\n";
+print "$date\tPerform EDTA advance filtering for raw TE candidates and generate the stage 1 library: \n\n";
 
 # remove existing results
 `rm ./$genome.EDTA.combine/* 2>/dev/null` if $overwrite == 1;
@@ -443,7 +443,7 @@ chdir "$genome.EDTA.combine";
 `rm ./$genome.LTR.raw* ./$genome.TIR.raw* ./$genome.Helitron.raw* ./$genome.TIR.Helitro* ./$genome.LTR.TIR.Helitron.fa.stg1.* 2>/dev/null` unless $debug eq 1;
 chdir "..";
 chomp ($date = `date`);
-print "$date\tEDTA advcance filtering finished.\n\n";
+print "$date\tEDTA advance filtering finished.\n\n";
 
 
 #####################################
