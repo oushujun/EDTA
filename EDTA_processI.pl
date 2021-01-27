@@ -4,10 +4,10 @@ use strict;
 use FindBin;
 use File::Basename;
 
-#######################################################################
-##### Perform EDTA basic and advcanced filterings on TE candidates ####
-##### Shujun Ou (shujun.ou.1@gmail.com, 11/04/2019)                ####
-#######################################################################
+#####################################################################
+##### Perform EDTA basic and advance filtering on TE candidates #####
+##### Shujun Ou (shujun.ou.1@gmail.com, 11/04/2019)             #####
+#####################################################################
 
 ## Input:
 #	$genome.LTR.raw.fa
@@ -17,7 +17,7 @@ use File::Basename;
 ## Output:
 #	$genome.LTR.TIR.Helitron.fa.stg1
 
-my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates and generate the stage 1 library
+my $usage = "\nPerform EDTA basic and advance filtering for raw TE candidates and generate the stage 1 library
 	perl EDTA_processF.pl [options]
 		-genome	[File]	The genome FASTA
 		-ltr	[File]	The raw LTR library FASTA
@@ -114,7 +114,7 @@ sub Purifier() {
 
 
 #################################
-###### Advanced filterings ######
+###### Advance filtering ######
 #################################
 
 ## predefined variables
