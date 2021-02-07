@@ -4,10 +4,10 @@ use strict;
 use FindBin;
 use File::Basename;
 
-#######################################################################
-##### Perform EDTA basic and advcanced filterings on TE candidates ####
-##### Shujun Ou (shujun.ou.1@gmail.com, 11/04/2019)                ####
-#######################################################################
+#####################################################################
+##### Perform EDTA basic and advance filtering on TE candidates #####
+##### Shujun Ou (shujun.ou.1@gmail.com, 11/04/2019)             #####
+#####################################################################
 
 ## Input:
 #	$genome.LTR.raw.fa
@@ -17,7 +17,7 @@ use File::Basename;
 ## Output:
 #	$genome.LTR.TIR.Helitron.fa.stg1
 
-my $usage = "\nPerform EDTA basic and advcanced filterings for raw TE candidates and generate the stage 1 library
+my $usage = "\nPerform EDTA basic and advance filtering for raw TE candidates and generate the stage 1 library
 	perl EDTA_processF.pl [options]
 		-genome	[File]	The genome FASTA
 		-ltr	[File]	The raw LTR library FASTA
@@ -40,6 +40,7 @@ my $genome = '';
 my $LTRraw = '';
 my $TIRraw = '';
 my $Helitronraw = '';
+my $err = '';
 
 # pre-defined
 my $mindiff_LTR = 1; #minimum richness difference between $TE1 and $TE2 for a sequence to be considered as real to $TE1
@@ -114,7 +115,7 @@ sub Purifier() {
 
 
 #################################
-###### Advanced filterings ######
+###### Advance filtering ######
 #################################
 
 ## predefined variables
@@ -140,7 +141,8 @@ my $HEL = "$genome.Helitron.raw.fa";
 
 ## clean LTRs in TIRs and Helitrons
 `cat $TIR.HQ $HEL.HQ | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.TIR.Helitron.fa.stg1.raw`;
-`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $LTR.HQ $genome.TIR.Helitron.fa.stg1.raw 2>/dev/null`;
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $LTR.HQ $genome.TIR.Helitron.fa.stg1.raw > /dev/null`;
+print STDERR "$err\n" if $err ne '';
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.Helitron.fa.stg1.raw.masked > $genome.TIR.Helitron.fa.stg1.raw.cln`;
 
 ## cluster TIRs and Helitrons and make stg1 raw library
