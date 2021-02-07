@@ -2,7 +2,9 @@
 use warnings;
 use strict;
 use Data::Dumper;
+use File::Basename;
 #Shujun Ou (shujun.ou.1@gmail.com)
+#01/25/2021
 #12/22/2019
 
 my $usage = "\n
@@ -34,6 +36,26 @@ open RM, "<$RM" or die $usage;
 open New, ">$seq.rename" or die $!;
 open List, ">$seq.rename.list" or die $!;
 
+#obtain the exact path for the program location
+my $script_path = dirname(__FILE__);
+
+##read SO info and defined sequence ontology
+my $SO = "$script_path/TE_Sequence_Ontology.txt";
+open SO, "<$SO" or die "The sequence ontology file 'TE_Sequence_Ontology.txt' is not found in $script_path!\n";
+my (%class, %SO);
+while (<SO>){
+	next if /#/;
+	next if /^(\s+)?$/;
+	my ($so_name, $so_id, $so_alias) = (split /\s+/, $_, 3);
+	$so_alias =~ s/\s+//;
+	$SO{$so_name} = $so_id;
+	foreach my $alia ((split /,/, $so_alias)){
+		$class{$alia} = $so_name;
+		}
+	}
+close SO;
+
+# read in lib seqs
 my %lib;
 my %seq;
 my @lib;
@@ -51,6 +73,7 @@ while (<Seq>){
 close Seq;
 $/ = "\n";
 
+# process RM.out data
 while (<RM>){
 	next if /^\s+?$/;
 	my @hit = (split);
@@ -59,7 +82,17 @@ while (<RM>){
 	my ($q_class, $q_fam, $s_fam) = ("NA", "NA", "NA");
 	($s_class, $s_fam) = ($1, $2) if $s_class =~ /^(.*)\/(.*)$/;
 	($q_class, $q_fam) = ($1, $2) if $query =~ /#(.*)\/(.*)$/;
+
+	# check classifications
+	my ($sso, $qso) = ($class{"$s_class/$s_fam"}, "$q_class/$q_fam");
+	if (exists $class{$qso}){
+		$qso = $class{$qso}
+		} else {
+		print STDERR "$qso not found in the TE_SO database, it will not be used to rename sequences in the final annotation.\n";
+		}
 	next if $q_class ne $s_class and $q_class ne "NA";
+	next if $qso ne $sso and $q_class ne "LTR";
+#	next if "$q_class/$q_fam" ne "$s_class/$s_fam" and $q_class ne "NA";
 	next if $q_class eq "DNA" and $q_fam =~ /Helitron|DHH/ and $s_fam !~ /Helitron|DHH/;
 	next if 100 - $div < $min_iden;
 	my $len = $qe - $qs + 1;
