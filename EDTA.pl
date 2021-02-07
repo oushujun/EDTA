@@ -581,7 +581,7 @@ if ($HQlib ne ''){
 	}
 
 # reclassify intact TEs with the TE lib #113
-`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa 2>/dev/null`;
+`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa 2>/dev/null` unless -s "$genome.EDTA.intact.fa.out" and $overwrite == 0;
 `perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
 `perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
 `mv $genome.EDTA.intact.fa.rename $genome.EDTA.intact.fa`;
