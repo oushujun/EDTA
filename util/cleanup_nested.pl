@@ -35,6 +35,7 @@ my $IN = "";
 my $coverage = 0.95; #if a subject sequence covers >95% of a query sequence, the matching part in the subject sequence will be removed.
 my $minlen = 80; #minimal length >=80bp, otherwise discard the sequence
 my $min_iden = 80; #minimal identity >=80%, otherwise discard the sequence
+my $offset = 7; #if two blast hits are less than $offset [default=7bp) away from each other, join them as one hit
 my $iter = 1;
 my $user_iter = 0;
 my $blastplus = ""; #the path to blastn
@@ -87,6 +88,7 @@ for (my $i=0; $i<$iter; $i++){
 	print "$date\tClean up nested insertions and redundancy. Working on iteration $i\n";
 	# write seq to a file and make blast db
 	open Seq, ">$IN.iter$i" or die $!;
+	%touched_seq = ();
 	foreach my $id (sort {$a cmp $b} keys %seq){
 		print Seq ">$id\n$seq{$id}\n";
 		$touched_seq{$id}=0;
@@ -139,24 +141,25 @@ sub condenser(){
 		next unless exists $seq{$id};
 		next if $touched_seq{$id} == 1;
 		my $seq = ">$id\n$seq{$id}\n";
-		my $length = length $seq{$id};
-		my $exec="timeout 188s ${blastplus}blastn -query <(echo -e \"$seq\") -db $db -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+		my $length = length $seq{$id}; #query length
+		next unless defined $length and $length > 0;
+		my $exec="timeout 188s ${blastplus}blastn -query <(echo -e \"$seq\") -db $db -word_size 7 -evalue 1e-5 -dust no -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send qlen slen\"";
 		my @Blast=();
+		my %seq_len; #store subject seq length info
 		my %merged_hsps;
-		my %merged_hsps_size; # collection of summing size of non-overlapped HSPs for cheching the coverage
+		my %merged_hsps_size; # collection of summing size of non-overlapped HSPs for checking the coverage
 		@Blast=qx(bash -c '$exec' 2> /dev/null);
 		# collect BLAST HSPs into the hash
 		foreach (@Blast){
-			my ($query, $subject, $iden, $len, $sbj_start, $sbj_end) = (split)[0,1,2,3,8,9];
+			my ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len) = (split)[0,1,2,3,8,9,11];
 			next unless exists $seq{$subject};
 			next if $query eq $subject;
-			next if $touched_seq{$query} == 1; # skip the iteration if the query sequency was already modified (including discarded)
-			next if $touched_seq{$subject} == 1; # skip the iteration if the subject sequence was already modified
-			next unless defined $length and $length > 0;
+			next if $touched_seq{$subject} == 1; # skip the iteration if the subject sequence was already modified (including discarded)
 			next if $iden < $min_iden;
 			next if $len < $minlen; # the length of HSPs should be more 80 bp
 			($sbj_start, $sbj_end) = ($sbj_end, $sbj_start) if $sbj_start > $sbj_end;
 			push @{$merged_hsps{$subject}}, [$sbj_start, $sbj_end];
+			$seq_len{$subject} = $sbj_len;
 		}
 		# merge all overlapped HSPs and calculating the total covering by HSPs of subjects on the query
 		my $merged = 0; # number of overlapping HSPs
@@ -175,27 +178,29 @@ sub condenser(){
 
 		# removing the regions from the subject that are inserted into the query
 		map {
-			my $sbj = $_;
+			my ($sbj, $sbj_len) = ($_, $seq_len{$_});
 			my $seq_new = $seq{$sbj};
+			next unless defined $seq_new;
+			next if length $seq_new ne $sbj_len; #if the subject length changes, it has been modified. Skip to avoid mismodification.
 			my $poss = ''; # positions of the non-overlapped rHSPs egions that will be removed from the subject
-			my $cov = $merged_hsps_size{$sbj}/$length;
+			my ($qcov, $scov) = ($merged_hsps_size{$sbj}/$length, $merged_hsps_size{$sbj}/$sbj_len);
 
-			if ($cov  >= $coverage) {
-				# replace bases of HSPs regions to R (aka Remove); this masking is nessary since the same sequence is
-				# scanned several times, for each non-overlaped merged HSPs regions.
+			if ($qcov >= $coverage or $scov >= $coverage) {
+				# replace bases of HSPs regions to R (aka Remove); this masking is nessary since the subject sequence 
+				# may be cleaned several times, for each non-overlapping merged HSPs regions.
 				for my $hsp (@{$merged_hsps{$sbj}}) {
 					my ($start, $end) = ($hsp->[0], $hsp->[1]);
-					$poss = $poss . $start. "..".$end . ",";
+					$poss = $poss . $start . ".." . $end . ",";
 					my $len = $end - $start + 1;
-					substr($seq_new, $start-1, $len) = "R" x $len;
+					substr($seq_new, $start-1, $len) = "R" x $len if length $seq_new >= $start + $len - 1;
 				}
 				$seq_new =~ s/R//g;
 				my $sbj_len_new = length $seq_new;
-				if ($sbj_len_new >= $minlen){
-					print STAT "$sbj\tIter$i\tCleaned. $poss covering $cov of $id; merged $merged\n";
-					$seq{$sbj} = $seq_new; #update sequence, overwrite the current sequence
+				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj}){
+					print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; merged $merged\n";
+					$seq{$sbj} = $seq_new; #overwrite the sbj sequence if the new one is shorter
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
-				} else {
+				} elsif ($sbj_len_new < $minlen) {
 					print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; merged $merged\n";
 					delete $seq{$sbj}; #delete this sequence if new seq is too short
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed (removed), and we will not deal with it any more in the current iteration
@@ -214,13 +219,13 @@ sub merger() {
 	my @merged;
 	my $current = $intervals[0];
 	for my $i (1..$#intervals) {
-		if ($intervals[$i][0] > $current->[1]) {
+		if ($intervals[$i][0] > $current->[1] + $offset) { # allow 7bp offset
 			push @merged, $current;
 			$current = $intervals[$i];
 		} else {
-			$merged++;
 			next unless $intervals[$i][1] > $current->[1];
 			$current->[1] = $intervals[$i][1];
+			$merged++;
 		}
 	}
 	push @merged, $current;
