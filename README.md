@@ -48,10 +48,13 @@ Find the yml file in the folder and run:
 `conda env create -f EDTA.yml`
 
 <details>
-<summary>Other possible ways...</summary>
+<summary>Other ways to install with conda...</summary>
 First, it is strongly recommended to ceate a dedicated environment for EDTA:
 
-`conda create -n EDTA`
+```
+conda create -n EDTA
+conda activate EDTA
+```
 
 Then use the following ways to install EDTA. One successful way is sufficient.
 
@@ -70,6 +73,11 @@ Use [mamba](https://github.com/mamba-org/mamba) to acclerate the installation:
 `mamba install -c conda-forge -c bioconda edta python=3.6 tensorflow=1.14 'h5py<3'`
 </details>
 
+Usage:
+```
+conda activate EDTA
+perl EDTA.pl
+```
 
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
