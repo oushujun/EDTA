@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v1.9.7";
+my $version = "v1.9.8";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -498,12 +498,12 @@ if ($sensitive == 1){
 		`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
 		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
-		`cat $genome.RepeatModeler.fa.stg1 $genome.LTR.TIR.Helitron.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
+		`cat $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
 
 		# clean up coding sequences in the stage 2 library
 		`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.others.fa.stg2 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blastplus -threads $threads`;
 		} else {
-		print "\t\t\t\tRepeatModeler is finished, but no consensi.fa.classified files found.\n\n";
+		print "\t\t\t\tRepeatModeler is finished, but no consensi.fa files found.\n\n";
 		`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
 		}
 	} else {
