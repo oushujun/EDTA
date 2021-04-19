@@ -2,19 +2,28 @@
 use warnings;
 use strict;
 # rename RepeatModeler consensus families, contributed by Zhigui Bao (#baozg)
+# rename TEsorter families (Shujun Ou)
+# Last modified: 04/19/2021
 
 my $usage = "perl rename_RM_TE.pl RM_*/consensi.fa.classified > RepeatModeler.TE.raw.fa";
 my $fasta = $ARGV[0];
 
 my %hash=("DNA/hAT"=>"DNA/DTA",
+          "TIR/hAT"=>"DNA/DTA",
           "DNA/CACTA"=>"DNA/DTC",
+          "TIR/EnSpm_CACTA"=>"DNA/DTC",
           "DNA/PIF-Harbinger"=>"DNA/DTH",
+          "TIR/PIF_Harbinger"=>"DNA/DTH",
           "DNA/Mutator"=>"DNA/DTM",
+          "TIR/MuDR_Mutator"=>"DNA/DTM",
           "DNA/Tcl-Mariner"=>"DNA/DTT",
           "LTR" => "LTR/unknown",
+          "LTR/Retrovirus" => "LTR/retrovirus",
           "LINE" => "LINE/unknown",
           "SINE" => "SINE/unknown",
-          "RC/Helitron"=>"DNA/Helitron");
+          "Maverick" => "polinton",
+          "RC/Helitron"=>"DNA/Helitron",
+          "Helitron"=>"DNA/Helitron",);
 
 
 open FA, "<$fasta" or die "\nInput not found!\n$usage";
@@ -30,7 +39,6 @@ while (<FA>){
         my ($class) = ($1) if $name =~ /^.*#(.*)/;
 	next if $name =~ /mixture/i; #skip sequences that have mixture classifications
         #rename TE as unknown if $class info could not be retrieved
-        #retain LTR-INT info for LTR sequences
     my $tag = 0;
     foreach my $key (sort keys %hash){
         if ($class =~ /$key/i){
