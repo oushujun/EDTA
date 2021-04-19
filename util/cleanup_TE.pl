@@ -9,7 +9,7 @@ use File::Basename;
 
 my $script_path = $FindBin::Bin;
 my $cds = "";
-my $rawlib = ""; #gene sequences in this file will be removed
+my $rawlib = ""; #sequences in this file will be use to remove TEs in $cds
 my $minlen = 300; #minimal cds length to be retained
 my $output_by_list = "$script_path/output_by_list.pl";
 my $cleanup = "$script_path/cleanup_tandem.pl";
