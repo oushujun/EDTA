@@ -16,9 +16,10 @@ telomeric_repeat	SO:0001496	telomere
 subtelomere	SO:0001997	subtelomere/4-12-1
 low_complexity	SO:0001004	Low_complexity,low_complexity_region,Simple_repeat
 rDNA_intergenic_spacer_element	SO:0001860	rDNA/spacer
+rRNA	SO:0000252	rRNA
 
 #higher	order
-repeat_region	SO:0000657	Unknown,unknown,unknown/unknown
+repeat_region	SO:0000657	Unknown,unknown,unknown/unknown,NA/NA,Unknown/NA,Unknown/unknown
 retrotransposon	SO:0000180	Class_I,RNA_transposon,retrotransposon
 DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown
 
