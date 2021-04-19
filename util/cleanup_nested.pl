@@ -26,6 +26,7 @@ perl cleanup_nested.pl -in file.fasta [options]
 -cov	[float]	Minimum coverage of the query sequence to be considered as nesting. Default: 0.95
 -minlen	[int]	Minimum length of the clean sequence to retain. Default: 80 (bp)
 -miniden	[int]	Minimum identity of the clean sequence to retain. Default: 80 (%)
+-clean	[int]	Clean nested sequences (1) or not (0). Default: 1
 -iter	[int]	Numbers of iteration to remove redundency. Default: automatic
 -blastplus [path]	Path to the blastn and makeblastdb program.
 -threads|-t	[int]	Threads to run this script. Default: 4
@@ -36,6 +37,7 @@ my $coverage = 0.95; #if a subject sequence covers >95% of a query sequence, the
 my $minlen = 80; #minimal length >=80bp, otherwise discard the sequence
 my $min_iden = 80; #minimal identity >=80%, otherwise discard the sequence
 my $offset = 7; #if two blast hits are less than $offset [default=7bp) away from each other, join them as one hit
+my $clean = 1; #1, clean nested sequences; 0, will not clean nested, only discard highly overlapping (~100%) sequences
 my $iter = 1;
 my $user_iter = 0;
 my $blastplus = ""; #the path to blastn
@@ -47,6 +49,7 @@ foreach (@ARGV){
 	$coverage=$ARGV[$k+1] if /^-cov$/i and $ARGV[$k+1] !~ /^-/;
 	$minlen=$ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1] !~ /^-/;
 	$min_iden=$ARGV[$k+1] if /^-miniden$/i and $ARGV[$k+1] !~ /^-/;
+	$clean=$ARGV[$k+1] if /^-clean$/i and $ARGV[$k+1] !~ /^-/;
 	$user_iter=$ARGV[$k+1] if /^-iter$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus=$ARGV[$k+1] if /^-blastplus$/i and defined $ARGV[$k+1] and $ARGV[$k+1] !~ /^-/;
 	$threads=$ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
@@ -196,7 +199,7 @@ sub condenser(){
 				}
 				$seq_new =~ s/R//g;
 				my $sbj_len_new = length $seq_new;
-				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj}){
+				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj} and $clean == 1){
 					print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; merged $merged\n";
 					$seq{$sbj} = $seq_new; #overwrite the sbj sequence if the new one is shorter
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
