@@ -84,20 +84,22 @@ while (<RM>){
 	($q_class, $q_fam) = ($1, $2) if $query =~ /#(.*)\/(.*)$/;
 
 	# check classifications
-	my ($sso, $qso) = ($class{"$s_class/$s_fam"}, "$q_class/$q_fam");
-	if (exists $class{$qso}){
-		$qso = $class{$qso}
+#	my ($sso, $qso) = ($class{"$s_class/$s_fam"}, "$q_class/$q_fam");
+	my ($sso, $qso) = ("$s_class/$s_fam", $class{"$q_class/$q_fam"});
+	if (exists $class{$sso}){
+		$sso = $class{$sso}
 		} else {
-		print STDERR "$qso not found in the TE_SO database, it will not be used to rename sequences in the final annotation.\n";
+		print STDERR "$sso not found in the TE_SO database, it will not be used to rename sequences in the final annotation.\n";
 		}
 	next if $q_class ne $s_class and $q_class ne "NA";
 	next if $qso ne $sso and $q_class ne "LTR";
 #	next if "$q_class/$q_fam" ne "$s_class/$s_fam" and $q_class ne "NA";
-	next if $q_class eq "DNA" and $q_fam =~ /Helitron|DHH/ and $s_fam !~ /Helitron|DHH/;
+	next if $q_class eq "DNA" and $q_fam =~ /Helitron|DHH/i and $s_fam !~ /Helitron|DHH/i;
 	next if 100 - $div < $min_iden;
 	my $len = $qe - $qs + 1;
 	next if $len < $min_len;
 	$subject =~ s/_INT|_LTR$//i; #combine LTR region and internal reigon into one family
+	# note: if $qso=copia and $sso=other LTRs (gypsy or unknown), or $qso=gyp and $sso=others, or $qso=unk and $sso=others, they are all counted in coverage and thus the final $qso may not equal to $sso. The final fix will be improving the library and have these discripencies blocked.
 	if (defined $lib{$query}){
 		$lib{$query}{$subject} += $len;
 		} else {
