@@ -39,7 +39,7 @@ while (<GFF>){
 		$class = "TIR/$class";
 		$type = "TIR";
 		}
-	if ($class =~ /(non_LTR|LINE_element|LINE_retrotransposon|SINE_element|SINE_retrotransposon|YR_retrotransposon)/i){
+	if ($class =~ /(non_LTR|LINE|LINE_element|LINE_retrotransposon|SINE|SINE_element|SINE_retrotransposon|YR_retrotransposon|Penelope)/i){
 		$class = "unknown" if $class eq "non_LTR";
 		$class =~ s/_retrotransposon//i;
 		$class = "nonLTR/$class";
@@ -59,6 +59,7 @@ while (<GFF>){
 	$type = "telomere" if $sequence_ontology =~ /telomer/i;
 	$type = "subtelomere" if $sequence_ontology =~ /subtelomer/i;
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
+	$type = "Penelope" if $sequence_ontology =~ /Penelope|RPP/i;
 	$type = "repeat_region" if $sequence_ontology =~ /repeat_region/i;
 	$type = 'repeat_region' if $sequence_ontology =~ /Unknown/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
