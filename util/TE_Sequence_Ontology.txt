@@ -12,7 +12,7 @@
 centromeric_repeat	SO:0001797	Cent,Cent/CentC,CentC,CentM,Centro/tandem
 knob	SO:0002257	knob/knob180,knob/TR-1
 satellite_DNA	SO:0000005	Satellite/rice,satellite,minisatellite,microsatellite
-telomeric_repeat	SO:0001496	telomere
+telomeric_repeat	SO:0001496	telomere,telomeric
 subtelomere	SO:0001997	subtelomere/4-12-1
 low_complexity	SO:0001004	Low_complexity,low_complexity_region,Simple_repeat
 rDNA_intergenic_spacer_element	SO:0001860	rDNA/spacer
@@ -26,11 +26,11 @@ DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown
 #TIR	DNA	transposons
 terminal_inverted_repeat_element	SO:0000208	TIR/unknown,DNA/DTX,DTX,DNAauto/unknown,DNAnona/unknown,DNAauto/PILE,DNAnona/PILE,DNAauto/POLE,DNAnona/POLE,DNA/PILE,MITE/PILE,DNA/POLE,MITE/POLE
 MITE	SO:0000338	MITE,TIR/MITE,MITE/unknown
-CACTA_TIR_transposon	SO:0002285	DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA
+CACTA_TIR_transposon	SO:0002285	DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA,DNA/EnSpm_CACTA
 hAT_TIR_transposon	SO:0002279	DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT,TIR/hAT
-Mutator_TIR_transposon	SO:0002280	DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator
-PIF_Harbinger_TIR_transposon	SO:0002284	DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger
-Tc1_Mariner_TIR_transposon	SO:0002278	stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner
+Mutator_TIR_transposon	SO:0002280	DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator,DNA/Mutator
+PIF_Harbinger_TIR_transposon	SO:0002284	DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger,DNA/Harbinger
+Tc1_Mariner_TIR_transposon	SO:0002278	stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner,DNA/Tc1-Mariner
 P_TIR_transposon	SO:0001535	P-element,P_element,DNA/DTP
 piggyBac_TIR_transposon	SO:0002283	PiggyBac,DNA/DTB,MITE/DTB
 polinton	SO:0001170	polinton,maverick,Maverick
