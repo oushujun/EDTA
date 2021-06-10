@@ -141,8 +141,11 @@ my $HEL = "$genome.Helitron.raw.fa";
 
 ## clean LTRs in TIRs and Helitrons
 `cat $TIR.HQ $HEL.HQ | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.TIR.Helitron.fa.stg1.raw`;
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $LTR.HQ $genome.TIR.Helitron.fa.stg1.raw > /dev/null`;
-print STDERR "$err\n" if $err ne '';
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $LTR.HQ $genome.TIR.Helitron.fa.stg1.raw 2>&1`;
+if ($err !~ /done/) {
+	`cp $genome.TIR.Helitron.fa.stg1.raw $genome.TIR.Helitron.fa.stg1.raw.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: $1/s;
+	print STDERR "\n$err\n";
+	}
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.Helitron.fa.stg1.raw.masked > $genome.TIR.Helitron.fa.stg1.raw.cln`;
 
 ## cluster TIRs and Helitrons and make stg1 raw library
