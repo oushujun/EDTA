@@ -298,19 +298,6 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 `cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 `${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
 
-# get intact LTR elements
-if (0){ #old, overly inclusive module, lots of false positives
-	`perl $get_range 1 $genome.rawLTR.scn $genome -f -g -max_ratio 50`;
-	`cat $genome.rawLTR.scn.full | sort -fu > $genome.rawLTR.scn.full.uniq`;
-	`perl $call_seq $genome.rawLTR.scn.full.uniq -C $genome > $genome.LTR`;
-	`perl -i -nle 's/\\|.*//; print \$_' $genome.LTR`;
-	`perl $get_ext_seq $genome $genome.LTR`;
-	`perl $flank_filter -genome $genome -query $genome.LTR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
-
-        # recover superfamily info
-	`perl $output_by_list 1 $genome.LTR 1 $genome.LTR.ext30.fa.pass.fa -FA -MSU0 -MSU1 > $genome.LTR.ext30.fa.pass.fa.ori`;
-	}
-
 # get full-length LTR from pass.list
 `awk '{if (\$1 !~ /#/) print \$1"\\t"\$1}' $genome.pass.list | perl $call_seq - -C $genome > $genome.LTR.intact.fa.ori`;
 `perl -i -nle 's/\\|.*//; print \$_' $genome.LTR.intact.fa.ori`;
@@ -346,6 +333,7 @@ if ($beta2 == 1){
 # copy result files out
 #`cp $genome.LTRlib.fa.cln $genome.LTR.raw.fa`;
 #`cp $genome.LTRlib.fa.cln ../$genome.LTR.raw.fa`;
+`touch $genome.LTRlib.fa` unless -e "$genome.LTRlib.fa";
 `cp $genome.LTRlib.fa $genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
 `cp $genome.LTR.intact.fa $genome.LTR.intact.gff3 ../`;
@@ -416,6 +404,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	}
 
 # copy result files out
+`touch $genome.TIR.raw.fa` unless -e "$genome.TIR.raw.fa";
 `cp $genome.TIR.raw.fa $genome.TIR.intact.fa $genome.TIR.intact.gff3 $genome.TIR.intact.bed ../`;
 chdir '../..';
 
@@ -425,7 +414,6 @@ die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.
 if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
 	print STDERR "$date\tFinish finding TIR candidates.\n\n";
 	} else {
-	`touch "$genome.EDTA.raw/$genome.TIR.raw.fa"`;
 	print STDERR "Warning: The TIR result file has 0 bp!\n\n";
 	}
 
@@ -483,6 +471,7 @@ if ($beta2 == 1){
 	}
 
 # copy result files out
+`touch $genome.Helitron.raw.fa` unless -e "$genome.Helitron.raw.fa";
 `cp $genome.Helitron.raw.fa $genome.Helitron.intact.fa $genome.Helitron.intact.gff3 $genome.Helitron.intact.bed ../`;
 chdir '../..';
 
