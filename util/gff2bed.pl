@@ -4,6 +4,7 @@ use strict;
 
 # Convert gff files to enriched bed format
 # Shujun Ou (shujun.ou.1@gmail.com)
+# v0.4	09/27/2021
 # v0.3	07/22/2020
 # v0.2	07/20/2020
 # v0.1	12/19/2019
@@ -39,7 +40,7 @@ while (<GFF>){
 		$class = "TIR/$class";
 		$type = "TIR";
 		}
-	if ($class =~ /(non_LTR|LINE|LINE_element|LINE_retrotransposon|SINE|SINE_element|SINE_retrotransposon|YR_retrotransposon|Penelope)/i){
+	if ($class =~ /(non_LTR|LINE|LINE_element|LINE_retrotransposon|SINE|SINE_element|SINE_retrotransposon|YR_retrotransposon|Penelope|Ngaro|DIRS|Viper)/i){
 		$class = "unknown" if $class eq "non_LTR";
 		$class =~ s/_retrotransposon//i;
 		$class = "nonLTR/$class";
@@ -48,19 +49,24 @@ while (<GFF>){
 	$class = "rDNA_spacer" if $class =~ /rDNA_intergenic_spacer_element/i;
 
 	# determine $type for struc-homo TE annotation merging
-	$type = "Cent" if $sequence_ontology =~ /Cent/i;
+	# $type is critical for get_frag.pl and keep_nest.pl, 
+	# if this info is not properlly assigned, the resulting bed file is wrong and EDTA.TEanno.sum will be empty
+	# $type should match what's listed in util/TE_Sequence_Ontology.txt
+	$type = "Cent" if $sequence_ontology =~ /Cent|centromeric_repeat/i;
 	$type = "knob" if $sequence_ontology =~ /knob/i;
 	$type = "LINE" if $sequence_ontology =~ /LINE|RIL/i;
 	$type = "SINE" if $sequence_ontology =~ /SINE|RIS/i;
 	$type = "nonLTR" if $sequence_ontology =~ /non_LTR/i;
-	$type = "rDNA" if $sequence_ontology =~ /rDNA/i;
-	$type = "satellite" if $sequence_ontology =~ /satellite/i;
+	$type = "rDNA" if $sequence_ontology =~ /rDNA|rDNA_intergenic_spacer_element/i;
+	$type = "satellite" if $sequence_ontology =~ /satellite|satellite_DNA/i;
 	$type = "low_complexity" if $sequence_ontology =~ /low_complexity/i;
-	$type = "telomere" if $sequence_ontology =~ /telomer/i;
+	$type = "telomere" if $sequence_ontology =~ /telomer|telomeric_repeat/i;
 	$type = "subtelomere" if $sequence_ontology =~ /subtelomer/i;
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
-	$type = "Penelope" if $sequence_ontology =~ /Penelope|RPP/i;
-	$type = "repeat_region" if $sequence_ontology =~ /repeat_region/i;
+	$type = "Crypton" if $sequence_ontology =~ /Crypton_YR_transposon/i;
+#	$type = "Penelope" if $sequence_ontology =~ /Penelope|RPP/i;
+	$type = "repeat_region" if $sequence_ontology =~ /repeat_region|DNA_transposon/i;
+	$type = "repeat_region" if $sequence_ontology == 'retrotransposon';
 	$type = 'repeat_region' if $sequence_ontology =~ /Unknown/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
