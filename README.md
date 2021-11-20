@@ -203,6 +203,10 @@ Optional:
 
     perl EDTA.pl --overwrite 0 [options]
 
+### Protips and self-diagnosis
+1. It's never said enough. You should tidy up all your sequence names before ANY analysis. Keep them short, simple, and unique.
+2. If your run has no errors but stuck at the TIR step for days, try to rerun with more memory. This step takes more memory than others.
+
 
 ## Benchmarking
 If you developed a new TE method/got a TE library and want to compare it's annotation performance to the methods we have tested, you can:
