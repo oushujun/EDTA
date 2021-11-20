@@ -119,6 +119,7 @@ my $split_overlap = "$script_path/util/split_overlap.pl";
 my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
+my $format_TElib = "$script_path/util/format_TElib.pl";
 my $LTR_retriever = "";
 my $genometools = "";
 my $repeatmodeler = "";
@@ -304,11 +305,12 @@ if ($raw_id > $old_id){
 `perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
 
 # try to shortern sequences
-if ($id_len > 15){
+my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
+if ($id_len > $id_len_max){
 	chomp ($date = `date`);
-	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
+	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
 	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
+	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
 	my $new_id = `grep \\> $genome.temp|sort -u|wc -l`;
 	chomp ($date = `date`);
 	if ($old_id == $new_id){
@@ -325,7 +327,7 @@ if ($id_len > 15){
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
 			`rm $genome.temp 2>/dev/null`;
-			die "$date\tERROR: Fail to convert seq IDs to less than 15 characters! Please provide a genome with shorter seq IDs.\n\n";
+			die "$date\tERROR: Fail to convert seq IDs to less than $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
 	}
@@ -560,6 +562,7 @@ if ($cds ne ''){
 
 # rename all TEs in the EDTA library
 `perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
+#`perl $rename_TE $genome.EDTA.raw.fa.cln.cln | perl $format_TElib - > $genome.EDTA.TElib.fa`;
 
 # check results
 die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
@@ -582,6 +585,7 @@ if ($HQlib ne ''){
 
 # reclassify intact TEs with the TE lib #113
 `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa 2>/dev/null` unless -s "$genome.EDTA.intact.fa.out" and $overwrite == 0;
+die "ERROR: The masked file for $genome.EDTA.intact.fa is not found! The RepeatMasker annotation on this file may be failed. Please check the $genome.EDTA.TElib.fa file for sequence naming formats especially when you provide a library via --curatedlib.\n" unless -s "$genome.EDTA.intact.fa.out";
 `perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
 `perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
 `mv $genome.EDTA.intact.fa.rename $genome.EDTA.intact.fa`;
