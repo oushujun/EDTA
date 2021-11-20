@@ -224,11 +224,12 @@ if (-s "$genome.mod"){
 `perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
 
 # try to shortern sequences
-if ($id_len > 15){
+my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
+if ($id_len > $id_len_max){
 	chomp ($date = `date`);
-	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
+	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
 	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
+	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
 	my $new_id = `grep \\> $genome.temp|sort -u|wc -l`;
 	chomp ($date = `date`);
 	if ($old_id == $new_id){
@@ -245,7 +246,7 @@ if ($id_len > 15){
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
 			`rm $genome.temp`;
-			die "$date\tERROR: Fail to convert seq IDs to less than 15 characters! Please provide a genome with shorter seq IDs.\n\n";
+			die "$date\tERROR: Fail to convert seq IDs to less than $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
 	}
