@@ -10,6 +10,7 @@ use Pod::Usage;
 my $version = "v1.1";
 # customized parameters
 my $seq_path = ""; #specify the sequence file
+my $harvest_para = "-minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes"; #specify LTR_HARVEST parameters.
 my $size_of_each_piece = 5000000; #5 Mb per piece
 my $timeout = 1500; #set maximum time for a thread to run. After $timeout seconds, the child thread is killed.
 my $try1 = 1; #1, further split to 50 Kb regions if thread killed by timeout. 0, no further split.
@@ -99,6 +100,14 @@ print "\nUsing this LTR_HARVEST: ${genometools}gt\n"; #test
 my $seq_file = basename($seq_path);
 `ln -s $seq_path $seq_file` unless -s $seq_file;
 
+if ($threads == 1){
+# run the original single threaded code
+`${genometools}gt suffixerator -db $seq_file -indexname $seq_file -tis -suf -lcp -des -ssp -sds -dna 2>/dev/null`;
+`${genometools}gt ltrharvest -index $seq_file $harvest_para > $seq_file.harvest.combine.scn 2>/dev/null`;
+`rm $seq_file.des $seq_file.esq $seq_file.lcp $seq_file.llv $seq_file.md5 $seq_file.prj $seq_file.sds $seq_file.ssp $seq_file.suf 2>/dev/null`;
+
+} else {
+## run the paralleled code
 # read genome in memory
 open SEQ, "<$seq_file" or die $usage;
 open GFF, ">$seq_file.harvest.combine.gff3" or die $!;
@@ -137,14 +146,14 @@ sub worker {
 		$seq =~ s/\s+//;
 		print localtime() ." CPU".threads -> self() -> tid().": running on $seq\n";
 		`timeout ${timeout}s ${genometools}gt suffixerator -db $seq -indexname $seq -tis -suf -lcp -des -ssp -sds -dna 2>/dev/null`;
-		`timeout ${timeout}s ${genometools}gt ltrharvest -index $seq -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes  > $seq.harvest.scn 2>/dev/null`;
+		`timeout ${timeout}s ${genometools}gt ltrharvest -index $seq $harvest_para > $seq.harvest.scn 2>/dev/null`;
 		 if ($? ne 0 and $try1 ne 0){
 			print localtime() ." CPU".threads -> self() -> tid().": $seq timeout, process it with the salvage mode\n";
 			my $in=`perl $script_path/LTR_HARVEST_parallel -seq $seq -size 50000 -time 30 -try1 0 -threads 1 -cut $cut -gt $genometools`;
 			`mv $seq.harvest.combine.scn $seq.harvest.scn`;
 			`rm -rf ./${seq}.harvest 2>/dev/null`; #remove?
 			}
-		`rm $seq.des $seq.esq $seq.lcp $seq.llv $seq.md5 $seq.prj $seq.sds $seq.ssp $seq.suf 2>/dev/null`; 
+		`rm $seq.des $seq.esq $seq.lcp $seq.llv $seq.md5 $seq.prj $seq.sds $seq.ssp $seq.suf 2>/dev/null`;
 		}
 	}
 
@@ -169,7 +178,7 @@ Next:
 open Out, ">$seq_file.harvest.combine.scn" or die $!;
 
 #print out headers
-print Out "#LTR_HARVEST_parallel -seq $seq_file -size $size_of_each_piece -time $timeout -try1 $try1 -threads $threads -cut $cut 
+print Out "#LTR_HARVEST_parallel -seq $seq_file -size $size_of_each_piece -time $timeout -try1 $try1 -threads $threads -cut $cut
 # LTR_HARVEST args= -minlenltr 100 -maxlenltr 7000 -mintsd 4 -maxtsd 6 -motif TGCA -motifmis 1 -similar 85 -vic 10 -seed 20 -seqids yes
 # LTR_HARVEST_parallel version=$version
 # predictions are reported in the following way
@@ -229,9 +238,10 @@ foreach my $seq (<List>){
 
 		}
 	$count++;
+	close Scn;
 	}
 close List;
-close Scn;
 close GFF;
 `rm -rf ./$seq_file.harvest` if $verbose eq 0;
+}
 print localtime() ." Job finished! Check out $seq_file.harvest.combine.scn\n";

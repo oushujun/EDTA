@@ -7,7 +7,7 @@ use File::Basename;
 use FindBin;
 use Pod::Usage;
 
-my $version = "v1.1";
+my $version = "v1.2";
 # customized parameters
 my $seq_path = ""; #specify the sequence file
 my $finder_para = "-w 2 -C -D 15000 -d 1000 -L 7000 -l 100 -p 20 -M 0.85"; #specify ltr_finder parameters. The "-w 2" parameter is required.
@@ -24,6 +24,7 @@ my $annotator = "LTR_FINDER_parallel"; #the annotator name used in gff output
 #my $script_path = dirname(__FILE__);
 my $script_path = $FindBin::Bin;
 my $cut = "$script_path/bin/cut.pl"; #the program to cut sequence
+my $convert = "$script_path/bin/convert_ltr_finder2.pl"; #the program to convert finder -w2 to harvest scn format
 my $ltr_finder = ""; #the path to ltr_finder
 my $check_dependencies = undef;
 my $help = undef;
@@ -102,6 +103,18 @@ exit if $check_dependencies;
 my $seq_file = basename($seq_path);
 `ln -s $seq_path $seq_file` unless -s $seq_file;
 
+
+if ($threads == 1){
+# run the original single threaded code
+`${ltr_finder}ltr_finder $finder_para $seq_file > $seq_file.finder.scn`;
+if ($harvest_format == 0){
+	`mv $seq_file.finder.scn $seq_file.finder.combine.scn`;
+	} else {
+	`perl $convert $seq_file.finder.scn > $seq_file.finder.combine.scn`;
+	}
+
+} else {
+## run the paralleled code
 # read genome in memory
 open SEQ, "<$seq_file" or die $usage;
 open GFF, ">$seq_file.finder.combine.gff3" or die $!;
@@ -128,6 +141,7 @@ $/="\n";
 
 goto Next if $next == 1; #run the next step if all LTR_finder processes are done
 
+# prepre files
 `mkdir $seq_file.finder` unless -d "$seq_file.finder";
 chdir "$seq_file.finder";
 `perl $cut ../$seq_file -s -l $size_of_each_piece`;
@@ -189,12 +203,13 @@ if ($harvest_format == 0){
 # seq-nr = sequence order\n";
 	}
 
-
+# process each candidates
 open List, "<$seq_file.list" or die $!;
 my $count = 1; #count repeats in gff
 foreach my $seq (<List>){
 	$seq =~ s/\s+//;
-	my ($base, $order) = ($1, $2) if $seq =~ /(.*)_sub([0-9]+)$/;
+	my ($base, $order) = ($seq, 1);
+	($base, $order) = ($1, $2) if $seq =~ /(.*)_sub([0-9]+)$/;
 	my $coord_adj = ($order - 1) * $size_of_each_piece;
 	next unless -e "$seq_file.finder/$seq.finder.scn";
 	open Scn, "<$seq_file.finder/$seq.finder.scn" or die $!;
@@ -235,10 +250,14 @@ foreach my $seq (<List>){
 		print GFF "###\n";
 
 		}
+	close Scn;
 	$count++;
 	}
 close List;
-close Scn;
+#close Scn;
 close GFF;
-`rm -rf ./$seq_file.finder` if $verbose eq 0;
+`rm -rf ./$seq_file.finder 2>/dev/null` if $verbose eq 0;
+}
+
 print localtime() ." Job finished! Check out $seq_file.finder.combine.scn\n";
+
