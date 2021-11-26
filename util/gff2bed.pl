@@ -66,7 +66,7 @@ while (<GFF>){
 	$type = "Crypton" if $sequence_ontology =~ /Crypton_YR_transposon/i;
 #	$type = "Penelope" if $sequence_ontology =~ /Penelope|RPP/i;
 	$type = "repeat_region" if $sequence_ontology =~ /repeat_region|DNA_transposon/i;
-	$type = "repeat_region" if $sequence_ontology == 'retrotransposon';
+	$type = "repeat_region" if $sequence_ontology =~ 'retrotransposon';
 	$type = 'repeat_region' if $sequence_ontology =~ /Unknown/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
