@@ -30,12 +30,14 @@ The EDTA package was designed to filter out false discoveries in raw TE candidat
 
 <img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true">
 
-For benchmarking of a testing TE library, I have provided the curated TE annotation (v6.9.5) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
+To benchmark the annotation quality of a new library/method, I have provided the curated TE annotation (v6.9.5) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
+
+For pan-genome annotations, you need to annotate each genome with EDTA, generate a pan-genome library, then reannotate each genome with the pan-genome library. Please refer to this [example](https://github.com/HuffordLab/NAM-genomes/tree/master/te-annotation) for details.
 
 
 ## Installation
 
-There are many ways to install EDTA. You just need to find the one that is working for your system. If you are not using macOs, you may try the conda appraoch before the Singularity apprapch.
+There are many ways to install EDTA. You just need to find the one that is working for your system. If you are not using macOS, you may try the conda appraoch before the Singularity apprapch.
 
 ### Quick installation using conda (Linux64)
 
@@ -46,6 +48,8 @@ Download the latest EDTA:
 Find the yml file in the folder and run:
 
 `conda env create -f EDTA.yml`
+
+The default `conda env` name is `EDTA` specified by the first line of the `EDTA.yml` file. You may change that to different names. Once the conda environment is set up, you can use it to drive other versions of EDTA. For example, if you have the EDTA v1.9.6 installed via conda, you may `git clone` the latest version, activate the v1.9.6 conda env, then specify the path to the freshly cloned EDTA to use it.
 
 <details>
 <summary>Other ways to install with conda...</summary>
@@ -130,29 +134,30 @@ Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) re
 
 
 ## Testing
-You can test the EDTA pipeline with a 1-Mb toy genome (it takes about 5 mins):
+You may test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If you encounter any errors with your data, you should test this first before reporting an issue. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. You should check your own data for any formating/naming mistakes.
+
 ```
 cd ./EDTA/test
 perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
 ```
 
 ## Inputs
-Required: The genome file [FASTA]. Please make sure sequence names are short (<=15 characters) and simple (i.e, letters, numbers, and underscore).
+Required: The genome file [FASTA]. Please make sure sequence names are short (<=13 characters) and simple (i.e, letters, numbers, and underscore).
 
 Optional: 
-1. Coding sequence of the species or closely related species [FASTA]. This file helps to purge gene sequences in the TE library.
-2. Known gene position of this version of the genome assembly [BED]. Coordinates specified in this file will be whitelisted from TE annotation to avoid over-masking.
-3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's fine. It doesn't need to be complete.
+1. Coding sequence of the species or a closely related species [FASTA]. This file helps to purge gene sequences in the TE library.
+2. Known gene positions of this version of the genome assembly [BED]. Coordinates specified in this file will be excluded from TE annotation to avoid over-masking.
+3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's fine. It doesn't need to be complete. Providing curated TE sequences, especially for those under annotated TE types (i.e., SINEs and LINEs), will greatly improve the annotation quality.
 
 
 ## Outputs
-Expected: A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library is included in this file if provided. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family.
+A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice6.9.5.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./util/TE_Sequence_Ontology.txt).
 
 Optional:
 1. Novel TE families: $genome.mod.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).
 2. Whole-genome TE annotation: $genome.mod.EDTA.TEanno.gff3. This file contains both structurally intact and fragmented TE annotations (`--anno 1` required).
 3. Summary of whole-genome TE annotation: $genome.mod.EDTA.TEanno.sum (`--anno 1` required).
-4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. Annotated gene models should contain TEs and need further filtering (`--anno 1` required).
+4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. In practice, this approach will reduce overmasking for genic regions, which can improve gene prediction quality. However, initial gene models should contain TEs and need further filtering (`--anno 1` required).
 5. Annotation inconsistency for simple TEs: $genome.mod.EDTA.TE.fa.stat.redun.sum (`--evaluate 1` required).
 6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum (`--evaluate 1` required).
 7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum (`--evaluate 1` required).
@@ -208,7 +213,7 @@ Optional:
 2. If your run has no errors but stuck at the TIR step for days, try to rerun with more memory. This step takes more memory than others.
 
 
-## Benchmarking
+## Benchmark
 If you developed a new TE method/got a TE library and want to compare it's annotation performance to the methods we have tested, you can:
 
 1.annotate the rice genome with your test library:
@@ -236,13 +241,13 @@ Please cite our paper if you find EDTA useful:
 
 Ou S., Su W., Liao Y., Chougule K., Agda J. R. A., Hellinga A. J., Lugo C. S. B., Elliott T. A., Ware D., Peterson T., Jiang N.✉, Hirsch C. N.✉ and Hufford M. B.✉ (2019). Benchmarking Transposable Element Annotation Methods for Creation of a Streamlined, Comprehensive Pipeline. [Genome Biol. 20(1): 275.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1905-y)
 
-Please also cite the software packages that were used in EDTA, listed in the [EDTA/bin](https://github.com/oushujun/EDTA/tree/master/bin) directory.
+Please also cite the software packages that were used in EDTA, listed in the [EDTA/bin](./bin) directory.
 
 ## Other resources
-You may download the [rice genome here](http://rice.plantbiology.msu.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con).
+You may download the [rice genome here](http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con).
 
 ## Issues
 If you have any issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 ## Acknowledgements
-I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), and many more others for testing, debugging, and improving the EDTA pipeline.
+I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), [Sergei Ryazansky](https://github.com/DrHogart), and many more others for testing, debugging, and improving the EDTA pipeline.
