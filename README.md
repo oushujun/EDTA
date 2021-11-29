@@ -16,7 +16,7 @@
    * [EDTA usage](#edta-usage)
       * [From head to toe](#from-head-to-toe)
       * [Divide and conquer](#divide-and-conquer)
-   * [Benchmarking usage](#benchmarking)
+   * [Benchmark](#benchmark)
    * [Citations](#citations)
    * [Other resources](#other-resources)
    * [Issues](#issues)
