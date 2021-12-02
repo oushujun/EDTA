@@ -211,6 +211,7 @@ Optional:
 ### Protips and self-diagnosis
 1. It's never said enough. You should tidy up all your sequence names before ANY analysis. Keep them short, simple, and unique.
 2. If your run has no errors but stuck at the TIR step for days, try to rerun with more memory. This step takes more memory than others.
+3. Check out the [Wiki page](https://github.com/oushujun/EDTA/wiki) for more information and frequently asked questions.
 
 
 ## Benchmark
