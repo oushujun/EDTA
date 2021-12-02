@@ -16,6 +16,7 @@
    * [EDTA usage](#edta-usage)
       * [From head to toe](#from-head-to-toe)
       * [Divide and conquer](#divide-and-conquer)
+      * [Protips and self-diagnosis](#protips-and-self-diagnosis)
    * [Benchmark](#benchmark)
    * [Citations](#citations)
    * [Other resources](#other-resources)
