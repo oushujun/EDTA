@@ -87,7 +87,11 @@ perl EDTA.pl
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
  
-`singularity pull EDTA.sif docker://oushujun/edta:<tag>`
+```
+SINGULARITY_CACHEDIR=./
+export SINGULARITY_CACHEDIR
+singularity pull EDTA.sif docker://oushujun/edta:<tag>
+```
 
 Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 1.9.5).
 
