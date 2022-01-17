@@ -94,7 +94,6 @@ Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of ava
 Usage:
 
 ```
-export LC_ALL=C
 singularity exec {path}/EDTA.sif EDTA.pl --genome genome.fa [other parameters]
 ```
 
