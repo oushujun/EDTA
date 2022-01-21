@@ -138,12 +138,15 @@ Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) re
 
 
 ## Testing
-You may test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If you encounter any errors with your data, you should test this first before reporting an issue. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. You should check your own data for any formating/naming mistakes.
+You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. If the test is OK but you encounter any errors with your data, you should check your own data for any formating/naming mistakes.
 
 ```
 cd ./EDTA/test
 perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
 ```
+
+If your test fails, you may check out this [collection of issues](https://github.com/oushujun/EDTA/wiki/Installations,-builds,-and-tests-Q&A) for possible reasons and solutions. If none works, you may open a new issue.
+
 
 ## Inputs
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=13 characters) and simple (i.e, letters, numbers, and underscore).
