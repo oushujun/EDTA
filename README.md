@@ -138,7 +138,7 @@ Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) re
 
 
 ## Testing
-You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. If the test is OK but you encounter any errors with your data, you should check your own data for any formating/naming mistakes.
+You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. If the test is OK but you encounter errors with your data, you should check your own data for any formating/naming mistakes.
 
 ```
 cd ./EDTA/test
