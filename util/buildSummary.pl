@@ -25,6 +25,8 @@
 # ChangeLog
 #
 #     $Log$
+#     Add support for count_base.pl output to replace -genome_size and 
+#     	-seq_count. Shujun Ou (shujun.ou.1@gmail.com) 03/22/2022
 #
 ###############################################################################
 #
@@ -39,7 +41,7 @@ buildSummary - Summarize the annotations in one or more *.out files
 
   buildSummary [-version] [-minDiv #] [-maxDiv #] [-species <species_name>]
                [-genome <*.tsv or *.2bit>] [-useAbsoluteGenomeSize]
-               <file1.out>[.gz]
+               [-stats <stats from count_base.pl>] <file1.out>[.gz]
 
 =head1 DESCRIPTION
 
@@ -57,7 +59,19 @@ Displays the version of the program
 
 =item -genome_size #
 
+=item -seq_count #
+
 =item -species <species_name>
+
+=item -stats <stats from count_base.pl>
+
+If the *.out file is manually constructed (i.e., not produced by
+RepeatMasker), you need to specify -genome_size and -seq_count so 
+that % can be correctly calculated. If you don't want to specify 
+these two values manually, you may use this option to privide a 
+stats file of the genome produced by count_base.pl in the EDTA 
+package. When -stats is provided, the -genome_size and -seq_count 
+values will be ignored.
 
 =item -genome <*.tsv or *.2bit>
 
@@ -142,6 +156,7 @@ my @getopt_args = (
                     '-genome=s',
                     '-maxDiv=s',
                     '-minDiv=s',
+		    '-stats=s',
                     '-genome_size=s',
                     '-seq_count=s'
 );
@@ -171,8 +186,13 @@ $maxDiv = $options{'maxDiv'} if ( defined $options{'maxDiv'} );
 # Total genome length
 my $totalSeqLen = 0;
 my $totalSeqNum = 0;
-$totalSeqLen = $options{'genome_size'} if ( defined $options{'genome_size'} );
-$totalSeqNum = $options{'seq_count'} if ( defined $options{'seq_count'} );
+if ( defined $options{'stats'} ){
+	my $info = `grep All $options{'stats'}`;
+	($totalSeqLen, $totalSeqNum) = (split /\s+/, $info)[1,4];
+} else {
+	$totalSeqLen = $options{'genome_size'} if ( defined $options{'genome_size'} );
+	$totalSeqNum = $options{'seq_count'} if ( defined $options{'seq_count'} );
+}
 
 my $taxDB;
 my $repDB;
