@@ -176,25 +176,29 @@ Optional:
 *You got a genome and you want to get a high-quality TE annotation:*
 
     perl EDTA.pl [options]
-      --genome	[File]	The genome FASTA
+      --genome [File]		The genome FASTA file. Required.
       --species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-      --step	[all|filter|final|anno] Specify which steps you want to run EDTA.
-				all: run the entire pipeline (default)
-				filter: start from raw TEs to the end.
-				final: start from filtered TEs to finalizing the run.
-				anno: perform whole-genome annotation/analysis after TE library construction.
-      --overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-      --cds	[File]	Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
-      --curatedlib	[file]	Provided a curated library to keep consistant naming and classification for known TEs.
+      --step [all|filter|final|anno]	Specify which steps you want to run EDTA.
+					 all: run the entire pipeline (default)
+					 filter: start from raw TEs to the end.
+					 final: start from filtered TEs to finalizing the run.
+					 anno: perform whole-genome annotation/analysis after TE library construction.
+      --overwrite [0|1]		If previous results are found, decide to overwrite (1, rerun) or not (0, default).
+      --cds [File]		Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
+      --curatedlib [file]	Provided a curated library to keep consistant naming and classification for known TEs.
 				All TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones here.
-				This option is not mandatory. It's totally OK if no file is provided (default).
-      --sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
-				This step is very slow and MAY help to recover some TEs.
-      --anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
-      --rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (--anno 1 required). Default: use the EDTA library for annotation.
-      --evaluate	[0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
-				This step is slow and does not affect the annotation result.
+				 This option is not mandatory. It's totally OK if no file is provided (default).
+      --sensitive [0|1]		Use RepeatModeler to identify remaining TEs (1) or not (0, default).
+				 This step is very slow and MAY help to recover some TEs.
+      --anno [0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
+      --rmout [File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking.
+			File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (--anno 1 required).
+			Default: use the EDTA library for annotation.
+      --evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
+			 This step is slow and does not affect the annotation result.
       --exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (--anno 1 required).
+      --u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
+			 Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list. Default: 1.3e-8 (per bp per year, from rice).
       --threads|-t	[int]	Number of theads to run this script (default: 4)
       --help|-h	Display this help info
 
