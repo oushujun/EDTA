@@ -21,7 +21,7 @@ dependencies:
   - curl=7.71.1=he644dc0_8
   - dill=0.3.3=pyhd8ed1ab_0
   - drmaa=0.7.9=py_1000
-  - edta=2.0.0=hdfd78af_0
+  - edta=2.0.1
   - entrez-direct=13.9=pl526h375a9b1_0
   - expat=2.2.9=he1b5a44_2
   - fontconfig=2.13.1=h736d332_1003
