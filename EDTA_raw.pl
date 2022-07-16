@@ -246,7 +246,7 @@ if ($id_len > $id_len_max){
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
 			`rm $genome.temp`;
-			die "$date\tERROR: Fail to convert seq IDs to less than $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
+			die "$date\tERROR: Fail to convert seq IDs to <= $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
 	}

@@ -328,7 +328,7 @@ if ($id_len > $id_len_max){
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
 			`rm $genome.temp 2>/dev/null`;
-			die "$date\tERROR: Fail to convert seq IDs to less than $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
+			die "$date\tERROR: Fail to convert seq IDs to <= $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
 	}
@@ -674,7 +674,7 @@ if ($anno == 1){
 	chomp $tot_TE;
 
 	# make low-threshold masked genome for MAKER
-	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
+	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude` unless -s "$genome.MAKER.masked" and $overwrite == 0;
 	`mv $genome.new.masked $genome.MAKER.masked`;
 	my $maker_TE = `perl $count_base $genome.MAKER.masked`;
 	$maker_TE = (split /\s+/, $maker_TE)[3];

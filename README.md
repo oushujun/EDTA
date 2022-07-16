@@ -62,11 +62,11 @@ conda activate EDTA
 
 Then use the following ways to install EDTA. One successful way is sufficient.
 
-The 'simplest' (and slowest) way:
+The 'simplest' and the slowest way (not recommended):
 
 `conda install -c bioconda -c conda-forge edta`
 
-More specifications helps to find the right dependencies:
+More specifications help to find the right dependencies:
 
 `conda install -c conda-forge -c bioconda edta python=3.6 tensorflow=1.14 'h5py<3'`
 
@@ -88,7 +88,7 @@ Installation:
  
 `singularity pull EDTA.sif docker://oushujun/edta:<tag>`
 
-Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 1.9.5).
+Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 2.0.0).
 
 Usage:
 
@@ -104,7 +104,7 @@ Installation:
 
 `docker pull docker://oushujun/edta:<tag>`
 
-Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 1.9.5).
+Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 2.0.0).
 
 Usage:
 
@@ -113,11 +113,11 @@ Usage:
 <details>
 <summary>Other container source...</summary>
 
-1. `singularity pull EDTA.sif docker://quay.io/biocontainers/edta:1.9.5`
+1. `singularity pull EDTA.sif docker://quay.io/biocontainers/edta:2.0.0`
 
-2. `docker pull quay.io/biocontainers/edta:1.9.5`
+2. `docker pull quay.io/biocontainers/edta:2.0.0`
 
-Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 1.9.5--0).
+Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., 2.0.0).
 
 3. Compile using your local docker with the Dockerfile in this package:
 
