@@ -16,10 +16,11 @@
    * [EDTA usage](#edta-usage)
       * [From head to toe](#from-head-to-toe)
       * [Divide and conquer](#divide-and-conquer)
+      * [Protips and self-diagnosis](#protips-and-self-diagnosis)
    * [Benchmark](#benchmark)
    * [Citations](#citations)
    * [Other resources](#other-resources)
-   * [Issues](#issues)
+   * [Questions and Issues](#questions-and-issues)
    * [Acknowledgements](#acknowledgements)
 
 
@@ -86,14 +87,17 @@ perl EDTA.pl
 ### Quick installation using [Singularity](https://sylabs.io/docs/) (good for HPC users)
 Installation:
  
-`singularity pull EDTA.sif docker://oushujun/edta:<tag>`
+```
+SINGULARITY_CACHEDIR=./
+export SINGULARITY_CACHEDIR
+singularity pull EDTA.sif docker://oushujun/edta:<tag>
+```
 
 Visit [dockerhub](https://hub.docker.com/r/oushujun/edta/tags) for a list of available tags (e.g., 2.0.0).
 
 Usage:
 
 ```
-export LC_ALL=C
 singularity exec {path}/EDTA.sif EDTA.pl --genome genome.fa [other parameters]
 ```
 
@@ -134,12 +138,15 @@ Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) re
 
 
 ## Testing
-You may test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If you encounter any errors with your data, you should test this first before reporting an issue. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. You should check your own data for any formating/naming mistakes.
+You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. If the test is OK but you encounter errors with your data, you should check your own data for any formating/naming mistakes.
 
 ```
 cd ./EDTA/test
 perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
 ```
+
+If your test fails, you may check out this [collection of issues](https://github.com/oushujun/EDTA/wiki/Installations,-builds,-and-tests-Q&A) for possible reasons and solutions. If none works, you may open a new issue.
+
 
 ## Inputs
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=13 characters) and simple (i.e, letters, numbers, and underscore).
@@ -169,25 +176,29 @@ Optional:
 *You got a genome and you want to get a high-quality TE annotation:*
 
     perl EDTA.pl [options]
-      --genome	[File]	The genome FASTA
+      --genome [File]		The genome FASTA file. Required.
       --species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-      --step	[all|filter|final|anno] Specify which steps you want to run EDTA.
-				all: run the entire pipeline (default)
-				filter: start from raw TEs to the end.
-				final: start from filtered TEs to finalizing the run.
-				anno: perform whole-genome annotation/analysis after TE library construction.
-      --overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-      --cds	[File]	Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
-      --curatedlib	[file]	Provided a curated library to keep consistant naming and classification for known TEs.
+      --step [all|filter|final|anno]	Specify which steps you want to run EDTA.
+					 all: run the entire pipeline (default)
+					 filter: start from raw TEs to the end.
+					 final: start from filtered TEs to finalizing the run.
+					 anno: perform whole-genome annotation/analysis after TE library construction.
+      --overwrite [0|1]		If previous results are found, decide to overwrite (1, rerun) or not (0, default).
+      --cds [File]		Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
+      --curatedlib [file]	Provided a curated library to keep consistant naming and classification for known TEs.
 				All TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones here.
-				This option is not mandatory. It's totally OK if no file is provided (default).
-      --sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0, default).
-				This step is very slow and MAY help to recover some TEs.
-      --anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
-      --rmout	[File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking. File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (--anno 1 required). Default: use the EDTA library for annotation.
-      --evaluate	[0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
-				This step is slow and does not affect the annotation result.
+				 This option is not mandatory. It's totally OK if no file is provided (default).
+      --sensitive [0|1]		Use RepeatModeler to identify remaining TEs (1) or not (0, default).
+				 This step is very slow and MAY help to recover some TEs.
+      --anno [0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
+      --rmout [File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking.
+			File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (--anno 1 required).
+			Default: use the EDTA library for annotation.
+      --evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
+			 This step is slow and does not affect the annotation result.
       --exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (--anno 1 required).
+      --u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
+			 Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list. Default: 1.3e-8 (per bp per year, from rice).
       --threads|-t	[int]	Number of theads to run this script (default: 4)
       --help|-h	Display this help info
 
@@ -211,6 +222,7 @@ Optional:
 ### Protips and self-diagnosis
 1. It's never said enough. You should tidy up all your sequence names before ANY analysis. Keep them short, simple, and unique.
 2. If your run has no errors but stuck at the TIR step for days, try to rerun with more memory. This step takes more memory than others.
+3. Check out the [Wiki page](https://github.com/oushujun/EDTA/wiki) for more information and frequently asked questions.
 
 
 ## Benchmark
@@ -244,10 +256,10 @@ Ou S., Su W., Liao Y., Chougule K., Agda J. R. A., Hellinga A. J., Lugo C. S. B.
 Please also cite the software packages that were used in EDTA, listed in the [EDTA/bin](./bin) directory.
 
 ## Other resources
-You may download the [rice genome here](http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con).
+You may download the [rice genome here](http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/) (the "all.con" file).
 
-## Issues
-If you have any issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
+## Questions and Issues
+You may want to check out this [Q&A page](https://github.com/oushujun/EDTA/wiki) for best practices and get answered. If you have other issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 ## Acknowledgements
 I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Shanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), [Sergei Ryazansky](https://github.com/DrHogart), and many more others for testing, debugging, and improving the EDTA pipeline.

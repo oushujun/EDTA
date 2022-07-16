@@ -57,14 +57,13 @@ while (<GFF>){
 	$type = "LINE" if $sequence_ontology =~ /LINE|RIL/i;
 	$type = "SINE" if $sequence_ontology =~ /SINE|RIS/i;
 	$type = "nonLTR" if $sequence_ontology =~ /non_LTR/i;
-	$type = "rDNA" if $sequence_ontology =~ /rDNA|rDNA_intergenic_spacer_element/i;
+	$type = "rDNA" if $sequence_ontology =~ /(rDNA|rDNA_intergenic_spacer_element|rRNA_gene|rRNA)/i;
 	$type = "satellite" if $sequence_ontology =~ /satellite|satellite_DNA/i;
 	$type = "low_complexity" if $sequence_ontology =~ /low_complexity/i;
 	$type = "telomere" if $sequence_ontology =~ /telomer|telomeric_repeat/i;
 	$type = "subtelomere" if $sequence_ontology =~ /subtelomer/i;
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
 	$type = "Crypton" if $sequence_ontology =~ /Crypton_YR_transposon/i;
-#	$type = "Penelope" if $sequence_ontology =~ /Penelope|RPP/i;
 	$type = "repeat_region" if $sequence_ontology =~ /repeat_region|DNA_transposon/i;
 	$type = "repeat_region" if $sequence_ontology =~ 'retrotransposon';
 	$type = 'repeat_region' if $sequence_ontology =~ /Unknown/i; #suggested by Changfu Jia

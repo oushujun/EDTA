@@ -2,35 +2,65 @@
 #Sequence ontology for TEs.
 #The first column: case sensitive, exact SO names used by the SO database: http://www.sequenceontology.org
 #The second column: SO IDs used by the database.
-#The third column and further: alias used in everywhere, which are used to make connections with the SO ID. Alias are commer separated with or without spaces. 
+#The third column and further: alias used in everywhere, which are used to make connections with the SO ID. 
+#	Alias are commer separated with or without spaces. 
 #All commented lines will be ignored.
 #Author: Shujun Ou (shujun.ou.1@gmail.com) 07/02/2020
+#Update: 03/15/2022
 ############################################################
 
 
+#######################
+####### Warning #######
+#######################
+# Everytime you add new SO entries to this file, you also need to update the EDTA/util/gff2bed.pl file, 
+#  so that $type can be correctly recognized from Sequence Ontologies listed on the first column of this file.
+
+
+#######################
+## Enhancement notes ##
+#######################
+# These terms do not have their own SO terms and are put under a generic SO
+# TIR/PiggyBac	SO:0000182	DNA_transposon
+# TIR/Sola2	SO:0000182	DNA_transposon
+# rDNA/45S	SO:0002360	rRNA_gene
+
+
+#######################
+####### Contents ######
+#######################
 #Sequence_Ontology	SO_ID	Alias
-centromeric_repeat	SO:0001797	centromeric_repeat,Cent,Cent/CentC,CentC,CentM,Centro/tandem
+centromeric_repeat	SO:0001797	centromeric_repeat,Cent,Cent/CentC,CentC,CentM,Centro/tandem,Cent/centromeric_repeat
 knob	SO:0002257	knob,knob/knob180,knob/TR-1
-satellite_DNA	SO:0000005	satellite_DNA,Satellite/rice,satellite,minisatellite,microsatellite
-telomeric_repeat	SO:0001496	telomeric_repeat,telomere,telomeric
+satellite_DNA	SO:0000005	satellite_DNA,Satellite/rice,satellite,minisatellite,microsatellite,Satellite/Satellite
+telomeric_repeat	SO:0001496	telomeric_repeat,telomere,telomeric,telomere/telomere
 subtelomere	SO:0001997	subtelomere,subtelomere/4-12-1
 low_complexity	SO:0001004	low_complexity,Low_complexity,low_complexity_region,Simple_repeat
-rDNA_intergenic_spacer_element	SO:0001860	rDNA_intergenic_spacer_element,rDNA/spacer
+rDNA_intergenic_spacer_element	SO:0001860	rDNA_intergenic_spacer_element,rDNA/spacer,rDNA/IGS
+2S_rRNA_gene	SO:0002336	2S_rRNA_gene,rRNA_2S_gene,cytosolic_rRNA_2S_gene,rDNA/2S,2S_rRNA
+5S_rRNA_gene	SO:0002238	5S_rRNA_gene,cytosolic_rRNA_5S_gene,rDNA/5S,5S_rRNA
+5_8S_rRNA_gene	SO:0002240	5_8S_rRNA_gene,cytosolic_rRNA_5_8S_gene,rDNA/5.8S,5.8S_rRNA,rDNA/5_8S,5_8S_rRNA
+23S_rRNA_gene	SO:0002243	23S_rRNA_gene,rDNA/23S,23S_rRNA
+25S_rRNA_gene	SO:0002242	25S_rRNA_gene,rDNA/25S,25S_rRNA
+28S_rRNA_gene	SO:0002239	28S_rRNA_gene,rDNA/28S,28S_rRNA
+18S_rRNA_gene	SO:0002236	18S_rRNA_gene,cytosolic_rRNA_18S_gene,rDNA/18S,18S_rRNA
+16S_rRNA_gene	SO:0002237	16S_rRNA_gene,cytosolic_rRNA_16S_gene,rDNA/16S,16S_rRNA
+rRNA_gene	SO:0002360	rRNA_gene,rDNA/45S
 rRNA	SO:0000252	rRNA
 
 #higher	order
-repeat_region	SO:0000657	repeat_region,Unknown,unknown,unknown/unknown,NA/NA,Unknown/NA,Unknown/unknown
+repeat_region	SO:0000657	repeat_region,Unknown,unknown,unknown/unknown,NA/NA,Unknown/NA,Unknown/unknown,Unspecified,repeat/unknown
 retrotransposon	SO:0000180	Class_I,RNA_transposon,retrotransposon
-DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown
+DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown,TIR/PiggyBac,TIR/Sola2
 
 #TIR	DNA	transposons
 terminal_inverted_repeat_element	SO:0000208	terminal_inverted_repeat_element,TIR/unknown,DNA/DTX,DTX,DNAauto/unknown,DNAnona/unknown,DNAauto/PILE,DNAnona/PILE,DNAauto/POLE,DNAnona/POLE,DNA/PILE,MITE/PILE,DNA/POLE,MITE/POLE
 MITE	SO:0000338	MITE,TIR/MITE,MITE/unknown
-CACTA_TIR_transposon	SO:0002285	CACTA_TIR_transposon,DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA,DNA/EnSpm_CACTA
-hAT_TIR_transposon	SO:0002279	hAT_TIR_transposon,DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT,TIR/hAT
-Mutator_TIR_transposon	SO:0002280	Mutator_TIR_transposon,DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator,DNA/Mutator
-PIF_Harbinger_TIR_transposon	SO:0002284	PIF_Harbinger_TIR_transposon,DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger,DNA/Harbinger
-Tc1_Mariner_TIR_transposon	SO:0002278	Tc1_Mariner_TIR_transposon,stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner,DNA/Tc1-Mariner
+CACTA_TIR_transposon	SO:0002285	CACTA_TIR_transposon,DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA,DNA/EnSpm_CACTA,DNA/CMC-EnSpm
+hAT_TIR_transposon	SO:0002279	hAT_TIR_transposon,DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT,TIR/hAT,DNA/hAT-Ac
+Mutator_TIR_transposon	SO:0002280	Mutator_TIR_transposon,DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator,DNA/Mutator,DNA/MuDR,DNA/MULE-MuDR
+PIF_Harbinger_TIR_transposon	SO:0002284	PIF_Harbinger_TIR_transposon,DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger,DNA/Harbinger,DNA/PIF-Harbinger
+Tc1_Mariner_TIR_transposon	SO:0002278	Tc1_Mariner_TIR_transposon,stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner,DNA/Tc1-Mariner,DNA/TcMar-Pogo,DNA/Mariner
 P_TIR_transposon	SO:0001535	P_TIR_transposon,P-element,P_element,DNA/DTP
 piggyBac_TIR_transposon	SO:0002283	piggyBac_TIR_transposon,PiggyBac,DNA/DTB,MITE/DTB
 polinton	SO:0001170	polinton,maverick,Maverick

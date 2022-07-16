@@ -52,7 +52,8 @@ foreach my $type1 (@types){
 		$all += $stat{"$type1-$type2"};
 		print $stat{"$type1-$type2"}."\t";
 		}
-	my $Misclas_rate = sprintf("%.4f", ($all-$true)/$all);
+	my $Misclas_rate = 0;
+	$Misclas_rate = sprintf("%.4f", ($all-$true)/$all) if $all > 0;
 	print "$Misclas_rate\n";
 	}
 

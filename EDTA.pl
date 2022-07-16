@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v2.0.0";
+my $version = "v2.0.1";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -33,27 +33,27 @@ my $usage = "\nThis is the Extensive de-novo TE Annotator that generates a high-
 structure-based TE library. Usage:
 
 perl EDTA.pl [options]
-	--genome	[File]	The genome FASTA
+	--genome [File]		The genome FASTA file. Required.
 	--species [Rice|Maize|others]	Specify the species for identification of TIR
 					candidates. Default: others
-	--step	[all|filter|final|anno] Specify which steps you want to run EDTA.
+	--step [all|filter|final|anno]	Specify which steps you want to run EDTA.
 					all: run the entire pipeline (default)
 					filter: start from raw TEs to the end.
 					final: start from filtered TEs to finalizing the run.
 					anno: perform whole-genome annotation/analysis after
 						TE library construction.
-	--overwrite	[0|1]	If previous raw TE results are found, decide to overwrite
+	--overwrite [0|1]	If previous raw TE results are found, decide to overwrite
 				(1, rerun) or not (0, default).
-	--cds	[File]	Provide a FASTA file containing the coding sequence (no introns,
+	--cds [File]	Provide a FASTA file containing the coding sequence (no introns,
 			UTRs, nor TEs) of this genome or its close relative.
-	--curatedlib	[File]	Provided a curated library to keep consistant naming and
+	--curatedlib [File]	Provided a curated library to keep consistant naming and
 				classification for known TEs. TEs in this file will be
 				trusted 100%, so please ONLY provide MANUALLY CURATED ones.
 				This option is not mandatory. It's totally OK if no file is
 				provided (default).
-	--sensitive	[0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0,
+	--sensitive [0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0,
 				default). This step is slow but MAY help to recover some TEs.
-	--anno	[0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation
+	--anno [0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation
 			after TE library construction.
 	--rmout	[File]	Provide your own homology-based TE annotation instead of using the
 			EDTA library for masking. File is in RepeatMasker .out format. This
@@ -62,16 +62,19 @@ perl EDTA.pl [options]
 	--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation.
 				(--anno 1 required). Default: 0. This step is slow and does
 				not change the annotation result.
-	--exclude	[File]	Exclude bed format regions from TE annotation. Default: undef.
+	--exclude [File]	Exclude bed format regions from TE annotation. Default: undef.
 				(--anno 1 required).
 	--force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit
 			(default); 1, use rice TEs to continue.
+	--u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
+			Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list.
+			Default: 1.3e-8 (per bp per year, from rice).
 	--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 	--repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 	--check_dependencies Check if dependencies are fullfiled and quit
-	--threads|-t	[int]	Number of theads to run this script (default: 4)
-	--debug		[0|1]	Retain intermediate files (default: 0)
-	--help|-h	Display this help info
+	--threads|-t [int]	Number of theads to run this script (default: 4)
+	--debug	 [0|1]	Retain intermediate files (default: 0)
+	--help|-h 	Display this help info
 \n";
 
 # pre-defined
@@ -88,6 +91,7 @@ my $rmout = ''; #a RM .out file for custom homology-based annotation.
 my $evaluate = 0; #1 will evaluate the consistancy of the TE annotation
 my $exclude = ''; #a bed file exclude from TE annotation
 my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
+my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
@@ -150,6 +154,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'evaluate=i'           => \$evaluate,
 		  'exclude=s'            => \$exclude,
 		  'force=i'              => \$force,
+		  'u=s'                  => \$miu,
 		  'repeatmodeler=s'      => \$repeatmodeler,
 		  'repeatmasker=s'       => \$repeatmasker,
 		  'tesorter=s'           => \$TEsorter,
@@ -185,6 +190,7 @@ if ($sensitive != 0 and $sensitive != 1){ die "The expected value for the sensit
 if ($anno != 0 and $anno != 1){ die "The expected value for the anno parameter is 0 or 1!\n"}
 if ($evaluate != 0 and $evaluate != 1){ die "The expected value for the evaluate parameter is 0 or 1!\n"}
 if ($force != 0 and $force != 1){ die "The expected value for the force parameter is 0 or 1!\n"}
+if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float value without units!\n"}
 if ($debug != 0 and $debug != 1){ die "The expected value for the debug parameter is 0 or 1!\n"}
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"}
 
@@ -394,7 +400,7 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --convert_seq_name 0`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --convert_seq_name 0`;
 
 chdir "$genome.EDTA.raw";
 
@@ -499,7 +505,8 @@ if ($sensitive == 1){
 	if (-s "$genome.RM.consensi.fa"){
 		`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
 		`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
-		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
+		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
+		`cp $genome.RepeatModeler.raw.fa $genome.RepeatModeler.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
 		`cat $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
 
@@ -530,8 +537,10 @@ if ($cds ne ''){
 	# remove cds-related sequences in the EDTA library
 	print "\t\t\t\tRemove CDS-related sequences in the EDTA library:\n\n";
 	if (-s "$cds"){
-		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
-		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.raw 2>/dev/null`;
+		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
+		`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+		$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.raw 2>/dev/null`;
+		`cp $genome.EDTA.intact.fa.raw $genome.EDTA.intact.fa.raw.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.raw.masked > $genome.EDTA.intact.fa.rmCDS`;
 
@@ -577,7 +586,8 @@ if ($HQlib ne ''){
 	print "$date\tCombine the high-quality TE library $HQlib with the EDTA library:\n\n";
 
 	# remove known TEs in the EDTA library
-	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	`cp $genome.EDTA.TElib.fa $genome.EDTA.TElib.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	`mv $genome.EDTA.TElib.fa $genome.EDTA.TElib.ori.fa`;
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;

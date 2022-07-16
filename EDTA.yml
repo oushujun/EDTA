@@ -1,8 +1,8 @@
 name: EDTA
 channels:
   - bioconda
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_gnu
@@ -13,15 +13,15 @@ dependencies:
   - blast=2.10.1=pl526he19e7b1_3
   - bzip2=1.0.8=h7f98852_4
   - c-ares=1.17.1=h36c2ea0_0
-  - ca-certificates=2020.12.5=ha878542_0
+  - ca-certificates=2021.10.26=h06a4308_2
   - cairo=1.16.0=h7979940_1007
   - cd-hit=4.8.1=hdbcaa40_0
-  - certifi=2020.12.5=py36h5fab9bb_1
+  - certifi=2021.5.30=py36h06a4308_0
   - coreutils=8.25=1
   - curl=7.71.1=he644dc0_8
   - dill=0.3.3=pyhd8ed1ab_0
   - drmaa=0.7.9=py_1000
-  - edta=2.0.1
+  - edta=2.0.0=hdfd78af_0
   - entrez-direct=13.9=pl526h375a9b1_0
   - expat=2.2.9=he1b5a44_2
   - fontconfig=2.13.1=h736d332_1003
@@ -95,7 +95,7 @@ dependencies:
   - nseg=1.0.1=h516909a_0
   - numpy=1.19.5=py36h2aa4a07_1
   - openjdk=11.0.8=hacce0ff_0
-  - openssl=1.1.1i=h7f98852_0
+  - openssl=1.1.1m=h7f8727e_0
   - pandas=1.1.5=py36h284efc9_0
   - pango=1.42.4=h69149e4_5
   - pcre=8.44=he1b5a44_0
@@ -228,3 +228,4 @@ dependencies:
   - zipp=3.4.0=py_0
   - zlib=1.2.11=h516909a_1010
   - zstd=1.4.8=ha95c52a_1
+prefix: /data/mschatz1/oushujun/bin/miniconda3/envs/EDTA

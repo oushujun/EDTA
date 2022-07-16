@@ -31,6 +31,9 @@ perl EDTA_raw.pl [options]
 	--convert_seq_name	[0|1]	Convert long sequence name to <= 15
 					characters and remove annotations (1,
 					default) or use the original (0)
+	--u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
+			Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list.
+			Default: 1.3e-8 (per bp per year, from rice).
 	--tesorter	[path]	Path to the TEsorter program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
 	--threads|-t	[int]	Number of theads to run this script. Default: 4
@@ -44,6 +47,7 @@ my $type = 'all';
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $convert_name = 1; #0, use original seq names; 1 shorten names.
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
+my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
@@ -82,6 +86,7 @@ foreach (@ARGV){
 	$type = lc $ARGV[$k+1] if /^--type$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^--overwrite$/i and $ARGV[$k+1] !~ /^-/;
 	$convert_name = $ARGV[$k+1] if /^--convert_seq_name$/i and $ARGV[$k+1] !~ /^-/;
+	$miu = $ARGV[$k+1] if /^--u$/i and $ARGV[$k+1] !~ /^-/;
 	$genometools = $ARGV[$k+1] if /^--genometools/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^--repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
 	$LTR_retriever = $ARGV[$k+1] if /^--ltrretriever/i and $ARGV[$k+1] !~ /^-/;
@@ -124,6 +129,7 @@ die "The expected value for the type parameter is ltr or tir or helitron or all!
 if ($overwrite != 0 and $overwrite != 1){ die "The expected value for the overwrite parameter is 0 or 1!\n"};
 if ($convert_name != 0 and $convert_name != 1){ die "The expected value for the convert_seq_name parameter is 0 or 1!\n"};
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"};
+if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float value without units!\n"}
 
 chomp (my $date = `date`);
 print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
@@ -297,7 +303,7 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 
 # run LTR_retriever
 `cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
-`${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
+`${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
 
 # get full-length LTR from pass.list
 `awk '{if (\$1 !~ /#/) print \$1"\\t"\$1}' $genome.pass.list | perl $call_seq - -C $genome > $genome.LTR.intact.fa.ori`;

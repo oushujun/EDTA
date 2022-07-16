@@ -17,6 +17,7 @@ while (<File>){
 	chomp;
 	s/>//g;
 	my ($id, $seq)=(split /\n/, $_, 2);
+	$id = (split)[0];
 	$seq=~s/\s+//g;
 	my $N_count=$seq=~tr/Nn//;
 	my $chr_len=length $seq;

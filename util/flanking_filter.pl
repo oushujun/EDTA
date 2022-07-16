@@ -208,12 +208,16 @@ sub filter(){
 # determine if the given sequence is simple repeat
 sub count_base(){
 	my $seq = lc $_[0];
-	$seq =~ s/[nx]+//gi;
-	my @base = ('a', 't', 'c', 'g');
-	my @count = map { $_ = () = ($seq =~ /$_/gi) } @base; #base count
-	@count = (sort { $b<=>$a } @count); #reverse sort
-	my $dominant_base = ($count[0] + $count[1])/length $seq;
 	my $repeat = "false";
-	$repeat = "true" if $dominant_base >= 0.85;
+	$seq =~ s/[nx]+//gi;
+	if (length $seq > 0){
+		my @base = ('a', 't', 'c', 'g');
+		my @count = map { $_ = () = ($seq =~ /$_/gi) } @base; #base count
+		@count = (sort { $b<=>$a } @count); #reverse sort
+		my $dominant_base = ($count[0] + $count[1])/length $seq;
+		$repeat = "true" if $dominant_base >= 0.85;
+		} else {
+		$repeat = "true";
+		}
 	return $repeat;
 	}
