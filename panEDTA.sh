@@ -4,7 +4,8 @@
 #	1. Each genome will be annotated by EDTA sequentially
 #	2. Individual TE libraries will be combined by panEDTA
 #	3. Each genome will be reannotated by the panEDTA library
-# Shujun Ou (shujun.ou.1@gmail.com)
+# Shujun Ou (shujun.ou.1@gmail.com) 
+# 10/10/2022
 
 
 ## Test files explained

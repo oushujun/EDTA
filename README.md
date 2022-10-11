@@ -17,6 +17,7 @@
       * [From head to toe](#from-head-to-toe)
       * [Divide and conquer](#divide-and-conquer)
       * [Protips and self-diagnosis](#protips-and-self-diagnosis)
+   * [panEDTA usage](#panedta-usage)
    * [Benchmark](#benchmark)
    * [Citations](#citations)
    * [Other resources](#other-resources)
@@ -154,7 +155,7 @@ Required: The genome file [FASTA]. Please make sure sequence names are short (<=
 Optional: 
 1. Coding sequence of the species or a closely related species [FASTA]. This file helps to purge gene sequences in the TE library.
 2. Known gene positions of this version of the genome assembly [BED]. Coordinates specified in this file will be excluded from TE annotation to avoid over-masking.
-3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's fine. It doesn't need to be complete. Providing curated TE sequences, especially for those under annotated TE types (i.e., SINEs and LINEs), will greatly improve the annotation quality.
+3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's also good. It doesn't need to be complete. Providing curated TE sequences, especially for those under-annotated TE types (i.e., SINEs and LINEs), will greatly improve the annotation quality.
 
 
 ## Outputs
@@ -224,6 +225,24 @@ Optional:
 2. If your run has no errors but stuck at the TIR step for days, try to rerun with more memory. This step takes more memory than others.
 3. Check out the [Wiki page](https://github.com/oushujun/EDTA/wiki) for more information and frequently asked questions.
 
+## panEDTA usage
+This is the serial version of panEDTA. Each genome will be annotated sequentially and then combined with the panEDTA functionality. Existing EDTA annotation of genomes (--anno 1) will be recognized and reused. A way to acclerate the pan-genome annotation is to execute EDTA annotation of each genomes separately and in parallel, then execute panEDTA to finish the remaining of the runs. You may want to save the GFF files and the sum file of the EDTA results because they will be overwritten by panEDTA. You may want to check out the toy example in the ./test folder to get familiarized.
+
+sh panEDTA.sh -genomes genome_list.txt -cds cds.fasta -threads 10
+	-g	A list of genome files with paths accessible from the working directory.
+			Required: You can provide only a list of genomes in this file (one column, one genome each row).
+			Optional: You can also provide both genomes and CDS files in this file (two columns, one genome and one CDS each row).
+				  Missing of CDS files (eg, for some or all genomes) is allowed.
+	-c		Optional. Coding sequence files in fasta format.
+   			The CDS file provided via this parameter will fill in the missing CDS files in the genome list.
+			If no CDS files are provided in the genome list, then this CDS file will be used on all genomes.
+	-l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format.
+	-f	Minimum number of full-length TE copies in individual genomes to be kept as candidate TEs for the pangenome.
+   			Lower is more inclusive, and will ↑ library size, ↑ sensitivity, and ↑ inconsistency.
+			Higher is more stringent, and will ↓ library size, ↓ sensitivity, and ↓ inconsistency.
+			Default: 3.
+	-t	Number of CPUs to run panEDTA. Default: 10.
+
 
 ## Benchmark
 If you developed a new TE method/got a TE library and want to compare it's annotation performance to the methods we have tested, you can:
@@ -252,6 +271,10 @@ eg.
 Please cite our paper if you find EDTA useful:
 
 Ou S., Su W., Liao Y., Chougule K., Agda J. R. A., Hellinga A. J., Lugo C. S. B., Elliott T. A., Ware D., Peterson T., Jiang N.✉, Hirsch C. N.✉ and Hufford M. B.✉ (2019). Benchmarking Transposable Element Annotation Methods for Creation of a Streamlined, Comprehensive Pipeline. [Genome Biol. 20(1): 275.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1905-y)
+
+Please cite the panEDTA paper if you are using the pan-genome functionality:
+
+Ou S., Collins T., Qiu Y., Seetharam A., Menard C., Manchanda N., Gent J., Schatz M., Anderson S., Hufford M.✉, Hirsch C.✉ (2022). Differences in activity and stability drive transposable element variation in tropical and temperate maize. [bioRxiv](https://doi.org/10.1101/2022.10.09.511471)
 
 Please also cite the software packages that were used in EDTA, listed in the [EDTA/bin](./bin) directory.
 
