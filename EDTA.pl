@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v2.0.1";
+my $version = "v2.1.0";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -18,6 +18,7 @@ my $version = "v2.0.1";
 #v1.8 02/09/2020
 #v1.9 07/24/2020
 #v2.0 11/25/2021
+#v2.1 10/10/2022
 
 print "
 ########################################################
@@ -719,5 +720,8 @@ if ($anno == 1){
 				Nested: $genome.EDTA.TE.fa.stat.nested.sum
 				Non-nested: $genome.EDTA.TE.fa.stat.redun.sum\n\n";
 		}
+
+	print "\t\t\t\tIf you want to learn more about the formatting and information of these files, please visit:
+	\t\t\t\thttps://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A\n\n";
 
 	}

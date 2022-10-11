@@ -187,7 +187,7 @@ $maxDiv = $options{'maxDiv'} if ( defined $options{'maxDiv'} );
 my $totalSeqLen = 0;
 my $totalSeqNum = 0;
 if ( defined $options{'stats'} ){
-	my $info = `grep All $options{'stats'}`;
+	my $info = `grep -P '^All' $options{'stats'}`;
 	($totalSeqLen, $totalSeqNum) = (split /\s+/, $info)[1,4];
 } else {
 	$totalSeqLen = $options{'genome_size'} if ( defined $options{'genome_size'} );
