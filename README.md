@@ -228,20 +228,20 @@ Optional:
 ## panEDTA usage
 This is the serial version of panEDTA. Each genome will be annotated sequentially and then combined with the panEDTA functionality. Existing EDTA annotation of genomes (--anno 1) will be recognized and reused. A way to acclerate the pan-genome annotation is to execute EDTA annotation of each genomes separately and in parallel, then execute panEDTA to finish the remaining of the runs. You may want to save the GFF files and the sum file of the EDTA results because they will be overwritten by panEDTA. You may want to check out the toy example in the ./test folder to get familiarized.
 
-sh panEDTA.sh -genomes genome_list.txt -cds cds.fasta -threads 10
-	-g	A list of genome files with paths accessible from the working directory.
-			Required: You can provide only a list of genomes in this file (one column, one genome each row).
-			Optional: You can also provide both genomes and CDS files in this file (two columns, one genome and one CDS each row).
-				  Missing of CDS files (eg, for some or all genomes) is allowed.
-	-c		Optional. Coding sequence files in fasta format.
-   			The CDS file provided via this parameter will fill in the missing CDS files in the genome list.
-			If no CDS files are provided in the genome list, then this CDS file will be used on all genomes.
-	-l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format.
-	-f	Minimum number of full-length TE copies in individual genomes to be kept as candidate TEs for the pangenome.
-   			Lower is more inclusive, and will ↑ library size, ↑ sensitivity, and ↑ inconsistency.
-			Higher is more stringent, and will ↓ library size, ↓ sensitivity, and ↓ inconsistency.
-			Default: 3.
-	-t	Number of CPUs to run panEDTA. Default: 10.
+    sh panEDTA.sh -genomes genome_list.txt -cds cds.fasta -threads 10
+        -g	A list of genome files with paths accessible from the working directory.
+                    Required: You can provide only a list of genomes in this file (one column, one genome each row).
+                    Optional: You can also provide both genomes and CDS files in this file (two columns, one genome and one CDS each row).
+                        Missing of CDS files (eg, for some or all genomes) is allowed.
+        -c	Optional. Coding sequence files in fasta format.
+                    The CDS file provided via this parameter will fill in the missing CDS files in the genome list.
+                    If no CDS files are provided in the genome list, then this CDS file will be used on all genomes.
+        -l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format.
+        -f	Minimum number of full-length TE copies in individual genomes to be kept as candidate TEs for the pangenome.
+                    Lower is more inclusive, and will ↑ library size, ↑ sensitivity, and ↑ inconsistency.
+                    Higher is more stringent, and will ↓ library size, ↓ sensitivity, and ↓ inconsistency.
+                    Default: 3.
+        -t	Number of CPUs to run panEDTA. Default: 10.
 
 
 ## Benchmark
