@@ -155,7 +155,7 @@ Required: The genome file [FASTA]. Please make sure sequence names are short (<=
 Optional: 
 1. Coding sequence of the species or a closely related species [FASTA]. This file helps to purge gene sequences in the TE library.
 2. Known gene positions of this version of the genome assembly [BED]. Coordinates specified in this file will be excluded from TE annotation to avoid over-masking.
-3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's also good. It doesn't need to be complete. Providing curated TE sequences, especially for those under-annotated TE types (i.e., SINEs and LINEs), will greatly improve the annotation quality.
+3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's also good. It doesn't need to be complete. Providing curated TE sequences, especially for those under-annotated TE types (i.e., SINEs and LINEs), will greatly improve the annotation quality. For more information, please visit this wiki page: [How to prepare a curated library to maximize the efficacy of EDTA](https://github.com/oushujun/EDTA/wiki/How-to-prepare-a-curated-library-to-maximize-the-efficacy-of-EDTA)
 
 
 ## Outputs
