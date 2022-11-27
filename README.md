@@ -226,14 +226,14 @@ Optional:
 3. Check out the [Wiki page](https://github.com/oushujun/EDTA/wiki) for more information and frequently asked questions.
 
 ## panEDTA usage
-This is the serial version of panEDTA. Each genome will be annotated sequentially and then combined with the panEDTA functionality. Existing EDTA annotation of genomes (--anno 1) will be recognized and reused. A way to acclerate the pan-genome annotation is to execute EDTA annotation of each genomes separately and in parallel, then execute panEDTA to finish the remaining of the runs. You may want to save the GFF files and the sum file of the EDTA results because they will be overwritten by panEDTA. You may want to check out the toy example in the ./test folder to get familiarized.
+This is the serial version of panEDTA. Each genome will be annotated sequentially and then combined with the panEDTA functionality. Existing EDTA annotation of genomes (EDTA run with --anno 1) will be recognized and reused. A way to acclerate the pan-genome annotation is to execute EDTA annotation of each genomes separately and in parallel, then execute panEDTA to finish the remaining of the runs. You may want to save the GFF files and the sum file of the EDTA results of each genome because they will be overwritten by panEDTA. To help filtering out gene-related sequences, at least one CDS file is required. Please read [wiki](https://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A) for the CDS requirement. You may want to check out the toy example in the ./test folder to get familiarized.
 
-    sh panEDTA.sh -genomes genome_list.txt -cds cds.fasta -threads 10
+    sh panEDTA.sh -g genome_list.txt -c cds.fasta -t 10
         -g	A list of genome files with paths accessible from the working directory.
                     Required: You can provide only a list of genomes in this file (one column, one genome each row).
                     Optional: You can also provide both genomes and CDS files in this file (two columns, one genome and one CDS each row).
                         Missing of CDS files (eg, for some or all genomes) is allowed.
-        -c	Optional. Coding sequence files in fasta format.
+        -c	Required. Coding sequence files in fasta format.
                     The CDS file provided via this parameter will fill in the missing CDS files in the genome list.
                     If no CDS files are provided in the genome list, then this CDS file will be used on all genomes.
         -l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format.
