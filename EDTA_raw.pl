@@ -226,8 +226,9 @@ if ($convert_name == 1){
 if (-s "$genome.mod"){
 	$genome = "$genome.mod";
 	} else {
-# remove sequence annotations (content after the first space in sequence names)
-`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
+
+# remove sequence annotations (content after the first space in sequence names) and replace special characters with _
+`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; print \$info' $genome > $genome.mod`;
 
 # try to shortern sequences
 my $id_len_max = 13; # allowed longest length of a sequence ID in the input file

@@ -309,8 +309,8 @@ if ($raw_id > $old_id){
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
 	}
 
-# remove sequence annotations (content after the first space in sequence names)
-`perl -nle 'my \$info=(split)[0]; print \$info' $genome > $genome.mod`;
+# remove sequence annotations (content after the first space in sequence names) and replace special characters with _
+`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; print \$info' $genome > $genome.mod`;
 
 # try to shortern sequences
 my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
