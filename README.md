@@ -34,7 +34,7 @@ The EDTA package was designed to filter out false discoveries in raw TE candidat
 
 To benchmark the annotation quality of a new library/method, I have provided the curated TE annotation (v6.9.5) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
 
-For pan-genome annotations, you need to annotate each genome with EDTA, generate a pan-genome library, then reannotate each genome with the pan-genome library. Please refer to this [example](https://github.com/HuffordLab/NAM-genomes/tree/master/te-annotation) for details.
+For pan-genome annotations, you need to annotate each genome with EDTA, generate a pan-genome library, then reannotate each genome with the pan-genome library. Please refer to this [example](https://github.com/HuffordLab/NAM-genomes/tree/master/te-annotation) for details. A sequential version of panEDTA is also included in this package. 
 
 
 ## Installation
