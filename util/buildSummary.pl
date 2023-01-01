@@ -184,11 +184,14 @@ $minDiv = $options{'minDiv'} if ( defined $options{'minDiv'} );
 $maxDiv = $options{'maxDiv'} if ( defined $options{'maxDiv'} );
 
 # Total genome length
+my $rawSeqLen = 0;
+my $gapLen = 0;
 my $totalSeqLen = 0;
 my $totalSeqNum = 0;
 if ( defined $options{'stats'} ){
 	my $info = `grep -P '^All' $options{'stats'}`;
-	($totalSeqLen, $totalSeqNum) = (split /\s+/, $info)[1,4];
+	($rawSeqLen, $gapLen, $totalSeqNum) = (split /\s+/, $info)[1,2,4];
+	$totalSeqLen = $rawSeqLen - $gapLen;
 } else {
 	$totalSeqLen = $options{'genome_size'} if ( defined $options{'genome_size'} );
 	$totalSeqNum = $options{'seq_count'} if ( defined $options{'seq_count'} );
