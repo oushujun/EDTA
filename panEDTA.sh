@@ -22,7 +22,7 @@
 helpFunction()
 {
    echo ""
-   echo "Usage: $0 -genomes genome_list.txt -cds cds.fasta -threads 10"
+   echo "Usage: $0 -g genome_list.txt -c cds.fasta -t 10"
    echo -e "\t-g	A list of genome files with paths accessible from the working directory.
 			Required: You can provide only a list of genomes in this file (one column, one genome each row).
 			Optional: You can also provide both genomes and CDS files in this file (two columns, one genome and one CDS each row).
@@ -66,12 +66,12 @@ if [ ! -s "$genome_list" ]; then
    helpFunction
 fi
 
-if [ "$cds" != '' ] & [ ! -s "$cds" ]; then
+if [ "$cds" != '' ] && [ ! -s "$cds" ]; then
    echo "ERROR: The cds $cds file is not found or is empty"
    helpFunction
 fi
 
-if [ "$curatedlib" != '' ] & [ ! -s "$curatedlib" ]; then
+if [ "$curatedlib" != '' ] && [ ! -s "$curatedlib" ]; then
    echo "ERROR: The curated library $curatedlib file is not found or is empty"
    helpFunction
 fi
@@ -155,19 +155,20 @@ done
 
 # aggregate TE libs
 i=0
-for j in *keep.ori; do 
+for j in `cat $genome_list`; do
+	genome=`echo $j|awk '{print $1}'`
 	i=$(($i+5000)); 
-	perl $path/util/rename_TE.pl $j $i; 
-done | perl $path/util/rename_TE.pl - > panEDTA.TElib.fa.raw
+	perl $path/util/rename_TE.pl $genome.mod.EDTA.TElib.fa.keep.ori $i; 
+done | perl $path/util/rename_TE.pl - > $genome_list.panEDTA.TElib.fa.raw
 
 # remove redundant
 echo "Generate the panEDTA library"
-perl $path/util/cleanup_nested.pl -in panEDTA.TElib.fa.raw -cov 0.95 -minlen 80 -miniden 80 -t $threads
-cp panEDTA.TElib.fa.raw.cln panEDTA.TElib.fa
+perl $path/util/cleanup_nested.pl -in $genome_list.panEDTA.TElib.fa.raw -cov 0.95 -minlen 80 -miniden 80 -t $threads
+cp $genome_list.panEDTA.TElib.fa.raw.cln $genome_list.panEDTA.TElib.fa
 
 # Extra step if --curatedlib is provided:
 if [ -s "$curatedlib" ]; then
-	cat $curatedlib >> panEDTA.TElib.fa
+	cat $curatedlib >> $genome_list.panEDTA.TElib.fa
 fi
 
 
@@ -175,11 +176,7 @@ fi
 for i in `cat $genome_list`; do
 	genome=`echo $i|awk '{print $1}'`
 	echo "Reannotate genome $genome with the panEDTA library - homology"
-	RepeatMasker -pa $threads -q -div 40 -lib panEDTA.TElib.fa -cutoff 225 -gff $genome.mod >/dev/null
-done
-
-for i in `cat $genome_list`; do
-	genome=`echo $i|awk '{print $1}'`
+	RepeatMasker -pa $threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod >/dev/null
 	perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.out
 done
 
@@ -193,7 +190,7 @@ for i in `cat $genome_list`; do
         fi
 
 	echo "Reannotate genome $genome with the panEDTA library - structural"
-	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.out
+	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.out
 done
 
 echo `date`
