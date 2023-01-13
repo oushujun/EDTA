@@ -99,7 +99,7 @@ for i in `cat $genome_list`; do
 	cds_ind=`echo $i|awk '{print $2}'`
 
 	# use the global $cds to replace a missing cds
-	if [ "$cds_ind" == '' ] & [ "$cds" != '' ]; then
+	if [ "$cds_ind" == '' ] && [ "$cds" != '' ]; then
 		cds_ind=$cds
 	fi
 
@@ -185,7 +185,7 @@ for i in `cat $genome_list`; do
 	cds_ind=`echo $i|awk '{print $2}'`
 
         # use the global $cds to replace a missing cds
-        if [ "$cds_ind" == '' ] & [ "$cds" != '' ]; then
+        if [ "$cds_ind" == '' ] && [ "$cds" != '' ]; then
                 cds_ind=$cds
         fi
 
