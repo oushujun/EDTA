@@ -35,6 +35,8 @@ helpFunction()
    			Lower is more inclusive, and will ↑ library size, ↑ sensitivity, and ↑ inconsistency.
 			Higher is more stringent, and will ↓ library size, ↓ sensitivity, and ↓ inconsistency.
 			Default: 3."
+   echo -e "\t-a	Optional. Just generate the panEDTA library (0) or 
+   			Perform whole-genome annotation using the generated panEDTA library (default, 1)."
    echo -e "\t-t	Number of CPUs to run panEDTA. Default: 10."
    echo ""
    exit 1 # Exit script after printing help
@@ -46,15 +48,17 @@ cds=''
 curatedlib=''
 fl_copy=3
 threads=10
+anno=1
 
 # Read user inputs
-while getopts "g:c::l::f::t::" opt
+while getopts "g:c::l::f::a::t::" opt
 do
    case "$opt" in
       g ) genome_list="$OPTARG" ;;
       c ) cds="$OPTARG" ;;
       l ) curatedlib="$OPTARG" ;;
       f ) fl_copy="$OPTARG" ;;
+      a ) anno="$OPTARG" ;;
       t ) threads="$OPTARG" ;;
       ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
    esac
@@ -170,9 +174,11 @@ cp $genome_list.panEDTA.TElib.fa.raw.cln $genome_list.panEDTA.TElib.fa
 if [ -s "$curatedlib" ]; then
 	cat $curatedlib >> $genome_list.panEDTA.TElib.fa
 fi
-
+echo `date`
+echo -e "\tpanEDTA library of $genome_list is generated!"
 
 ## Step 3, re-annotate all genomes with the panEDTA library, consider to submit each RepeatMasker and EDTA job to different nodes.
+if [ "$anno" == '1' ]; then
 for i in `cat $genome_list`; do
 	genome=`echo $i|awk '{print $1}'`
 	echo "Reannotate genome $genome with the panEDTA library - homology"
@@ -195,4 +201,4 @@ done
 
 echo `date`
 echo -e "\tpanEDTA annotation of $genome_list is finished!"
-
+fi
