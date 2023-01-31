@@ -70,6 +70,7 @@ while (<Genome>){
 	s/>//g;
 	s/^\s+//;
 	my ($chr, $seq)=(split /\n/, $_, 2);
+	next unless defined $seq;
 	$chr=~s/\s+$//;
 	$seq=~s/\s+//g;
 	$genome{$chr}=$seq;
