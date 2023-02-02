@@ -95,12 +95,36 @@ echo -e "\tCopy cutoff: $fl_copy"
 echo -e "\tCPUs: $threads"
 
 ## Step 1, initial EDTA annotation, consider to add --sensitive 1, consider to submit each EDTA job to different nodes.
+# make softlink to global cds
+if [ $cds != '' ]; then
+	cds_file=$cds
+	cds=`basename $cds_file 2>/dev/null`
+	ln -s $cds_file $cds 2>/dev/null
+fi
+
 # process one line each time
 IFS="
 "
 for i in `cat $genome_list`; do
-	genome=`echo $i|awk '{print $1}'`
-	cds_ind=`echo $i|awk '{print $2}'`
+	genome_file=`echo $i|awk '{print $1}'`
+
+	# skip empty lines
+	if [ $genome_file == '' ]; then
+		break
+	fi
+
+	# make softlink to genome
+	genome=`basename $genome_file`
+	if [ ! -s $genome ]; then
+		ln -s $genome_file $genome 2>/dev/null
+	fi
+
+	# make softlink to cds
+	cds_ind_file=`echo $i|awk '{print $2}'`
+	cds_ind=`basename $cds_ind_file 2>/dev/null` 
+	if [ ! -s $cds_ind ] && [ $cds_ind != '' ]; then
+		ln -s $cds_ind_file $cds_ind 2>/dev/null
+	fi
 
 	# use the global $cds to replace a missing cds
 	if [ "$cds_ind" == '' ] && [ "$cds" != '' ]; then
@@ -127,7 +151,13 @@ done
 ## Step 2, make pan-genome lib (quick step, use a sigle node is fine)
 # get fl-TE with ≥ $fl_copy copies in each genome
 for i in `cat $genome_list`; do   
-     	genome=`echo $i|awk '{print $1}'`
+	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
+
+	# skip empty lines
+        if [ $genome == '' ]; then
+                break
+        fi
+
 	echo "Idenfity full-length TEs for genome $genome"
 	perl $path/util/find_flTE.pl $genome.mod.EDTA.anno/$genome.mod.EDTA.RM.out | \
 		awk '{print $10}'| \
@@ -139,7 +169,12 @@ done
 
 # extract pan-TE library candidate sequences
 for i in `cat $genome_list`; do
-	genome=`echo $i|awk '{print $1}'`
+	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
+
+	# skip empty lines
+        if [ $genome == '' ]; then
+                break
+        fi
 
 	if [ -s "$curatedlib" ]; then
 
@@ -160,7 +195,13 @@ done
 # aggregate TE libs
 i=0
 for j in `cat $genome_list`; do
-	genome=`echo $j|awk '{print $1}'`
+	genome=`basename $(echo $j|awk '{print $1}') 2>/dev/null`
+
+	# skip empty lines
+        if [ $genome == '' ]; then
+                break
+        fi
+
 	i=$(($i+5000)); 
 	perl $path/util/rename_TE.pl $genome.mod.EDTA.TElib.fa.keep.ori $i; 
 done | perl $path/util/rename_TE.pl - > $genome_list.panEDTA.TElib.fa.raw
@@ -180,15 +221,26 @@ echo -e "\tpanEDTA library of $genome_list is generated!"
 ## Step 3, re-annotate all genomes with the panEDTA library, consider to submit each RepeatMasker and EDTA job to different nodes.
 if [ "$anno" == '1' ]; then
 for i in `cat $genome_list`; do
-	genome=`echo $i|awk '{print $1}'`
+	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
+
+	# skip empty lines
+        if [ $genome == '' ]; then
+                break
+        fi
+
 	echo "Reannotate genome $genome with the panEDTA library - homology"
 	RepeatMasker -pa $threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod >/dev/null
 	perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.out
 done
 
 for i in `cat $genome_list`; do
-	genome=`echo $i|awk '{print $1}'`
-	cds_ind=`echo $i|awk '{print $2}'`
+	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
+	cds_ind=`basename $(echo $i|awk '{print $2}') 2>/dev/null`
+
+	# skip empty lines
+        if [ $genome == '' ]; then
+                break
+        fi
 
         # use the global $cds to replace a missing cds
         if [ "$cds_ind" == '' ] && [ "$cds" != '' ]; then
