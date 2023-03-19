@@ -83,7 +83,7 @@ fi
 # Set paths
 path=$(dirname "$0") #program path
 dir=$(pwd) #current work directory
-
+rm_threads=$(($threads/4))
 
 ### Begin panEDTA and print all parameters
 echo `date`
@@ -229,7 +229,7 @@ for i in `cat $genome_list`; do
         fi
 
 	echo "Reannotate genome $genome with the panEDTA library - homology"
-	RepeatMasker -pa $threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod >/dev/null
+	RepeatMasker -pa $rm_threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod >/dev/null
 	perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.out
 done
 

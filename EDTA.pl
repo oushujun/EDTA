@@ -195,6 +195,9 @@ if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float
 if ($debug != 0 and $debug != 1){ die "The expected value for the debug parameter is 0 or 1!\n"}
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"}
 
+# define RepeatMasker -pa parameter
+my $rm_threads = int($threads/4);
+
 chomp (my $date = `date`);
 print "$date\tDependency checking:\n";
 
@@ -487,7 +490,7 @@ if ($sensitive == 1){
 		`perl $make_masked -genome $genome -rmout $rmout -maxdiv 40 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
 		`mv $genome.new.masked $genome.masked`;
 		} else {
-		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome 2>/dev/null`;
 		}
 
 	chomp ($date = `date`);
@@ -497,7 +500,7 @@ if ($sensitive == 1){
 		`rm -rf ./RM_*/consensi.fa 2>/dev/null`;
 		# Scan the repeatmasked genome with RepeatModeler for any remaining TEs
 		`${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
-		`${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome.masked 2>/dev/null`;
+		`${repeatmodeler}RepeatModeler -engine ncbi -pa $rm_threads -database $genome.masked 2>/dev/null`;
 		`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq 2>/dev/null`;
 		`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
 		}
@@ -506,7 +509,7 @@ if ($sensitive == 1){
 	if (-s "$genome.RM.consensi.fa"){
 		`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
 		`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
-		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
+		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
 		`cp $genome.RepeatModeler.raw.fa $genome.RepeatModeler.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
 		`cat $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
@@ -538,9 +541,9 @@ if ($cds ne ''){
 	# remove cds-related sequences in the EDTA library
 	print "\t\t\t\tRemove CDS-related sequences in the EDTA library:\n\n";
 	if (-s "$cds"){
-		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
+		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
 		`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
-		$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.raw 2>/dev/null`;
+		$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.raw 2>/dev/null`;
 		`cp $genome.EDTA.intact.fa.raw $genome.EDTA.intact.fa.raw.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.raw.masked > $genome.EDTA.intact.fa.rmCDS`;
@@ -587,7 +590,7 @@ if ($HQlib ne ''){
 	print "$date\tCombine the high-quality TE library $HQlib with the EDTA library:\n\n";
 
 	# remove known TEs in the EDTA library
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
 	`cp $genome.EDTA.TElib.fa $genome.EDTA.TElib.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	`mv $genome.EDTA.TElib.fa $genome.EDTA.TElib.ori.fa`;
@@ -596,7 +599,7 @@ if ($HQlib ne ''){
 	}
 
 # reclassify intact TEs with the TE lib #113
-`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa 2>/dev/null` unless -s "$genome.EDTA.intact.fa.out" and $overwrite == 0;
+`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa 2>/dev/null` unless -s "$genome.EDTA.intact.fa.out" and $overwrite == 0;
 die "ERROR: The masked file for $genome.EDTA.intact.fa is not found! The RepeatMasker annotation on this file may be failed. Please check the $genome.EDTA.TElib.fa file for sequence naming formats especially when you provide a library via --curatedlib.\n" unless -s "$genome.EDTA.intact.fa.out";
 `perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
 `perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
@@ -648,7 +651,7 @@ if ($anno == 1){
 		`ln -s $rmout $genome.out`;
 		} else {
 		print STDERR "$date\tHomology-based annotation of TEs using $genome.EDTA.TElib.fa from scratch.\n\n";
-		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
 		}
 	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out" or -s "$genome.mod.out";
 

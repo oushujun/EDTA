@@ -52,6 +52,9 @@ die $usage unless -s $liblist;
 die "Error: specified -mincov is not in range [0, 1]\n!" unless $min_cov =~ /^[0-9.]+$/ and $min_cov >= 0 and $min_cov <= 1;
 die "Error: specified -miniden is not in range (1, 100]\n!" unless $min_iden =~ /^[0-9.]+$/ and $min_iden > 1 and $min_iden <= 100;
 
+# define RepeatMasker -pa parameter
+my $rm_threads = int($threads/4);
+
 # print info
 chomp (my $date = `date`);
 print "\n$date\nStart to combine individual TE libraries from $liblist.\n";
@@ -71,7 +74,7 @@ while (<List>){
 	# get novel seqs based on -curatedlib
 	if (-s $HQlib and $lib_file !~ /mod.EDTA.TElib.novel.fa/){
 		print "\tIdentify novel sequences in this library.\t" if -s $HQlib;
-		`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $HQlib $lib_file 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $HQlib $lib_file 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr $min_cov -minlen $min_len -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $lib_file.masked > $lib_file.novel.fa`;
 		`rm $lib_file.masked $lib_file.cat.gz`;
 		$lib_file = "$lib_file.novel.fa";

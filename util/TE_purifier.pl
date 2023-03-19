@@ -59,6 +59,9 @@ foreach (@ARGV){
 die "The TE1 file $TE1 is not found or it's empty!\n$usage" unless -s $TE1;
 die "The TE2 file $TE2 is not found or it's empty!\n$usage" unless -s $TE2;
 
+# define RepeatMasker -pa parameter
+my $rm_threads = int($threads/4);
+
 # read $TE1 into memory and count total length
 my ($TE1_len, $TE2_len) = (0, 0);
 open TE1, "<$TE1" or die $!;
@@ -96,7 +99,7 @@ $/ = "\n";
 # Repeatmask TE1 with TE2; make blast db for $TE1 and $TE2
 my $div = 100 - $miniden;
 my $err = '';
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div $div -lib $TE2 $TE1 >/dev/null`;
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div $div -lib $TE2 $TE1 >/dev/null`;
 `${blastplus}makeblastdb -in $TE1 -out $TE1 -dbtype nucl 2> /dev/null`;
 `${blastplus}makeblastdb -in $TE2 -out $TE2 -dbtype nucl 2> /dev/null`;
 print STDERR "$err\n" if $err ne '';

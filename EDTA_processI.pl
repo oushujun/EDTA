@@ -76,6 +76,9 @@ foreach (@ARGV){
 	$k++;
         }
 
+# define RepeatMasker -pa parameter
+my $rm_threads = int($threads/4);
+
 # check files and dependencies
 die "Genome file $genome not exists!\n$usage" unless -s $genome;
 die "LTR raw library file $LTRraw not exists!\n$usage" unless -s $LTRraw;
@@ -141,7 +144,7 @@ my $HEL = "$genome.Helitron.raw.fa";
 
 ## clean LTRs in TIRs and Helitrons
 `cat $TIR.HQ $HEL.HQ | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.TIR.Helitron.fa.stg1.raw`;
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $LTR.HQ $genome.TIR.Helitron.fa.stg1.raw 2>&1`;
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $LTR.HQ $genome.TIR.Helitron.fa.stg1.raw 2>&1`;
 if ($err !~ /done/) {
 	`cp $genome.TIR.Helitron.fa.stg1.raw $genome.TIR.Helitron.fa.stg1.raw.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: $1/s;
 	print STDERR "\n$err\n";
