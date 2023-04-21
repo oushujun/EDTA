@@ -4,6 +4,7 @@ use strict;
 
 # Convert gff files to enriched bed format
 # Shujun Ou (shujun.ou.1@gmail.com)
+# v0.5	04/21/2023
 # v0.4	09/27/2021
 # v0.3	07/22/2020
 # v0.2	07/20/2020
@@ -26,13 +27,15 @@ while (<GFF>){
 
 	# get class info for summary categories
 	$class = $sequence_ontology;
-	$class = 'non_LTR' if $class eq "non_LTR_retrotransposon";
+	#	$class = 'non_LTR' if $class eq "non_LTR_retrotransposon";
+	# combine LTR subclass
 	if ($class =~ /(LTR_retrotransposon|_LTR_retrotransposon|long_terminal_repeat|TRIM|LARD)/i){
 		$class =~ s/_LTR_retrotransposon//i;
 		$class = "unknown" if $class eq "LTR_retrotransposon";
 		$class = "LTR/$class";
 		$type = "LTR";
 		}
+	# combine TIR subclass
 	if ($class =~ /(terminal_inverted_repeat|TIR_transposon|polinton|MITE)/i){
 		$class =~ s/_TIR_transposon//i;
 		$class =~ s/terminal_inverted_repeat_element/unknown/i;
@@ -40,13 +43,30 @@ while (<GFF>){
 		$class = "TIR/$class";
 		$type = "TIR";
 		}
-	if ($class =~ /(non_LTR|LINE|LINE_element|LINE_retrotransposon|SINE|SINE_element|SINE_retrotransposon|YR_retrotransposon|Penelope|Ngaro|DIRS|Viper)/i){
-		$class = "unknown" if $class eq "non_LTR";
+	# combine LINE subclass
+	if ($class =~ /(LINE|LINE_element|LINE_retrotransposon)/i){
+		$class = "unknown" if $class eq "LINE_element";
+		$class =~ s/_LINE_retrotransposon//i;
+		$class = "LINE/$class";
+		}
+	# combine SINE subclass
+	if ($class =~ /(SINE|SINE_element|SINE_retrotransposon)/i){
+		$class = "unknown" if $class eq "SINE_element";
+		$class =~ s/_SINE_retrotransposon//i;
+		$class = "SINE/$class";
+		}
+	if ($class =~ /(nonLTR|non_LTR|YR_retrotransposon|Penelope|ERTBV|pararetrovirus)/i){
+		$class = "unknown" if $class eq "non_LTR_retrotransposon";
 		$class =~ s/_retrotransposon//i;
 		$class = "nonLTR/$class";
 		}
+	if ($class =~ /(rDNA|rRNA)/i){
+		$class = "rDNA/spacer" if $class eq "rDNA_intergenic_spacer_element";
+		$class = "rDNA/45S" if $class eq "rRNA_gene";
+		$class = "rDNA/unknown" if $class eq "rRNA";
+		$class =~ s/(.*)_rRNA_gene/rDNA\/$1/i;
+		}
 	$class = "nonTIR/$class" if $class =~ /(Crypton_YR_transposon|helitron)/i;
-	$class = "rDNA_spacer" if $class =~ /rDNA_intergenic_spacer_element/i;
 
 	# determine $type for struc-homo TE annotation merging
 	# $type is critical for get_frag.pl and keep_nest.pl, 
@@ -56,7 +76,7 @@ while (<GFF>){
 	$type = "knob" if $sequence_ontology =~ /knob/i;
 	$type = "LINE" if $sequence_ontology =~ /LINE|RIL/i;
 	$type = "SINE" if $sequence_ontology =~ /SINE|RIS/i;
-	$type = "nonLTR" if $sequence_ontology =~ /non_LTR/i;
+	$type = "nonLTR" if $sequence_ontology =~ /non_LTR|nonLTR|YR_retrotransposon/i;
 	$type = "rDNA" if $sequence_ontology =~ /(rDNA|rDNA_intergenic_spacer_element|rRNA_gene|rRNA)/i;
 	$type = "satellite" if $sequence_ontology =~ /satellite|satellite_DNA/i;
 	$type = "low_complexity" if $sequence_ontology =~ /low_complexity/i;
@@ -65,7 +85,7 @@ while (<GFF>){
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
 	$type = "Crypton" if $sequence_ontology =~ /Crypton_YR_transposon/i;
 	$type = "repeat_region" if $sequence_ontology =~ /repeat_region|DNA_transposon/i;
-	$type = "repeat_region" if $sequence_ontology =~ 'retrotransposon';
+	#	$type = "repeat_region" if $sequence_ontology =~ 'retrotransposon';
 	$type = 'repeat_region' if $sequence_ontology =~ /Unknown/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 

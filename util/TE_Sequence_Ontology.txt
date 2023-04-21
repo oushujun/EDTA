@@ -6,7 +6,7 @@
 #	Alias are commer separated with or without spaces. 
 #All commented lines will be ignored.
 #Author: Shujun Ou (shujun.ou.1@gmail.com) 07/02/2020
-#Update: 03/15/2022
+#Update: 04/21/2023
 ############################################################
 
 
@@ -21,9 +21,17 @@
 ## Enhancement notes ##
 #######################
 # These terms do not have their own SO terms and are put under a generic SO
-# TIR/PiggyBac	SO:0000182	DNA_transposon
-# TIR/Sola2	SO:0000182	DNA_transposon
-# rDNA/45S	SO:0002360	rRNA_gene
+rRNA_gene	SO:0002360	rRNA_gene,rDNA/45S
+Sola2_TIR_transposon	SO:0000182	TIR/Sola2,Sola2_TIR_transposon
+PILE_TIR_transposon	SO:0000182	PILE_TIR_transposon,DNAauto/PILE,DNAnona/PILE,DNA/PILE,MITE/PILE
+POLE_TIR_transposon	SO:0000182	POLE_TIR_transposon,DNAauto/POLE,DNAnona/POLE,DNA/POLE,MITE/POLE
+CR1_LINE_retrotransposon	SO:0000194	CR1_LINE_retrotransposon,LINE/CR1
+L2_LINE_retrotransposon	SO:0000194	L2_LINE_retrotransposon,LINE/L2
+ERTBV_A_retrotransposon	SO:0000189	ERTBV_A_retrotransposon,DNAvirus/ERTBV-A,Evirus/ERTBV-A
+ERTBV_B_retrotransposon	SO:0000189	ERTBV_B_retrotransposon,DNAvirus/ERTBV-B,Evirus/ERTBV-B
+ERTBV_C_retrotransposon	SO:0000189	ERTBV_C_retrotransposon,DNAvirus/ERTBV-C,Evirus/ERTBV-C
+ERTBV_retrotransposon	SO:0000189	ERTBV_retrotransposon,Evirus/ERTBV,Evirus/Unknown,Evirus/unknown
+pararetrovirus	SO:0000189	pararetrovirus,pararetrovirus/NA,pararetrovirus/Unknown,pararetrovirus/unknown
 
 
 #######################
@@ -45,7 +53,6 @@ rDNA_intergenic_spacer_element	SO:0001860	rDNA_intergenic_spacer_element,rDNA/sp
 28S_rRNA_gene	SO:0002239	28S_rRNA_gene,rDNA/28S,28S_rRNA
 18S_rRNA_gene	SO:0002236	18S_rRNA_gene,cytosolic_rRNA_18S_gene,rDNA/18S,18S_rRNA
 16S_rRNA_gene	SO:0002237	16S_rRNA_gene,cytosolic_rRNA_16S_gene,rDNA/16S,16S_rRNA
-rRNA_gene	SO:0002360	rRNA_gene,rDNA/45S
 rRNA	SO:0000252	rRNA
 
 #higher	order
@@ -54,15 +61,15 @@ retrotransposon	SO:0000180	Class_I,RNA_transposon,retrotransposon
 DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown,TIR/PiggyBac,TIR/Sola2,DNA/Unknown
 
 #TIR	DNA	transposons
-terminal_inverted_repeat_element	SO:0000208	terminal_inverted_repeat_element,TIR/unknown,DNA/DTX,DTX,DNAauto/unknown,DNAnona/unknown,DNAauto/PILE,DNAnona/PILE,DNAauto/POLE,DNAnona/POLE,DNA/PILE,MITE/PILE,DNA/POLE,MITE/POLE,TIR/Unknown,DNAauto/Unknown,DNAnona/Unknown
+terminal_inverted_repeat_element	SO:0000208	terminal_inverted_repeat_element,TIR/unknown,DNA/DTX,DTX,DNAauto/unknown,DNAnona/unknown,TIR/Unknown,DNAauto/Unknown,DNAnona/Unknown
 MITE	SO:0000338	MITE,TIR/MITE,MITE/unknown,MITE/Unknown
 CACTA_TIR_transposon	SO:0002285	CACTA_TIR_transposon,DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA,DNA/EnSpm_CACTA,DNA/CMC-EnSpm
 hAT_TIR_transposon	SO:0002279	hAT_TIR_transposon,DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT,TIR/hAT,DNA/hAT-Ac,DNA/hAT-Tag1
 Mutator_TIR_transposon	SO:0002280	Mutator_TIR_transposon,DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator,DNA/Mutator,DNA/MuDR,DNA/MULE-MuDR
 PIF_Harbinger_TIR_transposon	SO:0002284	PIF_Harbinger_TIR_transposon,DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger,DNA/Harbinger,DNA/PIF-Harbinger
 Tc1_Mariner_TIR_transposon	SO:0002278	Tc1_Mariner_TIR_transposon,stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner,DNA/Tc1-Mariner,DNA/TcMar-Pogo,DNA/Mariner,DNA/TcMar-Stowaway,DNA/TcMar-Mariner
-P_TIR_transposon	SO:0001535	P_TIR_transposon,P-element,P_element,DNA/DTP
-piggyBac_TIR_transposon	SO:0002283	piggyBac_TIR_transposon,PiggyBac,DNA/DTB,MITE/DTB
+P_TIR_transposon	SO:0001535	P_TIR_transposon,P-element,P_element,DNA/DTP,TIR/P
+piggyBac_TIR_transposon	SO:0002283	piggyBac_TIR_transposon,PiggyBac,DNA/DTB,MITE/DTB,TIR/PiggyBac,TIR/piggyBac,piggyBac
 polinton	SO:0001170	polinton,maverick,Maverick
 Transib_TIR_transposon	SO:0002282	Transib_TIR_transposon,transib,DNA/DTR,MITE/DTR
 Merlin_TIR_transposon	SO:0002281	Merlin_TIR_transposon,Merlin,DNA/DTE,MITE/DTE,TIR/Merlin
@@ -82,7 +89,7 @@ Bel_Pao_LTR_retrotransposon	SO:0002266	Bel_Pao_LTR_retrotransposon,LTR/Bel-Pao,L
 Endogenous_Retrovirus_LTR_retrotransposon	SO:0002268	Endogenous_Retrovirus_LTR_retrotransposon,LTR/HERV,HERV,LTR/ERV,LTR/RLE,RLE
 
 #nonLTR	retrotransposons
-non_LTR_retrotransposon	SO:0000189	Evirus/ERTBV-A,Evirus/ERTBV-B,Evirus/ERTBV-C,Evirus/ERTBV,pararetrovirus,non_LTR_retrotransposon,non_LTR,nonLTR/unknown,nonLTR/Unknown,pararetrovirus/NA,DNAvirus/ERTBV-C,Evirus/ERTBV,DNAvirus/ERTBV-A,DNAvirus/ERTBV-B
+non_LTR_retrotransposon	SO:0000189	non_LTR_retrotransposon,non_LTR,nonLTR/unknown,nonLTR/Unknown
 LINE_element	SO:0000194	LINE_element,LINE/unknown,LINE,LINE/Unknown
 R2_LINE_retrotransposon	SO:0002269	R2_LINE_retrotransposon,LINE/R2,LINE/RIR,nonLTR/RIR,RIR
 Jockey_LINE_retrotransposon	SO:0002271	Jockey_LINE_retrotransposon,LINE/Jockey,LINE/RIJ,nonLTR/RIJ,RIJ
@@ -91,13 +98,13 @@ I_LINE_retrotransposon	SO:0002273	I_LINE_retrotransposon,LINE/I,LINE/RII,nonLTR/
 RTE_LINE_retrotransposon	SO:0002270	RTE_LINE_retrotransposon,LINE/RTE,LINE/RIT,nonLTR/RIT,RIT
 SINE_element	SO:0000206	SINE_element,SINE/unknown,SINE,SINE/Unknown
 tRNA_SINE_retrotransposon	SO:0002274	tRNA_SINE_retrotransposon,SINE/tRNA,SINE/RST,nonLTR/RST,RST,tRNA
-5S_SINE_retrotransposon	SO:0002276	5S_SINE_retrotransposon,SINE/5S,SINE/RSS,nonLTR/RSS,RSS
-7SL_SINE_retrotransposon	SO:0002275	7SL_SINE_retrotransposon,SINE/7SL,SINE/RSL,nonLTR/RSL,RSL
+5S_SINE_retrotransposon	SO:0002276	5S_SINE_retrotransposon,SINE/5S,SINE/RSS,nonLTR/RSS,RSS,SINE3/5S
+7SL_SINE_retrotransposon	SO:0002275	7SL_SINE_retrotransposon,SINE/7SL,SINE/RSL,nonLTR/RSL,RSL,SINE1/7SL
 YR_retrotransposon	SO:0002286	YR_retrotransposon,YR/unknown,YR/Unknown
 Ngaro_YR_retrotransposon	SO:0002288	Ngaro_YR_retrotransposon,YR/Ngaro,YR/RYN,Ngaro,RYN
 DIRS_YR_retrotransposon	SO:0002287	DIRS_YR_retrotransposonYR/DIRS,YR/RYD,DIRS,RYD
 Viper_YR_retrotransposon	SO:0002289	Viper_YR_retrotransposon,YR/Viper,YR/RYV,Viper,RYV
-Penelope_retrotransposon	SO:0002290	Penelope_retrotransposon,Penelope,nonLTR/RPP,RPP
+Penelope_retrotransposon	SO:0002290	Penelope_retrotransposon,Penelope,nonLTR/RPP,RPP,nonLTR/Penelope,Penelope/NA
 
 #parts
 terminal_inverted_repeat	SO:0000481	terminal_inverted_repeat,TIR
