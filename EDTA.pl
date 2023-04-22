@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v2.1.2";
+my $version = "v2.1.3";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -63,8 +63,8 @@ perl EDTA.pl [options]
 	--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation.
 				(--anno 1 required). Default: 0. This step is slow and does
 				not change the annotation result.
-	--exclude [File]	Exclude bed format regions from TE annotation. Default: undef.
-				(--anno 1 required).
+	--exclude [File]	Exclude regions (bed format) from TE masking in the MAKER.masked
+				output. Default: undef. (--anno 1 required).
 	--force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit
 			(default); 1, use rice TEs to continue.
 	--u [float]	Neutral mutation rate to calculate the age of intact LTR elements.

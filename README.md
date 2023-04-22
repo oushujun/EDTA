@@ -198,7 +198,7 @@ Optional:
 			Default: use the EDTA library for annotation.
       --evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
 			 This step is slow and does not affect the annotation result.
-      --exclude	[File]	Exclude bed format regions from TE annotation. Default: undef. (--anno 1 required).
+      --exclude	[File]	Exclude regions (bed format) from TE masking in the MAKER.masked output. Default: undef. (--anno 1 required).
       --u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
 			 Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list. Default: 1.3e-8 (per bp per year, from rice).
       --threads|-t	[int]	Number of theads to run this script (default: 4)
