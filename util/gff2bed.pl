@@ -27,7 +27,7 @@ while (<GFF>){
 
 	# get class info for summary categories
 	$class = $sequence_ontology;
-	#	$class = 'non_LTR' if $class eq "non_LTR_retrotransposon";
+	$class = 'non_LTRretrotransposon' if $class eq "non_LTR_retrotransposon"; #avoid confusing the LTR processing
 	# combine LTR subclass
 	if ($class =~ /(LTR_retrotransposon|_LTR_retrotransposon|long_terminal_repeat|TRIM|LARD)/i){
 		$class =~ s/_LTR_retrotransposon//i;
@@ -44,27 +44,31 @@ while (<GFF>){
 		$type = "TIR";
 		}
 	# combine LINE subclass
-	if ($class =~ /(LINE|LINE_element|LINE_retrotransposon)/i){
+	if ($class =~ /(LINE|LINE_element|LINE_retrotransposon|RIL)/i){
 		$class = "unknown" if $class eq "LINE_element";
 		$class =~ s/_LINE_retrotransposon//i;
 		$class = "LINE/$class";
+		$type = "LINE";
 		}
 	# combine SINE subclass
-	if ($class =~ /(SINE|SINE_element|SINE_retrotransposon)/i){
+	if ($class =~ /(SINE|SINE_element|SINE_retrotransposon|RIS)/i){
 		$class = "unknown" if $class eq "SINE_element";
 		$class =~ s/_SINE_retrotransposon//i;
 		$class = "SINE/$class";
+		$type = "SINE";
 		}
 	if ($class =~ /(nonLTR|non_LTR|YR_retrotransposon|Penelope|ERTBV|pararetrovirus)/i){
-		$class = "unknown" if $class eq "non_LTR_retrotransposon";
+		$class = "unknown" if $class eq "non_LTRretrotransposon";
 		$class =~ s/_retrotransposon//i;
 		$class = "nonLTR/$class";
+		$type = "nonLTR";
 		}
-	if ($class =~ /(rDNA|rRNA)/i){
+	if ($class =~ /(rDNA|rRNA|rDNA_intergenic_spacer_element|rRNA_gene)/i){
 		$class = "rDNA/spacer" if $class eq "rDNA_intergenic_spacer_element";
 		$class = "rDNA/45S" if $class eq "rRNA_gene";
 		$class = "rDNA/unknown" if $class eq "rRNA";
 		$class =~ s/(.*)_rRNA_gene/rDNA\/$1/i;
+		$type = "rDNA";
 		}
 	$class = "nonTIR/$class" if $class =~ /(Crypton_YR_transposon|helitron)/i;
 
@@ -74,19 +78,18 @@ while (<GFF>){
 	# $type should match what's listed in util/TE_Sequence_Ontology.txt
 	$type = "Cent" if $sequence_ontology =~ /Cent|centromeric_repeat/i;
 	$type = "knob" if $sequence_ontology =~ /knob/i;
-	$type = "LINE" if $sequence_ontology =~ /LINE|RIL/i;
-	$type = "SINE" if $sequence_ontology =~ /SINE|RIS/i;
-	$type = "nonLTR" if $sequence_ontology =~ /non_LTR|nonLTR|YR_retrotransposon/i;
-	$type = "rDNA" if $sequence_ontology =~ /(rDNA|rDNA_intergenic_spacer_element|rRNA_gene|rRNA)/i;
 	$type = "satellite" if $sequence_ontology =~ /satellite|satellite_DNA/i;
-	$type = "low_complexity" if $sequence_ontology =~ /low_complexity/i;
 	$type = "telomere" if $sequence_ontology =~ /telomer|telomeric_repeat/i;
 	$type = "subtelomere" if $sequence_ontology =~ /subtelomer/i;
+	$type = "low_complexity" if $sequence_ontology =~ /low_complexity/i;
+	#	$type = "rDNA" if $sequence_ontology =~ /(rDNA|rDNA_intergenic_spacer_element|rRNA_gene|rRNA)/i;
+	#	$type = "LINE" if $sequence_ontology =~ /LINE|RIL|LINE_retrotransposon/i;
+	#	$type = "SINE" if $sequence_ontology =~ /SINE|RIS|SINE_retrotransposon/i;
+	#	$type = "nonLTR" if $sequence_ontology =~ /non_LTR|nonLTR|YR_retrotransposon|Penelope|ERTBV|pararetrovirus/i;
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
 	$type = "Crypton" if $sequence_ontology =~ /Crypton_YR_transposon/i;
-	$type = "repeat_region" if $sequence_ontology =~ /repeat_region|DNA_transposon/i;
-	#	$type = "repeat_region" if $sequence_ontology =~ 'retrotransposon';
-	$type = 'repeat_region' if $sequence_ontology =~ /Unknown/i; #suggested by Changfu Jia
+	$type = "repeat_region" if $sequence_ontology =~ /(repeat_region|DNA_transposon|^retrotransposon$)/i;
+	$type = 'repeat_region' if $sequence_ontology =~ /Unknown|Unspecified/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
 	# get assortive structural info
@@ -101,11 +104,11 @@ while (<GFF>){
 	$extra =~ s/;+/;/g;
 	$extra = "NA" if $extra =~/^$/;
 
-	# skip some entries
+	# skip some structural TE entries
 	next if $sequence_ontology =~ /(target_site_duplication|primer_binding_site|U_box|RR_tract)/i;
-#print "$_\n" unless defined $TE_class;
 	next if $sequence_ontology eq "repeat_region" and $TE_class =~ /LTR/i;
 	next if $sequence_ontology eq "long_terminal_repeat" and $method =~ /structural/i;
+	next if $sequence_ontology eq "terminal_inverted_repeat" and $method =~ /structural/i;
 
 	print "$chr\t$element_start\t$element_end\t$TE_ID\t$TE_class\t$method\t$iden\t$score\t$strand\t$phase\t$extra\t$type\t$class\n";
 	}
