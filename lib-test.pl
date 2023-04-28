@@ -95,15 +95,15 @@ close All;
 
 ## Define TE categories. Categories are case insensitive, but hash keys of %category are all lowercases. Each category are specified in the format of "'cate1\\|cate2'". Don't forget ''.
 my %category;
-$category{'ltr'}="'RLG\\|RLC\\|RLB\\|RLR\\|RLE\\|LTR\\|RLX\\|Gypsy\\|Copia'";
-$category{'nonltr'}="'SINE\\|LINE\\|Penelope\\|RIT\\|RIL\\|RST\\|RIX\\|RSX'";
+$category{'ltr'}="'RLG\\|RLC\\|RLB\\|RLR\\|RLE\\|\\\\s+LTR\\|RLX\\|Gypsy\\|Copia'";
+$category{'nonltr'}="'SINE\\|LINE\\|Penelope\\|RIT\\|RIL\\|RST\\|RIX\\|RSX\\|nonLTR\\|\\\\s+YR'";
 $category{'line'}="'LINE\\|RIL\\|RIT\\|RIX\\|Penelope'";
 $category{'sine'}="'SINE\\|RST\\|RSX'";
-$category{'tir'}="'TIR\\|MITE\\|hAT\\|hAT-Ac\\|MULE\\|MLE\\|MuDR\\|Tourist\\|CACT\\|PILE\\|POLE\\|Stowaway\\|TcMar-Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|EnSpm\\|CMC-EnSpm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR\\|DTX\\|DTR\\|DTE\\|Merlin\\|DTP\\|DTB'";
+$category{'tir'}="'TIR\\|MITE\\|hAT\\|hAT-Ac\\|MULE\\|MLE\\|MuDR\\|Tourist\\|CACT\\|PILE\\|POLE\\|Stowaway\\|TcMar-Stowaway\\|PIF\\|Harbinger\\|Tc1\\|En-Spm\\|EnSpm\\|CMC-EnSpm\\|PiggyBac\\|Mirage\\|P-element\\|Transib\\|DTA\\|DTH\\|DTT\\|DTM\\|DTC\\|DTA\\|TIR\\|DTX\\|DTR\\|DTE\\|Merlin\\|DTP\\|DTB\\|polinton'";
 $category{'mite'}="MITE";
-$category{'helitron'}="'Helitron\\|DHH\\|DHX'";
+$category{'helitron'}="'Helitron\\|DHH\\|DHX\\|helitron'";
 $category{'total'}="[0-9]"; #grep any line with numbers
-$category{'classified'}="'Unknown\\|unknown\\/unknow'"; #unknown TEs of all kind
+$category{'classified'}="'Unknown\\|unknown\\/unknow\\|repeat_region\\|Unspecified'"; #unknown TEs of all kind
 
 die "The specified catetory $category is not found in our database!\n" unless exists $category{$category};
 
@@ -137,27 +137,28 @@ if ($category eq "mite" or $category eq "tir"){
 `perl $script_path/util/substract_parallel.pl $genome.list ${std_out}_$tst_out.$category-cmb.cbi $threads`;
 
 ## FP - false positive
-my $FP=`perl $script_path/util/count_mask.pl $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi`;
+my ($FP, $FN, $TP, $TN, $sens, $spec, $accu, $prec, $FDR, $F1) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+$FP=`perl $script_path/util/count_mask.pl $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi`;
 chomp $FP;
 
 ## FN - false negative
-my $FN=`perl $script_path/util/count_mask.pl $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
+$FN=`perl $script_path/util/count_mask.pl $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
 chomp $FN;
 
 ## TP - true positive
-my $TP=`perl $script_path/util/count_mask.pl $std_out.$category.cvg.cbi-$std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
+$TP=`perl $script_path/util/count_mask.pl $std_out.$category.cvg.cbi-$std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
 chomp $TP;
 
 ## TN - true negative
-my $TN=`perl $script_path/util/count_mask.pl $genome.list-${std_out}_$tst_out.$category-cmb.cbi`;
+$TN=`perl $script_path/util/count_mask.pl $genome.list-${std_out}_$tst_out.$category-cmb.cbi`;
 chomp $TN;
 
-my $sens=$TP/($TP+$FN);
-my $spec=$TN/($FP+$TN);
-my $accu=($TP+$TN)/($TP+$TN+$FP+$FN);
-my $prec=$TP/($TP+$FP);
-my $FDR=1-$prec;
-my $F1=2*$TP/(2*$TP+$FP+$FN);
+$sens=$TP/($TP+$FN) if $TP+$FN > 0;
+$spec=$TN/($FP+$TN) if $FP+$TN > 0;
+$accu=($TP+$TN)/($TP+$TN+$FP+$FN) if $TP+$TN+$FP+$FN > 0;
+$prec=$TP/($TP+$FP) if $TP+$FP > 0;
+$FDR=1-$prec;
+$F1=2*$TP/(2*$TP+$FP+$FN) if $TP+$FP+$FN > 0;
 
 ## output results
 open Out, ">$tst_out.$category.lib.report" or die $usage;
