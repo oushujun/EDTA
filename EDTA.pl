@@ -6,7 +6,7 @@ use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
 
-my $version = "v2.1.3";
+my $version = "v2.1.4";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -680,10 +680,9 @@ if ($anno == 1){
 	`perl $bed2gff $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.split.gff3`;
 
 	# make summary table for the non-overlapping annotation
-	my $genome_info = `perl $count_base $genome`;
-	my ($genome_size, $seq_count) = ((split /\s+/, $genome_info)[1] - (split /\s+/, $genome_info)[2], (split /\s+/, $genome_info)[4]);
+	`perl $count_base $genome > $genome.stats`;
 	`perl -nle 'my (\$chr, \$s, \$e, \$anno, \$dir, \$supfam)=(split)[0,1,2,3,8,12]; print "10000 0.001 0.001 0.001 \$chr \$s \$e NA \$dir \$anno \$supfam"' $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.out`;
-	`perl $buildSummary -maxDiv 40 -genome_size $genome_size -seq_count $seq_count $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum 2>/dev/null`;
+	`perl $buildSummary -maxDiv 40 -stats $genome.stats $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum 2>/dev/null`;
 	my $tot_TE = `grep Total $genome.EDTA.TEanno.sum|grep %|awk '{print \$4}'`;
 	chomp $tot_TE;
 
