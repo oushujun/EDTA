@@ -18,7 +18,9 @@ use File::Basename;
 # FN [    TP       ] FP  [ TN ]
 #
 #Author: Shujun Ou (oushujun@msu.edu), 03/08/2015
-#Update 05/09/2019
+#Updates:
+#	05/03/2023
+#	05/09/2019
 #
 my $usage="\n\tTo test the annotation performance of TE libraries by comparing to a reference annotation
 
@@ -109,20 +111,20 @@ die "The specified catetory $category is not found in our database!\n" unless ex
 
 ## get all classified regions
 if ($category eq "classified"){
-	`grep -v -P '$category{$category}' $std_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - > $std_out.$category.cvg`;
-	`grep -v -P '$category{$category}' $tst_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - > $tst_out.$category.cvg` if $category eq "classified";
+	`grep -v -P '$category{$category}' $std_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - | sort -suV > $std_out.$category.cvg`;
+	`grep -v -P '$category{$category}' $tst_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - | sort -suV > $tst_out.$category.cvg` if $category eq "classified";
 	} else {
 
 ## get stdlib and testlib cover range based on $category{$category}
-`grep -i -P '$category{$category}' $tst_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - > $tst_out.$category.cvg`;
-`grep -i -P '$category{$category}' $std_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7"\t"\$11}' - > $std_out.$category.cvg`;
+`grep -i -P '$category{$category}' $tst_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7}' - | sort -suV > $tst_out.$category.cvg`;
+`grep -i -P '$category{$category}' $std_out | awk '{if (\$6~/[0-9]+/) print \$5"\t"\$6"\t"\$7"\t"\$11}' - | sort -suV > $std_out.$category.cvg`;
 if ($category eq "mite" or $category eq "tir"){
-	`grep -i -v -P 'noTIR' $std_out.$category.cvg > $std_out.$category.cvg.temp`;
+	`grep -i -v -P 'noTIR' $std_out.$category.cvg | sort -suV > $std_out.$category.cvg.temp`;
 	`mv $std_out.$category.cvg.temp $std_out.$category.cvg`;
 	}
 
 ## if $unknown == 1, then include the "unknown" type annotation into the user specified $category{$category}.
-`perl -nle 's/^\\s+//g; my \$cat=(split)[10]; \$cat = lc \$cat; print \$_ if \$cat eq "unknown" or \$cat eq "unspecified"' $tst_out |awk '{print \$5"\t"\$6"\t"\$7}' - >> $tst_out.$category.cvg` if $unknown == 1;
+`perl -nle 's/^\\s+//g; my \$cat=(split)[10]; \$cat = lc \$cat; print \$_ if \$cat eq "unknown" or \$cat eq "unspecified"' $tst_out |awk '{print \$5"\t"\$6"\t"\$7}' - | sort -suV >> $tst_out.$category.cvg` if $unknown == 1;
 	}
 
 ## bed arithmetics

@@ -17,8 +17,8 @@ if (defined $ARGV[2]){
 	}
 
 ## minuend − subtrahend = difference
-open Minuend, "<$ARGV[0]" or die $usage;
-open Subtrahend, "<$ARGV[1]" or die $usage;
+open Minuend, "sort -suV $ARGV[0] |" or die $usage;
+open Subtrahend, "sort -suV $ARGV[1] |" or die $usage;
 open Diff, ">$ARGV[0]-$ARGV[1]" or die $!;
 
 my %substr;
