@@ -17,7 +17,7 @@ Iteratively clean up nested TE insertions and remove redundancy.
 Further info:
 Each sequence will be used as query to search the entire file.
 For a subject sequence containing >95% of the query sequence, the matching part in the subject will be removed.
-After removal, subject sequences shorter than the threadshold will be diacarded.
+After removal, subject sequences shorter than the threadshold will be discarded.
 The number of rounds of iterations is automatically decided (usually less than 8). User can also define this.
 
 Usage:
@@ -27,6 +27,7 @@ perl cleanup_nested.pl -in file.fasta [options]
 -minlen	[int]	Minimum length of the clean sequence to retain. Default: 80 (bp)
 -miniden	[int]	Minimum identity of the clean sequence to retain. Default: 80 (%)
 -clean	[int]	Clean nested sequences (1) or not (0). Default: 1
+-maxcount	[int]	Specify the maximum number of stat lines you want to obtain. Default: 0 (no limit)
 -iter	[int]	Numbers of iteration to remove redundency. Default: automatic
 -blastplus [path]	Path to the blastn and makeblastdb program.
 -threads|-t	[int]	Threads to run this script. Default: 4
@@ -40,6 +41,7 @@ my $offset = 7; #if two blast hits are less than $offset [default=7bp) away from
 my $clean = 1; #1, clean nested sequences; 0, will not clean nested, only discard highly overlapping (~100%) sequences
 my $iter = 1;
 my $user_iter = 0;
+my $count_limit = 0; # the maximum number of stat lines you want to obtain. 0 = no limit.
 my $blastplus = ""; #the path to blastn
 my $threads = 4;
 
@@ -50,6 +52,7 @@ foreach (@ARGV){
 	$minlen=$ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1] !~ /^-/;
 	$min_iden=$ARGV[$k+1] if /^-miniden$/i and $ARGV[$k+1] !~ /^-/;
 	$clean=$ARGV[$k+1] if /^-clean$/i and $ARGV[$k+1] !~ /^-/;
+	$count_limit=$ARGV[$k+1] if /^-maxcount$/i and $ARGV[$k+1] !~ /^-/;
 	$user_iter=$ARGV[$k+1] if /^-iter$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus=$ARGV[$k+1] if /^-blastplus$/i and defined $ARGV[$k+1] and $ARGV[$k+1] !~ /^-/;
 	$threads=$ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
@@ -83,7 +86,8 @@ close IN;
 
 # itreatively remove redundant sequences and nested insertions
 my $queue;
-my $num_stat = 0;
+my $count_stat :shared = 0; # count stat lines in realtime
+my $num_stat = 0; # count stat lines at the end of each iteration
 $iter = $user_iter if $user_iter != 0;
 for (my $i=0; $i<$iter; $i++){
 	my $date=`date`;
@@ -105,14 +109,16 @@ for (my $i=0; $i<$iter; $i++){
 		last unless defined $seq{$id};
 		$queue -> enqueue([$id, $i, "$IN.iter$i"]);
 	}
-	$queue -> end();
+	$queue -> end(); # signal that no more items will be added to the queue
 
 	# initiate a number of worker threads and run
+	my @threads;
 	foreach (1..$threads){
-		threads->create(\&condenser);
+		push @threads, threads->create(\&condenser);
+		#threads->create(\&condenser);
 	}
-	foreach (threads -> list()){
-		$_->join();
+	foreach my $thread (@threads){
+		$thread->join();
 	}
 	`rm $IN.iter$i.nhr $IN.iter$i.nin $IN.iter$i.nsq $IN.iter$i.ndb $IN.iter$i.not $IN.iter$i.ntf $IN.iter$i.nto 2>/dev/null`;
 
@@ -203,10 +209,18 @@ sub condenser(){
 					print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; merged $merged\n";
 					$seq{$sbj} = $seq_new; #overwrite the sbj sequence if the new one is shorter
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
+					$count_stat++;
 				} elsif ($sbj_len_new < $minlen) {
 					print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; merged $merged\n";
 					delete $seq{$sbj}; #delete this sequence if new seq is too short
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed (removed), and we will not deal with it any more in the current iteration
+					$count_stat++;
+				}
+				# When $count_stat reaches the user defined stat count, we end the entire queue.
+				if ($count_stat >= $count_limit and $count_limit > 0){
+					print STAT "Reached user defined $count_limit of processed sequences at iter$i, stopping...\n\n";
+					$queue->end();
+					last;
 				}
 			}
 		} keys %merged_hsps_size;
