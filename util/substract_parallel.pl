@@ -7,6 +7,7 @@ use threads::shared;
 
 #usage: perl substract_parallel.pl minuend.list subtrahend.list thread_num
 #Author: Shujun Ou (oushujun@msu.edu), 08/02/2019
+# 05/30/2023, ChatGPT v3.5
 
 my $usage = "\n\tperl substract_parallel.pl minuend.list subtrahend.list thread_num\n\n";
 
@@ -60,23 +61,25 @@ sub substract(){
 	while (defined ($_ = $queue->dequeue())){
 	my $keep=1;
 	my ($chr, $from, $to) = (@{$_}[0], @{$_}[1], @{$_}[2]);
-	Run:
+
+	if (exists $substr{$chr}) {
 	foreach my $info (@{$substr{$chr}}){
-		my @range=@{$info};
-		last if $range[0]>$to;
-		next if $range[1]<$from;
-		$keep=0 if ($range[0]<=$from and $range[1]>=$to);
-		if ($range[0]>$from){
+		my ($start, $end) = @{$info};
+		last if $start > $to;
+		next if $end < $from;
+		$keep = 0 if ($start <= $from && $end >= $to);
+		if ($start > $from) {
 			$keep=0;
-			$range[0]--;
-			$diff{"$chr:$from:$range[0]"} = "$chr:$from:$range[0]"
+			$start--;
+			$diff{"$chr:$from:$start"} = "$chr:$from:$start";
 			} # if $range[0]>$from;
-		if ($range[1]<$to){
-			$from=$range[1]+1;
+		if ($end < $to) {
+			$from = $end + 1;
 			$keep=1;
-			goto Run;
 			}
 		}
+	}
+	lock(%diff);
 	$diff{"$chr:$from:$to"} = "$chr:$from:$to" if $keep==1;
 	$keep=1;
 	}
