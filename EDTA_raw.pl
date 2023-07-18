@@ -17,6 +17,7 @@ use Pod::Usage;
 #	$genome.LTR.raw.fa, $genome.LTR.intact.fa, $genome.LTR.intact.gff3
 #	$genome.TIR.raw.fa, $genome.TIR.intact.fa, $genome.TIR.intact.gff3
 #	$genome.Helitron.raw.fa, $genome.Helitron.intact.fa, $genome.Helitron.intact.gff3
+#	$genome.nonLTR.raw.fa
 
 my $usage = "\nObtain raw TE libraries using various structure-based programs
 
@@ -24,8 +25,10 @@ perl EDTA_raw.pl [options]
 	--genome	[File]	The genome FASTA
 	--species [rice|maize|others]	Specify the species for identification
 					of TIR candidates. Default: others
-	--type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates
+	--type	[ltr|tir|helitron|nonltr|all]
+					Specify which type of raw TE candidates
 					you want to get. Default: all
+	--rmlib	[FASTA]	The RepeatModeler library, classified output.
 	--overwrite	[0|1]	If previous results are found, decide to
 				overwrite (1, rerun) or not (0, default).
 	--convert_seq_name	[0|1]	Convert long sequence name to <= 15
@@ -36,6 +39,7 @@ perl EDTA_raw.pl [options]
 			Default: 1.3e-8 (per bp per year, from rice).
 	--tesorter	[path]	Path to the TEsorter program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
+	--repeatmodeler	[path]	Path to the RepeatModeler2 program. (default: find from ENV)
 	--threads|-t	[int]	Number of theads to run this script. Default: 4
 	--help|-h	Display this help info
 \n";
@@ -44,6 +48,7 @@ perl EDTA_raw.pl [options]
 my $genome = '';
 my $species = 'others';
 my $type = 'all';
+my $RMlib = '';
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $convert_name = 1; #0, use original seq names; 1 shorten names.
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
@@ -57,6 +62,7 @@ my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $get_range = "$script_path/util/get_range.pl";
 my $rename_LTR = "$script_path/util/rename_LTR_skim.pl";
+my $rename_RM = "$script_path/util/rename_RM_TE.pl";
 my $filter_gff = "$script_path/util/filter_gff3.pl";
 my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
@@ -69,13 +75,14 @@ my $make_bed = "$script_path/util/make_bed_with_intact.pl";
 my $bed2gff = "$script_path/util/bed2gff.pl";
 my $genometools = ''; #path to the genometools program
 my $repeatmasker = ''; #path to the RepeatMasker program
+my $repeatmodeler = ''; #path to the RepeatModeler program
 my $LTR_retriever = ''; #path to the LTR_retriever program
 my $TEsorter = ''; #path to the TEsorter program
 my $blastplus = ''; #path to the blastn program
 my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
 my $GRF = ''; #path to GRF
-my $beta2 = 0; #0, beta2 is not ready. 1, try it out.
+my $beta2 = 1; #0, beta2 is not ready. 1, try it out.
 my $help = undef;
 
 # read parameters
@@ -84,11 +91,13 @@ foreach (@ARGV){
 	$genome = $ARGV[$k+1] if /^--genome$/i and $ARGV[$k+1] !~ /^-/;
 	$species = $ARGV[$k+1] if /^--species$/i and $ARGV[$k+1] !~ /^-/;
 	$type = lc $ARGV[$k+1] if /^--type$/i and $ARGV[$k+1] !~ /^-/;
+	$RMlib = $ARGV[$k+1] if /^--rmlib$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite = $ARGV[$k+1] if /^--overwrite$/i and $ARGV[$k+1] !~ /^-/;
 	$convert_name = $ARGV[$k+1] if /^--convert_seq_name$/i and $ARGV[$k+1] !~ /^-/;
 	$miu = $ARGV[$k+1] if /^--u$/i and $ARGV[$k+1] !~ /^-/;
 	$genometools = $ARGV[$k+1] if /^--genometools/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^--repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
+	$repeatmodeler = $ARGV[$k+1] if /^--repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
 	$LTR_retriever = $ARGV[$k+1] if /^--ltrretriever/i and $ARGV[$k+1] !~ /^-/;
 	$TEsorter = $ARGV[$k+1] if /^--tesorter$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus = $ARGV[$k+1] if /^--blastplus$/i and $ARGV[$k+1] !~ /^-/;
@@ -123,13 +132,16 @@ if ($species){
 	die "The expected value for the species parameter is Rice or Maize or others!\n" unless $species eq "Rice" or $species eq "Maize" or $species eq "others";
 	}
 
-die "The expected value for the type parameter is ltr or tir or helitron or all!\n" unless $type eq "ltr" or $type eq "tir" or $type eq "helitron" or $type eq "all";
+die "The expected value for the type parameter is ltr or tir or helitron or all!\n" unless $type eq "ltr" or $type eq "nonltr" or $type eq "tir" or $type eq "helitron" or $type eq "all";
 
 # check bolean
 if ($overwrite != 0 and $overwrite != 1){ die "The expected value for the overwrite parameter is 0 or 1!\n"};
 if ($convert_name != 0 and $convert_name != 1){ die "The expected value for the convert_seq_name parameter is 0 or 1!\n"};
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"};
 if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float value without units!\n"}
+
+# define RepeatModeler -pa parameter
+my $rm_threads = int($threads/4);
 
 chomp (my $date = `date`);
 print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
@@ -169,6 +181,12 @@ die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n"
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
 die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
+# RepeatModeler
+chomp ($repeatmodeler=`which RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
+$repeatmodeler =~ s/\s+$//;
+$repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
+$repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
+die "Error: RepeatModeler is not found in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
@@ -209,6 +227,18 @@ die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF\n
 my $genome_file = basename($genome);
 `ln -s $genome $genome_file` unless -e $genome_file;
 $genome = $genome_file;
+
+# check $RMlib
+if ($RMlib ne ''){
+	if (-e $RMlib){
+		print "\tA RepeatModeler library $RMlib is provided via --rmlib. Please make sure this is a RepeatModeler2 generated and classified library (some levels of unknown classification is OK).\n\n";
+		chomp ($RMlib = `realpath $RMlib`);
+		`cp $RMlib $genome.RM2.raw.fa` unless -s "$genome.RM2.raw.fa";
+		$RMlib = "$genome.RM2.raw.fa";
+		} else {
+		die "\tERROR: The RepeatModeler library $RMlib you specified is not found!\n\n";
+		}
+	}
 
 # check if duplicated sequences found
 my $id_mode = 0; #record the mode of id conversion.
@@ -264,6 +294,7 @@ $genome = "$genome.mod";
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
 `mkdir $genome.EDTA.raw/LTR` unless -e "$genome.EDTA.raw/LTR" && -d "$genome.EDTA.raw/LTR";
+`mkdir $genome.EDTA.raw/nonLTR` unless -e "$genome.EDTA.raw/nonLTR" && -d "$genome.EDTA.raw/nonLTR";
 `mkdir $genome.EDTA.raw/TIR` unless -e "$genome.EDTA.raw/TIR" && -d "$genome.EDTA.raw/TIR";
 `mkdir $genome.EDTA.raw/Helitron` unless -e "$genome.EDTA.raw/Helitron" && -d "$genome.EDTA.raw/Helitron";
 
@@ -317,8 +348,8 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.LTR.intact.fa.ori.dusted > $genome.LTR.intact.fa.ori.dusted.cln`;
 
 if ($beta2 == 1){
-	# annotate and remove non-LTR candidates
-	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln -p $threads`;
+	# annotate and remove not LTR candidates
+	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
 	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.fa`;
 	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.fa.anno.list`;
@@ -333,14 +364,7 @@ if ($beta2 == 1){
 `rm $genome`;
 	}
 
-# remove non-LTR sequence
-#`${TEsorter}TEsorter $genome.LTRlib.fa -p $threads`;
-#`awk '{if (\$2!="pararetrovirus" && \$2!="LTR")print \$0}' $genome.LTRlib.fa.rexdb.cls.tsv > $genome.LTRlib.fa.rexdb.cls.tsv.nonLTR`;
-#`perl $output_by_list 1 $genome.LTRlib.fa 1 $genome.LTRlib.fa.rexdb.cls.tsv.nonLTR -ex -FA > $genome.LTRlib.fa.cln`;
-
 # copy result files out
-#`cp $genome.LTRlib.fa.cln $genome.LTR.raw.fa`;
-#`cp $genome.LTRlib.fa.cln ../$genome.LTR.raw.fa`;
 `touch $genome.LTRlib.fa` unless -e "$genome.LTRlib.fa";
 `cp $genome.LTRlib.fa $genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
@@ -357,6 +381,76 @@ if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
 	}
 
 }
+
+
+#############################
+######  RepeatModeler  ######
+#############################
+
+if ($type eq "nonltr" or $type eq "all"){
+
+chomp ($date = `date`);
+print STDERR "$date\tStart to find nonLTR candidates.\n\n";
+
+# enter the working directory and create genome softlink
+chdir "$genome.EDTA.raw/nonLTR";
+`ln -s ../../$genome $genome` unless -s $genome;
+`cp ../../$RMlib $RMlib` if $RMlib ne '';
+
+# Try to recover existing results or run RepeatModeler2
+chomp ($date = `date`);
+if ($overwrite eq 0 and -s $RMlib){
+	if (-s "$genome-families.fa"){
+		print STDERR "$date\tExisting result file $genome-families.fa found!\n\t\t\t\tWill not use the provided RepeatModeler2 library since --overwrite 0.\n\t\t\t\tPlease specify --overwrite 1 if you want to use the provided --rmlib file.\n\n";
+		} else {
+		`cp $RMlib "$genome-families.fa" 2>/dev/null`;
+		}
+	}
+
+if ($overwrite eq 0 and -s "$genome-families.fa"){
+	print STDERR "$date\tExisting result file $genome-families.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	} else {
+	# run RepeatModeler2
+	print STDERR "$date\tIdentify nonLTR retrotransposon candidates from scratch.\n\n";
+	`${repeatmodeler}BuildDatabase -name $genome -engine ncbi $genome`;
+	`${repeatmodeler}RepeatModeler -engine ncbi -pa $rm_threads -database $genome 2>/dev/null`;
+	`rm $genome.nhr $genome.nin $genome.nnd $genome.nni $genome.nog $genome.nsq 2>/dev/null`;
+	}
+
+# filter and reclassify RepeatModeler candidates with TEsorter and make nonLTR library
+if (-s "$genome-families.fa"){
+	# annotate and remove not LTR candidates
+	`awk '{print \$1}' $genome-families.fa > $genome.RM2.raw.fa` if -e "$genome-families.fa";
+	`${TEsorter}TEsorter $genome.RM2.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
+	`perl $cleanup_misclas $genome.RM2.raw.fa.rexdb.cls.tsv`;
+	`${TEsorter}TEsorter $genome.RM2.raw.fa.cln --disable-pass2 -p $threads 2>/dev/null`;
+	`perl -nle 's/>\\S+\\s+/>/; print \$_' $genome.RM2.raw.fa.cln.rexdb.cls.lib > $genome.RM2.raw.fa.cln`;
+
+        # clean up tandem repeat
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.raw.fa.cln > $genome.RM2.raw.fa.cln2`;
+	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA > $genome.nonLTR.raw.fa`;
+	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA -ex > $genome.RM2.fa`;
+	} else {
+	print "\t\t\t\tRepeatModeler is finished, but the $genome-families.fa file is not produced.\n\n";
+	}
+
+# copy result files out
+`touch $genome.nonLTR.raw.fa` unless -e "$genome.nonLTR.raw.fa";
+`touch $genome.RM2.fa` unless -e "$genome.RM2.fa";
+`cp $genome.nonLTR.raw.fa $genome.RM2.fa ../`; #update the filtered RM2 result in the EDTA/raw folder
+`cp $genome.RM2.raw.fa ../../`; #update the raw RM2 result in the EDTA folder
+chdir '../..';
+
+# check results
+chomp ($date = `date`);
+die "Error: nonLTR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.nonLTR.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.nonLTR.raw.fa"){
+	print STDERR "$date\tFinish finding nonLTR candidates.\n\n";
+	} else {
+	print STDERR "$date\tWarning: The nonLTR result file has 0 bp!\n\n";
+	}
+}
+
 
 ###########################
 ######  TIR-Learner  ######
@@ -396,11 +490,11 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 
 	if ($beta2 == 1){
 	# annotate and remove non-TIR candidates
-	`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln -p $threads`;
+	`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.raw.fa`;
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.fa.anno.list`;
-	`cp $genome.LTR.intact.fa.anno.list ../`;
+	`cp $genome.TIR.intact.fa.anno.list ../`;
 	} else {
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.raw.fa`;
 	}
@@ -463,7 +557,7 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 
 if ($beta2 == 1){
 # annotate and remove non-Helitron candidates
-`${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln -p $threads`;
+`${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 `perl $cleanup_misclas $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 `mv $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln $genome.Helitron.raw.fa`;
 `cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.fa.anno.list`;
