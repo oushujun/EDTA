@@ -9,7 +9,7 @@ use FindBin;
 my $usage = "\nEvaluate annotation consistency for given annotations.
 	perl evaluation.pl -genome genome.fa -anno RepeatMasker.out -maxcount [int] -threads [int]
 		-anno	The whole-genome TE annotation file in RepeatMasker .out format
-		-maxcount	The maximum number of stat lines to obtain. Default: 0 (no limit)
+		-maxcount	The maximum number of stat lines to obtain. Default: 100000
 \n";
 
 my $script_path = $FindBin::Bin;
@@ -17,7 +17,7 @@ my $genome = '';
 my $RMout = '';
 my $blast = '';
 my $threads = 4;
-my $maxcount = 0;
+my $maxcount = 100000;
 my $call_seq = "$script_path/call_seq_by_list.pl";
 my $cleanup_nested = "$script_path/cleanup_nested.pl";
 my $count_nested = "$script_path/count_nested.pl";
