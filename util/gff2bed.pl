@@ -82,12 +82,9 @@ while (<GFF>){
 	$type = "telomere" if $sequence_ontology =~ /telomer|telomeric_repeat/i;
 	$type = "subtelomere" if $sequence_ontology =~ /subtelomer/i;
 	$type = "low_complexity" if $sequence_ontology =~ /low_complexity/i;
-	#	$type = "rDNA" if $sequence_ontology =~ /(rDNA|rDNA_intergenic_spacer_element|rRNA_gene|rRNA)/i;
-	#	$type = "LINE" if $sequence_ontology =~ /LINE|RIL|LINE_retrotransposon/i;
-	#	$type = "SINE" if $sequence_ontology =~ /SINE|RIS|SINE_retrotransposon/i;
-	#	$type = "nonLTR" if $sequence_ontology =~ /non_LTR|nonLTR|YR_retrotransposon|Penelope|ERTBV|pararetrovirus/i;
 	$type = "Helitron" if $sequence_ontology =~ /Helitron|DHH/i;
 	$type = "Crypton" if $sequence_ontology =~ /Crypton_YR_transposon/i;
+	$type = "plastid" if $sequence_ontology =~ /chloroplast|plastid|mitochondri/i;
 	$type = "repeat_region" if $sequence_ontology =~ /(repeat_region|DNA_transposon|^retrotransposon$)/i;
 	$type = 'repeat_region' if $sequence_ontology =~ /Unknown|Unspecified/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
