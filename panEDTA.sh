@@ -5,7 +5,8 @@
 #	2. Individual TE libraries will be combined by panEDTA
 #	3. Each genome will be reannotated by the panEDTA library
 # Shujun Ou (shujun.ou.1@gmail.com) 
-# 10/10/2022
+# 06/21/2023 v0.2
+# 10/10/2022 v0.1
 
 
 ## Test files explained
@@ -84,14 +85,16 @@ fi
 path=$(dirname "$0") #program path
 dir=$(pwd) #current work directory
 rm_threads=$(($threads/4))
+outfile=$(basename $genome_list 2>/dev/null)
 
 ### Begin panEDTA and print all parameters
 echo `date`
 echo "Pan-genome Extensive de-novo TE Annotator (panEDTA)"
+echo -e "\tOutput directory: $dir"
 echo -e "\tGenome files: $genome_list"
 echo -e "\tCoding sequences: $cds"
 echo -e "\tCurated library: $curatedlib"
-echo -e "\tCopy cutoff: $fl_copy"
+echo -e "\tCopy number cutoff: $fl_copy"
 echo -e "\tCPUs: $threads"
 
 ## Step 1, initial EDTA annotation, consider to add --sensitive 1, consider to submit each EDTA job to different nodes.
@@ -103,8 +106,7 @@ if [ $cds != '' ]; then
 fi
 
 # process one line each time
-IFS="
-"
+echo `date`
 for i in `cat $genome_list`; do
 	genome_file=`echo $i|awk '{print $1}'`
 
@@ -119,6 +121,10 @@ for i in `cat $genome_list`; do
 		ln -s $genome_file $genome 2>/dev/null
 	fi
 
+	if [ ! -s "$genome.mod" ]; then
+		ln -s $genome_file.mod $genome.mod 2>/dev/null
+	fi
+
 	# make softlink to cds
 	cds_ind_file=`echo $i|awk '{print $2}'`
 	cds_ind=`basename $cds_ind_file 2>/dev/null` 
@@ -131,8 +137,28 @@ for i in `cat $genome_list`; do
 		cds_ind=$cds
 	fi
 
-	echo "Annotate genome $genome with EDTA"
+	# check if provided genome has EDTA annotation in the same folder
+#	echo "Try to find existing EDTA annotation for $genome"
+	if [ -s "$genome_file.mod.EDTA.TEanno.sum" ] && [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then # link annotations to the work directory
+		echo "Existing EDTA annotation found in the directory of $genome, will use this as the panEDTA input"
+		ln -s "$genome_file.mod.EDTA.TEanno.sum" "$genome.mod.EDTA.TEanno.sum" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.TElib.fa" "$genome.mod.EDTA.TElib.fa" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.TElib.novel.fa" "$genome.mod.EDTA.TElib.novel.fa" 2>/dev/null
+		mkdir "$genome.mod.EDTA.raw" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.RM2.fa" "$genome.mod.EDTA.raw/" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.EDTA.intact.fa" "$genome.mod.EDTA.raw/" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.EDTA.intact.gff3" "$genome.mod.EDTA.raw/" 2>/dev/null
+		mkdir "$genome.mod.EDTA.combine" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.combine/$genome.mod.EDTA.fa.stg1" "$genome.mod.EDTA.combine/" 2>/dev/null
+
+		mkdir "$genome.mod.EDTA.anno" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.anno/$genome.mod.EDTA.RM.out" "$genome.mod.EDTA.anno/" 2>/dev/null
+	fi
+
+#if [ ! 0 ]; then #test
+	# de novo EDTA if no existing annotation is found
 	if [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then # run a new EDTA if annotation of the genome is not existing
+	echo "De novo annotate genome $genome with EDTA"
 		perl $path/util/count_base.pl $genome -s > $genome.stats
 		if [ "$curatedlib" != '' ]; then
 			perl $path/EDTA.pl --genome $genome -t $threads --anno 1 --cds $cds_ind --curatedlib $curatedlib || {
@@ -146,10 +172,12 @@ for i in `cat $genome_list`; do
 		}
 		fi
 	fi
+#fi #test
 done
 
 ## Step 2, make pan-genome lib (quick step, use a sigle node is fine)
 # get fl-TE with ≥ $fl_copy copies in each genome
+echo `date`
 for i in `cat $genome_list`; do   
 	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
 
@@ -168,6 +196,8 @@ for i in `cat $genome_list`; do
 done
 
 # extract pan-TE library candidate sequences
+echo `date`
+echo -e "\nExtract pan-TE library candidate sequences"
 for i in `cat $genome_list`; do
 	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
 
@@ -204,24 +234,27 @@ for j in `cat $genome_list`; do
 
 	i=$(($i+5000)); 
 	perl $path/util/rename_TE.pl $genome.mod.EDTA.TElib.fa.keep.ori $i; 
-done | perl $path/util/rename_TE.pl - > $genome_list.panEDTA.TElib.fa.raw
+done | perl $path/util/rename_TE.pl - > $outfile.panEDTA.TElib.fa.raw
 
 # remove redundant
+echo `date`
 echo "Generate the panEDTA library"
-perl $path/util/cleanup_nested.pl -in $genome_list.panEDTA.TElib.fa.raw -cov 0.95 -minlen 80 -miniden 80 -t $threads
-cp $genome_list.panEDTA.TElib.fa.raw.cln $genome_list.panEDTA.TElib.fa
+perl $path/util/cleanup_nested.pl -in $outfile.panEDTA.TElib.fa.raw -cov 0.95 -minlen 80 -miniden 80 -t $threads
+cp $outfile.panEDTA.TElib.fa.raw.cln $outfile.panEDTA.TElib.fa
 
 # Extra step if --curatedlib is provided:
 if [ -s "$curatedlib" ]; then
-	cat $curatedlib >> $genome_list.panEDTA.TElib.fa
+	cat $curatedlib >> $outfile.panEDTA.TElib.fa
 fi
 echo `date`
 echo -e "\tpanEDTA library of $genome_list is generated!"
+echo -e "\tPan-genome library: $outfile.panEDTA.TElib.fa"
 
 ## Step 3, re-annotate all genomes with the panEDTA library, consider to submit each RepeatMasker and EDTA job to different nodes.
 if [ "$anno" == '1' ]; then
 for i in `cat $genome_list`; do
 	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
+	ln -s $genome.mod $genome.mod.panEDTA
 
 	# skip empty lines
         if [ $genome == '' ]; then
@@ -229,8 +262,10 @@ for i in `cat $genome_list`; do
         fi
 
 	echo "Reannotate genome $genome with the panEDTA library - homology"
-	RepeatMasker -pa $rm_threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod >/dev/null
-	perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.out
+	if [ ! -s "$genome.mod.panEDTA.out" ]; then
+		RepeatMasker -e ncbi -pa $rm_threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod.panEDTA >/dev/null
+	fi
+	perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.panEDTA.out
 done
 
 for i in `cat $genome_list`; do
@@ -248,7 +283,7 @@ for i in `cat $genome_list`; do
         fi
 
 	echo "Reannotate genome $genome with the panEDTA library - structural"
-	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.out
+	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out
 done
 
 echo `date`
