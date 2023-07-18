@@ -5,8 +5,10 @@ use FindBin;
 use File::Basename;
 use Getopt::Long;
 use Pod::Usage;
+use POSIX qw(strftime);
+use Cwd qw(abs_path);
 
-my $version = "v2.1.4";
+my $version = "v2.1.5";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -25,7 +27,8 @@ print "
 ##### Extensive de-novo TE Annotator (EDTA) $version  ####
 ##### Shujun Ou (shujun.ou.1\@gmail.com)             ####
 ########################################################
-\n\n\n";
+\n\nParameters: @ARGV\n\n\n";
+
 
 ## Input: $genome
 ## Output: $genome.EDTA.TElib.fa
@@ -52,17 +55,22 @@ perl EDTA.pl [options]
 				trusted 100%, so please ONLY provide MANUALLY CURATED ones.
 				This option is not mandatory. It's totally OK if no file is
 				provided (default).
+	--rmlib	[File]	Provide the RepeatModeler library containing classified TEs to enhance
+			the sensitivity especially for nonLTRs. If no file is provided (default),
+			EDTA will generate such file for you.
 	--sensitive [0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0,
-				default). This step is slow but MAY help to recover some TEs.
+				default). This step may help to recover some TEs.
 	--anno [0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation
 			after TE library construction.
 	--rmout	[File]	Provide your own homology-based TE annotation instead of using the
 			EDTA library for masking. File is in RepeatMasker .out format. This
 			file will be merged with the structural-based TE annotation. (--anno 1
 			required). Default: use the EDTA library for annotation.
+	--maxdiv [0-100]	Maximum divergence (0-100%, default: 40) of repeat fragments comparing to 
+				library sequences.
 	--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation.
-				(--anno 1 required). Default: 0. This step is slow and does
-				not change the annotation result.
+				(--anno 1 required). Default: 0. This step does not change 
+				the annotation result.
 	--exclude [File]	Exclude regions (bed format) from TE masking in the MAKER.masked
 				output. Default: undef. (--anno 1 required).
 	--force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit
@@ -84,7 +92,8 @@ my $check_dependencies = undef;
 my $species = "others";
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
-my $HQlib = '';
+my $HQlib = ''; #curated library
+my $RMlib = ''; #RepeatModeler library, classified
 my $cds = ''; #a fasta file containing cds of this genome.
 my $sensitive = 0; #0, will not run RepeatModeler to get remaining TEs (default). 1, run RepeatModeler
 my $anno = 0; #0, will not annotate whole-genome TE (default). 1, annotate with RepeatMasker
@@ -94,9 +103,10 @@ my $exclude = ''; #a bed file exclude from TE annotation
 my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
+my $maxdiv = 40; # maximum divergence from lib sequences for fragmented repeats
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
-my $EDTA_process = "$script_path/EDTA_processI.pl";
+my $EDTA_process = "$script_path/EDTA_processJ.pl";
 my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
 my $cleanup_TE = "$script_path/util/cleanup_TE.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
@@ -107,11 +117,11 @@ my $make_masked = "$script_path/util/make_masked.pl";
 my $make_gff3 = "$script_path/util/make_gff3_with_RMout.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
 my $rice_LTR = "$script_path/database/rice6.9.5.liban.LTR";
-#my $rice_nonLTR = "$script_path/database/rice6.9.5.liban.nonLTR";
+my $rice_nonLTR = "$script_path/database/rice6.9.5.liban.nonLTR";
 my $rice_TIR = "$script_path/database/rice6.9.5.liban.TIR";
 my $rice_helitron = "$script_path/database/rice6.9.5.liban.Helitron";
 my $rename_TE = "$script_path/util/rename_TE.pl";
-my $rename_RM = "$script_path/util/rename_RM_TE.pl";
+#my $rename_RM = "$script_path/util/rename_RM_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $buildSummary = "$script_path/util/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
 my $filter_gff = "$script_path/util/filter_gff3.pl";
@@ -147,11 +157,13 @@ if ( !GetOptions( 'genome=s'            => \$genome,
                   'step=s'              => \$step,
                   'overwrite=i'         => \$overwrite,
                   'curatedlib=s'        => \$HQlib,
+                  'rmlib=s'       	=> \$RMlib,
                   'cds=s'                => \$cds,
                   'protlib=s'            => \$protlib,
                   'sensitive=s'          => \$sensitive,
 		  'anno=i'               => \$anno,
 		  'rmout=s'              => \$rmout,
+		  'maxdiv=i'		 => \$maxdiv,
 		  'evaluate=i'           => \$evaluate,
 		  'exclude=s'            => \$exclude,
 		  'force=i'              => \$force,
@@ -185,7 +197,12 @@ if ( (! -s $genome) and (! $check_dependencies) ){
            -exitval => 2 } );
 	}
 
+# get $maxdiv
+$maxdiv = $maxdiv*100 if $maxdiv < 1;
+$maxdiv =~ s/%//g;
+
 # check bolean
+if ($maxdiv < 0 or $maxdiv > 100){die "The expected value for the div parameter is 0 - 100!\n"}
 if ($overwrite != 0 and $overwrite != 1){ die "The expected value for the overwrite parameter is 0 or 1!\n"}
 if ($sensitive != 0 and $sensitive != 1){ die "The expected value for the sensitive parameter is 0 or 1!\n"}
 if ($anno != 0 and $anno != 1){ die "The expected value for the anno parameter is 0 or 1!\n"}
@@ -195,6 +212,7 @@ if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float
 if ($debug != 0 and $debug != 1){ die "The expected value for the debug parameter is 0 or 1!\n"}
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"}
 
+
 # define RepeatMasker -pa parameter
 my $rm_threads = int($threads/4);
 
@@ -203,7 +221,7 @@ print "$date\tDependency checking:\n";
 
 # check files and dependencies
 die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
-die "The script EDTA_processF.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
+die "The script EDTA_processJ.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
 die "The script cleanup_TE.pl is not found in $cleanup_TE!\n" unless -s $cleanup_TE;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
@@ -214,7 +232,7 @@ die "The script make_masked.pl is not found in $make_masked!\n" unless -s $make_
 die "The script make_gff3_with_RMout.pl is not found in $make_gff3!\n" unless -s $make_gff3;
 die "The protein-coding sequence library is not found in $protlib!\n" unless -s $protlib;
 die "The rice LTR sequence library is not found in $rice_LTR!\n" unless -s $rice_LTR;
-#die "The rice nonLTR sequence library is not found in $rice_nonLTR!\n" unless -s $rice_nonLTR;
+die "The rice nonLTR sequence library is not found in $rice_nonLTR!\n" unless -s $rice_nonLTR;
 die "The rice TIR sequence library is not found in $rice_TIR!\n" unless -s $rice_TIR;
 die "The rice Helitron sequence library is not found in $rice_helitron!\n" unless -s $rice_helitron;
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
@@ -313,7 +331,7 @@ if ($raw_id > $old_id){
 	}
 
 # remove sequence annotations (content after the first space in sequence names) and replace special characters with _
-`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; print \$info' $genome > $genome.mod`;
+`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; print \$info' $genome > $genome.$rand.mod`;
 
 # try to shortern sequences
 my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
@@ -321,23 +339,25 @@ if ($id_len > $id_len_max){
 	chomp ($date = `date`);
 	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
 	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
-	my $new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.$rand.mod > $genome.$rand.temp`;
+	my $new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 	chomp ($date = `date`);
 	if ($old_id == $new_id){
 		$id_mode = 1;
-		`mv $genome.temp $genome.mod`;
+		`mv $genome.$rand.temp $genome.mod`;
+		`rm $genome.$rand.mod 2>/dev/null`;
 		print "$date\tSeq ID conversion successful!\n\n";
 		} else {
 		print "\t\t\t\tAttempt 2...\n";
-		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.mod > $genome.temp`;
-		$new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.$rand.mod > $genome.$rand.temp`;
+		$new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 		if ($old_id == $new_id){
 			$id_mode = 2;
-			`mv $genome.temp $genome.mod`;
+			`mv $genome.$rand.temp $genome.mod`;
+			`rm $genome.$rand.mod 2>/dev/null`;
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
-			`rm $genome.temp 2>/dev/null`;
+			`rm $genome.$rand.temp $genome.$rand.mod 2>/dev/null`;
 			die "$date\tERROR: Fail to convert seq IDs to <= $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
@@ -355,6 +375,20 @@ if ($HQlib ne ''){
 		} else {
 		die "\tERROR: The custom library $HQlib you specified is not found!\n\n";
 		}
+	}
+
+# check $RMlib
+if ($RMlib ne ''){
+	if (-s $RMlib){
+		print "\tA RepeatModeler library $RMlib is provided via --rmlib. Please make sure this is a RepeatModeler2 generated and classified library (some levels of unknown classification is OK).\n\n";
+		chomp ($RMlib = `realpath $RMlib`);
+		`cp $RMlib $genome.RM2.raw.fa` unless -s "$genome.RM2.raw.fa";
+		$RMlib = "$genome.RM2.raw.fa";
+		} else {
+		die "\tERROR: The RepeatModeler library $RMlib you specified is not found!\n\n";
+		}
+	} else {
+	`touch $genome.RM2.raw.fa 2>/dev/null`;
 	}
 
 if ($cds ne ''){
@@ -404,20 +438,21 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --convert_seq_name 0`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --convert_seq_name 0 --rmlib $genome.RM2.raw.fa`;
 
 chdir "$genome.EDTA.raw";
 
 # Force to use rice TEs when raw.fa is empty
 if ($force eq 1){
 	`cp $rice_LTR $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
-#	`cp $rice_LTR $genome.nonLTR.raw.fa` unless -s "$genome.nonLTR.raw.fa";
+	`cp $rice_nonLTR $genome.nonLTR.raw.fa` unless -s "$genome.nonLTR.raw.fa";
 	`cp $rice_TIR $genome.TIR.raw.fa` unless -s "$genome.TIR.raw.fa";
 	`cp $rice_helitron $genome.Helitron.raw.fa` unless -s "$genome.Helitron.raw.fa";
 	}
 
 # check results and report status
 die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact LTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.LTR.raw.fa";
+die "ERROR: Raw nonLTR results not found in $genome.EDTA.raw/$genome.nonLTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of nonLTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.nonLTR.raw.fa";
 die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact TIRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.TIR.raw.fa";
 die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact Helitrons in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.Helitron.raw.fa";
 
@@ -448,10 +483,10 @@ print "$date\tPerform EDTA advance filtering for raw TE candidates and generate 
 `rm ./$genome.EDTA.combine/* 2>/dev/null` if $overwrite == 1;
 
 # Filter raw TE candidates and the make stage 1 library
-`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads -protlib $protlib`;
+`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -nonltr $genome.EDTA.raw/$genome.nonLTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads -protlib $protlib`;
 
 # check results, remove intermediate files, and report status
-die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1" unless -s "$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1";
+die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.EDTA.fa.stg1" unless -s "$genome.EDTA.combine/$genome.EDTA.fa.stg1";
 chdir "$genome.EDTA.combine";
 `rm ./$genome.LTR.raw* ./$genome.TIR.raw* ./$genome.Helitron.raw* ./$genome.TIR.Helitro* ./$genome.LTR.TIR.Helitron.fa.stg1.* 2>/dev/null` unless $debug eq 1;
 chdir "..";
@@ -473,60 +508,34 @@ print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive
 `mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
 chdir "$genome.EDTA.final";
 `rm ./* 2>/dev/null` if $overwrite == 1;
-`cp ../$genome.EDTA.combine/$genome.LTR.TIR.Helitron.fa.stg1 ./`;
+`cp ../$genome.EDTA.raw/$genome.RM2.fa ./`;
+`cp ../$genome.EDTA.combine/$genome.EDTA.fa.stg1 ./`;
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./$genome.EDTA.intact.fa.raw`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff3 ./`;
 `cp ../$exclude ./` if $exclude ne '';
 
-# identify remaining TEs in the genome
-if ($sensitive == 1){
-	print "\t\t\t\tUse RepeatModeler to identify any remaining TEs that are missed by structure-based methods.\n\n";
-	# RepeatMask the genome with the cleanned stage 1 library
-	`ln -s ../$genome $genome` unless -e $genome;
-	if ($rmout ne ''){
-		print STDERR "$date\tA RepeatMasker result file $rmout is provided! Will use this file without running RepeatMasker.\n\n";
-		`perl $make_masked -genome $genome -rmout $rmout -maxdiv 40 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
-		`mv $genome.new.masked $genome.masked`;
-		} else {
-		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome 2>/dev/null`;
-		}
-
+# identify remaining TEs in the filtered RM2 library
+if ($sensitive == 1 and -s "$genome.RM2.fa"){
+	print "\t\t\t\tIdentify TE families from RepeatModeler results that are missed by structure-based methods.\n\n";
 	chomp ($date = `date`);
-	if ($overwrite eq 0 and -s "$genome.RM.consensi.fa"){
-		print STDERR "$date\tExisting RepeatModeler result file $genome.RM.consensi.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>/dev/null`;
+	`cp $genome.RM2.fa $genome.RM2.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	# clean up tandem and coding sequences in the RM2 library
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.fa.masked > $genome.RM2.fa.stg1`;
+	`perl $cleanup_proteins -seq $genome.RM2.fa.stg1 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blastplus -threads $threads`;
+	if (-s "$genome.RM2.fa.stg1.clean"){
+		`cat $genome.EDTA.fa.stg1 $genome.RM2.fa.stg1.clean > $genome.EDTA.raw.fa`;
 		} else {
-		`rm -rf ./RM_*/consensi.fa 2>/dev/null`;
-		# Scan the repeatmasked genome with RepeatModeler for any remaining TEs
-		`${repeatmodeler}BuildDatabase -name $genome.masked -engine ncbi $genome.masked`;
-		`${repeatmodeler}RepeatModeler -engine ncbi -pa $rm_threads -database $genome.masked 2>/dev/null`;
-		`rm $genome.masked.nhr $genome.masked.nin $genome.masked.nnd $genome.masked.nni $genome.masked.nog $genome.masked.nsq 2>/dev/null`;
-		`cat RM_*/consensi.fa > $genome.RM.consensi.fa`;
-		}
-
-	# filter and reclassify RepeatModeler candidates with TEsorter and make stage 2 library
-	if (-s "$genome.RM.consensi.fa"){
-		`${TEsorter}TEsorter $genome.RM.consensi.fa -p $threads`;
-		`perl $rename_RM $genome.RM.consensi.fa.rexdb.cls.lib > $genome.RepeatModeler.raw.fa`;
-		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.raw.fa 2>/dev/null`;
-		`cp $genome.RepeatModeler.raw.fa $genome.RepeatModeler.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
-		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RepeatModeler.raw.fa.masked > $genome.RepeatModeler.fa.stg1`;
-		`cat $genome.LTR.TIR.Helitron.fa.stg1 $genome.RepeatModeler.fa.stg1 > $genome.LTR.TIR.Helitron.others.fa.stg2`;
-
-		# clean up coding sequences in the stage 2 library
-		`perl $cleanup_proteins -seq $genome.LTR.TIR.Helitron.others.fa.stg2 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blastplus -threads $threads`;
-		} else {
-		print "\t\t\t\tRepeatModeler is finished, but no consensi.fa files found.\n\n";
-		`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
+		print "\t\t\t\tNo extra repeat sequences found in the RepeatModeler output.\n\n";
+		`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
 		}
 	} else {
-	print "\t\t\t\tSkipping the RepeatModeler step (--sensitive 0).\n\t\t\t\tRun EDTA.pl --step final --sensitive 1 if you want to use RepeatModeler.\n\n";
-	`cp $genome.LTR.TIR.Helitron.fa.stg1 $genome.LTR.TIR.Helitron.others.fa.stg2.clean`;
+	print "\t\t\t\tSkipping the RepeatModeler results (--sensitive 0).\n\t\t\t\tRun EDTA.pl --step final --sensitive 1 if you want to add RepeatModeler results.\n\n";
+	`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
 	}
 
-# rename file
-`cp $genome.LTR.TIR.Helitron.others.fa.stg2.clean $genome.EDTA.raw.fa`;
 
 if ($cds ne ''){
 	# report status
@@ -581,8 +590,8 @@ if ($cds ne ''){
 # check results
 die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
 die "ERROR: Intact TE annotation not found in $genome.EDTA.intact.gff3" unless -s "$genome.EDTA.intact.gff3";
-`cp $genome.EDTA.TElib.fa ../`;
-`cp $genome.EDTA.intact.gff3 ../`;
+copy_file("$genome.EDTA.TElib.fa", "..");
+copy_file("$genome.EDTA.intact.gff3", "..");
 
 if ($HQlib ne ''){
 	# report status
@@ -593,9 +602,9 @@ if ($HQlib ne ''){
 	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
 	`cp $genome.EDTA.TElib.fa $genome.EDTA.TElib.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
-	`mv $genome.EDTA.TElib.fa $genome.EDTA.TElib.ori.fa`;
+	rename "$genome.EDTA.TElib.fa", "$genome.EDTA.TElib.ori.fa";
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
-	`cp $genome.EDTA.TElib.novel.fa $genome.EDTA.TElib.fa ../`;
+	copy_file("$genome.EDTA.TElib.novel.fa", "..");
 	}
 
 # reclassify intact TEs with the TE lib #113
@@ -603,8 +612,8 @@ if ($HQlib ne ''){
 die "ERROR: The masked file for $genome.EDTA.intact.fa is not found! The RepeatMasker annotation on this file may be failed. Please check the $genome.EDTA.TElib.fa file for sequence naming formats especially when you provide a library via --curatedlib.\n" unless -s "$genome.EDTA.intact.fa.out";
 `perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
 `perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
-`mv $genome.EDTA.intact.fa.rename $genome.EDTA.intact.fa`;
-`mv $genome.EDTA.intact.gff3.rename $genome.EDTA.intact.gff3`;
+rename "$genome.EDTA.intact.fa.rename", "$genome.EDTA.intact.fa";
+rename "$genome.EDTA.intact.gff3.rename", "$genome.EDTA.intact.gff3";
 `cp $genome.EDTA.intact.gff3 ../`; #replace the intact gff that has no lib family info
 
 # remove intermediate files
@@ -634,6 +643,7 @@ if ($anno == 1){
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
 	chdir "$genome.EDTA.anno";
 	`rm ./* 2>/dev/null` if $overwrite == 1;
+	`rm $genome.EDTA.TElib.fa* 2>/dev/null`; # clean up libraries
 	`cp ../$genome.EDTA.final/$genome.EDTA.TElib.fa ./`;
 	`cp ../$genome.EDTA.final/$genome.EDTA.intact.gff3 ./`;
 	`cp ../$exclude ./` if $exclude ne '';
@@ -651,12 +661,12 @@ if ($anno == 1){
 		`ln -s $rmout $genome.out`;
 		} else {
 		print STDERR "$date\tHomology-based annotation of TEs using $genome.EDTA.TElib.fa from scratch.\n\n";
-		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div $maxdiv -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
 		}
 	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out" or -s "$genome.mod.out";
 
 	# exclude regions from TE annotation and make whole-genome TE annotation
-	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
+	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv $maxdiv -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
 	`mv $genome.out.new $genome.EDTA.RM.out`;
 	`perl $RMout2bed $genome.EDTA.RM.out > $genome.EDTA.RM.bed`; # a regular enriched bed
 	`perl $bed2gff $genome.EDTA.RM.bed TE_homo > $genome.EDTA.RM.gff3`;
@@ -701,17 +711,19 @@ if ($anno == 1){
 	print "\t\t\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff3\n";
 	print "\t\t\t\tWhole-genome TE annotation summary: $genome.EDTA.TEanno.sum\n";
 	print "\t\t\t\tLow-threshold TE masking for MAKER gene annotation (masked: $maker_TE): $genome.MAKER.masked\n\n";
-	`cp $genome.MAKER.masked $genome.EDTA.TEanno.gff3 $genome.EDTA.TEanno.sum ../`;
+	`cp $genome.MAKER.masked ../`; # make no backup for this file
+	copy_file("$genome.EDTA.TEanno.gff3", "..");
+	copy_file("$genome.EDTA.TEanno.sum", "..");
 
 	# evaluate the annotation consistency
 	if ($evaluate == 1){
 		# report status
 		chomp ($date = `date`);
-		print "$date\tEvaluate the level of inconsistency for whole-genome TE annotation (slow step):\n\n";
+		print "$date\tEvaluate the level of inconsistency for whole-genome TE annotation:\n\n";
 
 		# extract whole-genome TE and perform all-v-all blast, then summarize the results
 		`awk '{if (\$5~/[0-9]+/ && \$1>300 && \$7-\$6>80) print \$11"\t"\$5":"\$6".."\$7}' $genome.EDTA.TEanno.out | perl $call_seq - -C $genome > $genome.EDTA.TE.fa`;
-		`perl $cleanup_nested -in $genome.EDTA.TE.fa -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blastplus 2>/dev/null`;
+		`perl $cleanup_nested -in $genome.EDTA.TE.fa -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blastplus -iter 1 -maxcount 100000 2>/dev/null`;
 		`for i in nested all redun; do perl $count_nested -in $genome.EDTA.TE.fa.stat -cat \$i > $genome.EDTA.TE.fa.stat.\$i.sum; done`;
 
 		# check results and report status
@@ -726,4 +738,27 @@ if ($anno == 1){
 	print "\t\t\t\tIf you want to learn more about the formatting and information of these files, please visit:
 	\t\t\t\thttps://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A\n\n";
 
+	}
+
+
+##########################
+###### Subroutines #######
+##########################
+
+sub copy_file {
+	my ($file, $path) = ($_[0], $_[1]);
+	# Generate new name with current date and time
+	my $new_name = $file . "_" . strftime("%Y%m%d_%H%M%S", localtime);
+	
+	# resolve symlinks and existing files
+	if (-l "$path/$file") {
+		# File is a symbolic link
+		unlink "$path/$file" or die "ERROR: Failed to remove symbolic link for $path/$file\n\n";
+		} elsif (-f "$path/$file") {
+        	# File is a regular file
+        	rename "$path/$file", "$path/$new_name" or die "ERROR: Failed to rename file: $path/$file\n\n";
+        	}
+
+        # copy file to the path if it's not the current path
+	`cp $file $path` if abs_path($path) ne abs_path('.');
 	}
