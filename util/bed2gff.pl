@@ -10,7 +10,7 @@ my $annotator="EDTA";
 my $script_path = dirname(__FILE__);
 
 my $ID_name = "TE_annot";
-$ID_name = $ARGV[1] if defined $ARGV[1];
+$ID_name = $ARGV[1] if defined $ARGV[1]; # TE_homo or TE_struc
 
 #read SO info and defined sequence ontology
 my $SO = "$script_path/TE_Sequence_Ontology.txt";
