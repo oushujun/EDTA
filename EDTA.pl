@@ -361,6 +361,8 @@ if ($id_len > $id_len_max){
 			die "$date\tERROR: Fail to convert seq IDs to <= $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
+	} else {
+	`mv $genome.$rand.mod $genome.mod`;
 	}
 $genome = "$genome.mod";
 
@@ -452,7 +454,7 @@ if ($force eq 1){
 
 # check results and report status
 die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact LTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.LTR.raw.fa";
-die "ERROR: Raw nonLTR results not found in $genome.EDTA.raw/$genome.nonLTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of nonLTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.nonLTR.raw.fa";
+die "ERROR: Raw nonLTR results not found in $genome.EDTA.raw/$genome.nonLTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of nonLTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -e "$genome.nonLTR.raw.fa"; # allow empty file
 die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact TIRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.TIR.raw.fa";
 die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact Helitrons in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.Helitron.raw.fa";
 

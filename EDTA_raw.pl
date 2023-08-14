@@ -432,6 +432,7 @@ if (-s "$genome-families.fa"){
 	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA -ex > $genome.RM2.fa`;
 	} else {
 	print "\t\t\t\tRepeatModeler is finished, but the $genome-families.fa file is not produced.\n\n";
+	`touch $genome.nonLTR.raw.fa $genome.RM2.fa`;
 	}
 
 # copy result files out
