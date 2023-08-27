@@ -26,6 +26,8 @@ while (<IN>){
 	s/\.$//;
 	next if (/Discarded/ and $cat eq "nested");
 	next if (/Cleaned/ and $cat eq "redun");
+	s/MITE/DNA/g;
+	s/TIR/DNA/g;
 	my ($type1, $type2) = ($1, $2) if /[\||#]([0-9a-z\/_]+)\s+.*[\||#]([0-9a-z\/_]+)(;|\s+)/i;
 	next unless defined $type1 and defined $type2;
 	$types{$type1}++;
