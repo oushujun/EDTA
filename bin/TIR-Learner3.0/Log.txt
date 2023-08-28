@@ -1,0 +1,39 @@
+Major updates:
+Version 3.0
+1. update scikit-learn model to the latest version
+2. use pandas dataframe to process all candidates instead of write out to disk
+3. parallel processing with swifter
+4. fix bugs for module 1 and 2
+ 
+Version 2.5
+1. Resolve cat: Argument too long issue
+2. Remove intermdediate files
+3. Skip for the lack of TIR predicitons
+
+Versions 1.21 and 1.22
+1. Replace blastdbcmd with call_seq_by_list.pl for much stable and faster performance
+2. If blastdbcmd has to be used, blast+ 2.5.0 - 2.6.0 works.
+
+Versions 1.19 and 1.20
+1. Reuse filtered GRF results in the /temp folder for reanalyses
+2. Filter out input sequence that is shorter than $l+500 bp
+3. Tolerate sequence that has no TIRs found in it
+
+Version 1.18
+1. Add a checking step for Module 1. Exit when no homology is found between input and database.
+2. Update installation and usage instructions.
+
+Versions 1.16 and 1.17
+1. Add a keras-trained model to classify TIRs for non-rice and non-maize species (Module3_New)
+2. Add TIRvish as a potential TIR search engine.
+
+Version 1.15
+1. Improved parameter reading from command line
+2. Suppress warning messages
+3. Clean up and formatting codes
+
+Version 1.14
+1. Add parameter -l (max length), user defined maximium length of TIR elements.
+2. Add parameter -s (species) , user defined "Maize", "Rice" or "others"; Maize RefLib and Maize model are saved in this package.
+3. Use multiprocessing to extract the sequence from the genome sequence (faster than 1.13)
+4. Module3_New is tested by using maize chromosome 10.  No error is reported.
