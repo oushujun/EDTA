@@ -3,6 +3,7 @@ use warnings;
 use strict;
 use FindBin;
 use File::Basename;
+use File::Spec; # for obtaining the real path of a file
 use Pod::Usage;
 
 ########################################################
@@ -57,7 +58,7 @@ my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";
-my $TIR_Learner = "$script_path/bin/TIR-Learner2.5/TIR-Learner2.5.sh";
+my $TIR_Learner = "$script_path/bin/TIR-Learner3.0";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $get_range = "$script_path/util/get_range.pl";
@@ -149,7 +150,7 @@ print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\
 # check files and dependencies
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
-die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s $TIR_Learner;
+die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
@@ -462,7 +463,11 @@ if ($type eq "tir" or $type eq "all"){
 chomp ($date = `date`);
 print STDERR "$date\tStart to find TIR candidates.\n\n";
 
-# enter the working directory, filter out short sequences and create genome softlink
+# pre-set parameters
+my $genome_file_real_path=File::Spec->rel2abs($genome); # the genome file with real path
+my $grfp=`dirname $GRF`;
+
+# enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/TIR";
 `ln -s ../../$genome $genome` unless -s $genome;
 
@@ -474,8 +479,11 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
 	print STDERR "Species: $species\n";
 
+	# Check sequence file
+        `python3 $TIR_Learner/bin/pre.py -g $genome_file_real_path -name TIR-Learner`;
+
 	# run TIR-Learner
-	`bash $TIR_Learner -g $genome -s $species -t $threads -l $maxint`;
+	`python3 $TIR_Learner/bin/main.py -f $genome_file_real_path -n TIR-Learner -s $species -c $TIR_Learner -t $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR -g $grfp`;
 	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
 	# clean raw predictions with flanking alignment
