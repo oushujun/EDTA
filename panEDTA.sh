@@ -22,23 +22,28 @@
 # Help info
 helpFunction()
 {
-   echo ""
-   echo "Usage: $0 -g genome_list.txt -c cds.fasta -t 10"
-   echo -e "\t-g	A list of genome files with paths accessible from the working directory.
+   echo "\nPan-genome annnotation of TEs using EDTA"
+   echo "Usage: bash $0 -g genome_list.txt -c cds.fasta -t 10"
+   echo "   -g	A list of genome files with paths accessible from the working directory.
 			Required: You can provide only a list of genomes in this file (one column, one genome each row).
-			Optional: You can also provide both genomes and CDS files in this file (two columns, one genome and one CDS each row).
-				  Missing of CDS files (eg, for some or all genomes) is allowed."
-   echo -e "\t-c		Optional. Coding sequence files in fasta format.
+			Option 1: You can also provide both genomes and CDS files in this file (two columns, one genome and 
+				  one CDS each row). Missing of CDS files (eg, for some or all genomes) is allowed.
+			Option 2: If there are existing EDTA annotations for individual genomes located in the directory of 
+				  genome files, these annotations will be copied to the current work directory and skip 
+				  recreating individual EDTA annotations."
+   echo "   -c		Optional. Coding sequence files in fasta format.
    			The CDS file provided via this parameter will fill in the missing CDS files in the genome list.
 			If no CDS files are provided in the genome list, then this CDS file will be used on all genomes."
-   echo -e "\t-l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format."
-   echo -e "\t-f	Minimum number of full-length TE copies in individual genomes to be kept as candidate TEs for the pangenome.
+   echo "   -l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format."
+   echo "   -f	Minimum number of full-length TE copies in individual genomes to be kept as candidate TEs for the pangenome.
    			Lower is more inclusive, and will ↑ library size, ↑ sensitivity, and ↑ inconsistency.
 			Higher is more stringent, and will ↓ library size, ↓ sensitivity, and ↓ inconsistency.
 			Default: 3."
-   echo -e "\t-a	Optional. Just generate the panEDTA library (0) or 
+   echo "   -a	Optional. Just generate the panEDTA library (0) or 
    			Perform whole-genome annotation using the generated panEDTA library (default, 1)."
-   echo -e "\t-t	Number of CPUs to run panEDTA. Default: 10."
+   echo "   -o	Optional. Overwrite EDTA results. If you run panEDTA in the same folder containing EDTA results, the program
+			will abort (default, 0) or overwrite (1)."
+   echo "   -t	Number of CPUs to run panEDTA. Default: 10."
    echo ""
    exit 1 # Exit script after printing help
 }
@@ -47,12 +52,13 @@ helpFunction()
 genome_list=''
 cds=''
 curatedlib=''
+overwrite=0
 fl_copy=3
 threads=10
 anno=1
 
 # Read user inputs
-while getopts "g:c::l::f::a::t::" opt
+while getopts "g:c::l::f::a::o::t::" opt
 do
    case "$opt" in
       g ) genome_list="$OPTARG" ;;
@@ -60,6 +66,7 @@ do
       l ) curatedlib="$OPTARG" ;;
       f ) fl_copy="$OPTARG" ;;
       a ) anno="$OPTARG" ;;
+      o ) overwrite="$OPTARG" ;;
       t ) threads="$OPTARG" ;;
       ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
    esac
@@ -67,7 +74,7 @@ done
 
 # Check parameters
 if [ ! -s "$genome_list" ]; then
-   echo "ERROR: The genomes $genomes_list file is not found or is empty";
+   echo "ERROR: The genomes $genome_list file is not found or is empty";
    helpFunction
 fi
 
@@ -88,59 +95,79 @@ rm_threads=$(($threads/4))
 outfile=$(basename $genome_list 2>/dev/null)
 
 ### Begin panEDTA and print all parameters
-echo `date`
+printf "\n%s\n" "$(date)"
 echo "Pan-genome Extensive de-novo TE Annotator (panEDTA)"
-echo -e "\tOutput directory: $dir"
-echo -e "\tGenome files: $genome_list"
-echo -e "\tCoding sequences: $cds"
-echo -e "\tCurated library: $curatedlib"
-echo -e "\tCopy number cutoff: $fl_copy"
-echo -e "\tCPUs: $threads"
+echo "   Output directory: $dir"
+echo "   Genome files: $genome_list"
+echo "   Coding sequences: $cds"
+echo "   Curated library: $curatedlib"
+echo "   Copy number cutoff: $fl_copy"
+echo "   Overwrite EDTA results: $overwrite"
+echo "   CPUs: $threads"
+echo ""
 
 ## Step 1, initial EDTA annotation, consider to add --sensitive 1, consider to submit each EDTA job to different nodes.
 # make softlink to global cds
 if [ $cds != '' ]; then
 	cds_file=$cds
 	cds=`basename $cds_file 2>/dev/null`
+	cds_file=`realpath $cds_file`
 	ln -s $cds_file $cds 2>/dev/null
 fi
 
 # process one line each time
-echo `date`
-for i in `cat $genome_list`; do
+genomes="" # store a list of genomes
+#cat "$genome_list" | while IFS= read -r i; do
+while IFS= read -r i; do
 	genome_file=`echo $i|awk '{print $1}'`
 
 	# skip empty lines
-	if [ $genome_file == '' ]; then
+	if [ "$genome_file" = "" ]; then
 		break
 	fi
 
-	# make softlink to genome
-	genome=`basename $genome_file`
-	if [ ! -s $genome ]; then
-		ln -s $genome_file $genome 2>/dev/null
+	# check if genome file exist
+	if [ ! -s "$genome_file" ]; then
+		echo "ERROR: $genome_file specified by -g not exist!"
+		exit 1
 	fi
 
-	if [ ! -s "$genome.mod" ]; then
-		ln -s $genome_file.mod $genome.mod 2>/dev/null
+	# make softlink to genome
+	genome_file=`realpath $genome_file`
+	genome=`basename $genome_file`
+	genomes="$genomes $genome"
+	if [ ! -s $genome ]; then
+		ln -s $genome_file $genome 2>/dev/null
 	fi
 
 	# make softlink to cds
 	cds_ind_file=`echo $i|awk '{print $2}'`
 	cds_ind=`basename $cds_ind_file 2>/dev/null` 
-	if [ ! -s $cds_ind ] && [ $cds_ind != '' ]; then
+	if [ "$cds_ind" != '' ]; then
+		if [ ! -s $cds_ind ]; then
+			echo "ERROR: $cds_ind specified by -g not exist!"
+			exit 1
+		fi
+		cds_ind_file=`realpath $cds_ind_file`
 		ln -s $cds_ind_file $cds_ind 2>/dev/null
 	fi
 
 	# use the global $cds to replace a missing cds
-	if [ "$cds_ind" == '' ] && [ "$cds" != '' ]; then
+	if [ "$cds_ind" = '' ] && [ "$cds" != '' ]; then
 		cds_ind=$cds
 	fi
 
+
+	# check if current folder has EDTA results
+	if [ `realpath "$genome_file.mod.EDTA.TEanno.sum"` = `realpath "$genome.mod.EDTA.TEanno.sum"` ] && [ $overwrite = 0 ]; then
+		echo "ERROR: Existing EDTA result found for $genome and the Overwrite parameter (-o) is $overwrite!"
+		exit 1
+	fi
+
 	# check if provided genome has EDTA annotation in the same folder
-#	echo "Try to find existing EDTA annotation for $genome"
 	if [ -s "$genome_file.mod.EDTA.TEanno.sum" ] && [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then # link annotations to the work directory
 		echo "Existing EDTA annotation found in the directory of $genome, will use this as the panEDTA input"
+		ln -s "$genome_file.mod" "$genome.mod" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.TEanno.sum" "$genome.mod.EDTA.TEanno.sum" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.TElib.fa" "$genome.mod.EDTA.TElib.fa" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.TElib.novel.fa" "$genome.mod.EDTA.TElib.novel.fa" 2>/dev/null
@@ -157,7 +184,8 @@ for i in `cat $genome_list`; do
 
 #if [ ! 0 ]; then #test
 	# de novo EDTA if no existing annotation is found
-	if [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then # run a new EDTA if annotation of the genome is not existing
+	if [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then
+	# run a new EDTA if annotation of the genome is not existing
 	echo "De novo annotate genome $genome with EDTA"
 		perl $path/util/count_base.pl $genome -s > $genome.stats
 		if [ "$curatedlib" != '' ]; then
@@ -173,20 +201,13 @@ for i in `cat $genome_list`; do
 		fi
 	fi
 #fi #test
-done
+done < "$genome_list"
 
 ## Step 2, make pan-genome lib (quick step, use a sigle node is fine)
 # get fl-TE with ≥ $fl_copy copies in each genome
-echo `date`
-for i in `cat $genome_list`; do   
-	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
-
-	# skip empty lines
-        if [ $genome == '' ]; then
-                break
-        fi
-
-	echo "Idenfity full-length TEs for genome $genome"
+printf "\n%s\n" "$(date)"
+for genome in $genomes; do
+	printf "\tIdenfity full-length TEs for genome %s\n"
 	perl $path/util/find_flTE.pl $genome.mod.EDTA.anno/$genome.mod.EDTA.RM.out | \
 		awk '{print $10}'| \
 		sort| \
@@ -196,96 +217,87 @@ for i in `cat $genome_list`; do
 done
 
 # extract pan-TE library candidate sequences
-echo `date`
-echo -e "\nExtract pan-TE library candidate sequences"
-for i in `cat $genome_list`; do
-	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
-
-	# skip empty lines
-        if [ $genome == '' ]; then
-                break
-        fi
-
+printf "\n%s\n\tExtract pan-TE library candidate sequences\n" "$(date)"
+for genome in $genomes; do
 	if [ -s "$curatedlib" ]; then
-
 		# a) if --curatedlib is provided
-		for j in `cat $genome.mod.EDTA.TElib.fa.keep.list`; do
-			grep $j $genome.mod.EDTA.TElib.novel.fa; 
+		for j in $(cat "$genome.mod.EDTA.TElib.fa.keep.list"); do
+#		cat "$genome.mod.EDTA.TElib.fa.keep.list" | while read -r j; do
+			grep "$j" "$genome.mod.EDTA.TElib.novel.fa"; 
 		done | \
-			perl $path/util/output_by_list.pl 1 $genome.mod.EDTA.TElib.novel.fa 1 - -FA > $genome.mod.EDTA.TElib.fa.keep.ori
+			perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.novel.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
+
+#		while read -r j; do
+#			grep "$j" "$genome.mod.EDTA.TElib.novel.fa";
+#		done < "$genome.mod.EDTA.TElib.fa.keep.list" | \
+#			perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.novel.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
+
 	else
 		# b) if --curatedlib is not provided
-		for j in `cat $genome.mod.EDTA.TElib.fa.keep.list`; do 
-			grep $j $genome.mod.EDTA.TElib.fa; 
+	#	for j in $(cat "$genome.mod.EDTA.TElib.fa.keep.list"); do 
+		for j in `cat "$genome.mod.EDTA.TElib.fa.keep.list"`; do 
+	#	cat "$genome.mod.EDTA.TElib.fa.keep.list" | while read -r j; do
+			grep "$j" "$genome.mod.EDTA.TElib.fa"; 
 		done | \
-        		perl $path/util/output_by_list.pl 1 $genome.mod.EDTA.TElib.fa 1 - -FA > $genome.mod.EDTA.TElib.fa.keep.ori
+        		perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
+
+#		while read -r j; do
+#			grep "$j" "$genome.mod.EDTA.TElib.fa";
+#		done < "$genome.mod.EDTA.TElib.fa.keep.list" | \
+#			perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
+
 	fi
 done
 
 # aggregate TE libs
 i=0
-for j in `cat $genome_list`; do
-	genome=`basename $(echo $j|awk '{print $1}') 2>/dev/null`
-
-	# skip empty lines
-        if [ $genome == '' ]; then
-                break
-        fi
-
+for genome in $genomes; do
 	i=$(($i+5000)); 
 	perl $path/util/rename_TE.pl $genome.mod.EDTA.TElib.fa.keep.ori $i; 
 done | perl $path/util/rename_TE.pl - > $outfile.panEDTA.TElib.fa.raw
 
 # remove redundant
-echo `date`
-echo "Generate the panEDTA library"
+printf "\n%s\n\tGenerate the panEDTA library\n" "$(date)"
 perl $path/util/cleanup_nested.pl -in $outfile.panEDTA.TElib.fa.raw -cov 0.95 -minlen 80 -miniden 80 -t $threads
-cp $outfile.panEDTA.TElib.fa.raw.cln $outfile.panEDTA.TElib.fa
+perl -nle 's/>(TE_[0-9]+)/>pan$1/; print $_' $outfile.panEDTA.TElib.fa.raw.cln > $outfile.panEDTA.TElib.fa
 
 # Extra step if --curatedlib is provided:
 if [ -s "$curatedlib" ]; then
 	cat $curatedlib >> $outfile.panEDTA.TElib.fa
 fi
-echo `date`
-echo -e "\tpanEDTA library of $genome_list is generated!"
-echo -e "\tPan-genome library: $outfile.panEDTA.TElib.fa"
+printf "\n%s\n" "$(date)"
+printf "\tpanEDTA library of %s is generated: %s.panEDTA.TElib.fa\n" "$genome_list" "$outfile"
+#printf "\tPan-genome library: %s.panEDTA.TElib.fa\n" "$outfile"
 
 ## Step 3, re-annotate all genomes with the panEDTA library, consider to submit each RepeatMasker and EDTA job to different nodes.
-if [ "$anno" == '1' ]; then
-for i in `cat $genome_list`; do
-	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
-	ln -s $genome.mod $genome.mod.panEDTA
+if [ "$anno" = '1' ]; then
+	for genome in $genomes; do
+		printf "\n%s\nReannotate genome %s with the panEDTA library - homology\n" "$(date)" $genome
+		#echo "Reannotate genome $genome with the panEDTA library - homology"
+		if [ ! -s "$genome.mod.panEDTA.out" ]; then
+			ln -s $genome.mod $genome.mod.panEDTA
+			RepeatMasker -e ncbi -pa $rm_threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod.panEDTA >/dev/null
+		fi
+		perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.panEDTA.out
+	done
 
-	# skip empty lines
-        if [ $genome == '' ]; then
-                break
-        fi
-
-	echo "Reannotate genome $genome with the panEDTA library - homology"
-	if [ ! -s "$genome.mod.panEDTA.out" ]; then
-		RepeatMasker -e ncbi -pa $rm_threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod.panEDTA >/dev/null
-	fi
-	perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.panEDTA.out
-done
-
-for i in `cat $genome_list`; do
+while IFS= read -r i; do
 	genome=`basename $(echo $i|awk '{print $1}') 2>/dev/null`
 	cds_ind=`basename $(echo $i|awk '{print $2}') 2>/dev/null`
 
 	# skip empty lines
-        if [ $genome == '' ]; then
+        if [ $genome = '' ]; then
                 break
         fi
 
         # use the global $cds to replace a missing cds
-        if [ "$cds_ind" == '' ] && [ "$cds" != '' ]; then
+        if [ "$cds_ind" = '' ] && [ "$cds" != '' ]; then
                 cds_ind=$cds
         fi
 
 	echo "Reannotate genome $genome with the panEDTA library - structural"
 	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out
-done
+done < $genome_list
 
-echo `date`
-echo -e "\tpanEDTA annotation of $genome_list is finished!"
+printf "%s\n\tpanEDTA annotation of %s is finished!\n\n" "$(date)" "$genome_list"
 fi
