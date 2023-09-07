@@ -93,7 +93,7 @@ my $species = "others";
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $HQlib = ''; #curated library
-my $RMlib = ''; #RepeatModeler library, classified
+my $RMlib = 'null'; #RepeatModeler library, classified
 my $cds = ''; #a fasta file containing cds of this genome.
 my $sensitive = 0; #0, will not run RepeatModeler to get remaining TEs (default). 1, run RepeatModeler
 my $anno = 0; #0, will not annotate whole-genome TE (default). 1, annotate with RepeatMasker
@@ -330,8 +330,8 @@ if ($raw_id > $old_id){
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
 	}
 
-# remove sequence annotations (content after the first space in sequence names) and replace special characters with _
-`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; print \$info' $genome > $genome.$rand.mod`;
+# remove sequence annotations (content after the first space in sequence names) and replace special characters with _, convert non-ATGC bases into Ns
+`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; \$info=~s/[^ATGCN]/N/gi unless /^>/; print \$info' $genome > $genome.$rand.mod`;
 
 # try to shortern sequences
 my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
@@ -380,18 +380,19 @@ if ($HQlib ne ''){
 	}
 
 # check $RMlib
-if ($RMlib ne ''){
+if ($RMlib ne 'null'){
 	if (-s $RMlib){
 		print "\tA RepeatModeler library $RMlib is provided via --rmlib. Please make sure this is a RepeatModeler2 generated and classified library (some levels of unknown classification is OK).\n\n";
 		chomp ($RMlib = `realpath $RMlib`);
-		`cp $RMlib $genome.RM2.raw.fa` unless -s "$genome.RM2.raw.fa";
+		`ln -s $RMlib $genome.RM2.raw.fa` unless -e "$genome.RM2.raw.fa";
+		#`cp $RMlib $genome.RM2.raw.fa` unless -s "$genome.RM2.raw.fa";
 		$RMlib = "$genome.RM2.raw.fa";
 		} else {
 		die "\tERROR: The RepeatModeler library $RMlib you specified is not found!\n\n";
 		}
-	} else {
-	`touch $genome.RM2.raw.fa 2>/dev/null`;
-	}
+	}# else {
+	#	`touch $genome.RM2.raw.fa 2>/dev/null`;
+	#}
 
 if ($cds ne ''){
 	if (-s $cds){
@@ -440,7 +441,7 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --convert_seq_name 0 --rmlib $genome.RM2.raw.fa`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --convert_seq_name 0 --rmlib $RMlib`;
 
 chdir "$genome.EDTA.raw";
 
