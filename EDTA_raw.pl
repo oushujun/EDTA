@@ -49,7 +49,7 @@ perl EDTA_raw.pl [options]
 my $genome = '';
 my $species = 'others';
 my $type = 'all';
-my $RMlib = '';
+my $RMlib = 'null';
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $convert_name = 1; #0, use original seq names; 1 shorten names.
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
@@ -230,11 +230,11 @@ my $genome_file = basename($genome);
 $genome = $genome_file;
 
 # check $RMlib
-if ($RMlib ne ''){
+if ($RMlib ne 'null'){
 	if (-e $RMlib){
 		print "\tA RepeatModeler library $RMlib is provided via --rmlib. Please make sure this is a RepeatModeler2 generated and classified library (some levels of unknown classification is OK).\n\n";
 		chomp ($RMlib = `realpath $RMlib`);
-		`cp $RMlib $genome.RM2.raw.fa` unless -s "$genome.RM2.raw.fa";
+		`ln -s $RMlib $genome.RM2.raw.fa` unless -s "$genome.RM2.raw.fa";
 		$RMlib = "$genome.RM2.raw.fa";
 		} else {
 		die "\tERROR: The RepeatModeler library $RMlib you specified is not found!\n\n";
@@ -258,8 +258,8 @@ if (-s "$genome.mod"){
 	$genome = "$genome.mod";
 	} else {
 
-# remove sequence annotations (content after the first space in sequence names) and replace special characters with _
-`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; print \$info' $genome > $genome.mod`;
+# remove sequence annotations (content after the first space in sequence names) and replace special characters with _, convert non-ATGC bases into Ns
+`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; \$info=~s/[^ATGCN]/N/gi unless /^>/; print \$info' $genome > $genome.$rand.mod`;
 
 # try to shortern sequences
 my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
@@ -267,26 +267,30 @@ if ($id_len > $id_len_max){
 	chomp ($date = `date`);
 	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
 	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.mod > $genome.temp`;
-	my $new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.$rand.mod > $genome.$rand.temp`;
+	my $new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 	chomp ($date = `date`);
 	if ($old_id == $new_id){
 		$id_mode = 1;
-		`mv $genome.temp $genome.mod`;
+		`mv $genome.$rand.temp $genome.mod`;
+		`rm $genome.$rand.mod 2>/dev/null`;
 		print "$date\tSeq ID conversion successful!\n\n";
 		} else {
 		print "\t\t\t\tAttempt 2...\n";
-		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.mod > $genome.temp`;
-		$new_id = `grep \\> $genome.temp|sort -u|wc -l`;
+		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.$rand.mod > $genome.$rand.temp`;
+		$new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 		if ($old_id == $new_id){
 			$id_mode = 2;
-			`mv $genome.temp $genome.mod`;
+			`mv $genome.$rand.temp $genome.mod`;
+			`rm $genome.$rand.mod 2>/dev/null`;
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
-			`rm $genome.temp`;
+			`rm $genome.$rand.temp $genome.$rand.mod 2>/dev/null`;
 			die "$date\tERROR: Fail to convert seq IDs to <= $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
+	} else {
+	`mv $genome.$rand.mod $genome.mod`;
 	}
 $genome = "$genome.mod";
 }
@@ -396,7 +400,7 @@ print STDERR "$date\tStart to find nonLTR candidates.\n\n";
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/nonLTR";
 `ln -s ../../$genome $genome` unless -s $genome;
-`cp ../../$RMlib $RMlib` if $RMlib ne '';
+`cp ../../$RMlib $RMlib` if $RMlib ne 'null';
 
 # Try to recover existing results or run RepeatModeler2
 chomp ($date = `date`);
@@ -413,9 +417,9 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 	} else {
 	# run RepeatModeler2
 	print STDERR "$date\tIdentify nonLTR retrotransposon candidates from scratch.\n\n";
-	`${repeatmodeler}BuildDatabase -name $genome -engine ncbi $genome`;
-	`${repeatmodeler}RepeatModeler -engine ncbi -pa $rm_threads -database $genome 2>/dev/null`;
-	`rm $genome.nhr $genome.nin $genome.nnd $genome.nni $genome.nog $genome.nsq 2>/dev/null`;
+	`${repeatmodeler}BuildDatabase -name $genome $genome`;
+	`${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome 2>/dev/null`;
+	`rm $genome.nhr $genome.nin $genome.nnd $genome.nni $genome.nog $genome.nsq $genome.njs $genome.translation 2>/dev/null`;
 	}
 
 # filter and reclassify RepeatModeler candidates with TEsorter and make nonLTR library
