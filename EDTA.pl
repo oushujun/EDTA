@@ -125,6 +125,7 @@ my $rename_TE = "$script_path/util/rename_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
 my $buildSummary = "$script_path/util/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
 my $filter_gff = "$script_path/util/filter_gff3.pl";
+my $combine_RMrows = "$script_path/util/combine_RMrows.pl";
 my $RMout2bed = "$script_path/util/RMout2bed.pl";
 my $bed2gff = "$script_path/util/bed2gff.pl";
 my $gff2bed = "$script_path/util/gff2bed.pl";
@@ -240,6 +241,7 @@ die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $cal
 die "The script buildSummary.pl is not found in $buildSummary!\n" unless -s $buildSummary;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
 die "The script RMout2bed.pl is not found in $RMout2bed!\n" unless -s $RMout2bed;
+die "The script combine_RMrows.pl is not found in $combine_RMrows!\n" unless -s $combine_RMrows;
 die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
 die "The script gff2bed.pl is not found in $gff2bed!\n" unless -s $gff2bed;
 die "The script get_frag.pl is not found in $get_frag!\n" unless -s $get_frag;
@@ -670,7 +672,9 @@ if ($anno == 1){
 
 	# exclude regions from TE annotation and make whole-genome TE annotation
 	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv $maxdiv -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
-	`mv $genome.out.new $genome.EDTA.RM.out`;
+	# combine RepeatMasker lines that appears to be the same element
+	`perl $combine_RMrows -rmout $genome.out.new -maxdiv 3.5 -maxgap 35`;
+	`mv $genome.out.new.cmb $genome.EDTA.RM.out`;
 	`perl $RMout2bed $genome.EDTA.RM.out > $genome.EDTA.RM.bed`; # a regular enriched bed
 	`perl $bed2gff $genome.EDTA.RM.bed TE_homo > $genome.EDTA.RM.gff3`;
 	`perl $gff2bed $genome.EDTA.RM.gff3 homology > $genome.EDTA.RM.bed`; # add the last column to this bed
