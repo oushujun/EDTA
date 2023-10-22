@@ -4,8 +4,10 @@ import subprocess
 import multiprocessing as mp
 import pandas as pd
 
-spliter = "-+-"
-TIR_types = ("DTA", "DTC", "DTH", "DTM", "DTT")
+import prog_const
+spliter = prog_const.spliter
+TIR_types = prog_const.TIR_types
+
 blast_header = ("qacc", "sacc", "length", "pident", "gaps", "mismatch",
                 "qstart", "qend", "sstart", "send", "evalue", "qcovhsp")
 blast_type = {"length": int, "gaps": int, "mismatch": int,
@@ -71,20 +73,24 @@ def process_result(df_list, species):
     try:
         df = pd.concat(df_list, ignore_index=True).iloc[:, [0, 1, 2, 9, 10]].copy()
     except ValueError:
-        print(f"""
+        # print(f"""
+        # ERROR: No sequence is found similar to the TIR database of {species}!
+        # You may have specified the wrong species. Please double check or set species=others and rerun TIR-Learner.
+        # """)
+        # sys.exit(-1)
+        raise SystemExit(f"""
         ERROR: No sequence is found similar to the TIR database of {species}!
         You may have specified the wrong species. Please double check or set species=others and rerun TIR-Learner. 
         """)
-        sys.exit(-1)
     df = df.set_axis(["TIR_type", "id", "seqid", "sstart", "send"], axis=1)
     return df
 
 
-def execute(args):
+def execute(TIRLearner_instance):
     print("Module 1, Step 2: Select 100% coverage entries from Blast results")
-    genome_name = args[1]
-    t = args[3]
-    species = args[4]
+    genome_name = TIRLearner_instance.genome_name
+    species = TIRLearner_instance.species
+    t = TIRLearner_instance.cpu_cores
 
     mp_args_list = [(genome_name, species, TIR_type) for TIR_type in TIR_types]
     with mp.Pool(int(t)) as pool:

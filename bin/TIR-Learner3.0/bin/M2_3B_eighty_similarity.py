@@ -5,8 +5,11 @@ import pandas as pd
 
 from M1_2_full_coverage import process_result
 
-spliter = "-+-"
-TIR_types = ("DTA", "DTC", "DTH", "DTM", "DTT")
+import prog_const
+spliter = prog_const.spliter
+TIR_types = prog_const.TIR_types
+
+
 
 blast_header = ("qseqid", "sseqid", "length", "pident", "gaps", "mismatch",
                 "qstart", "qend", "sstart", "send", "evalue", "qcovhsp")
@@ -54,14 +57,13 @@ def process_homology(file_name, species, TIR_type):
     return df
 
 
-def execute(args):
+def execute(TIRLearner_instance):
     print("Module 2, Step 3B: Select 80% similar entries from Blast results")
-    genome_name = args[1]
-    processedGRFmite_file_name = f"{genome_name}{spliter}processedGRFmite.fa"
-    t = args[3]
-    species = args[4]
+    processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
+    t = TIRLearner_instance.cpu_cores
+    species = TIRLearner_instance.species
 
-    mp_args_list = [(processedGRFmite_file_name, species, TIR_type) for TIR_type in TIR_types]
+    mp_args_list = [(processedGRFmite_file, species, TIR_type) for TIR_type in TIR_types]
     with mp.Pool(int(t)) as pool:
         df_list = pool.starmap(process_homology, mp_args_list)
     subprocess.Popen(["find", ".", "-name", f"*{spliter}blast{spliter}*", "-delete"])  # remove blast files

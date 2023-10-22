@@ -2,7 +2,9 @@ import subprocess
 import pandas as pd
 from Bio import SeqIO
 
-spliter = "-+-"
+import prog_const
+spliter = prog_const.spliter
+
 
 def get_start_end(genome_file, df_in, length = 200):
     df = df_in.copy()
@@ -55,8 +57,8 @@ def get_fasta_pieces_bedtools(genome_file, df_in):
     return df
 
 
-def execute(args, df_in):
-    genome_file = args[0]
+def execute(TIRLearner_instance, df_in):
+    genome_file = TIRLearner_instance.genome_file
 
     df = get_start_end(genome_file, df_in)
     return get_fasta_pieces_bedtools(genome_file, df)

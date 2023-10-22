@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 from Bio import SeqIO
 
-spliter = "-+-"
+import prog_const
+spliter = prog_const.spliter
 
 
 def TA_repeats(s, percent=0.7):
@@ -47,9 +48,11 @@ def TSD_check(x):
     return np.nan
 
 
-def execute(args):
-    genome_name = args[1]
+def execute(TIRLearner_instance):
+    genome_name = TIRLearner_instance.genome_name
+    flag_verbose = TIRLearner_instance.flag_verbose
 
+    print("  Step 1/9: Retrieving GRFmite")
     # GRFmite_file_path = os.path.join("{genome_name}_GRFmite", "candidate.fasta")
     GRFmite_file_path = os.path.join(f"{genome_name}_filtered.fa_GRFmite", "candidate.fasta")
 
@@ -59,23 +62,33 @@ def execute(args):
     subprocess.Popen(["rm", "-rf", f"{genome_name}_filtered.fa_GRFmite"])
     df = df[df["len"] >= 50].copy()
 
-    df["tir_len"] = df.swifter.progress_bar(True).apply(lambda x: find_digits_sum(x["id"].split(":")[-2]), axis=1)
+    print("  Step 2/9: Getting TIR")
+    df["tir_len"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: find_digits_sum(x["id"].split(":")[-2]),
+                                                                axis=1)
     #df["tirLen"] = df["tirLen"].astype(int)
-    df["tir"] = df.swifter.progress_bar(True).apply(lambda x: x["seq"][0:x["tir_len"]], axis=1)
-    df["TA_repeats_seq_check"] = df.swifter.progress_bar(True).apply(lambda x:
+    df["tir"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: x["seq"][0:x["tir_len"]], axis=1)
+
+    print("  Step 3/9: Checking TA repeats on sequence")
+    df["TA_repeats_seq_check"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
                                                                     np.nan if TA_repeats(x["seq"]) else False, axis=1)
-    df["check_N_per_seq_check"] = df.swifter.progress_bar(True).apply(lambda x:
+    print("  Step 4/9: Checking percentage of N on sequence")
+    df["check_N_per_seq_check"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
                                                                     np.nan if check_N_per(x["seq"]) else False, axis=1)
-    df["TA_repeats_tir_check"] = df.swifter.progress_bar(True).apply(lambda x:
+    print("  Step 5/9: Checking TA repeats on TIR")
+    df["TA_repeats_tir_check"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
                                                                     np.nan if TA_repeats(x["tir"]) else False, axis=1)
-    df["check_N_tir_check"] = df.swifter.progress_bar(True).apply(lambda x:
+    print("  Step 6/9: Checking N existance on TIR")
+    df["check_N_tir_check"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
                                                                  np.nan if check_N(x["tir"]) else False, axis=1)
     df = df.dropna(ignore_index=True).copy()
 
-    df["tsd"] = df.swifter.progress_bar(True).apply(lambda x: x["id"].split(":")[-1], axis=1)
-    df["tsd_check"] = df.swifter.progress_bar(True).apply(TSD_check, axis=1)
+    print("  Step 7/9: Getting TSD")
+    df["tsd"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: x["id"].split(":")[-1], axis=1)
+    print("  Step 8/9: Checking TSD")
+    df["tsd_check"] = df.swifter.progress_bar(flag_verbose).apply(TSD_check, axis=1)
     df = df.dropna(ignore_index=True).loc[:, ["id", "seq"]].copy()
 
-    df["id"] = df.swifter.progress_bar(True).apply(lambda x: ">" + x["id"], axis=1)
+    print("  Step 9/9: Saving processed GRFmite")
+    df["id"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: ">" + x["id"], axis=1)
     # df.to_csv(os.path.join("../", f"{genome_name}{spliter}processedGRFmite.fa"), sep='\n', header=False, index=False)
     df.to_csv(f"{genome_name}{spliter}processedGRFmite.fa", sep='\n', header=False, index=False)

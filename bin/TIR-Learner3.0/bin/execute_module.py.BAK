@@ -1,0 +1,147 @@
+import pandas as pd
+
+import M1_1_blast_reference
+import M1_2_full_coverage
+import M2_3A_blast_reference
+import M2_3B_eighty_similarity
+
+import run_GRF
+import process_GRFmite
+import prepare_data
+import CNN_predict
+import get_fasta_sequence
+import check_TIR_TSD
+
+
+def execute_M1(self):
+    print("############################################################ Module 1 Begin "
+          "###########################################################")
+
+    module = "Module1"
+    # # Create genome_name directory if it doesn't exist
+    # os.makedirs(os.path.join(dir, module), exist_ok=True)
+    # os.chdir(os.path.join(dir, module))
+
+    # Module 1, Step 1: Blast Genome against Reference Library
+    M1_1_blast_reference.execute(self)
+
+    # Module 1, Step 2: Select 100% coverage entries from Blast results
+    df_full_cov = M1_2_full_coverage.execute(self)
+
+    # Module 1, Step 3: Making blastDB and get candidate FASTA sequences
+    print("Module 1, Step 3: Making blastDB and get candidate FASTA sequences")
+    df_fasta = get_fasta_sequence.execute(self, df_full_cov)
+    del df_full_cov
+
+    # Module 1, Step 4: Check TIR and TSD
+    print("Module 1, Step 4: Check TIR and TSD")
+    df_TIR_TSD = check_TIR_TSD.execute(self, df_fasta, module)
+    del df_fasta
+
+    print("############################################################ Module 1 Finished "
+          "########################################################")
+    return df_TIR_TSD
+
+def execute_M2(self):
+    print("############################################################ Module 2 Begin "
+          "###########################################################")
+
+    module = "Module2"
+    # os.makedirs(os.path.join(dir, module), exist_ok=True)
+    # os.chdir(os.path.join(dir, module))
+
+    # Module 2, Step 1: Split Genome and Run GRF program to find Inverted Repeats
+    print("Module 2, Step 1: Run GRF program to find Inverted Repeats")
+    run_GRF.execute(self)
+
+    # Module 2, Step 2: Process GRF results
+    print("Module 2, Step 2: Process GRF results")
+    process_GRFmite.execute(self)
+
+    # Module 2, Step 3A: GRF result blast reference sequences
+    M2_3A_blast_reference.execute(self)
+
+    # Module 2, Step 3B: Select 80% similar entries from blast results
+    df_80_sim = M2_3B_eighty_similarity.execute(self)
+
+    # Module 2, Step 4: Get FASTA sequences from 80% similarity
+    print("Module 2, Step 4: Get FASTA sequences from 80% similarity")
+    df_fasta = get_fasta_sequence.execute(self, df_80_sim)
+    del df_80_sim
+
+    # Module 2, Step 5: Check TIR and TSD
+    print("Module 2, Step 5: Check TIR and TSD")
+    df_TIR_TSD = check_TIR_TSD.execute(self, df_fasta, module)
+
+    print("############################################################ Module 2 Finished "
+          "########################################################")
+    return df_TIR_TSD, df_fasta
+
+def execute_M3(self, df_homo: pd.DataFrame):
+    print("############################################################ Module 3 Begin "
+          "###########################################################")
+
+    module = "Module3"
+    # os.makedirs(os.path.join(dir, module), exist_ok=True)
+    # os.chdir(os.path.join(dir, module))
+
+    # Module 3, Step 1: Prepare Data
+    print("Module 3, Step 1: Prepare Data")
+    df_non_homo = prepare_data.execute(self, df_homo)
+
+    # Module 3, Step 2: ML (CNN) prediction
+    print("Module 3, Step 2: ML (CNN) prediction")
+    df_pred = CNN_predict.execute(self, df_non_homo)
+    del df_non_homo
+
+    # Module 3, Step 3: Get FASTA sequences from ML prediction
+    print("Module 3, Step 3: Get FASTA sequences from ML prediction")
+    df_fasta = get_fasta_sequence.execute(self, df_pred)
+
+    # Module 3, Step 4: Check TIR and TSD
+    print("Module 3, Step 4: Check TIR and TSD")
+    df_TIR_TSD = check_TIR_TSD.execute(self, df_fasta, module)
+    del df_fasta
+
+    print("############################################################ Module 3 Finished "
+          "########################################################")
+    return df_TIR_TSD
+
+def execute_M3N(self):
+    print("########################################################## Module 3 Begin "
+          "#########################################################")
+
+    module = "Module3"
+    # os.makedirs(os.path.join(dir, module), exist_ok=True)
+    # os.chdir(os.path.join(dir, module))
+
+    # Module 3, Step 1: Split Genome and Run GRF program to find Inverted Repeats
+    print("Module 3, Step 1: Run GRF program to find Inverted Repeats")
+    run_GRF.execute(self)
+
+    # Module 3, Step 2: Process GRF results
+    print("Module 3, Step 2: Process GRF results")
+    process_GRFmite.execute(self)
+
+    # Module 3, Step 3: Prepare Data
+    print("Module 3, Step 3: Prepare Data")
+    df_all = prepare_data.execute(self)
+
+    # Module 3, Step 4: ML (CNN) prediction
+    print("Module 3, Step 4: ML (CNN) prediction")
+    df_pred = CNN_predict.execute(self, df_all)
+    del df_all
+
+    # Module 3, Step 5: Get FASTA sequences from ML prediction
+    print("Module 3, Step 5: Get FASTA sequences from ML prediction")
+    df_fasta = get_fasta_sequence.execute(self, df_pred)
+    del df_pred
+
+    # Module 3, Step 6: Check TIR and TSD
+    print("Module 3, Step 6: Check TIR and TSD")
+    df_TIR_TSD = check_TIR_TSD.execute(self, df_fasta, module)
+    del df_fasta
+
+    print("########################################################## Module 3 Finished "
+          "######################################################")
+    return df_TIR_TSD

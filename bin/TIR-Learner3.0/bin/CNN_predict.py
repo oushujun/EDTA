@@ -14,8 +14,11 @@ from sklearn.preprocessing import LabelEncoder
 from keras.utils import to_categorical
 from keras.models import load_model
 
-spliter = "-+-"
-model_name = "cnn0912_tf_savedmodel"
+import prog_const
+spliter = prog_const.spliter
+CNN_model_file = prog_const.CNN_model_file
+path = prog_const.program_root_dir
+
 
 
 def get_sequence_fragment(x, featureSize=200):
@@ -32,18 +35,21 @@ def get_sequence_fragment(x, featureSize=200):
     return s1 + s2
 
 
-def preprocessing(df_in):
+def feature_encoding(df_in, flag_verbose):
     feature_int_encoder = LabelEncoder()
     voc = ["A", "C", "G", "T", "N"]
     num_classes = len(voc)
     feature_int_encoder.fit(voc)
 
     df = df_in.loc[:, ["id", "seq_frag"]].copy()
-    df["int_enc"] = df.swifter.progress_bar(True).apply(lambda x: np.array(feature_int_encoder.transform(
+    print("  Step 2/6: Label Encoding - Transforming non-numerical labels to numerical labels")
+    df["int_enc"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: np.array(feature_int_encoder.transform(
         list(x["seq_frag"]))).reshape(-1, 1), axis=1)
     df = df.drop(columns="seq_frag")
-    df["feature"] = df.swifter.progress_bar(True).apply(lambda x: to_categorical(x["int_enc"], num_classes=num_classes),
-                                                        axis=1)
+    print("  Step 3/6: One-Hot Encoding - Converting class vectors to binary class matrices")
+    df["feature"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
+                                                                    to_categorical(x["int_enc"],
+                                                                                   num_classes=num_classes), axis=1)
     df = df.drop(columns="int_enc")
 
     # inputfeatures = np.array(input_features)
@@ -51,7 +57,7 @@ def preprocessing(df_in):
     return df
 
 
-def predict(df_in, genome_file, path, model_name=model_name):
+def predict(df_in, genome_file, path, model_name=CNN_model_file):
     model = load_model(os.path.join(path, model_name))
     pre_feature = df_in["feature"].to_numpy()
     df = df_in.drop(columns="feature")
@@ -73,26 +79,30 @@ def predict(df_in, genome_file, path, model_name=model_name):
     return df
 
 
-def postprocessing(df_in):
+def postprocessing(df_in, flag_verbose):
     df = df_in.loc[:, ["id", "TIR_type"]]
     df = df[df["TIR_type"] != "NonTIR"].reset_index(drop=True)
-    df["seqid"] = df.swifter.progress_bar(True).apply(lambda x: x["id"].split(":")[0], axis=1)
-    df["sstart"] = df.swifter.progress_bar(True).apply(lambda x: int(x["id"].split(":")[1]), axis=1)
-    df["send"] = df.swifter.progress_bar(True).apply(lambda x: int(x["id"].split(":")[2]), axis=1)
+    print("  Step 4/6: Retrieving sequence ID")
+    df["seqid"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: x["id"].split(":")[0], axis=1)
+    print("  Step 5/6: Retrieving sequence starting coordinate")
+    df["sstart"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: int(x["id"].split(":")[1]), axis=1)
+    print("  Step 6/6: Retrieving sequence ending coordinate")
+    df["send"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: int(x["id"].split(":")[2]), axis=1)
     df = df.loc[:, ["TIR_type", "id", "seqid", "sstart", "send"]]
     df = df.sort_values(["TIR_type", "seqid", "sstart", "send"], ignore_index=True)
     return df
 
 
-def execute(args, df_non_homo):
-    genome_file = args[0]
-    path = args[2]
+def execute(TIRLearner_instance, df_non_homo):
+    genome_file = TIRLearner_instance.genome_file
+    flag_verbose = TIRLearner_instance.flag_verbose
 
     df = df_non_homo.copy()
-    df["seq_frag"] = df.swifter.progress_bar(True).apply(get_sequence_fragment, axis=1)
+    print("  Step 1/6: Getting sequence fragment for prediction")
+    df["seq_frag"] = df.swifter.progress_bar(flag_verbose).apply(get_sequence_fragment, axis=1)
     df = df.drop(columns="seq")
 
-    df = preprocessing(df)
+    df = feature_encoding(df, flag_verbose)
     df = predict(df, genome_file, path)
-    df = postprocessing(df)
+    df = postprocessing(df, flag_verbose)
     return df
