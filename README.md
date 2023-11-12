@@ -268,6 +268,8 @@ eg.
 
     perl lib-test.pl -genome rice_genome.fasta -std ./EDTA/database/Rice_MSU7.fasta.std6.9.5.out -tst rice_genome.fasta.test.out -cat LTR
 
+Note: the -std and -tst files should be named differently even they are placed in different folders.
+
 ## Citations
 Please cite our paper if you find EDTA useful:
 
