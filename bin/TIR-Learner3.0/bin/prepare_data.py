@@ -2,7 +2,9 @@ import subprocess
 import pandas as pd
 from Bio import SeqIO
 
-spliter = "-+-"
+import prog_const
+spliter = prog_const.spliter
+
 
 # def getNonHomo(file, df_homo):
 #     non_homo = []
@@ -21,13 +23,11 @@ spliter = "-+-"
 #     return df_all
 
 
-def execute(args, df_homo=None):
-    genome_name = args[1]
-    # processedGRFmite_file_dir = os.path.join("../", f"{genome_name}{spliter}processedGRFmite.fa")
-    processedGRFmite_file_name = f"{genome_name}{spliter}processedGRFmite.fa"
+def execute(TIRLearner_instance, df_homo: pd.DataFrame = None):
+    processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
 
-    data = [{"id": rec.id, "seq": rec.seq} for rec in SeqIO.parse(processedGRFmite_file_name, "fasta")]
-    subprocess.Popen(["unlink", processedGRFmite_file_name])
+    data = [{"id": rec.id, "seq": rec.seq} for rec in SeqIO.parse(processedGRFmite_file, "fasta")]
+    subprocess.Popen(["unlink", processedGRFmite_file])
 
     # Get non_homo data
     if df_homo is not None:

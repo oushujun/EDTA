@@ -2,14 +2,19 @@ import os
 import subprocess
 import multiprocessing as mp
 
-spliter = "-+-"
-TIR_types = ("DTA", "DTC", "DTH", "DTM", "DTT")
+import prog_const
+spliter = prog_const.spliter
+TIR_types = prog_const.TIR_types
+path = prog_const.program_root_dir
 
-def blast_reference(genomedb, genome_name, refLib, path, t):
-    query = os.path.join(path, "RefLib", refLib)
+
+
+def blast_reference(genome_db, genome_name, ref_lib, path, t):
+    query = os.path.join(path, "RefLib", ref_lib)
+    print(query)
     # query = path + "/RefLib/" + refLib
-    out = genome_name + spliter + "blast" + spliter + refLib
-    blast = f"blastn -max_hsps 5 -perc_identity 80 -qcov_hsp_perc 100 -query \"{query}\" -db \"{genomedb}\" " + \
+    out = genome_name + spliter + "blast" + spliter + ref_lib
+    blast = f"blastn -max_hsps 5 -perc_identity 80 -qcov_hsp_perc 100 -query \"{query}\" -db \"{genome_db}\" " + \
             f"-num_threads {int(t)} -outfmt '6 qacc sacc length pident gaps mismatch qstart qend sstart " + \
             f"send evalue qcovhsp' -out \"{out}\" 2>/dev/null"
     # Find where is the RefLib in the genome database
@@ -23,20 +28,19 @@ def blast_reference(genomedb, genome_name, refLib, path, t):
 #     df.to_csv("tem_blastResult", header=False, index=False, quoting=csv_QUOTE_NONE)
 
 
-def execute(args):
+def execute(TIRLearner_instance):
     print("Module 1, Step 1: Blast Genome against Reference Library")
-    genome_file = args[0]
-    genome_name = args[1]
-    path = args[2]
-    t = args[3]
-    species = args[4]
+    genome_file = TIRLearner_instance.genome_file
+    genome_name = TIRLearner_instance.genome_name
+    species = TIRLearner_instance.species
+    t = TIRLearner_instance.cpu_cores
 
-    genomedb = genome_file + spliter + "db"
-    mkDB = f"makeblastdb -in {genome_file} -out {genomedb} -parse_seqids -dbtype nucl 2>/dev/null"
+    genome_db = genome_file + spliter + "db"
+    mkDB = f"makeblastdb -in {genome_file} -out {genome_db} -parse_seqids -dbtype nucl 2>/dev/null"
     subprocess.Popen(mkDB, shell=True).wait()
 
-    ref_list = [f"{species}_{TIR_type}_RefLib" for TIR_type in TIR_types]
-    mp_args_list = [(genomedb, genome_name, ref, path, t) for ref in ref_list]
+    ref_lib_list = [f"{species}_{TIR_type}_RefLib" for TIR_type in TIR_types]
+    mp_args_list = [(genome_db, genome_name, ref_lib, path, t) for ref_lib in ref_lib_list]
 
     with mp.Pool(int(t)) as pool:
         pool.starmap(blast_reference, mp_args_list)

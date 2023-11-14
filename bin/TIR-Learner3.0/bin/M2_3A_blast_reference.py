@@ -2,8 +2,10 @@ import os
 import subprocess
 import multiprocessing as mp
 
-spliter = "-+-"
-TIR_types = ("DTA", "DTC", "DTH", "DTM", "DTT")
+import prog_const
+spliter = prog_const.spliter
+TIR_types = prog_const.TIR_types
+path = prog_const.program_root_dir
 
 
 def blast_reference(file_name, refLib, path):
@@ -17,16 +19,14 @@ def blast_reference(file_name, refLib, path):
     subprocess.Popen(blast, shell=True).wait()
 
 
-def execute(args):
+def execute(TIRLearner_instance):
     print("Module 2, Step 3A: GRF result blast reference sequences")
-    genome_name = args[1]
-    processedGRFmite_file_name = f"{genome_name}{spliter}processedGRFmite.fa"
-    path = args[2]
-    t = args[3]
-    species = args[4]
+    processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
+    t = TIRLearner_instance.cpu_cores
+    species = TIRLearner_instance.species
 
     ref_list = [f"{species}_{TIR_type}_RefLib" for TIR_type in TIR_types]
-    mp_args_list = [(processedGRFmite_file_name, ref, path) for ref in ref_list]
+    mp_args_list = [(processedGRFmite_file, ref, path) for ref in ref_list]
 
     with mp.Pool(int(t)) as pool:
         pool.starmap(blast_reference, mp_args_list)

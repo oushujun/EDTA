@@ -2,7 +2,8 @@ import re
 import numpy as np
 from Bio.Seq import Seq
 
-spliter = "-+-"
+import prog_const
+spliter = prog_const.spliter
 
 #
 TSD = {}
@@ -194,7 +195,9 @@ def process_result(df_in, module):
     return df
 
 
-def execute(df_in, module):
+def execute(TIRLearner, df_in, module):
+    flag_verbose = TIRLearner.flag_verbose
+
     df = df_in.copy()
     df["len"] = df.loc[:, "end"] - df.loc[:, "start"]
     df = df[df["len"] >= 450].reset_index(drop=True)
@@ -207,12 +210,17 @@ def execute(df_in, module):
     if(df.shape[0] == 0):
         return None
 
-    df["TIR"] = df.swifter.progress_bar(True).apply(get_TIR, axis=1)
-    df["p_TIR"] = df.swifter.progress_bar(True).apply(lambda x:
-                                                      TIR_TSD_percent(x["TIR"][0],
-                                                                      Seq(x["TIR"][1]).reverse_complement()), axis=1)
-    df["TSD"] = df.swifter.progress_bar(True).apply(get_TSD, axis=1)
-    df["p_TSD"] = df.swifter.progress_bar(True).apply(lambda x: TIR_TSD_percent(x["TSD"][0], x["TSD"][1]), axis=1)
+    print("  Step 1/4: Retrieving TIR")
+    df["TIR"] = df.swifter.progress_bar(flag_verbose).apply(get_TIR, axis=1)
+    print("  Step 2/4: Calculating TIR percentage")
+    df["p_TIR"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
+                                                                  TIR_TSD_percent(x["TIR"][0], Seq(x["TIR"][1])
+                                                                                  .reverse_complement()), axis=1)
+    print("  Step 3/4: Retrieving TSD")
+    df["TSD"] = df.swifter.progress_bar(flag_verbose).apply(get_TSD, axis=1)
+    print("  Step 4/4: Calculating TSD percentage")
+    df["p_TSD"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
+                                                                  TIR_TSD_percent(x["TSD"][0], x["TSD"][1]), axis=1)
     # both["rslt"] = both.swifter.progress_bar(True).apply(lambda x: x["seq"][200:-200], axis=1)
     df["len"] = df["len"] - 400
     return process_result(df, module)
