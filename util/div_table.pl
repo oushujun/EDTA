@@ -8,7 +8,12 @@ use warnings;
 
 my $usage = "
 Calculate divergence table based on superfamilies and EDTA.TEanno.bed file
-Usage: perl div_table.pl \$genome.mod.EDTA.anno/\$genome.mod.EDTA.TEanno.bed > \$genome.mod.EDTA.TEanno.div
+Usage: 
+  EDTA input:
+	perl div_table.pl \$genome.mod.EDTA.anno/\$genome.mod.EDTA.TEanno.bed > \$genome.mod.EDTA.TEanno.div
+  RepeatMasker input:
+  	perl div_table.pl \$genome.out RMout > \$genome.mod.EDTA.TEanno.div
+		* RMout is a fixed string that indicates the input is from RepeatMasker .out file.
 \n";
 
 # Define the input file name
