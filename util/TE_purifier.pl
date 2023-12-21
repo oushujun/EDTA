@@ -165,6 +165,7 @@ sub purifier(){
 		while ($coor =~ s/([0-9]+)-([0-9]+)//){
 			my ($from, $to, $seqlen) = ($1, $2, $2-$1+1);
 			my $seq = substr $ori_seq, $from-1, $seqlen;
+			next unless defined $seq;
 			my $target = ">$id:$from..$to\\n$seq";
 
 			# count the size of $target in $TE1
