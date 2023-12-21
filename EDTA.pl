@@ -609,6 +609,7 @@ if ($HQlib ne ''){
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	rename "$genome.EDTA.TElib.fa", "$genome.EDTA.TElib.ori.fa";
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
+	copy_file("$genome.EDTA.TElib.fa", "..");
 	copy_file("$genome.EDTA.TElib.novel.fa", "..");
 	}
 
