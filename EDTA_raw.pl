@@ -141,9 +141,6 @@ if ($convert_name != 0 and $convert_name != 1){ die "The expected value for the 
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"};
 if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float value without units!\n"}
 
-# define RepeatModeler -pa parameter
-my $rm_threads = int($threads/4);
-
 chomp (my $date = `date`);
 print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
 
@@ -417,8 +414,16 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 	} else {
 	# run RepeatModeler2
 	print STDERR "$date\tIdentify nonLTR retrotransposon candidates from scratch.\n\n";
+	my $status; # record status of RepeatModeler execution
 	`${repeatmodeler}BuildDatabase -name $genome $genome`;
-	`${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome 2>/dev/null`;
+	$status = system("${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome 2>/dev/null");
+	if ($status != 0) {
+		# Execute the old version of RepeatModeler
+		$status = system("${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome 2>/dev/null");
+		print "ERROR: RepeatModeler did not run correctly. Please test run this command:
+			${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome
+			" and exit;
+		}
 	`rm $genome.nhr $genome.nin $genome.nnd $genome.nni $genome.nog $genome.nsq $genome.njs $genome.translation 2>/dev/null`;
 	}
 
