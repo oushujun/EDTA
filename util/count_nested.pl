@@ -43,7 +43,7 @@ while (my ($key, $value) = each (%types)) {
 
 my @types = sort {$a cmp $b} keys %types;
 local $" = "\t";
-print "\t@types\tMisclas_rate\n";
+print "\t@types\tInconsistent_rate\n";
 foreach my $type1 (@types){
 	print "$type1\t";
 	$stat{"$type1-$type1"} = 0 unless exists $stat{"$type1-$type1"};
