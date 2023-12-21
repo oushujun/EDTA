@@ -35,6 +35,7 @@ my $usage="\n\tTo test the annotation performance of TE libraries by comparing t
 					target category specified by -cat. Default: 0 (not include unknowns)
 		-rand	[int]	A randum number used to identify the current run. (default: generate automatically)
 		-threads|-t	[int]	Number of threads to run this program. Default: 4
+		-debug	[0|1]	Retain intermediate files for debugging. Default: 0 (delete intermediate files)
 \n";
 
 my $script_path = dirname(__FILE__);
@@ -46,6 +47,7 @@ my $category='total'; #TE category for testing, default total (all TEs)
 my $unknown="0"; #0, not include unknown annotation in -tst, especially when -tst contains only 1 category (strict). 1 will include unknown..
 my $rand=int(rand(1000000));
 my $threads = 4;
+my $debug = 0;
 
 my $includeN=0; #0 will not include N in total length of the genome, 1 will include N
 
@@ -59,6 +61,7 @@ foreach (@ARGV){
 	$unknown=$ARGV[$k+1] if /^-unknown$/i;
 	$rand=$ARGV[$k+1] if /^-rand$/i;
 	$threads=$ARGV[$k+1] if /^-threads$|^-t$/i;
+	$debug=$ARGV[$k+1] if /^-debug$/i;
 	$k++;
 	}
 
@@ -184,4 +187,4 @@ $tst_out.$category.lib.report\t$sens\t$spec\t$accu\t$prec\t$FDR\t$F1\t$TP\t$TN\t
 close Out;
 
 ## remove temporary files
-`rm $genome $std_out $tst_out $genome.list $std_out.$category.cvg $tst_out.$category.cvg $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi ${std_out}_$tst_out.$category-cmb ${std_out}_$tst_out.$category-cmb.cbi $genome.list-${std_out}_$tst_out.$category-cmb.cbi`;
+`rm $genome $std_out $tst_out $genome.list $std_out.$category.cvg $tst_out.$category.cvg $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi ${std_out}_$tst_out.$category-cmb ${std_out}_$tst_out.$category-cmb.cbi $genome.list-${std_out}_$tst_out.$category-cmb.cbi` unless $debug == 1;
