@@ -14,7 +14,7 @@ HSDIR=$path/../bin/HelitronScanner
 
 ### preset CPU and max memory
 CPU=4
-MEMGB=300 #Gb
+MEMGB=150 #Gb
 
 ### allow user to specify CPU number to run HelitronScanner
 if [ ! -z "$2" ];
