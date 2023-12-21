@@ -14,7 +14,7 @@ Combine RepeatMasker entries that appear to be from the same repeat based on bot
 				on the genome and on the TE. Default: 35 (bp)
 		-maxdiv [float]	Maximum divergence between the two adjacent annotation. 
 				Default: 3.5 (%)
-		-iter [int]	Numbers of iteration to combine rows. Default: automatic
+		-iter [int]	Number of iterations to combine rows. Default: automatic
 \n";
 
 # parameter setting
@@ -34,7 +34,7 @@ foreach (@ARGV){
         }
 
 # checks
-die "\nERROR: Input sequence file is not exist!\n$usage" unless -s $rmout;
+die "\nERROR: Input sequence file not exist!\n$usage" unless -s $rmout;
 die "\nERROR: The -iter parameter receives non-integer input!\n$usage" unless $user_iter =~ /^[0-9]+$/;
 
 # output combine logs
@@ -72,12 +72,6 @@ while (<RMout>) {
 		&& abs($start - $prev_row{'end'}) <= $max_gap && abs($prev_row{'div'} - $div) <= $max_div
 		&& (($prev_row{'strand'} eq '+' && ($prev_row{'element_end'} - $element_start) <= $max_gap) 
 			or ($prev_row{'strand'} eq 'C' && ($element_end - $prev_row{'element_remain'}) <= $max_gap))) {
-
-	if (0){ #test lines
-	my ($g_diff, $d_diff, $t_diff_p, $t_diff_c) = ($start - $prev_row{'end'}, abs($prev_row{'div'} - $div), $prev_row{'element_end'} - $element_start, $element_end - $prev_row{'element_remain'}); # test line
-	print "inside!!\n"; #test
-	print "$strand\t$g_diff\t$d_diff\t+: $t_diff_p\tC: $t_diff_c\n"; #test
-	}
 
         # Calculate weights based on the length
         my $prev_length = $prev_row{'end'} - $prev_row{'start'};
