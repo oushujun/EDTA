@@ -7,7 +7,7 @@ my $usage = "\nFilter HelitronScanner fasta candidates
 	perl format_helitronscanner_out.pl -genome genome.fa [options]
 		-sitefilter	[0|1]	1 will filter out candidate without AT or TT target site (default); 0 will not.
 		-minscore	[int]	Candidates with head and tail quality scores add up less than this will be discarded. Default: 12
-		-keepshorter	[0|1]	1 will keep the shorter possible when multi 5' end presents (default); 0 will not.
+		-keepshorter	[0|1]	1 will keep the shorter possible when multi 5' end presents (default); 0 will not; 2 will keep all possible 5' ends.
 		-extlen	[int]	Length of flanking sequence for blast and output. Default: 30 (bp)
 		-extout	[0|1]	Output original sequence (0, default) or extended (1) sequence.
 		-h|-help	Display this help messege and exit.
