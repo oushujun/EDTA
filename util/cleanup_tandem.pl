@@ -13,16 +13,18 @@ my $usage="
 		-minlen		[int]	Minimum sequence length filter after clean up; default: 100 (bp)
 		-maxlen		[int]	Maximum sequence length filter after clean up; default: 25000 (bp)
 		-cleanN		[0|1]	Retain (0) or remove (1) the -misschar taget in output sequence; default: 0
-		-cleanT		[0|1]	Remove entire seq. if any terminal seq (20bp) has 15bp of N (1); disabled by default (0).
+		-cleanT		[0|1]	Remove entire seq. if any terminal seq (default: 20bp, set by -Tlen) has 75% of N (-cleanT 1); disabled by default (-cleanT 0).
+		-Tlen		[int]	The length of terminal sequence for the -cleanT parameter; default: 20 (bp)
 		-minrm		[int]	The minimum length of -misschar to be removed if -cleanN 1; default: 1.
 		-trf		[0|1]	Enable (1) or disable (0) tandem repeat finder (trf); default: 1
 		-trf_path	path	Path to the trf program
         \n";
 my $version="
-cleanup.pl
-cleanup: clean up tandem repeat sequence and sequencing gap sequence in the fasta file
-Author: Shujun Ou (oushujun\@msu.edu), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
-Version: 	1.6 Add alignment score control (-e [int]) and missing count control (-c [int])
+cleanup_tandem.pl
+Clean up tandem repeat sequence and N gaps in the fasta file
+Author: Shujun Ou (shujun.ou.1 @ gmail.com)
+Version:	1.7 Add the Tlen parameter. 2023/12/23
+		1.6 Add alignment score control (-e [int]) and missing count control (-c [int])
 		1.5 Add missing rate control (-r [0, 1]) and modify missing count control (-nc not control)
 		1.0 2014/06/02
 \n";
@@ -41,7 +43,8 @@ my $align_score=1000; #-e para, dft:1000
 my $max_seed=2000; #maximum period size to report
 my $cleanN=0; #1 will remove $target="n" in output sequence
 my $trf=1; #1 will enable tandem repeat finder (default), 0 will not
-my $cleanT=0; #1 will distard the entire sequence if any terminal sequence (head/tail) contains >= 10 bp of $target="n"; #0 will not do so.
+my $cleanT=0; #1 will distard the entire sequence if any terminal sequence (head/tail) contains >= 75% of $target="n"; #0 will not do so.
+my $Tlen=20; #The length of terminal sequence for the -cleanT parameter; default: 20 (bp)
 my $trf_path='';
 my $file;
 
@@ -49,15 +52,16 @@ my $k=0;
 foreach (@ARGV){
 	$target=$ARGV[$k+1] if /^-misschar$/i;
 	$func_nc=0 if /^-Nscreen$/i;
-	$n_count=$ARGV[$k+1] if /^-nc$/i;
+	$n_count=int($ARGV[$k+1]) if /^-nc$/i;
 	$n_rate=$ARGV[$k+1] if /^-nr$/i;
-	$minlen=$ARGV[$k+1] if /^-minlen$/i;
-	$maxlen=$ARGV[$k+1] if /^-maxlen$/i;
+	$minlen=int($ARGV[$k+1]) if /^-minlen$/i;
+	$maxlen=int($ARGV[$k+1]) if /^-maxlen$/i;
 	$minrm=$ARGV[$k+1] if /^-minrm$/i;
 	$align_score=$ARGV[$k+1] if /^-minscore$/i;
 	$file=$ARGV[$k+1] if /^-f$/i;
 	$cleanN=$ARGV[$k+1] if /^-cleanN$/i;
 	$cleanT=$ARGV[$k+1] if /^-cleanT$/i;
+	$Tlen=int($ARGV[$k+1]) if /^-Tlen$/i;
 	$trf=$ARGV[$k+1] if /^-trf$/i;
 	$trf_path=$ARGV[$k+1] if /^-trf_path$/i;
 	$k++;
@@ -71,6 +75,7 @@ die "Error: No Tandem Repeat Finder is working on the current system.
 	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
 die "\n\tTandem Repeat Finder not found!\n\n$usage" unless $trf_path ne '';
 die "\n\tInput file \"$file\" not found!\n\n$usage" unless -e $file;
+die "\n\tTlen must be > 0!\n\n$usage" unless $Tlen > 0;
 
 my %tandem;
 my $tandem='';
@@ -117,8 +122,8 @@ while (<File>){
 
 #terminal missing control
 	if ($cleanT==1){
-		my $start_20=substr $seq, 0, 20;
-		my $end_20=substr $seq, -20;
+		my $start_20=substr $seq, 0, $Tlen;
+		my $end_20=substr $seq, -$Tlen;
 		my ($count_s, $count_e) = (0,0);
 		if ($target =~ /n/i){ #hardmask
 			$count_s++ while $start_20=~/$target/gi;
@@ -128,8 +133,8 @@ while (<File>){
 			$count_s++ while $start_20=~/[atcgnN]/g;
 			$count_e++ while $end_20=~/[atcgnN]/g;
 			}
-		(print Info "$id\tSequence head has $count_s bp missing\n" and $mark=1) if $count_s>=15;
-		(print Info "$id\tSequence tail has $count_e bp missing\n" and $mark=1) if $count_e>=15;
+		(print Info "$id\tSequence head has $count_s/$Tlen bp missing\n" and $mark=1) if $count_s/$Tlen>=0.75;
+		(print Info "$id\tSequence tail has $count_e/$Tlen bp missing\n" and $mark=1) if $count_e/$Tlen>=0.75;
 		}
 
 #remove missing seq and length control
