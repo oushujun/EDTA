@@ -4,6 +4,7 @@ use strict;
 
 # Convert gff files to enriched bed format
 # Shujun Ou (shujun.ou.1@gmail.com)
+# v0.6	12/21/2023
 # v0.5	04/21/2023
 # v0.4	09/27/2021
 # v0.3	07/22/2020
@@ -64,10 +65,11 @@ while (<GFF>){
 		$type = "nonLTR";
 		}
 	if ($class =~ /(rDNA|rRNA|rDNA_intergenic_spacer_element|rRNA_gene)/i){
-		$class = "rDNA/spacer" if $class eq "rDNA_intergenic_spacer_element";
+		$class = "rDNA/IGS" if $class eq "rDNA_intergenic_spacer_element";
 		$class = "rDNA/45S" if $class eq "rRNA_gene";
-		$class = "rDNA/unknown" if $class eq "rRNA";
-		$class =~ s/(.*)_rRNA_gene/rDNA\/$1/i;
+		$class =~ s/cytosolic_(.*)_rRNA/rDNA\/$1/i;
+		$class =~ s/rRNA_([0-9])_external_transcribed_sequence/rDNA\/$1_ETS/i;
+		$class =~ s/rRNA_internal_transcribed_spacer([0-9])/rDNA\/ITS$1/i;
 		$type = "rDNA";
 		}
 	$class = "nonTIR/$class" if $class =~ /(Crypton_YR_transposon|helitron)/i;
