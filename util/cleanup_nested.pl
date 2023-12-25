@@ -157,6 +157,9 @@ sub condenser(){
 		my %seq_len; #store subject seq length info
 		my %merged_hsps;
 		my %merged_hsps_size; # collection of summing size of non-overlapped HSPs for checking the coverage
+		my @aln_iden; # store alignment length and iden of this $id
+		my $scaled_iden; # overall identity given all blast hits that pass the filter
+		my $total_len; # total length of all alignments to $id
 		@Blast=qx(bash -c '$exec' 2> /dev/null);
 		# collect BLAST HSPs into the hash
 		foreach (@Blast){
@@ -165,11 +168,20 @@ sub condenser(){
 			next if $query eq $subject;
 			next if $touched_seq{$subject} == 1; # skip the iteration if the subject sequence was already modified (including discarded)
 			next if $iden < $min_iden;
-			next if $len < $minlen; # the length of HSPs should be more 80 bp
+			next if $len < $minlen; # the length of HSPs should be more than 80 bp
 			($sbj_start, $sbj_end) = ($sbj_end, $sbj_start) if $sbj_start > $sbj_end;
 			push @{$merged_hsps{$subject}}, [$sbj_start, $sbj_end];
 			$seq_len{$subject} = $sbj_len;
-		}
+			$total_len += $len;
+			push @aln_iden, [$len, $iden];
+			}
+
+		# calculate weighted identity
+		foreach (@aln_iden) {
+			my ($len, $iden) = @{$_};
+			$scaled_iden += sprintf("%.3f", $iden * $len / $total_len);
+			}
+
 		# merge all overlapped HSPs and calculating the total covering by HSPs of subjects on the query
 		my $merged = 0; # number of overlapping HSPs
 		map {
@@ -193,6 +205,7 @@ sub condenser(){
 			next if length $seq_new ne $sbj_len; #if the subject length changes, it has been modified. Skip to avoid mismodification.
 			my $poss = ''; # positions of the non-overlapped rHSPs egions that will be removed from the subject
 			my ($qcov, $scov) = ($merged_hsps_size{$sbj}/$length, $merged_hsps_size{$sbj}/$sbj_len);
+			$qcov = sprintf("%.3f", $qcov);
 
 			if ($qcov >= $coverage or $scov >= $coverage) {
 				# replace bases of HSPs regions to R (aka Remove); this masking is nessary since the subject sequence 
@@ -206,12 +219,12 @@ sub condenser(){
 				$seq_new =~ s/R//g;
 				my $sbj_len_new = length $seq_new;
 				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj} and $clean == 1){
-					print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; merged $merged\n";
+					print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; identity: $scaled_iden; merged $merged\n";
 					$seq{$sbj} = $seq_new; #overwrite the sbj sequence if the new one is shorter
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
 					$count_stat++;
 				} elsif ($sbj_len_new < $minlen) {
-					print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; merged $merged\n";
+					print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; identity: $scaled_iden; merged $merged\n";
 					delete $seq{$sbj}; #delete this sequence if new seq is too short
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed (removed), and we will not deal with it any more in the current iteration
 					$count_stat++;
