@@ -164,6 +164,9 @@ sub condenser(){
 		# collect BLAST HSPs into the hash
 		foreach (@Blast){
 			my ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len) = (split)[0,1,2,3,8,9,11];
+			my @vars = ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len);
+			my @undefined_vars = grep { !defined($_) } @vars;
+			next if @undefined_vars;
 			next unless exists $seq{$subject};
 			next if $query eq $subject;
 			next if $touched_seq{$subject} == 1; # skip the iteration if the subject sequence was already modified (including discarded)
