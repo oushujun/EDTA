@@ -2,8 +2,9 @@ import subprocess
 import pandas as pd
 from Bio import SeqIO
 
-import prog_const
-spliter = prog_const.spliter
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from main import TIRLearner
 
 
 # def getNonHomo(file, df_homo):
@@ -23,7 +24,7 @@ spliter = prog_const.spliter
 #     return df_all
 
 
-def execute(TIRLearner_instance, df_homo: pd.DataFrame = None):
+def execute(TIRLearner_instance, df_homo: pd.DataFrame = None) -> pd.DataFrame:
     processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
 
     data = [{"id": rec.id, "seq": rec.seq} for rec in SeqIO.parse(processedGRFmite_file, "fasta")]

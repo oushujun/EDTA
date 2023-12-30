@@ -2,12 +2,16 @@ import os
 import multiprocessing as mp
 import numpy as np
 import pandas as pd
+import swifter
 
 from get_fasta_sequence import get_fasta_pieces_bedtools
 
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from main import TIRLearner
+
 import prog_const
 spliter = prog_const.spliter
-
 
 
 def TA_repeats(TIR_pair, percent=0.7):
@@ -15,7 +19,7 @@ def TA_repeats(TIR_pair, percent=0.7):
     t = s.upper().count("T")
     a = s.upper().count("A")
     ta = t + a
-    if (ta >= len(s) * percent):
+    if ta >= len(s) * percent:
         return True
     return False
 
@@ -30,8 +34,8 @@ def combine_all(df_list, flag_verbose):
     df = df.drop_duplicates(["seqid", "sstart"], keep="first", ignore_index=True)
     df = df.drop_duplicates(["seqid", "send"], keep="first", ignore_index=True)
     df["TArepeats_TIR_check"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                                np.nan if TA_repeats(x["TIR"])
-                                                                                else False, axis=1)
+                                                                            np.nan if TA_repeats(x["TIR"])
+                                                                            else False, axis=1)
     df = df.dropna(ignore_index=True).drop(columns="TArepeats_TIR_check")
     return df
 
@@ -133,7 +137,14 @@ def check_element_TIR_overlap(x1, y1, x2, y2, m1, n1, m2, n2):
 #     return df
 
 def remove_overlap(df_in, flag_verbose):
+    """
+    TODO documentation needed
+    :param df_in:
+    :param flag_verbose:
+    :return:
+    """
     df = df_in.sort_values(by=["sstart", "send"], ignore_index=True)
+    seqid = df.loc[0, "seqid"]
     df["TIR_len"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: len(x["TIR"][0]), axis=1)
     df["tstart"] = df.loc[:, "sstart"] - df.loc[:, "TIR_len"]
     df["tend"] = df.loc[:, "send"] + df.loc[:, "TIR_len"]
@@ -158,8 +169,9 @@ def remove_overlap(df_in, flag_verbose):
                                           df.iloc[ptr2, idx_sstart], df.iloc[ptr2, idx_send],
                                           df.iloc[ptr1, idx_tstart], df.iloc[ptr1, idx_tend],
                                           df.iloc[ptr2, idx_tstart], df.iloc[ptr2, idx_tend])):
-            dropped_index_list.append(df.iloc[[ptr1, ptr2], df.columns.get_loc("len")].idxmin())
-            print(f"      Sequence {dropped_index_list[-1]} removed")
+            # dropped_index_list.append(df.iloc[[ptr1, ptr2], df.columns.get_loc("len")].idxmin())
+            dropped_index_list.append(df.loc[[ptr1, ptr2], "len"].idxmin())
+            print(f"      Sequence {dropped_index_list[-1]} of genome {seqid} removed")
         ptr1 += 1
         ptr2 += 1
     df = df.drop(dropped_index_list)

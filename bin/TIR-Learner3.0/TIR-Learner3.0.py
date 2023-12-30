@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 # Tianyu Lu (tlu83@wisc.edu)
-# 2023-09-22
+# 2023-12-30
 
 import argparse
 import os
 import shutil
-import tempfile
 
 import sys
 sys.path.insert(0, f"{os.path.dirname(__file__)}/bin")
-from bin.main import TIRLearner
+
+# Use if True to suppress the PEP8: E402 warning
+if True:  # noqa: E402
+    from bin.main import TIRLearner
 
 
 if __name__ == "__main__":
@@ -22,14 +24,20 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument("-g", "--grfp", help="Path to GRF program (Optional)",
                         default=os.path.dirname(shutil.which("grf-main")))
-    parser.add_argument('-m', '--mode', help=("Execution mode of GRF, one of the following: \"boost\", \"strict\""
-                                              " or \"Native\" (Optional, default is \"boost\")"), default="boost")
+    parser.add_argument('-m', '--mode', help=("Execution mode of GRF, one of the following: \"boost\", \"mix\""
+                                              " or \"native\" (Optional)"), default="smart")
     parser.add_argument("-l", "--length", help="Max length of TIR (Optional)", default=5000)
     parser.add_argument("-t", "--processor", help="Number of processors allowed (Optional)", default=os.cpu_count())
+    parser.add_argument("-w", "--work_dir", help="Ou(Optional)", default=None)
     parser.add_argument("-o", "--output_dir", help="Output directory (Optional)", default=None)
-    parser.add_argument('-d', '--debug', help="Output each module's result in csv file (Optional)", action="store_true")
+    parser.add_argument('-d', '--debug', help="Ou (Optional)", action="store_true")
     parser.add_argument('-v', '--verbose', help="Verbose mode, will show interactive progress bar (Optional)",
                         action="store_true")
+    parser.add_argument('-c', '--checkpoint', help="Ou (Optional)", action="store_true")
+    parser.add_argument('-fc', '--force', help="Ou (Optional)", action="store_true")
+    # TODO write help information
+    # TODO regain the work folder specifying function
+
     parsed_args = parser.parse_args()
 
     genome_file = parsed_args.genome_file
@@ -46,18 +54,14 @@ if __name__ == "__main__":
 
     flag_debug = parsed_args.debug
     flag_verbose = parsed_args.verbose
+    flag_checkpoint = parsed_args.checkpoint
+    flag_force = parsed_args.force
 
     # Transforming the possible relative path into absolute path
     genome_file = os.path.abspath(str(genome_file))
     output_dir = os.path.abspath(str(output_dir))
     # ==================================================================================================================
 
-    temp_dir = tempfile.mkdtemp()
-    genome_file_soft_link = os.path.join(temp_dir, "genome_file_soft_link.fa.lnk")
-    os.symlink(genome_file, genome_file_soft_link)
-    os.chdir(temp_dir)
-
     TIRLearner_instance = TIRLearner(genome_file, genome_name, output_dir, species, TIR_length,
-                                     GRF_path, cpu_cores, GRF_mode, flag_verbose, flag_debug)
-
-    shutil.rmtree(temp_dir)
+                                     GRF_path, cpu_cores, GRF_mode,
+                                     flag_verbose, flag_debug, flag_checkpoint, flag_force)

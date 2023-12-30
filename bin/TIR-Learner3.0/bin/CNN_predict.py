@@ -5,20 +5,27 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'  # mute all tensorflow info, warnings, 
 os.environ["KMP_WARNINGS"] = '0'  # mute all OpenMP warnings. #shujun
 warnings.filterwarnings("ignore", category=FutureWarning)  # mute tensorflow warnings #shujun
 
-import numpy as np
-import pandas as pd
-import swifter
+# Use if True to suppress the PEP8: E402 warning
+if True:  # noqa: E402
+    import numpy as np
+    import pandas as pd
+    import swifter
 
-from sklearn.preprocessing import LabelEncoder
-# Attention: sklearn does not automatically import its subpackages
-from keras.utils import to_categorical
-from keras.models import load_model
+    from sklearn.preprocessing import LabelEncoder
+    # Attention: sklearn does not automatically import its subpackages
+    from keras.utils import to_categorical
+    from keras.models import load_model
 
-import prog_const
-spliter = prog_const.spliter
-CNN_model_file = prog_const.CNN_model_file
-path = prog_const.program_root_dir
+    # from typing import TYPE_CHECKING
+    #
+    # if TYPE_CHECKING:
+    #     from main import TIRLearner
 
+    import prog_const
+
+    spliter = prog_const.spliter
+    CNN_model_file = prog_const.CNN_model_file
+    path = prog_const.program_root_dir
 
 
 def get_sequence_fragment(x, featureSize=200):
@@ -48,8 +55,8 @@ def feature_encoding(df_in, flag_verbose):
     df = df.drop(columns="seq_frag")
     print("  Step 3/6: One-Hot Encoding - Converting class vectors to binary class matrices")
     df["feature"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                    to_categorical(x["int_enc"],
-                                                                                   num_classes=num_classes), axis=1)
+                                                                to_categorical(x["int_enc"],
+                                                                               num_classes=num_classes), axis=1)
     df = df.drop(columns="int_enc")
 
     # inputfeatures = np.array(input_features)
@@ -93,11 +100,11 @@ def postprocessing(df_in, flag_verbose):
     return df
 
 
-def execute(TIRLearner_instance, df_non_homo):
+def execute(TIRLearner_instance) -> pd.DataFrame:
     genome_file = TIRLearner_instance.genome_file
     flag_verbose = TIRLearner_instance.flag_verbose
 
-    df = df_non_homo.copy()
+    df = TIRLearner_instance.working_df_dict["base"].copy()
     print("  Step 1/6: Getting sequence fragment for prediction")
     df["seq_frag"] = df.swifter.progress_bar(flag_verbose).apply(get_sequence_fragment, axis=1)
     df = df.drop(columns="seq")
