@@ -9,7 +9,8 @@ use threads::shared;
 
 my $usage = "
 	A script to purify a TE library based on another TE file containing the target contaminant.
-	This is to use the richness difference between TE1 and TE2. Real contaminants in TE1 is rare but rich in TE2.
+	This is to use the richness difference between TE1 and TE2. Real contaminants is less abundant in TE1 but rich in TE2.
+	Identified contaminated sequences will be converted into lowercases in the TE1-TE2.fa output.
 		Usage: perl TE_purifier.pl -TE1 [fasta] -TE2 [fasta]
 		options:	-TE1	[fasta]	The file to be purified.
 				-TE2	[fasta]	The file that mainly consists of TE1 contaminants.
@@ -73,10 +74,10 @@ while (<TE1>){
 	chomp;
 	s/>//g;
 	my ($id, $seq) = (split /\n/, $_, 2);
-	$id =~ (split)[0];
+	$id = (split)[0];
 	next if length $id > 80;
 	$seq =~ s/\s+//g;
-	$seq = uc $seq;
+	$seq = uc $seq; # convert all TE1 sequences into uppercase
 	my $len = length $seq;
 	$TE1_len += $len;
 	$TE1{$id} = $seq;
@@ -208,7 +209,7 @@ sub purifier(){
 
 			# judge $seq in TE1 based on its relative richness in $TE2
 			if ($diff < $mindiff){
-				substr ($ori_seq, $from-1, $seqlen) = lc $seq;
+				substr ($ori_seq, $from-1, $seqlen) = lc $seq; # convert contaminated TE1 sequences into lowercase
 				}
 			}
 		$TE1_cln{$id} = $ori_seq;
