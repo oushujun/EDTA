@@ -556,10 +556,10 @@ if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
 # run HelitronScanner
-`sh $HelitronScanner $genome $threads`;
+#`sh $HelitronScanner $genome $threads`;
 
 # filter candidates based on repeatness of flanking regions
-`perl $format_helitronscanner -genome $genome -sitefilter 1 -minscore 12 -keepshorter 1 -extlen 30 -extout 1`;
+`perl $format_helitronscanner -genome $genome -sitefilter 1 -minscore 6 -keepshorter 2 -extlen 30 -extout 1`;
 `perl $flank_filter -genome $genome -query $genome.HelitronScanner.filtered.ext.fa -miniden 90 -mincov 0.9 -maxct 5 -blastplus $blastplus -t $threads`; #more relaxed
 #`perl $flank_filter -genome $genome -query $genome.HelitronScanner.filtered.ext.fa -miniden 80 -mincov 0.8 -maxct 5 -blastplus $blastplus -t $threads`; #more stringent
 

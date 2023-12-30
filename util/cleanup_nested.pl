@@ -61,7 +61,7 @@ foreach (@ARGV){
 
 # checks
 die "\nERROR: Input sequence file is not exist!\n$usage" unless -s $IN;
-die "\nERROR: The -iter parameter receives non-integer input!\n$usage" unless $iter =~ /^[0-9]+$/;
+die "\nERROR: The -iter parameter receives non-integer input!\n$usage" unless $user_iter =~ /^[0-9]+$/;
 $blastplus = "" unless defined $blastplus;
 $blastplus=`which blastn 2>/dev/null` if $blastplus eq '';
 $blastplus=~s/blastn\n//;

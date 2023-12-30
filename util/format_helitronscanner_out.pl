@@ -18,7 +18,7 @@ my $ext_len = 30; #extend 30 bp on each end
 my $ext_out = 0; #Output original sequence (0, default) or extended (1) sequence.
 my $tgt_ste_filter = 1; #1 will filter out candidate without AT or TT target site; 0 will not.
 my $min_score = 12; #candidates with head and tail quality scores add up less than this will be discarded
-my $keep_shorter = 1; #1 will keep the shorter possible when multi 5' end presents (default); 0 will not.
+my $keep_shorter = 1; #0 will keep the default 5' end; 1 will keep the shorter possible when multi 5' end presents (default); 2 will output all 5' ends.
 my $call_seq = "$FindBin::Bin/call_seq_by_list.pl";
 
 my $k=0;
@@ -48,29 +48,42 @@ while (<Hel>){
 
 	$dir =~ s/[\[\]]+//g;
 	$alt5 =~ s/Multi_5'_ends://;
+	$score =~ s/scores=//;
 
-	# get shorter coordinates for candidates with alternative 5'end available.
-	if ($keep_shorter == 1 and $alt5 ne ''){
+	# store default 5' end
+	my %line;
+	$line{"$str-$end-$score"} = '' if $keep_shorter != 1;
+
+	# store alternative 5' ends
+	if ($alt5 ne ''){
 		my $short5 = $str;
-		while ($alt5 =~ s/([0-9]+):[0-9]+//){
-			my $test5 = $1;
+		while ($alt5 =~ s/([0-9]+):([0-9]+)//){
+			my ($test5, $test_score) = ($1, $2);
+			$score =~ s/^([0-9]+):/$test_score:/;
+			$line{"$test5-$end-$score"} = '' if $keep_shorter == 2; #keep all 5' ends
 			$short5 = $test5 if abs($short5 - $end) > abs($test5 - $end);
 			}
-		$str = $short5;
+		$line{"$short5-$end-$score"} = '' if $keep_shorter == 1; #keep shorter 5' ends
+		} 
+	elsif ($keep_shorter == 1){
+		$line{"$str-$end-$score"} = '';
 		}
 
-	#extend $ext_len bp on each end
-	my ($new_str, $new_end);
-	if ($dir eq "forward"){
-		$new_str = $str - $ext_len;
-		$new_end = $end + $ext_len;
-		} else {
-		$new_str = $str + $ext_len;
-		$new_end = $end - $ext_len;
+	# process all 5' ends
+	foreach (keys %line){
+		my ($this_str, $this_end, $this_score) = (split /\-/, $_);
+		#extend $ext_len bp on each end
+		my ($new_str, $new_end);
+		if ($dir eq "forward"){
+			$new_str = $this_str - $ext_len;
+			$new_end = $this_end + $ext_len;
+			} else {
+			$new_str = $this_str + $ext_len;
+			$new_end = $this_end - $ext_len;
+			}
+		my $pos = "$chr:$new_str..$new_end";
+		print List "$chr-$this_str-$this_end-$ext_len-$dir-$this_score\t$pos\n";
 		}
-	my $pos = "$chr:$new_str..$new_end";
-	$score =~ s/scores=//;
-	print List "$chr-$str-$end-$ext_len-$dir-$score\t$pos\n";
 	}
 close Hel;
 close List;
