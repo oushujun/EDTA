@@ -18,7 +18,7 @@ use Pod::Usage;
 #	$genome.LTR.raw.fa, $genome.LTR.intact.fa, $genome.LTR.intact.gff3
 #	$genome.TIR.raw.fa, $genome.TIR.intact.fa, $genome.TIR.intact.gff3
 #	$genome.Helitron.raw.fa, $genome.Helitron.intact.fa, $genome.Helitron.intact.gff3
-#	$genome.nonLTR.raw.fa
+#	$genome.LINE.raw.fa, $genome.SINE.raw.fa
 
 my $usage = "\nObtain raw TE libraries using various structure-based programs
 
@@ -26,7 +26,7 @@ perl EDTA_raw.pl [options]
 	--genome	[File]	The genome FASTA
 	--species [rice|maize|others]	Specify the species for identification
 					of TIR candidates. Default: others
-	--type	[ltr|tir|helitron|nonltr|all]
+	--type	[ltr|tir|helitron|line|sine|all]
 					Specify which type of raw TE candidates
 					you want to get. Default: all
 	--rmlib	[FASTA]	The RepeatModeler library, classified output.
@@ -38,7 +38,14 @@ perl EDTA_raw.pl [options]
 	--u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
 			Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list.
 			Default: 1.3e-8 (per bp per year, from rice).
+	--genometools	[path]	Path to the GenomeTools program. (default: find from ENV)
+	--annosine	[path]	Path to the AnnoSINE program. (default: find from EDTA/bin)
+	--ltrretriever	[path]	Path to the LTR_retriever program. (default: find from ENV)
+	--blastplus	[path]	Path to the BLAST+ program. (default: find from ENV)
 	--tesorter	[path]	Path to the TEsorter program. (default: find from ENV)
+	--GRF		[path]	Path to the GRF program. (default: find from ENV)
+	--trf_path		[path]	Path to the TRF program. (default: find from ENV)
+	--mdust		[path]	Path to the mdust program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
 	--repeatmodeler	[path]	Path to the RepeatModeler2 program. (default: find from ENV)
 	--threads|-t	[int]	Number of theads to run this script. Default: 4
@@ -59,6 +66,7 @@ my $script_path = $FindBin::Bin;
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";
 my $TIR_Learner = "$script_path/bin/TIR-Learner3.0";
+my $annosine = "$script_path/bin/AnnoSINE/bin"; #path to the AnnoSINE program
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $get_range = "$script_path/util/get_range.pl";
@@ -99,6 +107,7 @@ foreach (@ARGV){
 	$genometools = $ARGV[$k+1] if /^--genometools/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^--repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmodeler = $ARGV[$k+1] if /^--repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
+	$annosine = $ARGV[$k+1] if /^--annosine$/i and $ARGV[$k+1] !~ /^-/;
 	$LTR_retriever = $ARGV[$k+1] if /^--ltrretriever/i and $ARGV[$k+1] !~ /^-/;
 	$TEsorter = $ARGV[$k+1] if /^--tesorter$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus = $ARGV[$k+1] if /^--blastplus$/i and $ARGV[$k+1] !~ /^-/;
@@ -133,7 +142,7 @@ if ($species){
 	die "The expected value for the species parameter is Rice or Maize or others!\n" unless $species eq "Rice" or $species eq "Maize" or $species eq "others";
 	}
 
-die "The expected value for the type parameter is ltr or tir or helitron or all!\n" unless $type eq "ltr" or $type eq "nonltr" or $type eq "tir" or $type eq "helitron" or $type eq "all";
+die "The expected value for the type parameter is ltr or tir or helitron or all!\n" unless $type eq "ltr" or $type eq "line" or $type eq "tir" or $type eq "helitron" or $type eq "sine" or $type eq "all";
 
 # check bolean
 if ($overwrite != 0 and $overwrite != 1){ die "The expected value for the overwrite parameter is 0 or 1!\n"};
@@ -148,6 +157,7 @@ print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
+die "The AnnoSINE is not found in $annosine!\n" unless -s "$annosine/AnnoSINE_v2.py";
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
@@ -185,6 +195,12 @@ $repeatmodeler =~ s/\s+$//;
 $repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
 $repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
 die "Error: RepeatModeler is not found in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
+# AnnoSINE
+chomp ($annosine=`which AnnoSINE_v2.py 2>/dev/null`) if $annosine eq '';
+$annosine =~ s/\s+$//;
+$annosine = dirname($annosine) unless -d $annosine;
+$annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
+die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless -s "${annosine}AnnoSINE_v2.py";
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
@@ -220,6 +236,7 @@ chomp ($GRF = `which grf-main 2>/dev/null`) if $GRF eq '';
 $GRF =~ s/\n$//;
 `$GRF 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF\n" if $?==32256;
+
 
 # make a softlink to the genome
 my $genome_file = basename($genome);
@@ -296,7 +313,8 @@ $genome = "$genome.mod";
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
 `mkdir $genome.EDTA.raw/LTR` unless -e "$genome.EDTA.raw/LTR" && -d "$genome.EDTA.raw/LTR";
-`mkdir $genome.EDTA.raw/nonLTR` unless -e "$genome.EDTA.raw/nonLTR" && -d "$genome.EDTA.raw/nonLTR";
+`mkdir $genome.EDTA.raw/SINE` unless -e "$genome.EDTA.raw/SINE" && -d "$genome.EDTA.raw/SINE";
+`mkdir $genome.EDTA.raw/LINE` unless -e "$genome.EDTA.raw/LINE" && -d "$genome.EDTA.raw/LINE";
 `mkdir $genome.EDTA.raw/TIR` unless -e "$genome.EDTA.raw/TIR" && -d "$genome.EDTA.raw/TIR";
 `mkdir $genome.EDTA.raw/Helitron` unless -e "$genome.EDTA.raw/Helitron" && -d "$genome.EDTA.raw/Helitron";
 
@@ -336,8 +354,12 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 	}
 
 # run LTR_retriever
-`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
-`${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
+if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
+	print STDERR "$date\tExisting LTR_retriever result $genome.LTRlib.fa found!\n\t\t\t\tWill use this for further analyses.\n\n";
+	} else {
+	`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
+	`${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
+	}
 
 # get full-length LTR from pass.list
 `awk '{if (\$1 !~ /#/) print \$1"\\t"\$1}' $genome.pass.list | perl $call_seq - -C $genome > $genome.LTR.intact.fa.ori`;
@@ -386,16 +408,73 @@ if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
 
 
 #############################
+######    AnnoSINE     ######
+#############################
+if ($type eq "sine" or $type eq "all"){
+
+chomp ($date = `date`);
+print STDERR "$date\tStart to find SINE candidates.\n\n";
+
+# enter the working directory and create genome softlink
+chdir "$genome.EDTA.raw/SINE";
+`ln -s ../../$genome $genome` unless -s $genome;
+
+# Remove existing Try to recover existing results or run RepeatModeler2
+chomp ($date = `date`);
+`rm -rf SINE/*` if $overwrite eq 1 and -d "SINE";
+
+# run AnnoSINE_v2
+print STDERR "$date\tIdentify SINE retrotransposon candidates.\n\n";
+my $status; # record status of AnnoSINE execution
+$status = system("python3 ${annosine}AnnoSINE_v2.py -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
+`rm $_` for grep { /^.\/${genome}_([0-9a-f]{32})\.mod$/i } glob("./*"); # remove duplicated genome file
+
+# filter and reclassify RepeatModeler candidates with TEsorter and make LINE library
+if (-s "Seed_SINE.fa"){
+	# annotate and remove non-SINE candidates
+	`awk '{print \$1}' Seed_SINE.fa > $genome.AnnoSINE.raw.fa`;
+	`${TEsorter}TEsorter $genome.AnnoSINE.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
+	`touch $genome.AnnoSINE.raw.fa.rexdb.cls.tsv` unless -e "$genome.AnnoSINE.raw.fa.rexdb.cls.tsv";
+	`perl $cleanup_misclas $genome.AnnoSINE.raw.fa.rexdb.cls.tsv`;
+        
+	# clean up tandem repeat
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.AnnoSINE.raw.fa.cln > $genome.SINE.raw.fa`;
+	}
+elsif ($status == 0) {
+	print "\t\t\t\tAnnoSINE is finished, but the Seed_SINE.fa file is not produced.\n\n";
+       	`touch $genome.SINE.raw.fa`;
+	}
+else {
+	print "\t\t\t\tAnnoSINE exited with error, please test run AnnoSINE to make sure it's working.\n\n";
+	}
+
+# copy result files out
+`cp $genome.SINE.raw.fa ../`;
+chdir '../..';
+
+# check results
+chomp ($date = `date`);
+die "Error: SINE results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.SINE.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.SINE.raw.fa"){
+	print STDERR "$date\tFinish finding SINE candidates.\n\n";
+	} else {
+	print STDERR "$date\tWarning: The SINE result file has 0 bp!\n\n";
+	}
+
+}
+
+
+#############################
 ######  RepeatModeler  ######
 #############################
 
-if ($type eq "nonltr" or $type eq "all"){
+if ($type eq "line" or $type eq "all"){
 
 chomp ($date = `date`);
-print STDERR "$date\tStart to find nonLTR candidates.\n\n";
+print STDERR "$date\tStart to find LINE candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/nonLTR";
+chdir "$genome.EDTA.raw/LINE";
 `ln -s ../../$genome $genome` unless -s $genome;
 `cp ../../$RMlib $RMlib` if $RMlib ne 'null';
 
@@ -413,52 +492,54 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 	print STDERR "$date\tExisting result file $genome-families.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	# run RepeatModeler2
-	print STDERR "$date\tIdentify nonLTR retrotransposon candidates from scratch.\n\n";
+	print STDERR "$date\tIdentify LINE retrotransposon candidates from scratch.\n\n";
 	my $status; # record status of RepeatModeler execution
 	`${repeatmodeler}BuildDatabase -name $genome $genome`;
-	$status = system("${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome 2>/dev/null");
+	$status = system("${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome > /dev/null 2>&1");
 	if ($status != 0) {
 		# Execute the old version of RepeatModeler
-		$status = system("${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome 2>/dev/null");
+		$status = system("${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome > /dev/null 2>&1");
 		print "ERROR: RepeatModeler did not run correctly. Please test run this command:
 			${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome
-			" and exit;
+			" and exit unless $status == 0;
 		}
 	`rm $genome.nhr $genome.nin $genome.nnd $genome.nni $genome.nog $genome.nsq $genome.njs $genome.translation 2>/dev/null`;
 	}
 
-# filter and reclassify RepeatModeler candidates with TEsorter and make nonLTR library
+# filter and reclassify RepeatModeler candidates with TEsorter and make LINE library
 if (-s "$genome-families.fa"){
-	# annotate and remove not LTR candidates
+	# annotate and remove misclassified candidates
 	`awk '{print \$1}' $genome-families.fa > $genome.RM2.raw.fa` if -e "$genome-families.fa";
 	`${TEsorter}TEsorter $genome.RM2.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
 	`perl $cleanup_misclas $genome.RM2.raw.fa.rexdb.cls.tsv`;
+	
+	# reclassify clean candidates
 	`${TEsorter}TEsorter $genome.RM2.raw.fa.cln --disable-pass2 -p $threads 2>/dev/null`;
 	`perl -nle 's/>\\S+\\s+/>/; print \$_' $genome.RM2.raw.fa.cln.rexdb.cls.lib > $genome.RM2.raw.fa.cln`;
 
         # clean up tandem repeat
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.raw.fa.cln > $genome.RM2.raw.fa.cln2`;
-	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA > $genome.nonLTR.raw.fa`;
+	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA > $genome.LINE.raw.fa`;
 	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA -ex > $genome.RM2.fa`;
 	} else {
 	print "\t\t\t\tRepeatModeler is finished, but the $genome-families.fa file is not produced.\n\n";
-	`touch $genome.nonLTR.raw.fa $genome.RM2.fa`;
+	`touch $genome.LINE.raw.fa $genome.RM2.fa`;
 	}
 
 # copy result files out
-`touch $genome.nonLTR.raw.fa` unless -e "$genome.nonLTR.raw.fa";
+`touch $genome.LINE.raw.fa` unless -e "$genome.LINE.raw.fa";
 `touch $genome.RM2.fa` unless -e "$genome.RM2.fa";
-`cp $genome.nonLTR.raw.fa $genome.RM2.fa ../`; #update the filtered RM2 result in the EDTA/raw folder
+`cp $genome.LINE.raw.fa $genome.RM2.fa ../`; #update the filtered RM2 result in the EDTA/raw folder
 `cp $genome.RM2.raw.fa ../../`; #update the raw RM2 result in the EDTA folder
 chdir '../..';
 
 # check results
 chomp ($date = `date`);
-die "Error: nonLTR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.nonLTR.raw.fa";
-if (-s "$genome.EDTA.raw/$genome.nonLTR.raw.fa"){
-	print STDERR "$date\tFinish finding nonLTR candidates.\n\n";
+die "Error: LINE results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.LINE.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.LINE.raw.fa"){
+	print STDERR "$date\tFinish finding LINE candidates.\n\n";
 	} else {
-	print STDERR "$date\tWarning: The nonLTR result file has 0 bp!\n\n";
+	print STDERR "$date\tWarning: The LINE result file has 0 bp!\n\n";
 	}
 }
 
