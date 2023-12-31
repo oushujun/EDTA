@@ -2,16 +2,20 @@ import os
 import subprocess
 import multiprocessing as mp
 
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from main import TIRLearner
+
 import prog_const
+
 spliter = prog_const.spliter
 TIR_types = prog_const.TIR_types
 path = prog_const.program_root_dir
 
 
-
 def blast_reference(genome_db, genome_name, ref_lib, path, t):
     query = os.path.join(path, "RefLib", ref_lib)
-    print(query)
+    # print(query)
     # query = path + "/RefLib/" + refLib
     out = genome_name + spliter + "blast" + spliter + ref_lib
     blast = f"blastn -max_hsps 5 -perc_identity 80 -qcov_hsp_perc 100 -query \"{query}\" -db \"{genome_db}\" " + \

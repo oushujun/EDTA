@@ -5,6 +5,10 @@ import pandas as pd
 
 from M1_2_full_coverage import process_result
 
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from main import TIRLearner
+
 import prog_const
 spliter = prog_const.spliter
 TIR_types = prog_const.TIR_types
@@ -57,8 +61,8 @@ def process_homology(file_name, species, TIR_type):
     return df
 
 
-def execute(TIRLearner_instance):
-    print("Module 2, Step 3B: Select 80% similar entries from Blast results")
+def execute(TIRLearner_instance) -> pd.DataFrame:
+    print("Module 2, Step 4: Select 80% similar entries from Blast results")
     processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
     t = TIRLearner_instance.cpu_cores
     species = TIRLearner_instance.species

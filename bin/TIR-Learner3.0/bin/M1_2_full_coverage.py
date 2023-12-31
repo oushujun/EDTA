@@ -4,6 +4,10 @@ import subprocess
 import multiprocessing as mp
 import pandas as pd
 
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from main import TIRLearner
+
 import prog_const
 spliter = prog_const.spliter
 TIR_types = prog_const.TIR_types
@@ -86,7 +90,7 @@ def process_result(df_list, species):
     return df
 
 
-def execute(TIRLearner_instance):
+def execute(TIRLearner_instance) -> pd.DataFrame:
     print("Module 1, Step 2: Select 100% coverage entries from Blast results")
     genome_name = TIRLearner_instance.genome_name
     species = TIRLearner_instance.species

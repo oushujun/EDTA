@@ -2,6 +2,10 @@ import os
 import subprocess
 import multiprocessing as mp
 
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from main import TIRLearner
+
 import prog_const
 spliter = prog_const.spliter
 TIR_types = prog_const.TIR_types
@@ -20,7 +24,7 @@ def blast_reference(file_name, refLib, path):
 
 
 def execute(TIRLearner_instance):
-    print("Module 2, Step 3A: GRF result blast reference sequences")
+    print("Module 2, Step 3: GRF result blast reference sequences")
     processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
     t = TIRLearner_instance.cpu_cores
     species = TIRLearner_instance.species

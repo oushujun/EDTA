@@ -1,17 +1,22 @@
 import re
 import numpy as np
+import pandas as pd
+import swifter
 from Bio.Seq import Seq
 
-import prog_const
-spliter = prog_const.spliter
+# from typing import TYPE_CHECKING
+#
+# if TYPE_CHECKING:
+#     from main import TIRLearner
+
 
 #
-TSD = {}
-TSD["DTA"] = [8]
-TSD["DTC"] = [3, 2]
-TSD["DTH"] = [3]
-TSD["DTM"] = [10, 9, 8, 7]
-TSD["DTT"] = [2]
+TSD = {"DTA": [8],
+       "DTC": [3, 2],
+       "DTH": [3],
+       "DTM": [10, 9, 8, 7],
+       "DTT": [2]}
+
 
 # DTA:8
 # DTC:2/3
@@ -22,7 +27,7 @@ TSD["DTT"] = [2]
 def compare(tir1, tir2):
     d = 0
     for i in range(0, len(tir1)):
-        if (tir1[i] != tir2[i]):
+        if tir1[i] != tir2[i]:
             d += 1
     return d
 
@@ -38,44 +43,44 @@ def sliding_window(seq1, seq2, tsdlength):
 
 def conserved(fam, s1):
     noMotif = ["DTX", "NonTIR"]
-    if (fam in noMotif):
+    if fam in noMotif:
         return True
     else:
         motif1 = " "
         pattern = " "
         if fam == "DTA":
             # YARNG
-            motif1 = s1.upper()[0:5]
+            motif1 = s1[0:5]
             pattern = "[CT]A[AG][ATGC]G"
         if fam == "DTC":
             # CMCWR
-            motif1 = s1.upper()[0:5]
+            motif1 = s1[0:5]
             pattern = "CACT[AG]"
         if fam == "DTH":
-            motif1 = s1.upper()[0:4]
+            motif1 = s1[0:4]
             pattern = "G[GA][GC]C"
         if fam == "DTM":
-            motif1 = s1.upper()[0:1]
+            motif1 = s1[0:1]
             pattern = "[GC]"
         if fam == "DTT":
-            motif1 = s1.upper()[0:10]
+            motif1 = s1[0:10]
             pattern = "CT[ATCG][ATCG]CTC[ATCG][ATCG]T"
         if fam == "DTE":
             # GGNRM
-            motif1 = s1.upper()[0:5]
+            motif1 = s1[0:5]
             pattern = "GG[ATCG][AG][AC]"
         if fam == "DTR":
             # CACWATG
-            motif1 = s1.upper()[0:7]
+            motif1 = s1[0:7]
             pattern = "CAC[AT]ATG"
         if fam == "DTP":
             # CANRG
-            motif1 = s1.upper()[0:5]
+            motif1 = s1[0:5]
             pattern = "CA[ATGC][AG]G"
         motif2 = str(Seq(motif1).reverse_complement())
         z1 = bool(re.match(pattern, motif1))
         z2 = bool(re.match(pattern, motif2))
-        if (z1 == True or z2 == True):
+        if z1 or z2:
             return True
         else:
             return False
@@ -83,18 +88,18 @@ def conserved(fam, s1):
 
 def conserved_DTH(set1, tsd_dffset, l):
     for i in tsd_dffset:
-        if (tsd_dffset[i] < l * 0.2):
+        if tsd_dffset[i] < l * 0.2:
             s1 = set1[int(i.split(":")[0])]
-            if (s1.lower() == "tta" or s1.lower == "taa"):
+            if s1 in ("TTA", "TAA"):
                 return True
     return False
 
 
 def conserved_DTT(set1, tsd_dffset, l):
     for i in tsd_dffset:
-        if (tsd_dffset[i] < l * 0.2):
+        if tsd_dffset[i] < l * 0.2:
             s1 = set1[int(i.split(":")[0])]
-            if (s1[0:2].lower() == "ta"):
+            if s1[0:2] == "TA":
                 return True
     return False
 
@@ -118,11 +123,11 @@ def is_TSD(tsd_dffset, l):
 
 def check_TIR(x):
     family = x[0]
-    s = x["seq"][200:-200].upper()
+    s = x["seq"][200:-200]
     len_s = len(s)
     minL = 10
 
-    if (len_s <= 200):
+    if len_s <= 200:
         l_List = list(range(minL, int(len_s / 2)))
     else:
         l_List = list(range(minL, 100))
@@ -156,10 +161,12 @@ def check_TSD(x):
             return i
     return np.nan
 
+
 def get_TIR(x):
     s = x["seq"][200:-200]
     l_TIR = x["l_TIR"]
-    return (s[0:l_TIR],s[-l_TIR:])
+    return s[0:l_TIR], s[-l_TIR:]
+
 
 def get_TSD(x):
     s = x["seq"]
@@ -174,7 +181,7 @@ def get_TSD(x):
         if tsd_dffset[i] < l_TSD * 0.2:
             seq1 = set1[int(i.split(":")[0])]
             seq2 = set2[int(i.split(":")[1])]
-            return (seq1, seq2)
+            return seq1, seq2
     return np.nan
 
 
@@ -195,32 +202,33 @@ def process_result(df_in, module):
     return df
 
 
-def execute(TIRLearner, df_in, module):
-    flag_verbose = TIRLearner.flag_verbose
+def execute(TIRLearner_instance, module: str) -> pd.DataFrame | None:
+    flag_verbose = TIRLearner_instance.flag_verbose
 
-    df = df_in.copy()
-    df["len"] = df.loc[:, "end"] - df.loc[:, "start"]
+    df = TIRLearner_instance.working_df_dict["base"].copy()
+    df["len"] = df["end"] - df["start"]
     df = df[df["len"] >= 450].reset_index(drop=True)
-    df["l_TIR"] = df.swifter.progress_bar(True).apply(check_TIR, axis=1)
-    df["l_TSD"] = df.swifter.progress_bar(True).apply(check_TSD, axis=1)
+    df["l_TIR"] = df.swifter.progress_bar(flag_verbose).apply(check_TIR, axis=1)
+    df["l_TSD"] = df.swifter.progress_bar(flag_verbose).apply(check_TSD, axis=1)
 
     df = df.dropna(ignore_index=True)
     df = df.astype({"l_TIR": int, "l_TSD": int})
 
-    if(df.shape[0] == 0):
+    if df.shape[0] == 0:
         return None
+    # TODO possible throw SystemExit
 
     print("  Step 1/4: Retrieving TIR")
     df["TIR"] = df.swifter.progress_bar(flag_verbose).apply(get_TIR, axis=1)
     print("  Step 2/4: Calculating TIR percentage")
     df["p_TIR"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                  TIR_TSD_percent(x["TIR"][0], Seq(x["TIR"][1])
-                                                                                  .reverse_complement()), axis=1)
+                                                              TIR_TSD_percent(x["TIR"][0], Seq(x["TIR"][1])
+                                                                              .reverse_complement()), axis=1)
     print("  Step 3/4: Retrieving TSD")
     df["TSD"] = df.swifter.progress_bar(flag_verbose).apply(get_TSD, axis=1)
     print("  Step 4/4: Calculating TSD percentage")
     df["p_TSD"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                  TIR_TSD_percent(x["TSD"][0], x["TSD"][1]), axis=1)
+                                                              TIR_TSD_percent(x["TSD"][0], x["TSD"][1]), axis=1)
     # both["rslt"] = both.swifter.progress_bar(True).apply(lambda x: x["seq"][200:-200], axis=1)
     df["len"] = df["len"] - 400
     return process_result(df, module)
