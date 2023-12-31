@@ -129,6 +129,7 @@ class TIRLearner:
         if self.working_dir is None:
             self.working_dir = tempfile.mkdtemp()
         # self.load_genome_file()
+        self.working_dir = os.path.abspath(self.working_dir)
         os.chdir(self.working_dir)
 
     # def load_genome_file(self):
@@ -159,14 +160,14 @@ class TIRLearner:
             checkpoint_folder = self.get_newest_checkpoint_folder(genome_file_directory)
         if checkpoint_folder is None:
             print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
-            self.flag_checkpoint = False
+            # self.flag_checkpoint = False
             return
 
         checkpoint_info_file = os.path.join(checkpoint_folder, "info.txt")
         # print(checkpoint_info_file) # TODO only for debug
         if not os.path.exists(checkpoint_info_file) or os.path.getsize(checkpoint_info_file) == 0:
             print("Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
-            self.flag_checkpoint = False
+            # self.flag_checkpoint = False
             return
 
         with open(checkpoint_info_file) as f:
@@ -198,9 +199,6 @@ class TIRLearner:
         if not (self.flag_debug or self.flag_checkpoint):
             return
 
-        if not self.flag_debug:
-            shutil.rmtree(self.checkpoint_folder)
-
         # print(self.current_step) # TODO debug only
         module = self.current_step[0]
         step = self.current_step[1]
@@ -220,6 +218,16 @@ class TIRLearner:
             # f.write(checkpoint_file_name)
             f.write(json.dumps(working_df_filename_dict))
             f.write('\n')
+
+        # print(os.listdir(self.checkpoint_folder)) # TODO debug only
+        if not self.flag_debug:
+            # shutil.rmtree(self.checkpoint_folder)
+            remove_file_set = (set(os.listdir(self.checkpoint_folder)) -
+                               set(working_df_filename_dict.values()) -
+                               {"info.txt"})
+            # print(remove_file_set) # TODO debug only
+            for f in remove_file_set:
+                os.remove(os.path.join(self.checkpoint_folder, f))
 
     def module_step_execution_check(self, executing_module: int, executing_step: int) -> bool:
         return (not self.flag_checkpoint or self.current_step[0] < executing_module or
