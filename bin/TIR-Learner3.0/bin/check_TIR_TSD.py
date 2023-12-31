@@ -202,7 +202,7 @@ def process_result(df_in, module):
     return df
 
 
-def execute(TIRLearner_instance, module: str) -> pd.DataFrame | None:
+def execute(TIRLearner_instance, module: str):
     flag_verbose = TIRLearner_instance.flag_verbose
 
     df = TIRLearner_instance.working_df_dict["base"].copy()
