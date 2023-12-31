@@ -28,12 +28,13 @@ import post_processing
 
 
 class TIRLearner:
-    def __init__(self, genome_file: str, genome_name: str, output_dir: str, species: str, TIR_length: int,
-                 GRF_path: str, cpu_cores: int, GRF_mode: str,
+    def __init__(self, genome_file: str, genome_name: str, species: str, TIR_length: int,
+                 working_dir: str, output_dir: str, GRF_path: str, cpu_cores: int, GRF_mode: str,
                  flag_verbose: bool, flag_debug: bool, flag_checkpoint: bool, flag_force: bool):
 
         self.genome_file = genome_file
         self.genome_name = genome_name
+        self.working_dir = working_dir
         self.output_dir = output_dir
         self.species = species
         self.TIR_length = TIR_length
@@ -51,7 +52,6 @@ class TIRLearner:
             self.checkpoint_folder = os.path.join(self.output_dir, f"TIR-Learner_v3_checkpoint_{timestamp_now_iso8601}")
             os.makedirs(self.checkpoint_folder)
 
-        self.execution_dir = None
         self.df_list = None
         self.genome_file_stat = {"file_size_gib": -0.1, "num": -1,
                                  "short_seq_num": 0, "short_seq_perc": -0.1,
@@ -62,7 +62,7 @@ class TIRLearner:
         self.execute()
 
     def execute(self):
-        self.mount_execution_dir()
+        self.mount_working_dir()
         self.load_checkpoint_file()
         self.check_fasta_file()
         # print(os.getcwd())  # TODO ONLY FOR DEBUG REMOVE AFTER FINISHED
@@ -77,7 +77,7 @@ class TIRLearner:
             self.df_list = [self.working_df_dict["m4"]]
 
         post_processing.execute(self)
-        shutil.rmtree(self.execution_dir)
+        shutil.rmtree(self.working_dir)
 
     def check_fasta_file(self):
         # names = [record.id for record in SeqIO.parse(self.genome_file, "fasta")]
@@ -118,48 +118,52 @@ class TIRLearner:
         self.GRF_execution_mode_check()
         print("Genome file scan finished!")
         print(f"  File name: {os.path.basename(self.genome_file)}")
-        print(f"  File size: {self.genome_file_stat['file_size_gib']} GiB")
+        print(f"  File size: {round(self.genome_file_stat['file_size_gib'], 4)} GiB")
         print(f"  Number of sequences: {self.genome_file_stat['num']}")
         print(f"  Number of short sequences: {self.genome_file_stat['short_seq_num']}")
         print(f"  Percentage of short sequences: {self.genome_file_stat['short_seq_perc']}")
-        print(f"  Average sequence length: {self.genome_file_stat['avg_len']}")
+        print(f"  Average sequence length: {self.genome_file_stat['avg_len'] // 1000} k")
         self.genome_file = os.path.abspath(checked_genome_file)
 
-    def mount_execution_dir(self):
-        self.execution_dir = tempfile.mkdtemp()
+    def mount_working_dir(self):
+        if self.working_dir is None:
+            self.working_dir = tempfile.mkdtemp()
         # self.load_genome_file()
-        os.chdir(self.execution_dir)
+        os.chdir(self.working_dir)
 
     # def load_genome_file(self):
     #     genome_file_soft_link = os.path.join(self.execution_dir, "genome_file_soft_link.fa.lnk")
     #     os.symlink(self.genome_file, genome_file_soft_link)
     #     self.genome_file = genome_file_soft_link
 
+    def get_newest_checkpoint_folder(self, search_dir: str):
+        checkpoint_folders = [f for f in os.listdir(search_dir) if f.startswith("TIR-Learner_v3_checkpoint_")]
+        try:
+            checkpoint_folders.remove(self.checkpoint_folder)
+        except ValueError:
+            pass
+        checkpoint_folders = sorted(checkpoint_folders)
+
+        if len(checkpoint_folders) == 0:
+            return None
+        return os.path.join(self.output_dir, checkpoint_folders[-1])
+
     def load_checkpoint_file(self):
         if not self.flag_checkpoint:
             return
 
         # Search both the output directory and the genome file directory
-        checkpoint_folders = sorted([f for f in os.listdir(self.output_dir) if
-                                     f.startswith("TIR-Learner_v3_checkpoint_")])
-
-        if len(checkpoint_folders) != 0:
-            checkpoint_folder = os.path.join(self.output_dir, checkpoint_folders[
-                -2 if self.flag_debug or self.flag_checkpoint else -1])
-        else:
+        checkpoint_folder = self.get_newest_checkpoint_folder(self.output_dir)
+        if checkpoint_folder is None:
             genome_file_directory = os.path.dirname(self.genome_file)
-            checkpoint_folders = [f for f in os.listdir(genome_file_directory)
-                                  if f.startswith("TIR-Learner_v3_checkpoint_")]
-            if len(checkpoint_folders) != 0:
-                checkpoint_folder = os.path.join(genome_file_directory, checkpoint_folders[
-                    -2 if self.flag_debug or self.flag_checkpoint else -1])
-            else:
-                print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
-                self.flag_checkpoint = False
-                return
+            checkpoint_folder = self.get_newest_checkpoint_folder(genome_file_directory)
+        if checkpoint_folder is None:
+            print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
+            self.flag_checkpoint = False
+            return
 
         checkpoint_info_file = os.path.join(checkpoint_folder, "info.txt")
-        print(checkpoint_info_file)
+        # print(checkpoint_info_file) # TODO only for debug
         if not os.path.exists(checkpoint_info_file) or os.path.getsize(checkpoint_info_file) == 0:
             print("Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
             self.flag_checkpoint = False

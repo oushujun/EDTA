@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Tianyu Lu (tlu83@wisc.edu)
-# 2023-12-30
+# 2023-09-22
 
 import argparse
 import os
@@ -28,7 +28,7 @@ if __name__ == "__main__":
                                               " or \"native\" (Optional)"), default="smart")
     parser.add_argument("-l", "--length", help="Max length of TIR (Optional)", default=5000)
     parser.add_argument("-t", "--processor", help="Number of processors allowed (Optional)", default=os.cpu_count())
-    parser.add_argument("-w", "--work_dir", help="Ou(Optional)", default=None)
+    parser.add_argument("-w", "--working_dir", help="Ou(Optional)", default=None)
     parser.add_argument("-o", "--output_dir", help="Output directory (Optional)", default=None)
     parser.add_argument('-d', '--debug', help="Ou (Optional)", action="store_true")
     parser.add_argument('-v', '--verbose', help="Verbose mode, will show interactive progress bar (Optional)",
@@ -48,6 +48,7 @@ if __name__ == "__main__":
 
     TIR_length = int(parsed_args.length)
     cpu_cores = int(parsed_args.processor)
+    working_dir = parsed_args.working_dir
     output_dir = parsed_args.output_dir
     if output_dir is None:
         output_dir = os.path.dirname(genome_file)
@@ -62,6 +63,6 @@ if __name__ == "__main__":
     output_dir = os.path.abspath(str(output_dir))
     # ==================================================================================================================
 
-    TIRLearner_instance = TIRLearner(genome_file, genome_name, output_dir, species, TIR_length,
-                                     GRF_path, cpu_cores, GRF_mode,
+    TIRLearner_instance = TIRLearner(genome_file, genome_name, species, TIR_length,
+                                     working_dir, output_dir, GRF_path, cpu_cores, GRF_mode,
                                      flag_verbose, flag_debug, flag_checkpoint, flag_force)

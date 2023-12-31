@@ -570,7 +570,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	print STDERR "Species: $species\n";
 
 	# run TIR-Learner
-	`python3 $TIR_Learner/bin/main.py -f $genome_file_real_path -s $species -t $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR -g $grfp`;
+	`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR -g $grfp`;
 	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 
 	# clean raw predictions with flanking alignment
