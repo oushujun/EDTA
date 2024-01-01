@@ -118,10 +118,10 @@ class TIRLearner:
         self.GRF_execution_mode_check()
         print("Genome file scan finished!")
         print(f"  File name: {os.path.basename(self.genome_file)}")
-        print(f"  File size: {round(self.genome_file_stat['file_size_gib'], 4)} GiB")
+        print(f"  File size: {float('%.4g' % self.genome_file_stat['file_size_gib'])} GiB")
         print(f"  Number of sequences: {self.genome_file_stat['num']}")
         print(f"  Number of short sequences: {self.genome_file_stat['short_seq_num']}")
-        print(f"  Percentage of short sequences: {self.genome_file_stat['short_seq_perc']}")
+        print(f"  Percentage of short sequences: {self.genome_file_stat['short_seq_perc'] * 100} %")
         print(f"  Average sequence length: {self.genome_file_stat['avg_len'] // 1000} k")
         self.genome_file = os.path.abspath(checked_genome_file)
 
@@ -129,6 +129,8 @@ class TIRLearner:
         if self.working_dir is None:
             self.working_dir = tempfile.mkdtemp()
         # self.load_genome_file()
+        else:
+            os.makedirs(self.working_dir, exist_ok=True)
         self.working_dir = os.path.abspath(self.working_dir)
         os.chdir(self.working_dir)
 
@@ -139,8 +141,10 @@ class TIRLearner:
 
     def get_newest_checkpoint_folder(self, search_dir: str):
         checkpoint_folders = [f for f in os.listdir(search_dir) if f.startswith("TIR-Learner_v3_checkpoint_")]
+        # print(checkpoint_folders)  # TODO only for debug
+        # print(self.checkpoint_folder)  # TODO only for debug
         try:
-            checkpoint_folders.remove(self.checkpoint_folder)
+            checkpoint_folders.remove(os.path.basename(self.checkpoint_folder))
         except ValueError:
             pass
         checkpoint_folders = sorted(checkpoint_folders)
@@ -163,8 +167,9 @@ class TIRLearner:
             # self.flag_checkpoint = False
             return
 
+        # print(checkpoint_folder)  # TODO only for debug
         checkpoint_info_file = os.path.join(checkpoint_folder, "info.txt")
-        # print(checkpoint_info_file) # TODO only for debug
+        # print(checkpoint_info_file)  # TODO only for debug
         if not os.path.exists(checkpoint_info_file) or os.path.getsize(checkpoint_info_file) == 0:
             print("Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
             # self.flag_checkpoint = False
@@ -184,11 +189,14 @@ class TIRLearner:
                                                       sep='\t', header=0, engine='c', memory_map=True)
             # self.df_current = pd.read_csv(df_current_file, sep='\t', header=0, engine='c', memory_map=True)
 
-            if step == 2 and module in (2, 4):
-                # Load processedGRFmite checkpoint file for module 2 step 2 or module 4 step 2
-                processedGRFmite_checkpoint_file = os.path.join(checkpoint_folder, self.processedGRFmite_file)
-                if os.path.exists(processedGRFmite_checkpoint_file):
-                    shutil.copy(processedGRFmite_checkpoint_file, self.processedGRFmite_file)
+            # if step == 2 and module in (2, 4):
+            #     # Load processedGRFmite checkpoint file for module 2 step 2 or module 4 step 2
+            processedGRFmite_checkpoint_file = os.path.join(checkpoint_folder, self.processedGRFmite_file)
+            if os.path.exists(processedGRFmite_checkpoint_file):
+                shutil.copy(processedGRFmite_checkpoint_file,
+                            os.path.join(self.working_dir, self.processedGRFmite_file))
+                shutil.copy(processedGRFmite_checkpoint_file,
+                            os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
 
             print(("Successfully loaded checkpoint:\n"
                    f"  Time: {timestamp_iso8601}\n"
@@ -212,7 +220,7 @@ class TIRLearner:
                      index=False, header=True, sep="\t")
         # self.df_current.to_csv(os.path.join(self.checkpoint_folder, checkpoint_file_name),
         #                        index=False, header=False, sep="\t")
-        with open(os.path.join(self.checkpoint_folder, "info.txt"), "w") as f:
+        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'w') as f:
             f.write(timestamp_now_iso8601 + '\n')
             f.write(f"{module},{step}\n")
             # f.write(checkpoint_file_name)
@@ -224,10 +232,25 @@ class TIRLearner:
             # shutil.rmtree(self.checkpoint_folder)
             remove_file_set = (set(os.listdir(self.checkpoint_folder)) -
                                set(working_df_filename_dict.values()) -
-                               {"info.txt"})
+                               {"info.txt", self.processedGRFmite_file})
             # print(remove_file_set) # TODO debug only
             for f in remove_file_set:
                 os.remove(os.path.join(self.checkpoint_folder, f))
+
+    def save_processedGRFmite_checkpoint_file(self):
+        if not (self.flag_debug or self.flag_checkpoint):
+            return
+
+        shutil.copy(self.processedGRFmite_file, os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
+        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'r') as f:
+            lines = f.readlines()
+
+        module = self.current_step[0]
+        step = self.current_step[1]
+        lines[1] = f"{module},{step}\n"
+
+        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'w') as f:
+            f.writelines(lines)
 
     def module_step_execution_check(self, executing_module: int, executing_step: int) -> bool:
         return (not self.flag_checkpoint or self.current_step[0] < executing_module or
@@ -343,16 +366,14 @@ class TIRLearner:
             # Checkpoint saving for this step is currently not available
             print("Module 2, Step 1: Run GRF program to find Inverted Repeats")
             run_GRF.execute(self)
-            # self.current_step = [2, 1]
+            self.current_step = [2, 1]
 
         # Module 2, Step 2: Process GRF results
         print("Module 2, Step 2: Process GRF results")
         if self.module_step_execution_check(2, 2):
             process_GRFmite.execute(self)
             self.current_step = [2, 2]
-            if self.flag_debug or self.flag_checkpoint:
-                shutil.copy(self.processedGRFmite_file,
-                            os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
+            self.save_processedGRFmite_checkpoint_file()
 
         # Module 2, Step 3: GRF result blast reference sequences
         if self.module_step_execution_check(2, 3):
@@ -453,16 +474,14 @@ class TIRLearner:
             print("Module 4, Step 1: Run GRF program to find Inverted Repeats")
             # Checkpoint saving for this step is currently not available
             run_GRF.execute(self)
-            # self.current_step = [4, 1]
+            self.current_step = [4, 1]
 
         # Module 4, Step 2: Process GRF results
         if self.module_step_execution_check(4, 2):
             print("Module 4, Step 2: Process GRF results")
             process_GRFmite.execute(self)
             self.current_step = [4, 2]
-            if self.flag_debug or self.flag_checkpoint:
-                shutil.copy(self.processedGRFmite_file,
-                            os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
+            self.save_processedGRFmite_checkpoint_file()
 
         # Module 4, Step 3: Prepare Data
         if self.module_step_execution_check(4, 3):
