@@ -27,10 +27,14 @@ import check_TIR_TSD
 import post_processing
 
 
+def get_timestamp_now_utc_iso8601():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
+
+
 class TIRLearner:
     def __init__(self, genome_file: str, genome_name: str, species: str, TIR_length: int,
                  working_dir: str, output_dir: str, GRF_path: str, cpu_cores: int, GRF_mode: str,
-                 flag_verbose: bool, flag_debug: bool, flag_checkpoint: bool, flag_force: bool):
+                 checkpoint_input: str, flag_verbose: bool, flag_debug: bool, flag_force: bool):
 
         self.genome_file = genome_file
         self.genome_name = genome_name
@@ -41,16 +45,17 @@ class TIRLearner:
         self.GRF_path = GRF_path
         self.cpu_cores = cpu_cores
         self.GRF_mode = GRF_mode
+        self.checkpoint_input = checkpoint_input
         self.flag_verbose = flag_verbose
         self.flag_debug = flag_debug
-        self.flag_checkpoint = flag_checkpoint
+        # self.flag_checkpoint = flag_checkpoint
         self.flag_force = flag_force
 
         self.processedGRFmite_file = f"{self.genome_name}{prog_const.spliter}processedGRFmite.fa"
-        if self.flag_debug or self.flag_checkpoint:
-            timestamp_now_iso8601 = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-            self.checkpoint_folder = os.path.join(self.output_dir, f"TIR-Learner_v3_checkpoint_{timestamp_now_iso8601}")
-            os.makedirs(self.checkpoint_folder)
+        if self.flag_debug or self.checkpoint_input is not None:
+            self.checkpoint_output = os.path.join(self.output_dir,
+                                                  f"TIR-Learner_v3_checkpoint_{get_timestamp_now_utc_iso8601()}")
+            os.makedirs(self.checkpoint_output)
 
         self.df_list = None
         self.genome_file_stat = {"file_size_gib": -0.1, "num": -1,
@@ -139,36 +144,37 @@ class TIRLearner:
     #     os.symlink(self.genome_file, genome_file_soft_link)
     #     self.genome_file = genome_file_soft_link
 
-    def get_newest_checkpoint_folder(self, search_dir: str):
+    def get_newest_checkpoint_folder(self, search_dir: str) -> str:
         checkpoint_folders = [f for f in os.listdir(search_dir) if f.startswith("TIR-Learner_v3_checkpoint_")]
         # print(checkpoint_folders)  # TODO only for debug
         # print(self.checkpoint_folder)  # TODO only for debug
         try:
-            checkpoint_folders.remove(os.path.basename(self.checkpoint_folder))
+            checkpoint_folders.remove(os.path.basename(self.checkpoint_output))
         except ValueError:
             pass
         checkpoint_folders = sorted(checkpoint_folders)
 
         if len(checkpoint_folders) == 0:
-            return None
+            return "no_checkpoint_folder_found"
         return os.path.join(self.output_dir, checkpoint_folders[-1])
 
     def load_checkpoint_file(self):
-        if not self.flag_checkpoint:
+        if self.checkpoint_input is None:
             return
 
-        # Search both the output directory and the genome file directory
-        checkpoint_folder = self.get_newest_checkpoint_folder(self.output_dir)
-        if checkpoint_folder is None:
-            genome_file_directory = os.path.dirname(self.genome_file)
-            checkpoint_folder = self.get_newest_checkpoint_folder(genome_file_directory)
-        if checkpoint_folder is None:
-            print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
-            # self.flag_checkpoint = False
-            return
+        if self.checkpoint_input == "auto":
+            # Search both the output directory and the genome file directory
+            self.checkpoint_input = self.get_newest_checkpoint_folder(self.output_dir)
+            if self.checkpoint_input == "no_checkpoint_folder_found":
+                genome_file_directory = os.path.dirname(self.genome_file)
+                self.checkpoint_input = self.get_newest_checkpoint_folder(genome_file_directory)
+            if self.checkpoint_input == "no_checkpoint_folder_found":
+                print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
+                # self.flag_checkpoint = False
+                return
 
-        # print(checkpoint_folder)  # TODO only for debug
-        checkpoint_info_file = os.path.join(checkpoint_folder, "info.txt")
+        # print(self.checkpoint_input)  # TODO only for debug
+        checkpoint_info_file = os.path.join(self.checkpoint_input, "info.txt")
         # print(checkpoint_info_file)  # TODO only for debug
         if not os.path.exists(checkpoint_info_file) or os.path.getsize(checkpoint_info_file) == 0:
             print("Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
@@ -185,18 +191,18 @@ class TIRLearner:
             # df_current_file = f.readline().rstrip()
             working_df_filename_dict = json.loads(f.readline().rstrip())
             for k, v in working_df_filename_dict.items():
-                self.working_df_dict[k] = pd.read_csv(os.path.join(checkpoint_folder, v),
+                self.working_df_dict[k] = pd.read_csv(os.path.join(self.checkpoint_input, v),
                                                       sep='\t', header=0, engine='c', memory_map=True)
             # self.df_current = pd.read_csv(df_current_file, sep='\t', header=0, engine='c', memory_map=True)
 
             # if step == 2 and module in (2, 4):
             #     # Load processedGRFmite checkpoint file for module 2 step 2 or module 4 step 2
-            processedGRFmite_checkpoint_file = os.path.join(checkpoint_folder, self.processedGRFmite_file)
+            processedGRFmite_checkpoint_file = os.path.join(self.checkpoint_input, self.processedGRFmite_file)
             if os.path.exists(processedGRFmite_checkpoint_file):
                 shutil.copy(processedGRFmite_checkpoint_file,
                             os.path.join(self.working_dir, self.processedGRFmite_file))
                 shutil.copy(processedGRFmite_checkpoint_file,
-                            os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
+                            os.path.join(self.checkpoint_output, self.processedGRFmite_file))
 
             print(("Successfully loaded checkpoint:\n"
                    f"  Time: {timestamp_iso8601}\n"
@@ -204,24 +210,23 @@ class TIRLearner:
                    f"  Step: {step}"))
 
     def save_checkpoint_file(self):
-        if not (self.flag_debug or self.flag_checkpoint):
+        if not self.flag_debug and self.checkpoint_input is None:
             return
 
         # print(self.current_step) # TODO debug only
         module = self.current_step[0]
         step = self.current_step[1]
-        timestamp_now_iso8601 = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
         # checkpoint_file_name = f"module_{module}_step_{step}_{timestamp_now_iso8601}.csv"
-        working_df_filename_dict = {k: f"{k}_module_{module}_step_{step}_{timestamp_now_iso8601}.csv"
+        working_df_filename_dict = {k: f"{k}_module_{module}_step_{step}_{get_timestamp_now_utc_iso8601()}.csv"
                                     for k in self.working_df_dict.keys()}
         # print(working_df_filename_dict) # TODO debug only
         for k, v in self.working_df_dict.items():
-            v.to_csv(os.path.join(self.checkpoint_folder, working_df_filename_dict[k]),
+            v.to_csv(os.path.join(self.checkpoint_output, working_df_filename_dict[k]),
                      index=False, header=True, sep="\t")
         # self.df_current.to_csv(os.path.join(self.checkpoint_folder, checkpoint_file_name),
         #                        index=False, header=False, sep="\t")
-        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'w') as f:
-            f.write(timestamp_now_iso8601 + '\n')
+        with open(os.path.join(self.checkpoint_output, "info.txt"), 'w') as f:
+            f.write(get_timestamp_now_utc_iso8601() + '\n')
             f.write(f"{module},{step}\n")
             # f.write(checkpoint_file_name)
             f.write(json.dumps(working_df_filename_dict))
@@ -230,30 +235,31 @@ class TIRLearner:
         # print(os.listdir(self.checkpoint_folder)) # TODO debug only
         if not self.flag_debug:
             # shutil.rmtree(self.checkpoint_folder)
-            remove_file_set = (set(os.listdir(self.checkpoint_folder)) -
+            remove_file_set = (set(os.listdir(self.checkpoint_output)) -
                                set(working_df_filename_dict.values()) -
                                {"info.txt", self.processedGRFmite_file})
             # print(remove_file_set) # TODO debug only
             for f in remove_file_set:
-                os.remove(os.path.join(self.checkpoint_folder, f))
+                os.remove(os.path.join(self.checkpoint_output, f))
 
     def save_processedGRFmite_checkpoint_file(self):
-        if not (self.flag_debug or self.flag_checkpoint):
+        if not self.flag_debug and self.checkpoint_input is None:
             return
 
-        shutil.copy(self.processedGRFmite_file, os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
-        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'r') as f:
+        shutil.copy(self.processedGRFmite_file, os.path.join(self.checkpoint_output, self.processedGRFmite_file))
+        with open(os.path.join(self.checkpoint_output, "info.txt"), 'r') as f:
             lines = f.readlines()
 
         module = self.current_step[0]
         step = self.current_step[1]
         lines[1] = f"{module},{step}\n"
 
-        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'w') as f:
+        with open(os.path.join(self.checkpoint_output, "info.txt"), 'w') as f:
             f.writelines(lines)
 
     def module_step_execution_check(self, executing_module: int, executing_step: int) -> bool:
-        return (not self.flag_checkpoint or self.current_step[0] < executing_module or
+        return (self.checkpoint_input is None or
+                self.current_step[0] < executing_module or
                 (self.current_step[0] == executing_module and self.current_step[1] < executing_step))
 
     def GRF_execution_mode_check(self):
