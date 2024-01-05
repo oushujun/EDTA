@@ -48,6 +48,7 @@ perl EDTA_raw.pl [options]
 	--mdust		[path]	Path to the mdust program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
 	--repeatmodeler	[path]	Path to the RepeatModeler2 program. (default: find from ENV)
+	--annosine	[path]  The directory containing AnnoSINE (default: read from ENV)
 	--threads|-t	[int]	Number of theads to run this script. Default: 4
 	--help|-h	Display this help info
 \n";
@@ -66,7 +67,6 @@ my $script_path = $FindBin::Bin;
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";
 my $TIR_Learner = "$script_path/bin/TIR-Learner3.0";
-my $annosine = "$script_path/bin/AnnoSINE/bin"; #path to the AnnoSINE program
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $get_range = "$script_path/util/get_range.pl";
@@ -91,6 +91,7 @@ my $blastplus = ''; #path to the blastn program
 my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
 my $GRF = ''; #path to GRF
+my $annosine = ""; #path to the AnnoSINE program
 my $beta2 = 1; #0, beta2 is not ready. 1, try it out.
 my $help = undef;
 
@@ -157,7 +158,6 @@ print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
-die "The AnnoSINE is not found in $annosine!\n" unless -s "$annosine/AnnoSINE_v2.py";
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
@@ -196,11 +196,11 @@ $repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
 $repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
 die "Error: RepeatModeler is not found in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
 # AnnoSINE
-chomp ($annosine=`which AnnoSINE_v2.py 2>/dev/null`) if $annosine eq '';
+chomp ($annosine=`which annosine2 2>/dev/null`) if $annosine eq '';
 $annosine =~ s/\s+$//;
 $annosine = dirname($annosine) unless -d $annosine;
 $annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
-die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless -s "${annosine}AnnoSINE_v2.py";
+die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2.py" or -X "${annosine}/bin/AnnoSINE_v2.py" or -X "${annosine}annosine2");
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
@@ -375,16 +375,16 @@ if ($beta2 == 1){
 	# annotate and remove not LTR candidates
 	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
-	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.fa`;
-	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.fa.anno.list`;
-	`cp $genome.LTR.intact.fa.anno.list ../`;
+	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.raw.fa`;
+	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.raw.fa.anno.list`;
+	`cp $genome.LTR.intact.raw.fa.anno.list ../`;
 	} else {
-	`mv $genome.LTR.intact.fa.ori.dusted.cln $genome.LTR.intact.fa`;
+	`mv $genome.LTR.intact.raw.fa.ori.dusted.cln $genome.LTR.intact.raw.fa`;
 	}
 
 # generate annotated output and gff
-`perl $output_by_list 1 $genome.LTR.intact.fa.ori 1 $genome.LTR.intact.fa -FA -ex|grep \\>|perl -nle 's/>//; print "Name\\t\$_"' > $genome.LTR.intact.fa.ori.rmlist`;
-`perl $filter_gff $genome.pass.list.gff3 $genome.LTR.intact.fa.ori.rmlist | perl -nle 's/LTR_retriever/EDTA/gi; print \$_' > $genome.LTR.intact.gff3`;
+`perl $output_by_list 1 $genome.LTR.intact.fa.ori 1 $genome.LTR.intact.raw.fa -FA -ex|grep \\>|perl -nle 's/>//; print "Name\\t\$_"' > $genome.LTR.intact.fa.ori.rmlist`;
+`perl $filter_gff $genome.pass.list.gff3 $genome.LTR.intact.fa.ori.rmlist | perl -nle 's/LTR_retriever/EDTA/gi; print \$_' > $genome.LTR.intact.raw.gff3`;
 `rm $genome`;
 	}
 
@@ -392,7 +392,7 @@ if ($beta2 == 1){
 `touch $genome.LTRlib.fa` unless -e "$genome.LTRlib.fa";
 `cp $genome.LTRlib.fa $genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
-`cp $genome.LTR.intact.fa $genome.LTR.intact.gff3 ../`;
+`cp $genome.LTR.intact.raw.fa $genome.LTR.intact.raw.gff3 ../`;
 chdir '../..';
 
 # check results
@@ -419,17 +419,19 @@ print STDERR "$date\tStart to find SINE candidates.\n\n";
 chdir "$genome.EDTA.raw/SINE";
 `ln -s ../../$genome $genome` unless -s $genome;
 
-# Remove existing Try to recover existing results or run RepeatModeler2
-chomp ($date = `date`);
-`rm -rf SINE/*` if $overwrite eq 1 and -d "SINE";
+# Remove existing results
+`rm -rf Seed_SINE.fa Step* HMM_out 2>/dev/null` if $overwrite eq 1;
 
-# run AnnoSINE_v2
-print STDERR "$date\tIdentify SINE retrotransposon candidates.\n\n";
+# run AnnoSINE2
 my $status; # record status of AnnoSINE execution
-$status = system("python3 ${annosine}AnnoSINE_v2.py -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
-`rm $_` for grep { /^.\/${genome}_([0-9a-f]{32})\.mod$/i } glob("./*"); # remove duplicated genome file
+if (-s "Seed_SINE.fa"){
+	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE2.\n\n";
+	} else { 
+	$status = system("python3 ${annosine}annosine2 -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
+	#`rm $_` for grep { /^.\/${genome}_([0-9a-f]{32})\.mod$/i } glob("./*"); # remove duplicated genome file
+	}
 
-# filter and reclassify RepeatModeler candidates with TEsorter and make LINE library
+# filter and reclassify AnnoSINE candidates with TEsorter and make SINE library
 if (-s "Seed_SINE.fa"){
 	# annotate and remove non-SINE candidates
 	`awk '{print \$1}' Seed_SINE.fa > $genome.AnnoSINE.raw.fa`;
@@ -441,7 +443,7 @@ if (-s "Seed_SINE.fa"){
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.AnnoSINE.raw.fa.cln > $genome.SINE.raw.fa`;
 	}
 elsif ($status == 0) {
-	print "\t\t\t\tAnnoSINE is finished, but the Seed_SINE.fa file is not produced.\n\n";
+	print "\t\t\t\tAnnoSINE is finished without error, but the Seed_SINE.fa file is not produced.\n\n";
        	`touch $genome.SINE.raw.fa`;
 	}
 else {
@@ -588,28 +590,27 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	# annotate and remove non-TIR candidates
 	`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
-	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.raw.fa`;
-	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.fa.anno.list`;
+	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.intact.raw.fa`;
+	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.raw.fa.anno.list`;
 	`cp $genome.TIR.intact.fa.anno.list ../`;
 	} else {
-	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.raw.fa`;
+	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.intact.raw.fa`;
 	}
 
 	# get gff3 of intact TIR elements
-	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$method, \$supfam, \$s, \$e, \$anno) = (split)[0,1,2,3,4,8]; my \$class='DNA'; \$class='MITE' if \$e-\$s+1 <= 600; my (\$tir, \$iden, \$tsd)=(\$1, \$2/100, \$3) if \$anno=~/TIR:(.*)_([0-9.]+)_TSD:([a-z0-9._]+)_LEN/i; print "\$chr \$s \$e \$chr:\$s..\$e \$class/\$supfam structural \$iden . . . TSD=\$tsd;TIR=\$tir"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 4 - 1 $genome.TIR.raw.fa -MSU0 -MSU1 > $genome.TIR.intact.bed`;
-	`perl $bed2gff $genome.TIR.intact.bed TIR > $genome.TIR.intact.gff3`;
-	`cp $genome.TIR.raw.fa $genome.TIR.intact.fa`;
+	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$method, \$supfam, \$s, \$e, \$anno) = (split)[0,1,2,3,4,8]; my \$class='DNA'; \$class='MITE' if \$e-\$s+1 <= 600; my (\$tir, \$iden, \$tsd)=(\$1, \$2/100, \$3) if \$anno=~/TIR:(.*)_([0-9.]+)_TSD:([a-z0-9._]+)_LEN/i; print "\$chr \$s \$e \$chr:\$s..\$e \$class/\$supfam structural \$iden . . . TSD=\$tsd;TIR=\$tir"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 4 - 1 $genome.TIR.intact.raw.fa -MSU0 -MSU1 > $genome.TIR.intact.raw.bed`;
+	`perl $bed2gff $genome.TIR.intact.raw.bed TIR > $genome.TIR.intact.raw.gff3`;
 	}
 
 # copy result files out
-`touch $genome.TIR.raw.fa` unless -e "$genome.TIR.raw.fa";
-`cp $genome.TIR.raw.fa $genome.TIR.intact.fa $genome.TIR.intact.gff3 $genome.TIR.intact.bed ../`;
+`touch $genome.TIR.intact.raw.fa` unless -e "$genome.TIR.intact.raw.fa";
+`cp $genome.TIR.intact.raw.fa $genome.TIR.intact.raw.gff3 $genome.TIR.intact.raw.bed ../`;
 chdir '../..';
 
 # check results
 chomp ($date = `date`);
-die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.raw.fa";
-if (-s "$genome.EDTA.raw/$genome.TIR.raw.fa"){
+die "Error: TIR results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.TIR.intact.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.TIR.intact.raw.fa"){
 	print STDERR "$date\tFinish finding TIR candidates.\n\n";
 	} else {
 	print STDERR "Warning: The TIR result file has 0 bp!\n\n";
@@ -655,28 +656,28 @@ if ($beta2 == 1){
 # annotate and remove non-Helitron candidates
 `${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 `perl $cleanup_misclas $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
-`mv $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln $genome.Helitron.raw.fa`;
-`cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.fa.anno.list`;
-`cp $genome.Helitron.intact.fa.anno.list ../`;
+`mv $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln $genome.Helitron.intact.raw.fa`;
+`cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.raw.fa.anno.list`;
+`cp $genome.Helitron.intact.raw.fa.anno.list ../`;
 } else {
-`cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln $genome.Helitron.raw.fa`;
+`cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln $genome.Helitron.intact.raw.fa`;
 }
 
 # get intact Helitrons and gff3
-`cp $genome.Helitron.raw.fa $genome.Helitron.intact.fa`;
-`perl $make_bed $genome.Helitron.intact.fa > $genome.Helitron.intact.bed`;
-`perl $bed2gff $genome.Helitron.intact.bed HEL > $genome.Helitron.intact.gff3`;
+`cp $genome.Helitron.raw.fa $genome.Helitron.intact.raw.fa`;
+`perl $make_bed $genome.Helitron.intact.raw.fa > $genome.Helitron.intact.raw.bed`;
+`perl $bed2gff $genome.Helitron.intact.raw.bed HEL > $genome.Helitron.intact.raw.gff3`;
 	}
 
 # copy result files out
-`touch $genome.Helitron.raw.fa` unless -e "$genome.Helitron.raw.fa";
-`cp $genome.Helitron.raw.fa $genome.Helitron.intact.fa $genome.Helitron.intact.gff3 $genome.Helitron.intact.bed ../`;
+`touch $genome.Helitron.intact.raw.fa` unless -e "$genome.Helitron.intact.raw.fa";
+`cp $genome.Helitron.intact.raw.fa $genome.Helitron.intact.raw.gff3 $genome.Helitron.intact.raw.bed ../`;
 chdir '../..';
 
 # check results
 chomp ($date = `date`);
-die "Error: Helitron results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.Helitron.raw.fa";
-if (-s "$genome.EDTA.raw/$genome.Helitron.raw.fa"){
+die "Error: Helitron results not found!\n\n" unless -e "$genome.EDTA.raw/$genome.Helitron.intact.raw.fa";
+if (-s "$genome.EDTA.raw/$genome.Helitron.intact.raw.fa"){
 	print STDERR "$date\tFinish finding Helitron candidates.\n\n";
 	} else {
 	print STDERR "$date\tWarning: The Helitron result file has 0 bp!\n\n";
