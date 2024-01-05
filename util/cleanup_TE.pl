@@ -60,7 +60,7 @@ $cds = "$cds.code";
 `awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA >> $cds.TE`; #CDS seqs appears >=10 times in masking the TE rawlib are considered TEs and removed from the CDS file
 `awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA -ex > $cds.rmTE2`;
 
-# 3rd attempt, mask remaining TE seqs in cds with identified TE seqs
+# 3rd attempt, mask remaining TE seqs in cds with potential TE seqs identified in cds ($cds.TE)
 if (-s "$cds.TE"){
 	`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $cds.TE -cutoff 225 $cds.rmTE2`;
 	if (-s "$cds.rmTE2.masked"){

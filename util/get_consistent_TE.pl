@@ -3,8 +3,9 @@ use strict;
 use warnings;
 #usage: This script helps to find TEs that are consistently annotated in a genome
 #Shujun Ou (shujun.ou.1@gmail.com) 04/25/2021
-#example:
-#	perl ~/las/git_bin/EDTA/util/find_flTE.pl Gy14_v2.0_final.fa.454.out | perl get_consistent_TE.pl - Gy14_v2.0_final.fa.454.out.TE.fa.stat|sort -k2,2 -nr|less -S
+#usage:
+#	perl ~/bin/EDTA/util/evaluation.pl -anno genome.RM.out -maxcount 0 -threads 50 -genome genome.fa 
+#	perl ~/bin/EDTA/util/find_flTE.pl genome.RM.out | perl get_consistent_TE.pl - genome.RM.out.TE.fa.stat|sort -k2,2 -nr|less -S
 
 my $rmout = $ARGV[0]; #the original RepeatMasker out file can be preprocess by find_flTE.pl to find full-length TEs
 my $stat = $ARGV[1];
@@ -27,7 +28,7 @@ while (<STAT>){
 	$id1 =~ s/\|.*//;
 	$id2 =~ s/\|.*//;
 	next unless defined $anno{$id1} and defined $anno{$id2};
-#	print "$anno{$id1}\t$id1\t$id2\n" if $anno{$id1} eq $anno{$id2};
+	#print "$anno{$id1}\t$id1\t$id2\n" if $anno{$id1} eq $anno{$id2}; #test
 	push @{$consistent{$anno{$id1}}}, $id1;
 	push @{$consistent{$anno{$id1}}}, $id2;
 	}
