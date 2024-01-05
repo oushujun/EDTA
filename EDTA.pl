@@ -8,7 +8,7 @@ use Pod::Usage;
 use POSIX qw(strftime);
 use Cwd qw(abs_path);
 
-my $version = "v2.1.5";
+my $version = "v2.2.0";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -21,6 +21,7 @@ my $version = "v2.1.5";
 #v1.9 07/24/2020
 #v2.0 11/25/2021
 #v2.1 10/10/2022
+#v2.2 01/05/2024
 
 print "
 ########################################################
@@ -56,7 +57,7 @@ perl EDTA.pl [options]
 				This option is not mandatory. It's totally OK if no file is
 				provided (default).
 	--rmlib	[File]	Provide the RepeatModeler library containing classified TEs to enhance
-			the sensitivity especially for nonLTRs. If no file is provided (default),
+			the sensitivity especially for LINEs. If no file is provided (default),
 			EDTA will generate such file for you.
 	--sensitive [0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0,
 				default). This step may help to recover some TEs.
@@ -69,8 +70,7 @@ perl EDTA.pl [options]
 	--maxdiv [0-100]	Maximum divergence (0-100%, default: 40) of repeat fragments comparing to 
 				library sequences.
 	--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation.
-				(--anno 1 required). Default: 0. This step does not change 
-				the annotation result.
+				(--anno 1 required). Default: 1.
 	--exclude [File]	Exclude regions (bed format) from TE masking in the MAKER.masked
 				output. Default: undef. (--anno 1 required).
 	--force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit
@@ -79,7 +79,8 @@ perl EDTA.pl [options]
 			Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list.
 			Default: 1.3e-8 (per bp per year, from rice).
 	--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
-	--repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
+	--repeatmasker	[path]	The directory containing RepeatMasker (default: read from ENV)
+	--annosine	[path]	The directory containing AnnoSINE_v2 (default: read from ENV)
 	--check_dependencies Check if dependencies are fullfiled and quit
 	--threads|-t [int]	Number of theads to run this script (default: 4)
 	--debug	 [0|1]	Retain intermediate files (default: 0)
@@ -98,7 +99,7 @@ my $cds = ''; #a fasta file containing cds of this genome.
 my $sensitive = 0; #0, will not run RepeatModeler to get remaining TEs (default). 1, run RepeatModeler
 my $anno = 0; #0, will not annotate whole-genome TE (default). 1, annotate with RepeatMasker
 my $rmout = ''; #a RM .out file for custom homology-based annotation.
-my $evaluate = 0; #1 will evaluate the consistancy of the TE annotation
+my $evaluate = 1; #1 will evaluate the consistancy of the TE annotation
 my $exclude = ''; #a bed file exclude from TE annotation
 my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
@@ -106,7 +107,7 @@ my $threads = 4;
 my $maxdiv = 40; # maximum divergence from lib sequences for fragmented repeats
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
-my $EDTA_process = "$script_path/EDTA_processJ.pl";
+my $EDTA_process = "$script_path/EDTA_processK.pl";
 my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
 my $cleanup_TE = "$script_path/util/cleanup_TE.pl";
 my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
@@ -146,6 +147,7 @@ my $blastplus = "";
 my $mdust = "";
 my $trf = "";
 my $GRF = "";
+my $annosine = "";
 
 my $beta2 = 0; #0, beta2 is not ready. 1, developer mode.
 #my $reanno = 0; #0, use existing whole-genome RM results (beta); 1, de novo Repeatmasker using the EDTA library (default)
@@ -173,6 +175,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'repeatmasker=s'       => \$repeatmasker,
 		  'tesorter=s'           => \$TEsorter,
 		  'blast=s'              => \$blastplus,
+		  'annosine=s'		 => \$annosine,
 		  'threads|t=i'          => \$threads,
 		  'check_dependencies!'  => \$check_dependencies,
                   'debug=i'              => \$debug,
@@ -215,14 +218,15 @@ if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter i
 
 
 # define RepeatMasker -pa parameter
-my $rm_threads = int($threads/4);
+#my $rm_threads = int($threads/4);
+my $rm_threads = $threads;
 
 chomp (my $date = `date`);
 print "$date\tDependency checking:\n";
 
 # check files and dependencies
 die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
-die "The script EDTA_processJ.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
+die "The script EDTA_processK13.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
 die "The script cleanup_TE.pl is not found in $cleanup_TE!\n" unless -s $cleanup_TE;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
@@ -258,6 +262,12 @@ $genometools =~ s/\s+$//;
 $genometools = dirname($genometools) unless -d $genometools;
 $genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
 die "Error: gt is not found in the genometools path $genometools!\n" unless -X "${genometools}gt";
+# AnnoSINE
+chomp ($annosine=`which annosine2 2>/dev/null`) if $annosine eq '';
+$annosine =~ s/\s+$//;
+$annosine = dirname($annosine) unless -d $annosine;
+$annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
+die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2.py" or -X "${annosine}/bin/AnnoSINE_v2.py" or -X "${annosine}annosine2");
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
@@ -443,40 +453,41 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --convert_seq_name 0 --rmlib $RMlib`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --convert_seq_name 0 --rmlib $RMlib`;
 
 chdir "$genome.EDTA.raw";
 
 # Force to use rice TEs when raw.fa is empty
 if ($force eq 1){
 	`cp $rice_LTR $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
-	`cp $rice_nonLTR $genome.nonLTR.raw.fa` unless -s "$genome.nonLTR.raw.fa";
+	`cp $rice_nonLTR $genome.LINE.raw.fa` unless -s "$genome.LINE.raw.fa";
+	`cp $rice_nonLTR $genome.SINE.raw.fa` unless -s "$genome.SINE.raw.fa";
 	`cp $rice_TIR $genome.TIR.raw.fa` unless -s "$genome.TIR.raw.fa";
 	`cp $rice_helitron $genome.Helitron.raw.fa` unless -s "$genome.Helitron.raw.fa";
 	}
 
 # check results and report status
 die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact LTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.LTR.raw.fa";
-die "ERROR: Raw nonLTR results not found in $genome.EDTA.raw/$genome.nonLTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of nonLTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -e "$genome.nonLTR.raw.fa"; # allow empty file
+die "ERROR: Raw SINE results not found in $genome.EDTA.raw/$genome.SINE.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of SINEs in your genome.\n" unless -e "$genome.SINE.raw.fa"; # allow empty file
+die "ERROR: Raw LINE results not found in $genome.EDTA.raw/$genome.LINE.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of LINEs in your genome.\n" unless -e "$genome.LINE.raw.fa"; # allow empty file
 die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact TIRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.TIR.raw.fa";
 die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact Helitrons in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.Helitron.raw.fa";
 
 # combine intact TEs
-`cat $genome.LTR.intact.fa $genome.TIR.intact.fa $genome.Helitron.intact.fa > $genome.EDTA.intact.fa`;
-`cat $genome.TIR.intact.bed $genome.Helitron.intact.bed | perl $bed2gff - TE_struc > $genome.EDTA.intact.gff3.raw`;
-`cat $genome.LTR.intact.gff3 >> $genome.EDTA.intact.gff3.raw`;
-`sort -sV -k1,1 -k4,4 $genome.EDTA.intact.gff3.raw | grep -v '^#' > $genome.EDTA.intact.gff3; rm $genome.EDTA.intact.gff3.raw`;
-`cp $genome.EDTA.intact.gff3 ../`;
+`cat $genome.LTR.intact.fa $genome.TIR.intact.fa $genome.Helitron.intact.fa > $genome.EDTA.intact.raw.fa`;
+`cat $genome.TIR.intact.bed $genome.Helitron.intact.bed | perl $bed2gff - TE_struc > $genome.EDTA.intact.gff3.temp`;
+`cat $genome.LTR.intact.gff3 >> $genome.EDTA.intact.gff3.temp`;
+`sort -sV -k1,1 -k4,4 $genome.EDTA.intact.gff3.temp | grep -v '^#' > $genome.EDTA.intact.raw.gff3; rm $genome.EDTA.intact.gff3.temp`;
 
 chomp ($date = `date`);
 print "$date\tObtain raw TE libraries finished.
-\t\t\t\tAll intact TEs found by EDTA: \n\t\t\t\t\t$genome.EDTA.intact.fa\n\t\t\t\t\t$genome.EDTA.intact.gff3\n\n";
+\t\t\t\tAll intact TEs found by EDTA: \n\t\t\t\t\t$genome.EDTA.intact.raw.fa \n\t\t\t\t\t$genome.EDTA.intact.raw.gff3\n\n";
 chdir "..";
 
 
-##################################################
-####### Filter LTR/TIR/Helitron candidates #######
-##################################################
+############################################################
+####### Filter LTR/SINE/LINE/TIR/Helitron candidates #######
+############################################################
 
 FILTER:
 
@@ -488,12 +499,14 @@ print "$date\tPerform EDTA advance filtering for raw TE candidates and generate 
 `rm ./$genome.EDTA.combine/* 2>/dev/null` if $overwrite == 1;
 
 # Filter raw TE candidates and the make stage 1 library
-`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -nonltr $genome.EDTA.raw/$genome.nonLTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads -protlib $protlib`;
+`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -ltrint $genome.EDTA.raw/$genome.LTR.intact.raw.fa -line $genome.EDTA.raw/$genome.LINE.raw.fa -sine $genome.EDTA.raw/$genome.SINE.raw.fa -tir $genome.EDTA.raw/$genome.TIR.intact.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.intact.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads`; #new processor
+#`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -nonltr $genome.EDTA.raw/$genome.nonLTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads -protlib $protlib`; #old processor
 
 # check results, remove intermediate files, and report status
 die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.EDTA.fa.stg1" unless -s "$genome.EDTA.combine/$genome.EDTA.fa.stg1";
 chdir "$genome.EDTA.combine";
-`rm ./$genome.LTR.raw* ./$genome.TIR.raw* ./$genome.Helitron.raw* ./$genome.TIR.Helitro* ./$genome.LTR.TIR.Helitron.fa.stg1.* 2>/dev/null` unless $debug eq 1;
+`rm ./$genome.LTR.raw.fa*Q* ./$genome.LTR.intact.raw.fa*Q* ./$genome.TIR.intact.raw.fa*Q* ./$genome.Helitron.intact.raw.fa*Q* ./$genome.TIR.Helitron.fa*Q* $genome*tbl $genome*out $genome*cleanup $genome*RMoutput $genome*stg1.raw* $genome.LTR.raw.fa-* $genome.LTR.intact.raw.fa-* $genome.TIR.intact.raw.fa-* $genome.Helitron.intact.raw.fa-* $genome.LINE_LTR.raw.fa $genome.LTR.SINE.LINE.fa *.ndb *.not *.ntf *.nto *.cat.gz *.cat *.masked *.ori.out *.nhr *.nin *.nsq 2>/dev/null` unless $debug eq 1;
+
 chdir "..";
 chomp ($date = `date`);
 print "$date\tEDTA advance filtering finished.\n\n";
@@ -517,7 +530,7 @@ chdir "$genome.EDTA.final";
 `cp ../$genome.EDTA.combine/$genome.EDTA.fa.stg1 ./`;
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
-`cp ../$genome.EDTA.raw/$genome.EDTA.intact.fa ./$genome.EDTA.intact.fa.raw`;
+`cp ../$genome.EDTA.combine/$genome.EDTA.intact.fa.cln ./$genome.EDTA.intact.fa.raw`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff3 ./`;
 `cp ../$exclude ./` if $exclude ne '';
 
@@ -548,7 +561,7 @@ if ($cds ne ''){
 
 	# cleanup TE-related sequences in the CDS file with TEsorter
 	print "$date\tClean up TE-related sequences in the CDS file with TEsorter:\n\n";
-	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa`;
+	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa 2>/dev/null`;
 	`rm ./$cds ./$cds.code.r* 2>/dev/null` unless $debug eq 1;
 	$cds = "$cds.code.noTE";
 
