@@ -15,9 +15,9 @@ use Pod::Usage;
 #	$genome
 
 ## Output:
-#	$genome.LTR.raw.fa, $genome.LTR.intact.fa, $genome.LTR.intact.gff3
-#	$genome.TIR.raw.fa, $genome.TIR.intact.fa, $genome.TIR.intact.gff3
-#	$genome.Helitron.raw.fa, $genome.Helitron.intact.fa, $genome.Helitron.intact.gff3
+#	$genome.LTR.raw.fa, $genome.LTR.intact.raw.fa, $genome.LTR.intact.raw.gff3
+#	$genome.TIR.intact.fa, $genome.TIR.intact.raw.gff3
+#	$genome.Helitron.intact.raw.fa, $genome.Helitron.intact.raw.gff3
 #	$genome.LINE.raw.fa, $genome.SINE.raw.fa
 
 my $usage = "\nObtain raw TE libraries using various structure-based programs
@@ -392,7 +392,9 @@ if ($beta2 == 1){
 `touch $genome.LTRlib.fa` unless -e "$genome.LTRlib.fa";
 `cp $genome.LTRlib.fa $genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
-`cp $genome.LTR.intact.raw.fa $genome.LTR.intact.raw.gff3 ../`;
+`cp $genome.LTR.intact.raw.fa $genome.LTR.intact.raw.gff3 ../ 2>/dev/null`;
+`cp $genome.LTR.intact.fa ../$genome.LTR.intact.raw.fa` if -s "$genome.LTR.intact.fa";
+`cp $genome.LTR.intact.gff3 ../$genome.LTR.intact.raw.gff3` if -s "$genome.LTR.intact.gff3";
 chdir '../..';
 
 # check results
@@ -592,7 +594,7 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.intact.raw.fa`;
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.raw.fa.anno.list`;
-	`cp $genome.TIR.intact.fa.anno.list ../`;
+	`cp $genome.TIR.intact.raw.fa.anno.list ../`;
 	} else {
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.intact.raw.fa`;
 	}
@@ -604,7 +606,9 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 
 # copy result files out
 `touch $genome.TIR.intact.raw.fa` unless -e "$genome.TIR.intact.raw.fa";
-`cp $genome.TIR.intact.raw.fa $genome.TIR.intact.raw.gff3 $genome.TIR.intact.raw.bed ../`;
+`cp $genome.TIR.intact.raw.fa $genome.TIR.intact.raw.gff3 $genome.TIR.intact.raw.bed ../ 2>/dev/null`;
+`cp $genome.TIR.intact.fa ../$genome.TIR.intact.raw.fa` if -s "$genome.TIR.intact.fa";
+`cp $genome.TIR.intact.gff3 ../$genome.TIR.intact.raw.gff3` if -s "$genome.TIR.intact.gff3";
 chdir '../..';
 
 # check results
@@ -634,8 +638,8 @@ chdir "$genome.EDTA.raw/Helitron";
 
 # Try to recover existing results
 chomp ($date = `date`);
-if ($overwrite eq 0 and -s "$genome.Helitron.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.Helitron.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+if ($overwrite eq 0 and -s "$genome.Helitron.intact.raw.fa"){
+	print STDERR "$date\tExisting result file $genome.Helitron.intact.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
@@ -664,14 +668,15 @@ if ($beta2 == 1){
 }
 
 # get intact Helitrons and gff3
-`cp $genome.Helitron.raw.fa $genome.Helitron.intact.raw.fa`;
 `perl $make_bed $genome.Helitron.intact.raw.fa > $genome.Helitron.intact.raw.bed`;
 `perl $bed2gff $genome.Helitron.intact.raw.bed HEL > $genome.Helitron.intact.raw.gff3`;
 	}
 
 # copy result files out
 `touch $genome.Helitron.intact.raw.fa` unless -e "$genome.Helitron.intact.raw.fa";
-`cp $genome.Helitron.intact.raw.fa $genome.Helitron.intact.raw.gff3 $genome.Helitron.intact.raw.bed ../`;
+`cp $genome.Helitron.intact.raw.fa $genome.Helitron.intact.raw.gff3 $genome.Helitron.intact.raw.bed ../ 2>/dev/null`;
+`cp $genome.Helitron.intact.fa ../$genome.Helitron.intact.raw.fa` if -s "$genome.Helitron.intact.fa";
+`cp $genome.Helitron.intact.gff3 ../$genome.Helitron.intact.raw.gff3` if -s "$genome.Helitron.intact.gff3";
 chdir '../..';
 
 # check results
