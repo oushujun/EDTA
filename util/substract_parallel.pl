@@ -10,6 +10,7 @@ use threads::shared;
 # 05/30/2023, ChatGPT v3.5
 
 my $usage = "\n\tperl substract_parallel.pl minuend.list subtrahend.list thread_num\n\n";
+die $usage unless @ARGV >= 2;
 
 ## read thread number
 my $threads = 4;
