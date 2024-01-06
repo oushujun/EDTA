@@ -16,11 +16,7 @@ open(my $rm_out_file, ">", $ARGV[1]) or die "Cannot open output.out: $!";
 # Read and process the GFF3 file line by line
 while (my $line = <$gff3_file>) {
     chomp $line;
-
-    # Skip header lines or comments
     next if $line =~ /^#/;
-
-    # Split the line into fields
     my @fields = split /\t/, $line;
 
     # Extract necessary information (adjust indices based on your GFF3 structure)
@@ -33,9 +29,10 @@ while (my $line = <$gff3_file>) {
     my $strand = $fields[6];
     my $phase = $fields[7];
     my $attributes = $fields[8];
+    my ($family, $classification) = ($1, $2) if $attributes =~ /Name=(.*);Classification=(.*);Sequence_ontology/i;
 
     # Format the output for RepeatMasker .out (modify according to the expected format)
-    printf $rm_out_file "0 0 0 0\t$seqName\t$start\t$end\tNA\t$strand\tLINE\tLINE\tNA NA NA NA\n";
+    printf $rm_out_file "0 0 0 0\t$seqName\t$start\t$end\tNA\t$strand\t$family\t$classification\tNA NA NA NA\n";
 }
 
 # Close the filehandles
