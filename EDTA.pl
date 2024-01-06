@@ -24,10 +24,10 @@ my $version = "v2.2.0";
 #v2.2 01/05/2024
 
 print "
-########################################################
-##### Extensive de-novo TE Annotator (EDTA) $version  ####
-##### Shujun Ou (shujun.ou.1\@gmail.com)             ####
-########################################################
+#########################################################
+##### Extensive de-novo TE Annotator (EDTA) $version  #####
+##### Shujun Ou (shujun.ou.1\@gmail.com)             #####
+#########################################################
 \n\nParameters: @ARGV\n\n\n";
 
 
@@ -128,6 +128,7 @@ my $buildSummary = "$script_path/util/buildSummary.pl"; #modified from RepeatMas
 my $filter_gff = "$script_path/util/filter_gff3.pl";
 my $combine_RMrows = "$script_path/util/combine_RMrows.pl";
 my $RMout2bed = "$script_path/util/RMout2bed.pl";
+my $gff2RMout = "$script_path/util/gff2RMout.pl";
 my $bed2gff = "$script_path/util/bed2gff.pl";
 my $gff2bed = "$script_path/util/gff2bed.pl";
 my $get_frag = "$script_path/util/get_frag.pl";
@@ -245,6 +246,7 @@ die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $cal
 die "The script buildSummary.pl is not found in $buildSummary!\n" unless -s $buildSummary;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
 die "The script RMout2bed.pl is not found in $RMout2bed!\n" unless -s $RMout2bed;
+die "The script gff2RMout.pl is not found in $gff2RMout!\n" unless -s $gff2RMout;
 die "The script combine_RMrows.pl is not found in $combine_RMrows!\n" unless -s $combine_RMrows;
 die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
 die "The script gff2bed.pl is not found in $gff2bed!\n" unless -s $gff2bed;
@@ -442,9 +444,9 @@ $step = uc $step;
 goto $step;
 
 
-##################################################
-####### Get raw LTR/TIR/Helitron candidates ######
-##################################################
+############################################################
+####### Get raw LTR/SINE/LINE/TIR/Helitron candidates ######
+############################################################
 
 ALL:
 
@@ -460,23 +462,24 @@ chdir "$genome.EDTA.raw";
 # Force to use rice TEs when raw.fa is empty
 if ($force eq 1){
 	`cp $rice_LTR $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
+	`cp $rice_LTR $genome.LTR.intact.raw.fa` unless -s "$genome.LTR.intact.raw.fa";
 	`cp $rice_nonLTR $genome.LINE.raw.fa` unless -s "$genome.LINE.raw.fa";
 	`cp $rice_nonLTR $genome.SINE.raw.fa` unless -s "$genome.SINE.raw.fa";
-	`cp $rice_TIR $genome.TIR.raw.fa` unless -s "$genome.TIR.raw.fa";
-	`cp $rice_helitron $genome.Helitron.raw.fa` unless -s "$genome.Helitron.raw.fa";
+	`cp $rice_TIR $genome.TIR.intact.raw.fa` unless -s "$genome.TIR.intact.raw.fa";
+	`cp $rice_helitron $genome.Helitron.intact.raw.fa` unless -s "$genome.Helitron.intact.raw.fa";
 	}
 
 # check results and report status
-die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact LTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.LTR.raw.fa";
+die "ERROR: Raw LTR results not found in $genome.EDTA.raw/$genome.LTR.raw.fa and $genome.EDTA.raw/$genome.LTR.intact.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact LTRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless (-s "$genome.LTR.raw.fa" and -s "$genome.LTR.intact.raw.fa");
 die "ERROR: Raw SINE results not found in $genome.EDTA.raw/$genome.SINE.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of SINEs in your genome.\n" unless -e "$genome.SINE.raw.fa"; # allow empty file
 die "ERROR: Raw LINE results not found in $genome.EDTA.raw/$genome.LINE.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of LINEs in your genome.\n" unless -e "$genome.LINE.raw.fa"; # allow empty file
-die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact TIRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.TIR.raw.fa";
-die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact Helitrons in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.Helitron.raw.fa";
+die "ERROR: Raw TIR results not found in $genome.EDTA.raw/$genome.TIR.intact.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact TIRs in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.TIR.intact.raw.fa";
+die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.intact.raw.fa\n\tIf you believe the program is working properly, this may be caused by the lack of intact Helitrons in your genome. Consider to use the --force 1 parameter to overwrite this check\n" unless -s "$genome.Helitron.intact.raw.fa";
 
 # combine intact TEs
-`cat $genome.LTR.intact.fa $genome.TIR.intact.fa $genome.Helitron.intact.fa > $genome.EDTA.intact.raw.fa`;
-`cat $genome.TIR.intact.bed $genome.Helitron.intact.bed | perl $bed2gff - TE_struc > $genome.EDTA.intact.gff3.temp`;
-`cat $genome.LTR.intact.gff3 >> $genome.EDTA.intact.gff3.temp`;
+`cat $genome.LTR.intact.raw.fa $genome.TIR.intact.raw.fa $genome.Helitron.intact.raw.fa > $genome.EDTA.intact.raw.fa`;
+`cat $genome.TIR.intact.raw.bed $genome.Helitron.intact.raw.bed | perl $bed2gff - TE_struc > $genome.EDTA.intact.gff3.temp`;
+`cat $genome.LTR.intact.raw.gff3 >> $genome.EDTA.intact.gff3.temp`;
 `sort -sV -k1,1 -k4,4 $genome.EDTA.intact.gff3.temp | grep -v '^#' > $genome.EDTA.intact.raw.gff3; rm $genome.EDTA.intact.gff3.temp`;
 
 chomp ($date = `date`);
@@ -512,15 +515,15 @@ chomp ($date = `date`);
 print "$date\tEDTA advance filtering finished.\n\n";
 
 
-#####################################
-###### Final TE/SINE/LINE scan ######
-#####################################
+####################################
+###### Final purge CDS in TEs ######
+####################################
 
 FINAL:
 
 # report status
 chomp ($date = `date`);
-print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive TE library:\n\n";
+print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive TE library.\n\n";
 
 # Make the final working directory
 `mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
@@ -530,8 +533,9 @@ chdir "$genome.EDTA.final";
 `cp ../$genome.EDTA.combine/$genome.EDTA.fa.stg1 ./`;
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
-`cp ../$genome.EDTA.combine/$genome.EDTA.intact.fa.cln ./$genome.EDTA.intact.fa.raw`;
-`cp ../$genome.EDTA.raw/$genome.EDTA.intact.gff3 ./`;
+`cp ../$genome.EDTA.combine/$genome.EDTA.intact.fa.cln ./$genome.EDTA.intact.fa.cln`;
+`cp ../$genome.EDTA.raw/$genome.EDTA.intact.raw.fa ./`;
+`cp ../$genome.EDTA.raw/$genome.EDTA.intact.raw.gff3 ./`;
 `cp ../$exclude ./` if $exclude ne '';
 
 # identify remaining TEs in the filtered RM2 library
@@ -554,49 +558,45 @@ if ($sensitive == 1 and -s "$genome.RM2.fa"){
 	`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
 	}
 
-
-if ($cds ne ''){
+# remove CDS in the non-redundant library and intact TEs
+if (-s "$cds"){
 	# report status
 	chomp ($date = `date`);
 
 	# cleanup TE-related sequences in the CDS file with TEsorter
-	print "$date\tClean up TE-related sequences in the CDS file with TEsorter:\n\n";
+	print "$date\tClean up TE-related sequences in the CDS file with TEsorter.\n\n";
 	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa 2>/dev/null`;
 	`rm ./$cds ./$cds.code.r* 2>/dev/null` unless $debug eq 1;
+	die "\tERROR: The $cds file is empty after TE clean up. Please check the file and $cds.code.noTE.\n\n" unless -s "$cds.code.noTE";
 	$cds = "$cds.code.noTE";
 
 	# remove cds-related sequences in the EDTA library
-	print "\t\t\t\tRemove CDS-related sequences in the EDTA library:\n\n";
-	if (-s "$cds"){
-		my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
-		`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
-		$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.raw 2>/dev/null`;
-		`cp $genome.EDTA.intact.fa.raw $genome.EDTA.intact.fa.raw.masked` if $rm_status =~ /No repetitive sequences were detected/i;
-		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
-		`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.raw.masked > $genome.EDTA.intact.fa.rmCDS`;
+	print "\t\t\t\tRemove CDS-related sequences in the EDTA library.\n\n";
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
+	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 
-		# remove gene seq in intact TEs
-		if (-s "$genome.EDTA.intact.fa.raw.masked.cleanup"){
-			`grep -v -P "Only|head|tail" $genome.EDTA.intact.fa.raw.masked.cleanup | awk '{if (\$2>=0.8) print \$1}' |sort -u | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist`;
-			`perl $output_by_list 1 $genome.EDTA.intact.fa.raw 2 $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist -ex -FA > $genome.EDTA.intact.fa`; #update intact.fa
-			`perl $filter_gff $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist > $genome.EDTA.intact.gff3.new`;
-			`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\t\$id\nName\t\$id" if defined \$id' $genome.EDTA.intact.gff3.removed >> $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist`;
-			`perl $filter_gff $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.raw.masked.cleanup.rmlist > $genome.EDTA.intact.gff3.new`;
-			`mv $genome.EDTA.intact.gff3.new $genome.EDTA.intact.gff3`; #update intact.gff
-			} else {
-			`cp $genome.EDTA.intact.fa.rmCDS $genome.EDTA.intact.fa`;
-			}
-		} else {
-		print STDERR "\t\t\t\tWarning: No CDS left after clean up ($cds.code.noTE empty). Will not clean CDS in the raw lib.\n\n";
-		`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
-		`cp $genome.EDTA.intact.fa.raw $genome.EDTA.intact.fa`;
-		}
-
+	# remove cds-related sequences in intact TEs
+	print "\t\t\t\tRemove CDS-related sequences in intact TEs.\n\n";
+	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>/dev/null`;
+	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.cln.masked > $genome.EDTA.intact.fa.cln.rmCDS`;
+	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa`;
 	} else {
 	print "\t\t\t\tSkipping the CDS cleaning step (--cds [File]) since no CDS file is provided or it's empty.\n\n";
-	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
-	`cp $genome.EDTA.intact.fa.raw $genome.EDTA.intact.fa`;
+	copy_file("$genome.EDTA.raw.fa", "./$genome.EDTA.raw.fa.cln");
+	copy_file("$genome.EDTA.intact.fa.cln", "./$genome.EDTA.intact.fa");
 	}
+
+## generate clean intact gff3
+# get a dirty list of intact.gff
+`sed 's/.*Name=//; s/;Classifica.*//' $genome.EDTA.intact.raw.gff3 | sort -u > $genome.EDTA.intact.raw.gff3.famlist`;
+`grep \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.dirtlist`;
+# first attempt purging the gff3
+`perl $filter_gff $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.raw.gff3.dirtlist > $genome.EDTA.intact.gff3`;
+# remake the remove list an purge again
+`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\\t\$id\nName\\t\$id" if defined \$id' $genome.EDTA.intact.raw.gff3.removed >> $genome.EDTA.intact.raw.gff3.dirtlist`;
+`perl $filter_gff $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.raw.gff3.dirtlist > $genome.EDTA.intact.gff3`;
 
 # Final rounds of redundancy removal and make final EDTA library
 `perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blastplus 2>/dev/null`;
@@ -605,12 +605,7 @@ if ($cds ne ''){
 `perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
 #`perl $rename_TE $genome.EDTA.raw.fa.cln.cln | perl $format_TElib - > $genome.EDTA.TElib.fa`;
 
-# check results
-die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
-die "ERROR: Intact TE annotation not found in $genome.EDTA.intact.gff3" unless -s "$genome.EDTA.intact.gff3";
-copy_file("$genome.EDTA.TElib.fa", "..");
-copy_file("$genome.EDTA.intact.gff3", "..");
-
+# identify novel TEs using the user provided $HQlib
 if ($HQlib ne ''){
 	# report status
 	chomp ($date = `date`);
@@ -622,7 +617,6 @@ if ($HQlib ne ''){
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	rename "$genome.EDTA.TElib.fa", "$genome.EDTA.TElib.ori.fa";
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
-	copy_file("$genome.EDTA.TElib.fa", "..");
 	copy_file("$genome.EDTA.TElib.novel.fa", "..");
 	}
 
@@ -633,10 +627,17 @@ die "ERROR: The masked file for $genome.EDTA.intact.fa is not found! The RepeatM
 `perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
 rename "$genome.EDTA.intact.fa.rename", "$genome.EDTA.intact.fa";
 rename "$genome.EDTA.intact.gff3.rename", "$genome.EDTA.intact.gff3";
-`cp $genome.EDTA.intact.gff3 ../`; #replace the intact gff that has no lib family info
+#`cp $genome.EDTA.intact.gff3 ../`; #replace the intact gff that has no lib family info
+
+# check results
+die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
+die "ERROR: Intact TE annotation not found in $genome.EDTA.intact.gff3" unless -s "$genome.EDTA.intact.gff3";
+copy_file("$genome.EDTA.TElib.fa", "..");
+copy_file("$genome.EDTA.intact.fa", "..");
+copy_file("$genome.EDTA.intact.gff3", "..");
 
 # remove intermediate files
-`rm $genome.EDTA.intact.fa.raw.* $genome.EDTA.raw.fa.* $genome.EDTA.TElib.fa.* $genome.LTR.TIR.Helitron.fa.stg1.* $genome.masked *.cat.gz 2>/dev/null` if $debug eq 0;
+`rm $genome.EDTA.intact.fa.cln.* $genome.EDTA.raw.fa.* $genome.EDTA.TElib.fa.* $genome.LTR.TIR.Helitron.fa.stg1.* $genome.masked *.cat.gz 2>/dev/null` if $debug eq 0;
 
 # report status
 chomp ($date = `date`);
@@ -709,6 +710,7 @@ if ($anno == 1){
 	`perl $gff2bed $genome.EDTA.TEanno.gff3 structural > $genome.EDTA.TEanno.bed`;
 	`perl $split_overlap $genome.EDTA.TEanno.bed $genome.EDTA.TEanno.split.bed`;
 	`perl $bed2gff $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.split.gff3`;
+	`perl $gff2RMout $genome.EDTA.TEanno.split.gff3 $genome.EDTA.TEanno.split.out`;
 
 	# make summary table for the non-overlapping annotation
 	`perl $count_base $genome > $genome.stats`;
