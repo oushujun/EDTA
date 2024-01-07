@@ -3,22 +3,15 @@ import subprocess
 import multiprocessing as mp
 import pandas as pd
 
-from M1_2_full_coverage import process_result
+from process_homology import process_result
 
 # from typing import TYPE_CHECKING
 # if TYPE_CHECKING:
 #     from main import TIRLearner
 
 import prog_const
-spliter = prog_const.spliter
-TIR_types = prog_const.TIR_types
 
 
-
-blast_header = ("qseqid", "sseqid", "length", "pident", "gaps", "mismatch",
-                "qstart", "qend", "sstart", "send", "evalue", "qcovhsp")
-blast_type = {"length": int, "gaps": int, "mismatch": int,
-                "qstart": int, "qend": int, "sstart": int, "send": int}
 
 
 # def processHomology(file, species):
@@ -41,8 +34,13 @@ blast_type = {"length": int, "gaps": int, "mismatch": int,
 #     return homo
 
 
-def process_homology(file_name, species, TIR_type):
-    blast = f"{file_name}{spliter}blast{spliter}{species}_{TIR_type}_RefLib"
+def process_homology_eighty_similarity(file_name, species, TIR_type):
+    blast_header = ("qseqid", "sseqid", "length", "pident", "gaps", "mismatch",
+                    "qstart", "qend", "sstart", "send", "evalue", "qcovhsp")
+    blast_type = {"length": int, "gaps": int, "mismatch": int,
+                  "qstart": int, "qend": int, "sstart": int, "send": int}
+
+    blast = f"{file_name}{prog_const.spliter}blast{prog_const.spliter}{species}_{TIR_type}_RefLib"
     df = None
     if os.path.exists(blast) and os.path.getsize(blast) != 0:
         # df = pd.read_csv(blast, sep='\t', header=None, names=blast_header, dtype=blast_type, engine="pyarrow")
@@ -61,14 +59,11 @@ def process_homology(file_name, species, TIR_type):
     return df
 
 
-def execute(TIRLearner_instance) -> pd.DataFrame:
+def select_eighty_similarity(TIRLearner_instance) -> pd.DataFrame:
     print("Module 2, Step 4: Select 80% similar entries from Blast results")
-    processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
-    t = TIRLearner_instance.cpu_cores
-    species = TIRLearner_instance.species
-
-    mp_args_list = [(processedGRFmite_file, species, TIR_type) for TIR_type in TIR_types]
-    with mp.Pool(int(t)) as pool:
-        df_list = pool.starmap(process_homology, mp_args_list)
-    subprocess.Popen(["find", ".", "-name", f"*{spliter}blast{spliter}*", "-delete"])  # remove blast files
-    return process_result(df_list, species)
+    mp_args_list = [(TIRLearner_instance.processedGRFmite_file, TIRLearner_instance.species, TIR_type)
+                    for TIR_type in prog_const.TIR_types]
+    with mp.Pool(int(TIRLearner_instance.cpu_cores)) as pool:
+        df_list = pool.starmap(process_homology_eighty_similarity, mp_args_list)
+    subprocess.Popen(["find", ".", "-name", f"*{prog_const.spliter}blast{prog_const.spliter}*", "-delete"])
+    return process_result(df_list, TIRLearner_instance.species)

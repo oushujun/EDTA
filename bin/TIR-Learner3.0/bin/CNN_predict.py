@@ -9,23 +9,14 @@ warnings.filterwarnings("ignore", category=FutureWarning)  # mute tensorflow war
 if True:  # noqa: E402
     import numpy as np
     import pandas as pd
-    import swifter
+    import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 
     from sklearn.preprocessing import LabelEncoder
     # Attention: sklearn does not automatically import its subpackages
     from keras.utils import to_categorical
     from keras.models import load_model
 
-    # from typing import TYPE_CHECKING
-    #
-    # if TYPE_CHECKING:
-    #     from main import TIRLearner
-
     import prog_const
-
-    spliter = prog_const.spliter
-    CNN_model_file = prog_const.CNN_model_file
-    path = prog_const.program_root_dir
 
 
 def get_sequence_fragment(x, featureSize=200):
@@ -50,13 +41,12 @@ def feature_encoding(df_in, flag_verbose):
 
     df = df_in.loc[:, ["id", "seq_frag"]].copy()
     print("  Step 2/6: Label Encoding - Transforming non-numerical labels to numerical labels")
-    df["int_enc"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: np.array(feature_int_encoder.transform(
-        list(x["seq_frag"]))).reshape(-1, 1), axis=1)
+    df["int_enc"] = df.swifter.progress_bar(flag_verbose).apply(
+        lambda x: np.array(feature_int_encoder.transform(list(x["seq_frag"]))).reshape(-1, 1), axis=1)
     df = df.drop(columns="seq_frag")
     print("  Step 3/6: One-Hot Encoding - Converting class vectors to binary class matrices")
-    df["feature"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                to_categorical(x["int_enc"],
-                                                                               num_classes=num_classes), axis=1)
+    df["feature"] = df.swifter.progress_bar(flag_verbose).apply(
+        lambda x: to_categorical(x["int_enc"], num_classes=num_classes), axis=1)
     df = df.drop(columns="int_enc")
 
     # inputfeatures = np.array(input_features)
@@ -64,8 +54,8 @@ def feature_encoding(df_in, flag_verbose):
     return df
 
 
-def predict(df_in, genome_file, path, model_name=CNN_model_file):
-    model = load_model(os.path.join(path, model_name))
+def predict(df_in, genome_file, path_to_model):
+    model = load_model(path_to_model)
     pre_feature = df_in["feature"].to_numpy()
     df = df_in.drop(columns="feature")
 
@@ -101,15 +91,13 @@ def postprocessing(df_in, flag_verbose):
 
 
 def execute(TIRLearner_instance) -> pd.DataFrame:
-    genome_file = TIRLearner_instance.genome_file
-    flag_verbose = TIRLearner_instance.flag_verbose
-
     df = TIRLearner_instance.working_df_dict["base"].copy()
     print("  Step 1/6: Getting sequence fragment for prediction")
-    df["seq_frag"] = df.swifter.progress_bar(flag_verbose).apply(get_sequence_fragment, axis=1)
+    df["seq_frag"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(get_sequence_fragment, axis=1)
     df = df.drop(columns="seq")
 
-    df = feature_encoding(df, flag_verbose)
-    df = predict(df, genome_file, path)
-    df = postprocessing(df, flag_verbose)
+    df = feature_encoding(df, TIRLearner_instance.flag_verbose)
+    df = predict(df, TIRLearner_instance.genome_file,
+                 os.path.join(prog_const.program_root_dir, prog_const.CNN_model_file))
+    df = postprocessing(df, TIRLearner_instance.flag_verbose)
     return df
