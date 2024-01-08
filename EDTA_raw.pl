@@ -638,7 +638,7 @@ chdir "$genome.EDTA.raw/Helitron";
 
 # Try to recover existing results
 chomp ($date = `date`);
-if ($overwrite eq 0 and -s "$genome.Helitron.intact.raw.fa"){
+if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Helitron.intact.fa")){
 	print STDERR "$date\tExisting result file $genome.Helitron.intact.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
