@@ -2,10 +2,6 @@ import os
 import subprocess
 import multiprocessing as mp
 
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-#     from main import TIRLearner
-
 import prog_const
 
 

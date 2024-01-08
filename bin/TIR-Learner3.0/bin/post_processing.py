@@ -7,10 +7,6 @@ import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT
 from get_fasta_sequence import get_fasta_pieces_SeqIO
 from process_de_novo_result import TA_repeats_check
 
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-#     from main import TIRLearner
-
 import prog_const
 
 

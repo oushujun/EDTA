@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-# Tianyu Lu (skyl@cs.wisc.edu)
-# 2024-01-03
+# Tianyu Lu (tlu83@wisc.edu)
+# 2024-01-08
+
 import datetime
 import json
 import os
@@ -32,28 +33,34 @@ def get_timestamp_now_utc_iso8601():
 
 class TIRLearner:
     def __init__(self, genome_file: str, genome_name: str, species: str, TIR_length: int,
-                 working_dir: str, output_dir: str, GRF_path: str, cpu_cores: int, GRF_mode: str,
-                 checkpoint_input: str, flag_verbose: bool, flag_debug: bool, flag_force: bool):
-
+                 cpu_cores: int, GRF_mode: str, working_dir: str, output_dir: str, checkpoint_input: str,
+                 flag_verbose: bool, flag_debug: bool, GRF_path: str, gt_path: str, force_list: list):
         self.genome_file = genome_file
         self.genome_name = genome_name
-        self.working_dir = working_dir
-        self.output_dir = output_dir
         self.species = species
+
         self.TIR_length = TIR_length
-        self.GRF_path = GRF_path
         self.cpu_cores = cpu_cores
         self.GRF_mode = GRF_mode
+
+        self.working_dir = working_dir
+        self.output_dir = output_dir
         self.checkpoint_input = checkpoint_input
+
         self.flag_verbose = flag_verbose
         self.flag_debug = flag_debug
+
+        self.GRF_path = GRF_path
+        self.gt_path = gt_path
         # self.flag_checkpoint = flag_checkpoint
-        self.flag_force = flag_force
+        self.force_list = force_list
 
         self.processed_de_novo_result_file = f"{self.genome_name}{prog_const.spliter}processed_de_novo_result.fa"
-        self.checkpoint_output = os.path.join(self.output_dir,
-                                              f"TIR-Learner_v3_checkpoint_{get_timestamp_now_utc_iso8601()}")
-        os.makedirs(self.checkpoint_output)
+
+        if "checkpoint_off" not in force_list:
+            self.checkpoint_output = os.path.join(self.output_dir,
+                                                  f"TIR-Learner_v3_checkpoint_{get_timestamp_now_utc_iso8601()}")
+            os.makedirs(self.checkpoint_output)
 
         self.df_list = None
         self.genome_file_stat = {"file_size_gib": -0.1, "num": -1,
@@ -80,8 +87,9 @@ class TIRLearner:
             self.df_list = [self.working_df_dict["m4"]]
 
         post_processing.execute(self)
-        if not self.flag_debug:
+        if "checkpoint_off" not in self.force_list and not self.flag_debug:
             shutil.rmtree(self.checkpoint_output)
+
         shutil.rmtree(self.working_dir)
 
     def pre_scan_fasta_file(self):
@@ -114,7 +122,7 @@ class TIRLearner:
 
             self.genome_file_stat["total_len"] += len(sequence_str)
             records.append(record)
-        checked_genome_file = f"{self.genome_name}_checked.fa"
+        checked_genome_file = f"{self.genome_name}{prog_const.spliter}checked.fa"
         SeqIO.write(records, checked_genome_file, "fasta")
         self.genome_file_stat["short_seq_perc"] = (self.genome_file_stat["short_seq_num"] /
                                                    self.genome_file_stat["num"])
@@ -159,7 +167,7 @@ class TIRLearner:
         return os.path.join(self.output_dir, checkpoint_folders[-1])
 
     def load_checkpoint_file(self):
-        if self.checkpoint_input is None:
+        if "checkpoint_off" in self.force_list or self.checkpoint_input is None:
             return
 
         if self.checkpoint_input == "auto":
@@ -213,6 +221,8 @@ class TIRLearner:
     def save_checkpoint_file(self):
         # if not self.flag_debug and self.checkpoint_input is None:
         #     return
+        if "checkpoint_off" in self.force_list:
+            return
 
         # print(self.current_step) # TODO debug only
         module = self.current_step[0]
@@ -245,6 +255,9 @@ class TIRLearner:
                 subprocess.Popen(["unlink", os.path.join(self.checkpoint_output, f)])
 
     def save_processed_de_novo_result_checkpoint_file(self):
+        if "checkpoint_off" in self.force_list:
+            return
+
         shutil.copy(self.processed_de_novo_result_file,
                     os.path.join(self.checkpoint_output, self.processed_de_novo_result_file))
         with open(os.path.join(self.checkpoint_output, "info.txt"), 'r') as f:
@@ -263,7 +276,7 @@ class TIRLearner:
                 (self.current_step[0] == executing_module and self.current_step[1] < executing_step))
 
     def GRF_execution_mode_check(self):
-        if self.flag_force or self.GRF_mode in ("native", "boost"):
+        if "grf_mode" in self.force_list or self.GRF_mode in ("native", "boost"):
             return
 
         if self.genome_file_stat["num"] <= prog_const.general_split_num_threshold:

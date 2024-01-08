@@ -1,16 +1,7 @@
-import os
-import subprocess
 import regex as re
 import numpy as np
 import pandas as pd
 import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
-from Bio import SeqIO
-
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-#     from main import TIRLearner
-
-import prog_const
 
 
 def TA_repeats_check(df_in: pd.DataFrame, column: str = "seq", percent_threshold: float = 0.7) -> pd.DataFrame:
@@ -51,14 +42,6 @@ def TSD_check(x):
 
 
 def process_GRF_result(TIRLearner_instance):
-    # print("  Step 1/9: Retrieving GRFmite")
-    # # GRFmite_file_path = os.path.join("{genome_name}_GRFmite", "candidate.fasta")
-    # GRFmite_file_path = os.path.join(f"{TIRLearner_instance.genome_name}_filtered.fa_GRFmite", "candidate.fasta")
-    #
-    # df = pd.DataFrame({"id": [rec.id for rec in SeqIO.parse(GRFmite_file_path, "fasta")],
-    #                    "seq": [str(rec.seq) for rec in SeqIO.parse(GRFmite_file_path, "fasta")],
-    #                    "len": [len(rec) for rec in SeqIO.parse(GRFmite_file_path, "fasta")]})
-    # subprocess.Popen(["rm", "-rf", f"{TIRLearner_instance.genome_name}_filtered.fa_GRFmite"])
     df_in = TIRLearner_instance.working_df_dict["GRF"]
     df = df_in[df_in["len"] >= 50].copy()
 

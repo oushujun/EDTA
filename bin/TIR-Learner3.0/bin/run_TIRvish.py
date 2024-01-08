@@ -7,14 +7,14 @@ from get_fasta_sequence import get_fasta_pieces_SeqIO
 import prog_const
 
 
-def run_TIRvish(genome_file, genome_name, TIR_length):
+def run_TIRvish(genome_file, genome_name, TIR_length, gt_path):
     gt_index_file_name = genome_name + prog_const.spliter + "gt_index"
     subprocess.Popen(
-        ["gt", "suffixerator", "-db", genome_file, "-indexname", gt_index_file_name, "-tis", "-suf", "-lcp", "-des",
-         "-ssp", "-sds", "-dna", "-mirrored"]).wait()
+        [f"{gt_path}/gt", "suffixerator", "-db", genome_file, "-indexname", gt_index_file_name,
+         "-tis", "-suf", "-lcp", "-des", "-ssp", "-sds", "-dna", "-mirrored"]).wait()
 
     TIRvish_result_gff3_file_name = f"{genome_name}{prog_const.spliter}TIRvish.gff3"
-    gt_tirvish = (f"gt tirvish -index {gt_index_file_name} -seed 20 -mintirlen 10 -maxtirlen 1000 "
+    gt_tirvish = (f"\"{gt_path}/gt\" tirvish -index {gt_index_file_name} -seed 20 -mintirlen 10 -maxtirlen 1000 "
                   f"-mintirdist 10 -maxtirdist {str(TIR_length)} -similar 80 -mintsd 2 -maxtsd 11 "
                   f"-vic 13 -seqids \"yes\" > {TIRvish_result_gff3_file_name}")
     subprocess.Popen(gt_tirvish, shell=True).wait()
@@ -66,7 +66,8 @@ def execute(TIRLearner_instance):
     cpu_cores = TIRLearner_instance.cpu_cores
     TIR_length = TIRLearner_instance.TIR_length
     flag_verbose = TIRLearner_instance.flag_verbose
+    gt_path = TIRLearner_instance.gt_path
 
-    TIRvish_result_gff3_file_name = run_TIRvish(genome_file, genome_name, TIR_length)
+    TIRvish_result_gff3_file_name = run_TIRvish(genome_file, genome_name, TIR_length, gt_path)
     df = get_TIRvish_result_df(TIRvish_result_gff3_file_name)
     return get_fasta_pieces_SeqIO(genome_file, df, cpu_cores, flag_verbose)
