@@ -8,8 +8,8 @@ my $size=0; #no size control; if set to 10000; program will output sequence file
 my $i=0;
 foreach (@ARGV){
 	$separate=1 if $_=~/-s|Separate/;
-	$length=$ARGV[$i+1] if $_=~/-l|Length/i;
-	$size=1 if /-S|size/;
+	$length=$ARGV[$i+1] if /^(-l|Length)$/i and $ARGV[$i+1] !~ /^-/;
+	$size=1 if /^(-S|size)$/;
 	$i++;
 	}
 open Seq, "<$ARGV[0]" or die $!;
