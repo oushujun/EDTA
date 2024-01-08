@@ -21,6 +21,7 @@ open Target, "<$target" or die $usage;
 my %list;
 while (<List>){
 	chomp;
+	next if /^#/;
 	my ($old_id, $new_id) = (split)[0,1];
 	$list{$old_id} = $new_id;
 	$old_id =~ s/#.*//; #make old_id flexible by removing the classification info
