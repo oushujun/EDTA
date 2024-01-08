@@ -2,10 +2,6 @@ import subprocess
 import pandas as pd
 from Bio import SeqIO
 
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-#     from main import TIRLearner
-
 
 # def getNonHomo(file, df_homo):
 #     non_homo = []

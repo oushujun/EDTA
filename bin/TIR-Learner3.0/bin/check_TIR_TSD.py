@@ -4,13 +4,12 @@ import pandas as pd
 import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 from Bio.Seq import Seq
 
-# from typing import TYPE_CHECKING
-#
-# if TYPE_CHECKING:
-#     from main import TIRLearner
+# DTA:8
+# DTC:2/3
+# DTH:3(twa)
+# DTM:7-10
+# DTT:2(TA)
 
-
-#
 TSD = {"DTA": [8],
        "DTC": [3, 2],
        "DTH": [3],
@@ -18,26 +17,20 @@ TSD = {"DTA": [8],
        "DTT": [2]}
 
 
-# DTA:8
-# DTC:2/3
-# DTH:3(twa)
-# DTM:7-10
-# DTT:2(TA)
-
-def compare(tir1, tir2):
+def compare(TIR1, TIR2):
     d = 0
-    for i in range(0, len(tir1)):
-        if tir1[i] != tir2[i]:
+    for i in range(0, len(TIR1)):
+        if TIR1[i] != TIR2[i]:
             d += 1
     return d
 
 
-def sliding_window(seq1, seq2, tsdlength):
+def sliding_window(seq1, seq2, TSD_length):
     set1 = []
     set2 = []
-    for i in range(0, len(seq1) - tsdlength + 1):
-        set1.append(seq1[i:i + tsdlength])
-        set2.append(seq2[i:i + tsdlength])
+    for i in range(0, len(seq1) - TSD_length + 1):
+        set1.append(seq1[i:i + TSD_length])
+        set2.append(seq2[i:i + TSD_length])
     return set1, set2
 
 
@@ -86,18 +79,18 @@ def conserved(fam, s1):
             return False
 
 
-def conserved_DTH(set1, tsd_dffset, l):
-    for i in tsd_dffset:
-        if tsd_dffset[i] < l * 0.2:
+def conserved_DTH(set1, TSD_dffset, l):
+    for i in TSD_dffset:
+        if TSD_dffset[i] < l * 0.2:
             s1 = set1[int(i.split(":")[0])]
             if s1 in ("TTA", "TAA"):
                 return True
     return False
 
 
-def conserved_DTT(set1, tsd_dffset, l):
-    for i in tsd_dffset:
-        if tsd_dffset[i] < l * 0.2:
+def conserved_DTT(set1, TSD_dffset, l):
+    for i in TSD_dffset:
+        if TSD_dffset[i] < l * 0.2:
             s1 = set1[int(i.split(":")[0])]
             if s1[0:2] == "TA":
                 return True
@@ -114,9 +107,9 @@ def get_difference(set1, set2):
     return tsd_diff
 
 
-def is_TSD(tsd_dffset, l):
-    for i in tsd_dffset:
-        if tsd_dffset[i] < l * 0.2:
+def is_TSD(TSD_dffset, l):
+    for i in TSD_dffset:
+        if TSD_dffset[i] < l * 0.2:
             return True
     return False
 

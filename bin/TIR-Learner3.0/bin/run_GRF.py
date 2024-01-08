@@ -7,11 +7,6 @@ import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT
 import multiprocessing as mp
 from Bio import SeqIO
 
-# from typing import TYPE_CHECKING
-#
-# if TYPE_CHECKING:
-#     from main import TIRLearner
-
 import prog_const
 
 
@@ -51,13 +46,17 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
     """
     filtered_genome_file_name = f"{genome_name}{prog_const.spliter}filtered.fa"
 
-    if GRF_mode == "native":
-        records = []
+    if GRF_mode == "boost":
+        records_split_file_name = []
+        os.makedirs("GRFmite_mp", exist_ok=True)
+        os.chdir("./GRFmite_mp")
         for record in SeqIO.parse(genome_file, "fasta"):
             if len(record.seq) > drop_seq_len:
-                records.append(record)
-        SeqIO.write(records, filtered_genome_file_name, "fasta")
-        return None, filtered_genome_file_name
+                file_name = f"{record.id}.fa"
+                SeqIO.write(record, file_name, "fasta")
+                records_split_file_name.append(file_name)
+        os.chdir("../")
+        return records_split_file_name, filtered_genome_file_name
 
     if GRF_mode == "mix":
         records_long = []
@@ -76,6 +75,8 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
         SeqIO.write(records_long, filtered_genome_file_name, "fasta")
         records_split_file_name = [f"{record.id}.fa" for record in records_short]
         return records_split_file_name, filtered_genome_file_name
+
+
 
         # if cpu_cores >= mix_short_seq_process_num / mix_split_percent_threshold:
         #     # Mix mode will only available when cpu_cores >= 10,
@@ -103,17 +104,13 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
         #     print(f"   WARNING: Two many short sequences exist (over {(1 - mix_split_percent_threshold) * 100}%), "
         #           f"you will very likely not getting useful result!")
 
-    # mode = "boost"
-    records_split_file_name = []
-    os.makedirs("GRFmite_mp", exist_ok=True)
-    os.chdir("./GRFmite_mp")
+    # mode = "native"
+    records = []
     for record in SeqIO.parse(genome_file, "fasta"):
         if len(record.seq) > drop_seq_len:
-            file_name = f"{record.id}.fa"
-            SeqIO.write(record, file_name, "fasta")
-            records_split_file_name.append(file_name)
-    os.chdir("../")
-    return records_split_file_name, filtered_genome_file_name
+            records.append(record)
+    SeqIO.write(records, filtered_genome_file_name, "fasta")
+    return None, filtered_genome_file_name
 
 
 def GRF(GRF_path, file, cpu_cores, TIR_length):
@@ -233,11 +230,11 @@ def execute(TIRLearner_instance):
     # for i in os.listdir(os.getcwd()):
     #     shutil.copyfile(os.path.join(os.getcwd(), i), os.path.join(TIRLearner_instance.output_dir, i))
 
-    if GRF_mode == "native":
-        run_GRF_native(filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
-    elif GRF_mode == "mix":
+    if GRF_mode == "mix":
         run_GRF_mix(records_split_file_name, filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
-    else:
+    elif GRF_mode == "boost":
         run_GRF_boost(records_split_file_name, GRF_result_dir_name, GRF_path, cpu_cores, TIR_length)
+    else:
+        run_GRF_native(filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
 
     return get_GRF_result_df(GRF_result_dir_name)

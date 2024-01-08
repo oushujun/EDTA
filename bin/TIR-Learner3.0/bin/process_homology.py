@@ -1,12 +1,7 @@
-import sys
 import os
 import subprocess
 import multiprocessing as mp
 import pandas as pd
-
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-#     from main import TIRLearner
 
 import prog_const
 
