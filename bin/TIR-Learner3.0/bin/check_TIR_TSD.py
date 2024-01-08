@@ -1,7 +1,7 @@
 import re
 import numpy as np
 import pandas as pd
-import swifter
+import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 from Bio.Seq import Seq
 
 # from typing import TYPE_CHECKING
@@ -202,14 +202,12 @@ def process_result(df_in, module):
     return df
 
 
-def execute(TIRLearner_instance, module: str):
-    flag_verbose = TIRLearner_instance.flag_verbose
-
+def execute(TIRLearner_instance, module: str) -> pd.DataFrame | None:
     df = TIRLearner_instance.working_df_dict["base"].copy()
     df["len"] = df["end"] - df["start"]
     df = df[df["len"] >= 450].reset_index(drop=True)
-    df["l_TIR"] = df.swifter.progress_bar(flag_verbose).apply(check_TIR, axis=1)
-    df["l_TSD"] = df.swifter.progress_bar(flag_verbose).apply(check_TSD, axis=1)
+    df["l_TIR"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(check_TIR, axis=1)
+    df["l_TSD"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(check_TSD, axis=1)
 
     df = df.dropna(ignore_index=True)
     df = df.astype({"l_TIR": int, "l_TSD": int})
@@ -219,16 +217,15 @@ def execute(TIRLearner_instance, module: str):
     # TODO possible throw SystemExit
 
     print("  Step 1/4: Retrieving TIR")
-    df["TIR"] = df.swifter.progress_bar(flag_verbose).apply(get_TIR, axis=1)
+    df["TIR"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(get_TIR, axis=1)
     print("  Step 2/4: Calculating TIR percentage")
-    df["p_TIR"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                              TIR_TSD_percent(x["TIR"][0], Seq(x["TIR"][1])
-                                                                              .reverse_complement()), axis=1)
+    df["p_TIR"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(
+        lambda x: TIR_TSD_percent(x["TIR"][0], Seq(x["TIR"][1]).reverse_complement()), axis=1)
     print("  Step 3/4: Retrieving TSD")
-    df["TSD"] = df.swifter.progress_bar(flag_verbose).apply(get_TSD, axis=1)
+    df["TSD"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(get_TSD, axis=1)
     print("  Step 4/4: Calculating TSD percentage")
-    df["p_TSD"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                              TIR_TSD_percent(x["TSD"][0], x["TSD"][1]), axis=1)
+    df["p_TSD"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(
+        lambda x: TIR_TSD_percent(x["TSD"][0], x["TSD"][1]), axis=1)
     # both["rslt"] = both.swifter.progress_bar(True).apply(lambda x: x["seq"][200:-200], axis=1)
     df["len"] = df["len"] - 400
     return process_result(df, module)

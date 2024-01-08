@@ -2,26 +2,16 @@ import os
 import multiprocessing as mp
 import numpy as np
 import pandas as pd
-import swifter
+import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 
-from get_fasta_sequence import get_fasta_pieces_bedtools
+from get_fasta_sequence import get_fasta_pieces_SeqIO
+from process_de_novo_result import TA_repeats_check
 
 # from typing import TYPE_CHECKING
 # if TYPE_CHECKING:
 #     from main import TIRLearner
 
 import prog_const
-spliter = prog_const.spliter
-
-
-def TA_repeats(TIR_pair, percent=0.7):
-    s = TIR_pair[0] + TIR_pair[1]
-    t = s.upper().count("T")
-    a = s.upper().count("A")
-    ta = t + a
-    if ta >= len(s) * percent:
-        return True
-    return False
 
 
 def combine_all(df_list, flag_verbose):
@@ -29,23 +19,27 @@ def combine_all(df_list, flag_verbose):
         df = pd.concat(df_list, ignore_index=True)
     else:
         df = df_list[0].copy()
+
     df = df.sort_values(["seqid", "sstart", "send", "source", "type"], ignore_index=True)
     df = df.drop_duplicates(["seqid", "sstart", "send"], keep="first", ignore_index=True)
     df = df.drop_duplicates(["seqid", "sstart"], keep="first", ignore_index=True)
     df = df.drop_duplicates(["seqid", "send"], keep="first", ignore_index=True)
-    df["TArepeats_TIR_check"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                            np.nan if TA_repeats(x["TIR"])
-                                                                            else False, axis=1)
-    df = df.dropna(ignore_index=True).drop(columns="TArepeats_TIR_check")
+
+    df["TIR_pair_str"] = df["TIR"].swifter.progress_bar(flag_verbose).apply("".join)
+    df = TA_repeats_check(df, "TIR_pair_str")
+    df = df.drop(columns="TIR_pair_str")
+
+    # df["TArepeats_TIR_check"] = df.swifter.progress_bar(flag_verbose).apply(
+    #     lambda x: np.nan if TA_repeats(x["TIR"]) else False, axis=1)
+    # df = df.dropna(ignore_index=True).drop(columns="TArepeats_TIR_check")
     return df
 
 
 def format_df_in_gff3_format(df_in, flag_verbose):
     df = df_in.copy()
-    df["attributes"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                       (f"TIR:{x['TIR'][0]}_{x['TIR'][1]}_{x['p_TIR']}_"
-                                                                        f"TSD:{x['TSD'][0]}_{x['TSD'][1]}_{x['p_TSD']}"
-                                                                        f"{spliter}{x['len']}"), axis=1)
+    df["attributes"] = df.swifter.progress_bar(flag_verbose).apply(
+        lambda x: (f"TIR:{x['TIR'][0]}_{x['TIR'][1]}_{x['p_TIR']}_"
+                   f"TSD:{x['TSD'][0]}_{x['TSD'][1]}_{x['p_TSD']}{prog_const.spliter}{x['len']}"), axis=1)
     df = df.loc[:, ["seqid", "source", "type", "sstart", "send", "attributes"]]
     df.insert(5, "phase", ".")
     df.insert(5, "strand", ".")
@@ -88,22 +82,27 @@ def check_element_TIR_overlap(x1, y1, x2, y2, m1, n1, m2, n2):
       - True: Overlap - A right element with B left TIR
 
         m1===x1------A------y1===n1
-                         m2========x2------B------y2========n2
+                       m2========x2------B------y2========n2
 
       - True: Overlap - B left element with A right TIR
 
         m1========x1------A------y1========n1
-                                   m2===x2------B------y2===n2
+                                 m2===x2------B------y2===n2
 
       - True: Overlap - A right element with B right TIR
 
         m1===x1----------------A----------------y1===n1
-                    m2========x2------B------y2========n2
+                  m2========x2------B------y2========n2
 
       - True: Overlap - A left element with B left TIR
 
-          m1===x1----------------A----------------y1===n1
+        m1===x1----------------A----------------y1===n1
         m2========x2------B------y2========n2
+
+      - False: No correlation
+
+        m1===x1----A----y1===n1
+                                 m2=====x2------B------y2=====n2
     """
     if y1 < x2:
         if y1 > m2 or x2 < n1:
@@ -181,14 +180,12 @@ def remove_overlap(df_in, flag_verbose):
 # ======================================================================================================================
 
 
-def get_final_fasta_file(df_in, genome_file, genome_name, file_path, flag_verbose):
+def get_final_fasta_file(df_in, genome_file, genome_name, cpu_cores, flag_verbose, file_path):
     df = df_in.copy()
-    df["name"] = df.swifter.progress_bar(flag_verbose).apply(lambda x:
-                                                                 (f">{genome_name}_{x['seqid']}"
-                                                                  f"_{x['sstart']}_{x['send']}"
-                                                                  f"_{x['type']}_{x['attributes']}"), axis=1)
+    df["name"] = df.swifter.progress_bar(flag_verbose).apply(
+        lambda x: f">{genome_name}_{x['seqid']}_{x['sstart']}_{x['send']}_{x['type']}_{x['attributes']}", axis=1)
     df.rename(columns={"sstart": "start", "send": "end"}, inplace=True)
-    df = get_fasta_pieces_bedtools(genome_file, df)
+    df = get_fasta_pieces_SeqIO(genome_file, df, cpu_cores, flag_verbose)
     df = df.loc[:, ["name", "seq"]]
     df.to_csv(file_path, index=False, header=False, sep="\n")
 
@@ -197,7 +194,7 @@ def execute(TIRLearner_instance):
     genome_file = TIRLearner_instance.genome_file
     genome_name = TIRLearner_instance.genome_name
     output_dir = TIRLearner_instance.output_dir
-    t = TIRLearner_instance.cpu_cores
+    cpu_cores = TIRLearner_instance.cpu_cores
     flag_verbose = TIRLearner_instance.flag_verbose
 
     df_list = TIRLearner_instance.df_list
@@ -216,8 +213,8 @@ def execute(TIRLearner_instance):
                    sep="\t")
 
     print("  Step 3/6: Generating raw fasta file")
-    get_final_fasta_file(df_gff3, genome_file, genome_name,
-                         os.path.join(output_folder_path, f"{genome_name}_FinalAnn.fa"), flag_verbose)
+    get_final_fasta_file(df_gff3, genome_file, genome_name, cpu_cores, flag_verbose,
+                         os.path.join(output_folder_path, f"{genome_name}_FinalAnn.fa"))
     del df_gff3
 
     df_combined_groupby_seqid = df_combined.groupby("seqid")
@@ -226,7 +223,7 @@ def execute(TIRLearner_instance):
     del df_combined, df_combined_groupby_seqid, df_combined_seqid_list
 
     print("  Step 4/6: Removing the shorter one among two overlapped sequences")
-    with mp.Pool(int(t)) as pool:
+    with mp.Pool(int(cpu_cores)) as pool:
         df_filtered_list = pool.starmap(remove_overlap, df_combined_mp)
     df_filtered = pd.concat(df_filtered_list, ignore_index=True)
     del df_filtered_list
@@ -237,6 +234,6 @@ def execute(TIRLearner_instance):
                             header=False, sep="\t")
 
     print("  Step 6/6: Generating final fasta file")
-    get_final_fasta_file(df_gff3_filtered, genome_file, genome_name,
-                         os.path.join(output_folder_path, f"{genome_name}_FinalAnn_filter.fa"), flag_verbose)
+    get_final_fasta_file(df_gff3_filtered, genome_file, genome_name, cpu_cores, flag_verbose,
+                         os.path.join(output_folder_path, f"{genome_name}_FinalAnn_filter.fa"))
     del df_gff3_filtered

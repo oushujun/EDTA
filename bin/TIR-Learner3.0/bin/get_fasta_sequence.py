@@ -1,6 +1,7 @@
-import subprocess
+import multiprocessing as mp
+# import subprocess
 import pandas as pd
-import swifter
+import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 from Bio import SeqIO
 
 # from typing import TYPE_CHECKING
@@ -32,37 +33,38 @@ def get_start_end(genome_file, df_in, flag_verbose, length=200):
     return df
 
 
-# def getFastaPieces(genome_file, df_in):
+# def get_fasta_pieces_bedtools(genome_file, df_in: pd.DataFrame):
 #     df = df_in.reset_index(drop=True)
 #     # df_bed = df.iloc[:, [2, 5, 6]]
-#     df_bed = df.loc[:, ["seqid", "start", "end"]]
-#     bed_string = df_bed.to_string(header=False, index=False)
-#     bed = BedTool(bed_string, from_string=True)
-#     fasta = BedTool(genome_file)
-#     bed = bed.sequence(fi=fasta)
-#     bed_seq_file = bed.seqfn
-#     bed_series = pd.read_csv(bed_seq_file, header=None).squeeze()
+#     df.loc[:, ["seqid", "start", "end"]].to_csv("bed.txt", sep='\t', header=False, index=False)
+#     # subprocess.Popen(f"bedtools getfasta -fo seq_from_bed.txt -fi {genome_file} -bed bed.txt", ).wait()
+#     subprocess.Popen(["bedtools", "getfasta", "-fo", "seq_from_bed.txt", "-fi", genome_file, "-bed", "bed.txt"]).wait()
+#     # bed_series = pd.read_csv("seq_from_bed.txt", header=None, engine="pyarrow").squeeze()
+#     bed_series = pd.read_csv("seq_from_bed.txt", header=None, engine='c', memory_map=True).squeeze()
+#     subprocess.Popen(["find", ".", "-name", "*bed.txt", "-delete"])
 #     df["seq"] = bed_series[1::2].reset_index(drop=True)
 #     return df
 
 
-def get_fasta_pieces_bedtools(genome_file, df_in: pd.DataFrame):
-    df = df_in.reset_index(drop=True)
-    # df_bed = df.iloc[:, [2, 5, 6]]
-    df.loc[:, ["seqid", "start", "end"]].to_csv("bed.txt", sep='\t', header=False, index=False)
-    # subprocess.Popen(f"bedtools getfasta -fo seq_from_bed.txt -fi {genome_file} -bed bed.txt", ).wait()
-    subprocess.Popen(["bedtools", "getfasta", "-fo", "seq_from_bed.txt", "-fi", genome_file, "-bed", "bed.txt"]).wait()
-    # bed_series = pd.read_csv("seq_from_bed.txt", header=None, engine="pyarrow").squeeze()
-    bed_series = pd.read_csv("seq_from_bed.txt", header=None, engine='c', memory_map=True).squeeze()
-    subprocess.Popen(["find", ".", "-name", "*bed.txt", "-delete"])
-    df["seq"] = bed_series[1::2].reset_index(drop=True)
-    return df
+def get_fasta_pieces_single_seqid_SeqIO(df: pd.DataFrame,
+                                        genome_SeqRecord: SeqIO.SeqRecord, seqid: str, flag_verbose: bool):
+    df.loc[df["seqid"] == seqid, "seq"] = df.swifter.progress_bar(flag_verbose).apply(
+        lambda x: str(genome_SeqRecord.seq[x["start"]: x["end"]]), axis=1)
+    return df.dropna()
+
+
+def get_fasta_pieces_SeqIO(genome_file: str, df_in: pd.DataFrame, cpu_cores, flag_verbose):
+    df = df_in.copy()
+    genome_SeqIO_index = SeqIO.index(genome_file, "fasta")
+    mp_args_list = [(df, genome_SeqIO_index[seqid], seqid, flag_verbose) for seqid in genome_SeqIO_index]
+    with mp.Pool(int(cpu_cores)) as pool:
+        df_with_seq_list = pool.starmap(get_fasta_pieces_single_seqid_SeqIO, mp_args_list)
+    return pd.concat(df_with_seq_list).sort_index()
 
 
 def execute(TIRLearner_instance) -> pd.DataFrame:
-    df_in = TIRLearner_instance.working_df_dict["base"]
-    genome_file = TIRLearner_instance.genome_file
-    flag_verbose = TIRLearner_instance.flag_verbose
-
-    df = get_start_end(genome_file, df_in, flag_verbose)
-    return get_fasta_pieces_bedtools(genome_file, df)
+    df = get_start_end(TIRLearner_instance.genome_file, TIRLearner_instance.working_df_dict["base"],
+                       TIRLearner_instance.flag_verbose)
+    # return get_fasta_pieces_bedtools(genome_file, df)
+    return get_fasta_pieces_SeqIO(TIRLearner_instance.genome_file, df, TIRLearner_instance.cpu_cores,
+                                  TIRLearner_instance.flag_verbose)

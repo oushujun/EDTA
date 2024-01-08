@@ -30,13 +30,13 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--processor", help="Number of processors allowed (Optional)", default=os.cpu_count())
     parser.add_argument("-w", "--working_dir", help="Ou(Optional)", default=None)
     parser.add_argument("-o", "--output_dir", help="Output directory (Optional)", default=None)
-    parser.add_argument('-d', '--debug', help="Ou (Optional)", action="store_true")
-    parser.add_argument('-v', '--verbose', help="Verbose mode, will show interactive progress bar (Optional)",
+    parser.add_argument("-d", "--debug", help="Ou (Optional)", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Verbose mode, will show interactive progress bar (Optional)",
                         action="store_true")
-    parser.add_argument('-c', '--checkpoint', help="Ou (Optional)", action="store_true")
-    parser.add_argument('-fc', '--force', help="Ou (Optional)", action="store_true")
+    # parser.add_argument('-c', '--checkpoint', help="Ou (Optional)", action="store_true")
+    parser.add_argument("-c", "--checkpoint", help="Ou (Optional)", nargs='?', const="auto", default=None)
+    parser.add_argument("-fc", "--force", help="Ou (Optional)", action="store_true")
     # TODO write help information
-    # TODO regain the work folder specifying function
 
     parsed_args = parser.parse_args()
 
@@ -45,6 +45,7 @@ if __name__ == "__main__":
     species = parsed_args.species
     GRF_path = parsed_args.grfp
     GRF_mode = parsed_args.mode
+    checkpoint_input = parsed_args.checkpoint
 
     TIR_length = int(parsed_args.length)
     cpu_cores = int(parsed_args.processor)
@@ -55,14 +56,18 @@ if __name__ == "__main__":
 
     flag_debug = parsed_args.debug
     flag_verbose = parsed_args.verbose
-    flag_checkpoint = parsed_args.checkpoint
+    # flag_checkpoint = parsed_args.checkpoint
     flag_force = parsed_args.force
 
     # Transforming the possible relative path into absolute path
-    genome_file = os.path.abspath(str(genome_file))
-    output_dir = os.path.abspath(str(output_dir))
+    genome_file = os.path.abspath(genome_file)
+    GRF_path = os.path.abspath(GRF_path)
+    output_dir = os.path.abspath(output_dir)
+
+    if checkpoint_input is not None and checkpoint_input != "auto":
+        checkpoint_input = os.path.abspath(checkpoint_input)
     # ==================================================================================================================
 
     TIRLearner_instance = TIRLearner(genome_file, genome_name, species, TIR_length,
                                      working_dir, output_dir, GRF_path, cpu_cores, GRF_mode,
-                                     flag_verbose, flag_debug, flag_checkpoint, flag_force)
+                                     checkpoint_input, flag_verbose, flag_debug, flag_force)

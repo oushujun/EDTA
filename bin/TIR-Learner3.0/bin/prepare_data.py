@@ -25,10 +25,9 @@ from Bio import SeqIO
 
 
 def execute(TIRLearner_instance, df_homo: pd.DataFrame = None) -> pd.DataFrame:
-    processedGRFmite_file = TIRLearner_instance.processedGRFmite_file
-
-    data = [{"id": rec.id, "seq": rec.seq} for rec in SeqIO.parse(processedGRFmite_file, "fasta")]
-    subprocess.Popen(["unlink", processedGRFmite_file])
+    data = [{"id": rec.id, "seq": rec.seq}
+            for rec in SeqIO.parse(TIRLearner_instance.processed_de_novo_result_file, "fasta")]
+    subprocess.Popen(["unlink", TIRLearner_instance.processed_de_novo_result_file])
 
     # Get non_homo data
     if df_homo is not None:

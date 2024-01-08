@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
-# Tianyu Lu (tlu83@wisc.edu)
-# 2023-09-22
+# Tianyu Lu (skyl@cs.wisc.edu)
+# 2024-01-03
 import datetime
 import json
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 
 import pandas as pd
 from Bio import SeqIO
 from Bio.Seq import Seq
 
-import M1_1_blast_reference
-import M1_2_full_coverage
-import M2_3_blast_reference
-import M2_4_eighty_similarity
-
-import prog_const
+import blast_reference
+import process_homology
+import run_TIRvish
 import run_GRF
-import process_GRFmite
+import process_de_novo_result
 import prepare_data
 import CNN_predict
 import get_fasta_sequence
 import check_TIR_TSD
 import post_processing
+import prog_const
+
+
+def get_timestamp_now_utc_iso8601():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
 
 
 class TIRLearner:
     def __init__(self, genome_file: str, genome_name: str, species: str, TIR_length: int,
                  working_dir: str, output_dir: str, GRF_path: str, cpu_cores: int, GRF_mode: str,
-                 flag_verbose: bool, flag_debug: bool, flag_checkpoint: bool, flag_force: bool):
+                 checkpoint_input: str, flag_verbose: bool, flag_debug: bool, flag_force: bool):
 
         self.genome_file = genome_file
         self.genome_name = genome_name
@@ -41,16 +44,16 @@ class TIRLearner:
         self.GRF_path = GRF_path
         self.cpu_cores = cpu_cores
         self.GRF_mode = GRF_mode
+        self.checkpoint_input = checkpoint_input
         self.flag_verbose = flag_verbose
         self.flag_debug = flag_debug
-        self.flag_checkpoint = flag_checkpoint
+        # self.flag_checkpoint = flag_checkpoint
         self.flag_force = flag_force
 
-        self.processedGRFmite_file = f"{self.genome_name}{prog_const.spliter}processedGRFmite.fa"
-        if self.flag_debug or self.flag_checkpoint:
-            timestamp_now_iso8601 = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-            self.checkpoint_folder = os.path.join(self.output_dir, f"TIR-Learner_v3_checkpoint_{timestamp_now_iso8601}")
-            os.makedirs(self.checkpoint_folder)
+        self.processed_de_novo_result_file = f"{self.genome_name}{prog_const.spliter}processed_de_novo_result.fa"
+        self.checkpoint_output = os.path.join(self.output_dir,
+                                              f"TIR-Learner_v3_checkpoint_{get_timestamp_now_utc_iso8601()}")
+        os.makedirs(self.checkpoint_output)
 
         self.df_list = None
         self.genome_file_stat = {"file_size_gib": -0.1, "num": -1,
@@ -64,7 +67,7 @@ class TIRLearner:
     def execute(self):
         self.mount_working_dir()
         self.load_checkpoint_file()
-        self.check_fasta_file()
+        self.pre_scan_fasta_file()
         # print(os.getcwd())  # TODO ONLY FOR DEBUG REMOVE AFTER FINISHED
 
         if self.species == "rice" or self.species == "maize":
@@ -77,9 +80,11 @@ class TIRLearner:
             self.df_list = [self.working_df_dict["m4"]]
 
         post_processing.execute(self)
+        if not self.flag_debug:
+            shutil.rmtree(self.checkpoint_output)
         shutil.rmtree(self.working_dir)
 
-    def check_fasta_file(self):
+    def pre_scan_fasta_file(self):
         # names = [record.id for record in SeqIO.parse(self.genome_file, "fasta")]
         print("Doing pre-scan for genome file...")
         self.genome_file_stat["file_size_gib"] = os.path.getsize(self.genome_file) / (2 ** 10) ** 3
@@ -139,36 +144,37 @@ class TIRLearner:
     #     os.symlink(self.genome_file, genome_file_soft_link)
     #     self.genome_file = genome_file_soft_link
 
-    def get_newest_checkpoint_folder(self, search_dir: str):
+    def get_newest_checkpoint_folder(self, search_dir: str) -> str:
         checkpoint_folders = [f for f in os.listdir(search_dir) if f.startswith("TIR-Learner_v3_checkpoint_")]
         # print(checkpoint_folders)  # TODO only for debug
         # print(self.checkpoint_folder)  # TODO only for debug
         try:
-            checkpoint_folders.remove(os.path.basename(self.checkpoint_folder))
+            checkpoint_folders.remove(os.path.basename(self.checkpoint_output))
         except ValueError:
             pass
         checkpoint_folders = sorted(checkpoint_folders)
 
         if len(checkpoint_folders) == 0:
-            return None
+            return "no_checkpoint_folder_found"
         return os.path.join(self.output_dir, checkpoint_folders[-1])
 
     def load_checkpoint_file(self):
-        if not self.flag_checkpoint:
+        if self.checkpoint_input is None:
             return
 
-        # Search both the output directory and the genome file directory
-        checkpoint_folder = self.get_newest_checkpoint_folder(self.output_dir)
-        if checkpoint_folder is None:
-            genome_file_directory = os.path.dirname(self.genome_file)
-            checkpoint_folder = self.get_newest_checkpoint_folder(genome_file_directory)
-        if checkpoint_folder is None:
-            print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
-            # self.flag_checkpoint = False
-            return
+        if self.checkpoint_input == "auto":
+            # Search both the output directory and the genome file directory
+            self.checkpoint_input = self.get_newest_checkpoint_folder(self.output_dir)
+            if self.checkpoint_input == "no_checkpoint_folder_found":
+                genome_file_directory = os.path.dirname(self.genome_file)
+                self.checkpoint_input = self.get_newest_checkpoint_folder(genome_file_directory)
+            if self.checkpoint_input == "no_checkpoint_folder_found":
+                print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
+                # self.flag_checkpoint = False
+                return
 
-        # print(checkpoint_folder)  # TODO only for debug
-        checkpoint_info_file = os.path.join(checkpoint_folder, "info.txt")
+        # print(self.checkpoint_input)  # TODO only for debug
+        checkpoint_info_file = os.path.join(self.checkpoint_input, "info.txt")
         # print(checkpoint_info_file)  # TODO only for debug
         if not os.path.exists(checkpoint_info_file) or os.path.getsize(checkpoint_info_file) == 0:
             print("Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
@@ -185,18 +191,19 @@ class TIRLearner:
             # df_current_file = f.readline().rstrip()
             working_df_filename_dict = json.loads(f.readline().rstrip())
             for k, v in working_df_filename_dict.items():
-                self.working_df_dict[k] = pd.read_csv(os.path.join(checkpoint_folder, v),
+                self.working_df_dict[k] = pd.read_csv(os.path.join(self.checkpoint_input, v),
                                                       sep='\t', header=0, engine='c', memory_map=True)
             # self.df_current = pd.read_csv(df_current_file, sep='\t', header=0, engine='c', memory_map=True)
 
             # if step == 2 and module in (2, 4):
-            #     # Load processedGRFmite checkpoint file for module 2 step 2 or module 4 step 2
-            processedGRFmite_checkpoint_file = os.path.join(checkpoint_folder, self.processedGRFmite_file)
-            if os.path.exists(processedGRFmite_checkpoint_file):
-                shutil.copy(processedGRFmite_checkpoint_file,
-                            os.path.join(self.working_dir, self.processedGRFmite_file))
-                shutil.copy(processedGRFmite_checkpoint_file,
-                            os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
+            #     # Load processedGRFmite checkpoint file for module 2 step 5 or module 4 step 2
+            processed_de_novo_result_checkpoint_file = os.path.join(self.checkpoint_input,
+                                                                    self.processed_de_novo_result_file)
+            if os.path.exists(processed_de_novo_result_checkpoint_file):
+                shutil.copy(processed_de_novo_result_checkpoint_file,
+                            os.path.join(self.working_dir, self.processed_de_novo_result_file))
+                shutil.copy(processed_de_novo_result_checkpoint_file,
+                            os.path.join(self.checkpoint_output, self.processed_de_novo_result_file))
 
             print(("Successfully loaded checkpoint:\n"
                    f"  Time: {timestamp_iso8601}\n"
@@ -204,24 +211,23 @@ class TIRLearner:
                    f"  Step: {step}"))
 
     def save_checkpoint_file(self):
-        if not (self.flag_debug or self.flag_checkpoint):
-            return
+        # if not self.flag_debug and self.checkpoint_input is None:
+        #     return
 
         # print(self.current_step) # TODO debug only
         module = self.current_step[0]
         step = self.current_step[1]
-        timestamp_now_iso8601 = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
         # checkpoint_file_name = f"module_{module}_step_{step}_{timestamp_now_iso8601}.csv"
-        working_df_filename_dict = {k: f"{k}_module_{module}_step_{step}_{timestamp_now_iso8601}.csv"
+        working_df_filename_dict = {k: f"{k}_module_{module}_step_{step}_{get_timestamp_now_utc_iso8601()}.csv"
                                     for k in self.working_df_dict.keys()}
         # print(working_df_filename_dict) # TODO debug only
         for k, v in self.working_df_dict.items():
-            v.to_csv(os.path.join(self.checkpoint_folder, working_df_filename_dict[k]),
+            v.to_csv(os.path.join(self.checkpoint_output, working_df_filename_dict[k]),
                      index=False, header=True, sep="\t")
         # self.df_current.to_csv(os.path.join(self.checkpoint_folder, checkpoint_file_name),
         #                        index=False, header=False, sep="\t")
-        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'w') as f:
-            f.write(timestamp_now_iso8601 + '\n')
+        with open(os.path.join(self.checkpoint_output, "info.txt"), 'w') as f:
+            f.write(get_timestamp_now_utc_iso8601() + '\n')
             f.write(f"{module},{step}\n")
             # f.write(checkpoint_file_name)
             f.write(json.dumps(working_df_filename_dict))
@@ -230,30 +236,30 @@ class TIRLearner:
         # print(os.listdir(self.checkpoint_folder)) # TODO debug only
         if not self.flag_debug:
             # shutil.rmtree(self.checkpoint_folder)
-            remove_file_set = (set(os.listdir(self.checkpoint_folder)) -
+            remove_file_set = (set(os.listdir(self.checkpoint_output)) -
                                set(working_df_filename_dict.values()) -
-                               {"info.txt", self.processedGRFmite_file})
+                               {"info.txt", self.processed_de_novo_result_file})
             # print(remove_file_set) # TODO debug only
             for f in remove_file_set:
-                os.remove(os.path.join(self.checkpoint_folder, f))
+                # os.remove(os.path.join(self.checkpoint_output, f))
+                subprocess.Popen(["unlink", os.path.join(self.checkpoint_output, f)])
 
-    def save_processedGRFmite_checkpoint_file(self):
-        if not (self.flag_debug or self.flag_checkpoint):
-            return
-
-        shutil.copy(self.processedGRFmite_file, os.path.join(self.checkpoint_folder, self.processedGRFmite_file))
-        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'r') as f:
+    def save_processed_de_novo_result_checkpoint_file(self):
+        shutil.copy(self.processed_de_novo_result_file,
+                    os.path.join(self.checkpoint_output, self.processed_de_novo_result_file))
+        with open(os.path.join(self.checkpoint_output, "info.txt"), 'r') as f:
             lines = f.readlines()
 
         module = self.current_step[0]
         step = self.current_step[1]
         lines[1] = f"{module},{step}\n"
 
-        with open(os.path.join(self.checkpoint_folder, "info.txt"), 'w') as f:
+        with open(os.path.join(self.checkpoint_output, "info.txt"), 'w') as f:
             f.writelines(lines)
 
     def module_step_execution_check(self, executing_module: int, executing_step: int) -> bool:
-        return (not self.flag_checkpoint or self.current_step[0] < executing_module or
+        return (self.checkpoint_input is None or
+                self.current_step[0] < executing_module or
                 (self.current_step[0] == executing_module and self.current_step[1] < executing_step))
 
     def GRF_execution_mode_check(self):
@@ -270,6 +276,16 @@ class TIRLearner:
                       f"{self.GRF_mode} mode unneeded, redirect to \"native\" mode.")
             self.GRF_mode = "native"
             return
+
+        if self.GRF_mode == "mix" and self.cpu_cores < 2 * prog_const.mix_short_seq_process_num:
+            if self.GRF_mode == "smart":
+                print("  \"native\" mode is selected due to insufficient number of available cpu cores.")
+            else:
+                print(f"   Number of available cpu cores insufficient "
+                      f"(expect >= {2 * prog_const.mix_short_seq_process_num}"
+                      f" but actually got {self.cpu_cores}), "
+                      f"\"mix\" mode unavailable, redirect to \"native\" mode.")
+            self.GRF_mode = "native"
 
         # "mix" mode or "smart" mode
         drop_seq_len = int(self.TIR_length) + 500
@@ -317,14 +333,14 @@ class TIRLearner:
         # os.makedirs(os.path.join(dir, module), exist_ok=True)
         # os.chdir(os.path.join(dir, module))
 
-        # Module 1, Step 1: Blast Genome against Reference Library
+        # Module 1, Step 1: Blast reference library in genome file
         if self.module_step_execution_check(1, 1):
-            M1_1_blast_reference.execute(self)
+            blast_reference.blast_genome_file(self)
             self.current_step = [1, 1]
 
-        # Module 1, Step 2: Select 100% coverage entries from Blast results
+        # Module 1, Step 2: Select 100% coverage entries from blast results
         if self.module_step_execution_check(1, 2):
-            self.working_df_dict["base"] = M1_2_full_coverage.execute(self)
+            self.working_df_dict["base"] = process_homology.select_full_coverage(self)
             self.current_step = [1, 2]
             self.save_checkpoint_file()
 
@@ -361,52 +377,73 @@ class TIRLearner:
         # os.makedirs(os.path.join(dir, module), exist_ok=True)
         # os.chdir(os.path.join(dir, module))
 
-        # Module 2, Step 1: Split Genome and Run GRF program to find Inverted Repeats
+        # Module 2, Step 1: Run TIRvish to find inverted repeats
         if self.module_step_execution_check(2, 1):
-            # Checkpoint saving for this step is currently not available
-            print("Module 2, Step 1: Run GRF program to find Inverted Repeats")
-            run_GRF.execute(self)
+            print("Module 2, Step 1: Run TIRvish to find inverted repeats")
+            self.working_df_dict["TIRvish"] = run_TIRvish.execute(self)
             self.current_step = [2, 1]
-
-        # Module 2, Step 2: Process GRF results
-        print("Module 2, Step 2: Process GRF results")
-        if self.module_step_execution_check(2, 2):
-            process_GRFmite.execute(self)
-            self.current_step = [2, 2]
-            self.save_processedGRFmite_checkpoint_file()
-
-        # Module 2, Step 3: GRF result blast reference sequences
-        if self.module_step_execution_check(2, 3):
-            # Checkpoint saving for this step is currently not available
-            M2_3_blast_reference.execute(self)
-            self.current_step = [2, 3]
-
-        # Module 2, Step 4: Select 80% similar entries from blast results
-        if self.module_step_execution_check(2, 4):
-            self.working_df_dict["base"] = M2_4_eighty_similarity.execute(self)
-            self.current_step = [2, 4]
             self.save_checkpoint_file()
 
-        # Module 2, Step 5: Get FASTA sequences from 80% similarity
+        # Module 2, Step 2: Process TIRvish results
+        if self.module_step_execution_check(2, 2):
+            print("Module 2, Step 2: Process TIRvish results")
+            self.working_df_dict["TIRvish"] = process_de_novo_result.process_TIRvish_result(self)
+            self.current_step = [2, 2]
+            self.save_checkpoint_file()
+
+        # Module 2, Step 3: Run GRF to find inverted repeats
+        if self.module_step_execution_check(2, 3):
+            print("Module 2, Step 3: Run GRF to find inverted repeats")
+            self.working_df_dict["GRF"] = run_GRF.execute(self)
+            self.current_step = [2, 3]
+            self.save_checkpoint_file()
+
+        # Module 2, Step 4: Process GRF results
+        if self.module_step_execution_check(2, 4):
+            print("Module 2, Step 4: Process GRF results")
+            self.working_df_dict["GRF"] = process_de_novo_result.process_GRF_result(self)
+            self.current_step = [2, 4]
+
+        # Module 2, Step 5: Combine TIRvish and GRF results
         if self.module_step_execution_check(2, 5):
-            print("Module 2, Step 5: Get FASTA sequences from 80% similarity")
+            print("Module 2, Step 5: Combine TIRvish and GRF results")
+            process_de_novo_result.combine_de_novo_result(self)
+            self.current_step = [2, 5]
+            self.save_processed_de_novo_result_checkpoint_file()
+
+        # Module 2, Step 6: Blast GRF and TIRvish result in reference library
+        if self.module_step_execution_check(2, 6):
+            # Checkpoint saving for this step is currently not available
+            blast_reference.blast_de_novo_result(self)
+            self.current_step = [2, 6]
+
+        # Module 2, Step 7: Select 80% similar entries from blast results
+        if self.module_step_execution_check(2, 7):
+            self.working_df_dict["base"] = process_homology.select_eighty_similarity(self)
+            self.current_step = [2, 7]
+            self.save_checkpoint_file()
+
+        # Module 2, Step 8: Get FASTA sequences from 80% similarity
+        if self.module_step_execution_check(2, 8):
+            print("Module 2, Step 8: Get FASTA sequences from 80% similarity")
             self.working_df_dict["base"] = get_fasta_sequence.execute(self)
             self.working_df_dict["m2_homo"] = self.working_df_dict["base"].copy()
-            self.current_step = [2, 5]
+            self.current_step = [2, 8]
             self.save_checkpoint_file()
 
         # Module 2, Step 6: Check TIR and TSD
-        if self.module_step_execution_check(2, 6):
-            print("Module 2, Step 6: Check TIR and TSD")
+        if self.module_step_execution_check(2, 9):
+            print("Module 2, Step 9: Check TIR and TSD")
             self.working_df_dict["base"] = check_TIR_TSD.execute(self, module)
-            self.current_step = [2, 6]
+            self.current_step = [2, 9]
             self.save_checkpoint_file()
 
         # Module 2, Step 7: Save module result
-        if self.module_step_execution_check(2, 7):
+        if self.module_step_execution_check(2, 10):
+            print("Module 2, Step 10: Save module result")
             self.working_df_dict["m2"] = self.working_df_dict["base"]
             del self.working_df_dict["base"]
-            self.current_step = [2, 7]
+            self.current_step = [2, 10]
             self.save_checkpoint_file()
 
         print("############################################################ Module 2 Finished "
@@ -421,24 +458,24 @@ class TIRLearner:
         # os.makedirs(os.path.join(dir, module), exist_ok=True)
         # os.chdir(os.path.join(dir, module))
 
-        # Module 3, Step 1: Prepare Data
+        # Module 3, Step 1: Prepare data
         if self.module_step_execution_check(3, 1):
-            print("Module 3, Step 1: Prepare Data")
+            print("Module 3, Step 1: Prepare data")
             self.working_df_dict["base"] = prepare_data.execute(self, self.working_df_dict["m2_homo"])
             del self.working_df_dict["m2_homo"]
             self.current_step = [3, 1]
             self.save_checkpoint_file()
 
-        # Module 3, Step 2: ML (CNN) prediction
+        # Module 3, Step 2: CNN prediction
         if self.module_step_execution_check(3, 2):
-            print("Module 3, Step 2: ML (CNN) prediction")
+            print("Module 3, Step 2: CNN prediction")
             self.working_df_dict["base"] = CNN_predict.execute(self)
             self.current_step = [3, 2]
             self.save_checkpoint_file()
 
-        # Module 3, Step 3: Get FASTA sequences from ML prediction
+        # Module 3, Step 3: Get FASTA sequences from CNN prediction
         if self.module_step_execution_check(3, 3):
-            print("Module 3, Step 3: Get FASTA sequences from ML prediction")
+            print("Module 3, Step 3: Get FASTA sequences from CNN prediction")
             self.working_df_dict["base"] = get_fasta_sequence.execute(self)
             self.current_step = [3, 3]
             self.save_checkpoint_file()
@@ -469,134 +506,75 @@ class TIRLearner:
         # os.makedirs(os.path.join(dir, module), exist_ok=True)
         # os.chdir(os.path.join(dir, module))
 
-        # Module 4, Step 1: Split Genome and Run GRF program to find Inverted Repeats
+        # Module 4, Step 1: Run TIRvish to find inverted repeats
         if self.module_step_execution_check(4, 1):
-            print("Module 4, Step 1: Run GRF program to find Inverted Repeats")
-            # Checkpoint saving for this step is currently not available
-            run_GRF.execute(self)
+            print("Module 4, Step 1: Run TIRvish to find inverted repeats")
+            self.working_df_dict["TIRvish"] = run_TIRvish.execute(self)
             self.current_step = [4, 1]
+            self.save_checkpoint_file()
 
-        # Module 4, Step 2: Process GRF results
+        # Module 4, Step 2: Process TIRvish results
         if self.module_step_execution_check(4, 2):
-            print("Module 4, Step 2: Process GRF results")
-            process_GRFmite.execute(self)
+            print("Module 4, Step 2: Process TIRvish results")
+            self.working_df_dict["TIRvish"] = process_de_novo_result.process_TIRvish_result(self)
             self.current_step = [4, 2]
-            self.save_processedGRFmite_checkpoint_file()
+            self.save_checkpoint_file()
 
-        # Module 4, Step 3: Prepare Data
+        # Module 4, Step 3: Run GRF to find inverted repeats
         if self.module_step_execution_check(4, 3):
-            print("Module 4, Step 3: Prepare Data")
-            self.working_df_dict["base"] = prepare_data.execute(self)
+            print("Module 4, Step 3: Run GRF to find inverted repeats")
+            self.working_df_dict["GRF"] = run_GRF.execute(self)
             self.current_step = [4, 3]
             self.save_checkpoint_file()
 
-        # Module 4, Step 4: ML (CNN) prediction
-        print("Module 4, Step 4: ML (CNN) prediction")
+        # Module 4, Step 4: Process GRF results
         if self.module_step_execution_check(4, 4):
-            self.working_df_dict["base"] = CNN_predict.execute(self)
+            print("Module 4, Step 4: Process GRF results")
+            self.working_df_dict["GRF"] = process_de_novo_result.process_GRF_result(self)
             self.current_step = [4, 4]
-            self.save_checkpoint_file()
 
-        # Module 4, Step 5: Get FASTA sequences from ML prediction
+        # Module 4, Step 5: Combine TIRvish and GRF results
         if self.module_step_execution_check(4, 5):
-            print("Module 4, Step 5: Get FASTA sequences from ML prediction")
-            self.working_df_dict["base"] = get_fasta_sequence.execute(self)
+            print("Module 4, Step 5: Combine TIRvish and GRF results")
+            process_de_novo_result.combine_de_novo_result(self)
             self.current_step = [4, 5]
-            self.save_checkpoint_file()
+            self.save_processed_de_novo_result_checkpoint_file()
 
-        # Module 4, Step 6: Check TIR and TSD
+        # Module 4, Step 6: Prepare data
         if self.module_step_execution_check(4, 6):
-            print("Module 4, Step 6: Check TIR and TSD")
-            self.working_df_dict["base"] = check_TIR_TSD.execute(self, module)
+            print("Module 4, Step 6: Prepare data")
+            self.working_df_dict["base"] = prepare_data.execute(self)
             self.current_step = [4, 6]
             self.save_checkpoint_file()
 
-        # Module 4, Step 7: Save module result
+        # Module 4, Step 7: CNN prediction
+        print("Module 4, Step 7: CNN prediction")
         if self.module_step_execution_check(4, 7):
+            self.working_df_dict["base"] = CNN_predict.execute(self)
+            self.current_step = [4, 7]
+            self.save_checkpoint_file()
+
+        # Module 4, Step 8: Get FASTA sequences from CNN prediction
+        if self.module_step_execution_check(4, 8):
+            print("Module 4, Step 8: Get FASTA sequences from CNN prediction")
+            self.working_df_dict["base"] = get_fasta_sequence.execute(self)
+            self.current_step = [4, 8]
+            self.save_checkpoint_file()
+
+        # Module 4, Step 9: Check TIR and TSD
+        if self.module_step_execution_check(4, 9):
+            print("Module 4, Step 9: Check TIR and TSD")
+            self.working_df_dict["base"] = check_TIR_TSD.execute(self, module)
+            self.current_step = [4, 9]
+            self.save_checkpoint_file()
+
+        # Module 4, Step 10: Save module result
+        if self.module_step_execution_check(4, 10):
             self.working_df_dict["m4"] = self.working_df_dict["base"]
             del self.working_df_dict["base"]
-            self.current_step = [4, 7]
+            self.current_step = [4, 10]
             self.save_checkpoint_file()
 
         print("########################################################## Module 4 Finished "
               "######################################################")
         # return self.df_current.copy()
-
-# def execute(args_list, output_dir, flag_debug):
-#     genome_file = args_list[0]
-#     species = args_list[4]
-#
-#     pre.check_sequence_names(genome_file)
-#
-#     if species == "rice" or species == "maize":
-#         df_M1 = execute_M1(args_list)
-#         df_M2, df_homo = execute_M2(args_list)
-#         df_M3 = execute_M3(args_list, df_homo)
-#         df_list = [df_M1, df_M2, df_M3]
-#     else:
-#         df_M3N = execute_M3N(args_list)
-#         df_list = [df_M3N]
-#
-#     if flag_debug:
-#         for i, df in enumerate(df_list, start=1):
-#             df.to_csv(os.path.join(output_dir, f"debug_{i}.csv"), sep='\t')
-#     post_processing.execute(args_list, df_list, output_dir)
-
-
-# if __name__ == "__main__":
-#     # ================================================ argument parsing ================================================
-#     parser = argparse.ArgumentParser(prog="TIR-Learner")
-#     parser.add_argument("-f", "--genome_file", help="Genome file in fasta format", required=True)
-#     parser.add_argument("-n", "--genome_name", help="Genome name", required=True)
-#     parser.add_argument("-s", "--species", help="One of the following: \"Maize\", \"Rice\" or \"Others\"",
-#                         required=True)
-#     parser.add_argument("-c", "--CNN_path", help="Path to Tensorflow CNN SavedModel "
-#                                                  "(Do not include the SavedModel folder name)", required=True)
-#     parser.add_argument("-g", "--GRF_path", help="Path to GRF program", required=True)
-#     parser.add_argument("-l", "--TIR_length", help="Max length of TIR (Optional)", default=5000)
-#     parser.add_argument("-t", "--processor", help="Number of processor (Optional)", default=os.cpu_count())
-#     parser.add_argument("-o", "--output_dir", help="Output directory (Optional)", default=None)
-#     parser.add_argument('-d', '--debug', help="Output each module's result in csv file (Optional)", action="store_true")
-#     parsed_args = parser.parse_args()
-#
-#     genome_file = parsed_args.genome_file
-#     genome_name = parsed_args.genome_name
-#     species = parsed_args.species
-#     CNN_path = parsed_args.CNN_path
-#     grfp = parsed_args.GRF_path
-#
-#     length = parsed_args.TIR_length
-#     t = parsed_args.processor
-#     output_dir = parsed_args.output_dir
-#     flag_debug = parsed_args.debug
-#     # ==================================================================================================================
-#
-#     temp_dir = tempfile.mkdtemp()
-#     genome_file_hard_link = os.path.join(temp_dir, "genome_file_hard_link.fa.lnk")
-#     os.symlink(genome_file, genome_file_hard_link)
-#     os.chdir(temp_dir)
-#
-#     args_list = [genome_file_hard_link, genome_name, CNN_path, t, species, grfp, length]
-#     # index:                0                 1         2      3     4      5      6
-#
-#     df_list = None
-#     if species == "Rice" or species == "Maize":
-#         df_M1 = execute_M1(args_list)
-#         df_M2, df_homo = execute_M2(args_list)
-#         df_M3 = execute_M3(args_list, df_homo)
-#         df_list = [df_M1, df_M2, df_M3]
-#     else:
-#         df_M3N = execute_M3N(args_list)
-#         df_list = [df_M3N]
-#
-#     if output_dir is None or output_dir == "None":
-#         output_dir = os.path.dirname(genome_file)
-#
-#     if flag_debug:
-#         for i, df in enumerate(df_list, start=1):
-#             df.to_csv(os.path.join(output_dir, f"debug_{i}.csv"), sep='\t')
-#     post_processing.execute(args_list, df_list, output_dir)
-#
-#     # subprocess.Popen(["rm", "-f", f"{genome_file}.fai"])
-#     # subprocess.Popen(["rm", "-rf", temp_dir])
-#     shutil.rmtree(temp_dir)
