@@ -81,6 +81,7 @@ perl EDTA.pl [options]
 	--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 	--repeatmasker	[path]	The directory containing RepeatMasker (default: read from ENV)
 	--annosine	[path]	The directory containing AnnoSINE_v2 (default: read from ENV)
+	--ltrretriever	[path]	The directory containing LTR_retriever (default: read from ENV)
 	--check_dependencies Check if dependencies are fullfiled and quit
 	--threads|-t [int]	Number of theads to run this script (default: 4)
 	--debug	 [0|1]	Retain intermediate files (default: 0)
@@ -177,6 +178,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'tesorter=s'           => \$TEsorter,
 		  'blast=s'              => \$blastplus,
 		  'annosine=s'		 => \$annosine,
+		  'ltrretriever=s'	 => \$LTR_retriever,
 		  'threads|t=i'          => \$threads,
 		  'check_dependencies!'  => \$check_dependencies,
                   'debug=i'              => \$debug,
@@ -581,22 +583,12 @@ if (-s "$cds"){
 	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>/dev/null`;
 	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.cln.masked > $genome.EDTA.intact.fa.cln.rmCDS`;
-	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa`;
+	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa.cln2`;
 	} else {
 	print "\t\t\t\tSkipping the CDS cleaning step (--cds [File]) since no CDS file is provided or it's empty.\n\n";
 	copy_file("$genome.EDTA.raw.fa", "./$genome.EDTA.raw.fa.cln");
-	copy_file("$genome.EDTA.intact.fa.cln", "./$genome.EDTA.intact.fa");
+	copy_file("$genome.EDTA.intact.fa.cln", "./$genome.EDTA.intact.fa.cln2");
 	}
-
-## generate clean intact gff3
-# get a dirty list of intact.gff
-`sed 's/.*Name=//; s/;Classifica.*//' $genome.EDTA.intact.raw.gff3 | sort -u > $genome.EDTA.intact.raw.gff3.famlist`;
-`grep \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.dirtlist`;
-# first attempt purging the gff3
-`perl $filter_gff $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.raw.gff3.dirtlist > $genome.EDTA.intact.gff3`;
-# remake the remove list an purge again
-`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\\t\$id\nName\\t\$id" if defined \$id' $genome.EDTA.intact.raw.gff3.removed >> $genome.EDTA.intact.raw.gff3.dirtlist`;
-`perl $filter_gff $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.raw.gff3.dirtlist > $genome.EDTA.intact.gff3`;
 
 # Final rounds of redundancy removal and make final EDTA library
 `perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blastplus 2>/dev/null`;
@@ -621,13 +613,24 @@ if ($HQlib ne ''){
 	}
 
 # reclassify intact TEs with the TE lib #113
-`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa 2>/dev/null` unless -s "$genome.EDTA.intact.fa.out" and $overwrite == 0;
-die "ERROR: The masked file for $genome.EDTA.intact.fa is not found! The RepeatMasker annotation on this file may be failed. Please check the $genome.EDTA.TElib.fa file for sequence naming formats especially when you provide a library via --curatedlib.\n" unless -s "$genome.EDTA.intact.fa.out";
-`perl $reclassify -seq $genome.EDTA.intact.fa -RM $genome.EDTA.intact.fa.out`;
-`perl $rename_by_list $genome.EDTA.intact.gff3 $genome.EDTA.intact.fa.rename.list 1 > $genome.EDTA.intact.gff3.rename`;
-rename "$genome.EDTA.intact.fa.rename", "$genome.EDTA.intact.fa";
-rename "$genome.EDTA.intact.gff3.rename", "$genome.EDTA.intact.gff3";
-#`cp $genome.EDTA.intact.gff3 ../`; #replace the intact gff that has no lib family info
+`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa.cln2 2>/dev/null` unless -s "$genome.EDTA.intact.fa.cln2.out" and $overwrite == 0;
+die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The RepeatMasker annotation on this file may be failed. Please check the $genome.EDTA.TElib.fa file for sequence naming formats especially when you provide a library via --curatedlib.\n" unless -s "$genome.EDTA.intact.fa.cln2.out";
+`perl $reclassify -seq $genome.EDTA.intact.fa.cln2 -RM $genome.EDTA.intact.fa.cln2.out -cov 80 -len 80 -iden 60`; # 80-80-60
+
+# remove inconsistently classified intact TEs and generate the final intact TEs
+`perl $output_by_list 1 $genome.EDTA.intact.fa.cln2.rename 1 $genome.EDTA.intact.fa.cln2.false.list -ex -FA > $genome.EDTA.intact.fa`;
+
+## generate clean intact gff3
+# update the family names in the intact.raw.gff3 file
+`perl $rename_by_list $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.fa.cln2.rename.list 1 > $genome.EDTA.intact.raw.gff3.rename`;
+`sed 's/.*Name=//; s/;Classifica.*//' $genome.EDTA.intact.raw.gff3.rename | sort -u > $genome.EDTA.intact.raw.gff3.rename.famlist`;
+# get a dirty list of intact.gff
+`grep \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.rename.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
+# first attempt purging the gff3
+`perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > $genome.EDTA.intact.gff3`;
+# remake the remove list an purge again
+`perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\\t\$id\nName\\t\$id" if defined \$id' $genome.EDTA.intact.raw.gff3.rename.removed >> $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
+`perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > $genome.EDTA.intact.gff3`;
 
 # check results
 die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
