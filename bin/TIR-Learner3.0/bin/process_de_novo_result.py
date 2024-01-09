@@ -61,7 +61,7 @@ def process_GRF_result(TIRLearner_instance):
     print("  Step 3/7: Checking percentage of N on sequence")
     df["check_N_per_seq_check"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(
         lambda x: np.nan if check_N_per(x["seq"]) else False, axis=1)
-    df = df.dropna(ignore_index=True)
+    df = df.dropna(ignore_index=True).copy()
 
     print("  Step 4/7: Checking TA repeats on TIR")
     # df["TA_repeats_tir_check"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(
@@ -72,7 +72,7 @@ def process_GRF_result(TIRLearner_instance):
     print("  Step 5/7: Checking N existence on TIR")
     df["check_N_TIR_check"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(
         lambda x: np.nan if check_N(x["TIR"]) else False, axis=1)
-    df = df.dropna(ignore_index=True)
+    df = df.dropna(ignore_index=True).copy()
 
     print("  Step 6/7: Getting TSD")
     df["TSD"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(

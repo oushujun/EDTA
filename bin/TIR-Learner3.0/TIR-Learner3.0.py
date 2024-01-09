@@ -61,8 +61,8 @@ if __name__ == "__main__":
     flag_verbose = parsed_args.verbose
     flag_debug = parsed_args.debug
 
-    GRF_path = parsed_args.grf_path
-    gt_path = parsed_args.gt_path
+    GRF_path = parsed_args.grf_path.replace('"', "")
+    gt_path = parsed_args.gt_path.replace('"', "")
 
     force_list = parsed_args.force.split(" ")
 

@@ -8,13 +8,14 @@ import prog_const
 
 
 def run_TIRvish(genome_file, genome_name, TIR_length, gt_path):
+    gt_bin_path = os.path.join(gt_path, "gt")
     gt_index_file_name = genome_name + prog_const.spliter + "gt_index"
     subprocess.Popen(
-        [f"{gt_path}/gt", "suffixerator", "-db", genome_file, "-indexname", gt_index_file_name,
+        [gt_bin_path, "suffixerator", "-db", genome_file, "-indexname", gt_index_file_name,
          "-tis", "-suf", "-lcp", "-des", "-ssp", "-sds", "-dna", "-mirrored"]).wait()
 
     TIRvish_result_gff3_file_name = f"{genome_name}{prog_const.spliter}TIRvish.gff3"
-    gt_tirvish = (f"\"{gt_path}/gt\" tirvish -index {gt_index_file_name} -seed 20 -mintirlen 10 -maxtirlen 1000 "
+    gt_tirvish = (f"\"{gt_bin_path}\" tirvish -index {gt_index_file_name} -seed 20 -mintirlen 10 -maxtirlen 1000 "
                   f"-mintirdist 10 -maxtirdist {str(TIR_length)} -similar 80 -mintsd 2 -maxtsd 11 "
                   f"-vic 13 -seqids \"yes\" > {TIRvish_result_gff3_file_name}")
     subprocess.Popen(gt_tirvish, shell=True).wait()
