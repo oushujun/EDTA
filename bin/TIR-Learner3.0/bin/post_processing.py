@@ -202,6 +202,9 @@ def execute(TIRLearner_instance):
 
     print("  Step 1/6: Combining all results")
     df_combined = combine_all(df_list, flag_verbose)
+    if df_combined.shape[0] == 0:
+        print("NOTICE: No TIR found. Post-processing will be terminated and no result will be produced.")
+        return
 
     print("  Step 2/6: Preparing gff3 attributes for all sequences")
     df_gff3 = format_df_in_gff3_format(df_combined, flag_verbose)
