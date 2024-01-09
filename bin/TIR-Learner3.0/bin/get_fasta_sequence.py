@@ -49,6 +49,8 @@ def get_start_end(genome_file, df_in, flag_verbose, length=200):
 def get_fasta_pieces_single_seqid_SeqIO(df_in: pd.DataFrame,
                                         genome_SeqRecord: SeqIO.SeqRecord, seqid: str, flag_verbose: bool):
     df = df_in[df_in["seqid"] == seqid].copy()
+    if df.shape[0] == 0:
+        return None
     df["seq"] = df.swifter.progress_bar(flag_verbose).apply(
         lambda x: str(genome_SeqRecord.seq[x["start"]: x["end"]]), axis=1)
     return df.dropna()

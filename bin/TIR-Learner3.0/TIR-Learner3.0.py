@@ -38,8 +38,8 @@ if __name__ == "__main__":
     parser.add_argument("--gt_path", help="Path to genometools program (Optional)",
                         default=os.path.dirname(shutil.which("gt")))
     parser.add_argument("--force", help="Ou (Optional)", default="")
-    # only two usages for force is available currently: grf_mode, checkpoint_off
-    # --force "grf_mode checkpoint_off"
+    # usages for force is available: grf_mode, checkpoint_off, skip_tirvish, skip_grf
+    # --force "<args>", e.g. --force "grf_mode"
     # TODO write help information
 
     parsed_args = parser.parse_args()
@@ -65,6 +65,9 @@ if __name__ == "__main__":
     gt_path = parsed_args.gt_path.replace('"', "")
 
     force_list = parsed_args.force.split(" ")
+
+    if "skip_tirvish" in force_list and "skip_grf" in force_list:
+        raise SystemExit("ERROR: \"skip_tirvish\" and \"skip_grf\" cannot be specified at the same time!")
 
     # Transforming the possible relative path into absolute path
     genome_file = os.path.abspath(genome_file)

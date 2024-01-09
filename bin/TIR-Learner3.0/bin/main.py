@@ -101,7 +101,7 @@ class TIRLearner:
         try:
             self.genome_file_stat["num"] = len(list(SeqIO.index(self.genome_file, "fasta")))
         except Exception:
-            raise SystemExit(f"Duplicate sequence name occurs in the fasta file.")
+            raise SystemExit(f"ERROR: Duplicate sequence name occurs in the fasta file.")
 
         records = []
         for record in SeqIO.parse(self.genome_file, "fasta"):
@@ -276,7 +276,7 @@ class TIRLearner:
                 (self.current_step[0] == executing_module and self.current_step[1] < executing_step))
 
     def GRF_execution_mode_check(self):
-        if "grf_mode" in self.force_list or self.GRF_mode in ("native", "boost"):
+        if "skip_grf" in self.force_list or "grf_mode" in self.force_list or self.GRF_mode in ("native", "boost"):
             return
 
         if self.genome_file_stat["num"] <= prog_const.general_split_num_threshold:
@@ -391,28 +391,28 @@ class TIRLearner:
         # os.chdir(os.path.join(dir, module))
 
         # Module 2, Step 1: Run TIRvish to find inverted repeats
-        if self.module_step_execution_check(2, 1):
+        if self.module_step_execution_check(2, 1) and "skip_tirvish" not in self.force_list:
             print("Module 2, Step 1: Run TIRvish to find inverted repeats")
             self.working_df_dict["TIRvish"] = run_TIRvish.execute(self)
             self.current_step = [2, 1]
             self.save_checkpoint_file()
 
         # Module 2, Step 2: Process TIRvish results
-        if self.module_step_execution_check(2, 2):
+        if self.module_step_execution_check(2, 2) and "skip_tirvish" not in self.force_list:
             print("Module 2, Step 2: Process TIRvish results")
             self.working_df_dict["TIRvish"] = process_de_novo_result.process_TIRvish_result(self)
             self.current_step = [2, 2]
             self.save_checkpoint_file()
 
         # Module 2, Step 3: Run GRF to find inverted repeats
-        if self.module_step_execution_check(2, 3):
+        if self.module_step_execution_check(2, 3) and "skip_grf" not in self.force_list:
             print("Module 2, Step 3: Run GRF to find inverted repeats")
             self.working_df_dict["GRF"] = run_GRF.execute(self)
             self.current_step = [2, 3]
             self.save_checkpoint_file()
 
         # Module 2, Step 4: Process GRF results
-        if self.module_step_execution_check(2, 4):
+        if self.module_step_execution_check(2, 4) and "skip_grf" not in self.force_list:
             print("Module 2, Step 4: Process GRF results")
             self.working_df_dict["GRF"] = process_de_novo_result.process_GRF_result(self)
             self.current_step = [2, 4]
@@ -520,28 +520,28 @@ class TIRLearner:
         # os.chdir(os.path.join(dir, module))
 
         # Module 4, Step 1: Run TIRvish to find inverted repeats
-        if self.module_step_execution_check(4, 1):
+        if self.module_step_execution_check(4, 1) and "skip_tirvish" not in self.force_list:
             print("Module 4, Step 1: Run TIRvish to find inverted repeats")
             self.working_df_dict["TIRvish"] = run_TIRvish.execute(self)
             self.current_step = [4, 1]
             self.save_checkpoint_file()
 
         # Module 4, Step 2: Process TIRvish results
-        if self.module_step_execution_check(4, 2):
+        if self.module_step_execution_check(4, 2) and "skip_tirvish" not in self.force_list:
             print("Module 4, Step 2: Process TIRvish results")
             self.working_df_dict["TIRvish"] = process_de_novo_result.process_TIRvish_result(self)
             self.current_step = [4, 2]
             self.save_checkpoint_file()
 
         # Module 4, Step 3: Run GRF to find inverted repeats
-        if self.module_step_execution_check(4, 3):
+        if self.module_step_execution_check(4, 3) and "skip_grf" not in self.force_list:
             print("Module 4, Step 3: Run GRF to find inverted repeats")
             self.working_df_dict["GRF"] = run_GRF.execute(self)
             self.current_step = [4, 3]
             self.save_checkpoint_file()
 
         # Module 4, Step 4: Process GRF results
-        if self.module_step_execution_check(4, 4):
+        if self.module_step_execution_check(4, 4) and "skip_grf" not in self.force_list:
             print("Module 4, Step 4: Process GRF results")
             self.working_df_dict["GRF"] = process_de_novo_result.process_GRF_result(self)
             self.current_step = [4, 4]

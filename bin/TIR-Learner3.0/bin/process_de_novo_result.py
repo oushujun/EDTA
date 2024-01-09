@@ -135,8 +135,11 @@ def process_TIRvish_result(TIRLearner_instance):
 
 
 def combine_de_novo_result(TIRLearner_instance):
-    df = pd.concat((TIRLearner_instance.working_df_dict["TIRvish"], TIRLearner_instance.working_df_dict["GRF"]),
+    df = pd.concat((TIRLearner_instance.working_df_dict.get("TIRvish", None),
+                    TIRLearner_instance.working_df_dict.get("GRF", None)),
                    ignore_index=True)
     df.to_csv(TIRLearner_instance.processed_de_novo_result_file, sep='\n', header=False, index=False)
+    TIRLearner_instance.working_df_dict["TIRvish"] = None
+    TIRLearner_instance.working_df_dict["GRF"] = None
     del TIRLearner_instance.working_df_dict["TIRvish"]
     del TIRLearner_instance.working_df_dict["GRF"]
