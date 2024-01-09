@@ -114,7 +114,8 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
 
 
 def GRF(GRF_path, file, cpu_cores, TIR_length):
-    grf = (f"\"{GRF_path}/grf-main\" -i \"{file}\" -o \"{file}_GRFmite\" -c 1 -t {int(cpu_cores)} -p 20 "
+    grf_bin_path = os.path.join(GRF_path, "grf-main")
+    grf = (f"\"{grf_bin_path}\" -i \"{file}\" -o \"{file}_GRFmite\" -c 1 -t {int(cpu_cores)} -p 20 "
            f"--min_space 10 --max_space {int(TIR_length)} --max_indel 0 --min_tr 10 "
            f"--min_spacer_len 10 --max_spacer_len {int(TIR_length)}")
     shell_filter = r" | grep -vE 'start:|end:|print:|calculate|^$'"
