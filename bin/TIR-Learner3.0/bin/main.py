@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Tianyu Lu (tlu83@wisc.edu)
-# 2024-01-08
+# 2024-01-09
 
 import datetime
 import json
@@ -90,7 +90,9 @@ class TIRLearner:
         if "checkpoint_off" not in self.force_list and not self.flag_debug:
             shutil.rmtree(self.checkpoint_output)
 
-        shutil.rmtree(self.working_dir)
+        subprocess.Popen(["unlink", self.genome_file])
+        # shutil.rmtree(self.working_dir)
+
 
     def pre_scan_fasta_file(self):
         # names = [record.id for record in SeqIO.parse(self.genome_file, "fasta")]
@@ -177,7 +179,8 @@ class TIRLearner:
                 genome_file_directory = os.path.dirname(self.genome_file)
                 self.checkpoint_input = self.get_newest_checkpoint_folder(genome_file_directory)
             if self.checkpoint_input == "no_checkpoint_folder_found":
-                print("Unable to find checkpoint file. Will skip loading checkpoint and start from the very beginning.")
+                print("WARN: Unable to find checkpoint file. "
+                      "Will skip loading checkpoint and start from the very beginning.")
                 # self.flag_checkpoint = False
                 return
 
@@ -185,26 +188,28 @@ class TIRLearner:
         checkpoint_info_file = os.path.join(self.checkpoint_input, "info.txt")
         # print(checkpoint_info_file)  # TODO only for debug
         if not os.path.exists(checkpoint_info_file) or os.path.getsize(checkpoint_info_file) == 0:
-            print("Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
+            print("WARN: Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
             # self.flag_checkpoint = False
             return
 
-        with open(checkpoint_info_file) as f:
-            timestamp_iso8601 = f.readline().rstrip()
+        try:
+            with open(checkpoint_info_file) as f:
+                timestamp_iso8601 = f.readline().rstrip()
 
-            self.current_step = list(map(int, f.readline().rstrip().split(",")))
-            module = self.current_step[0]
-            step = self.current_step[1]
+                self.current_step = list(map(int, f.readline().rstrip().split(",")))
+                module = self.current_step[0]
+                step = self.current_step[1]
 
-            # df_current_file = f.readline().rstrip()
-            working_df_filename_dict = json.loads(f.readline().rstrip())
-            for k, v in working_df_filename_dict.items():
-                self.working_df_dict[k] = pd.read_csv(os.path.join(self.checkpoint_input, v),
-                                                      sep='\t', header=0, engine='c', memory_map=True)
-            # self.df_current = pd.read_csv(df_current_file, sep='\t', header=0, engine='c', memory_map=True)
+                # df_current_file = f.readline().rstrip()
+                working_df_filename_dict = json.loads(f.readline().rstrip())
+                for k, v in working_df_filename_dict.items():
+                    df_file_name = os.path.join(self.checkpoint_input, v)
+                    with open(f"{df_file_name}_dtypes.txt", 'r') as f:
+                        df_dtypes_dict = json.loads(f.readline().rstrip())
+                    self.working_df_dict[k] = pd.read_csv(f"{df_file_name}.csv",
+                                                          sep='\t', header=0, dtype=df_dtypes_dict,
+                                                          engine='c', memory_map=True)
 
-            # if step == 2 and module in (2, 4):
-            #     # Load processedGRFmite checkpoint file for module 2 step 5 or module 4 step 2
             processed_de_novo_result_checkpoint_file = os.path.join(self.checkpoint_input,
                                                                     self.processed_de_novo_result_file)
             if os.path.exists(processed_de_novo_result_checkpoint_file):
@@ -213,10 +218,15 @@ class TIRLearner:
                 shutil.copy(processed_de_novo_result_checkpoint_file,
                             os.path.join(self.checkpoint_output, self.processed_de_novo_result_file))
 
-            print(("Successfully loaded checkpoint:\n"
-                   f"  Time: {timestamp_iso8601}\n"
-                   f"  Module: {module}\n"
-                   f"  Step: {step}"))
+            print("Successfully loaded checkpoint:\n"
+                  f"  Time: {timestamp_iso8601}\n"
+                  f"  Module: {module}\n"
+                  f"  Step: {step}")
+        except FileNotFoundError:
+            print("WARN: Checkpoint file invalid. Will skip loading checkpoint and start from the very beginning.")
+            self.current_step = [0, 0]
+            self.working_df_dict.clear()
+            return
 
     def save_checkpoint_file(self):
         # if not self.flag_debug and self.checkpoint_input is None:
@@ -228,14 +238,15 @@ class TIRLearner:
         module = self.current_step[0]
         step = self.current_step[1]
         # checkpoint_file_name = f"module_{module}_step_{step}_{timestamp_now_iso8601}.csv"
-        working_df_filename_dict = {k: f"{k}_module_{module}_step_{step}_{get_timestamp_now_utc_iso8601()}.csv"
+        working_df_filename_dict = {k: f"{k}_module_{module}_step_{step}_{get_timestamp_now_utc_iso8601()}"
                                     for k in self.working_df_dict.keys()}
         # print(working_df_filename_dict) # TODO debug only
         for k, v in self.working_df_dict.items():
-            v.to_csv(os.path.join(self.checkpoint_output, working_df_filename_dict[k]),
-                     index=False, header=True, sep="\t")
-        # self.df_current.to_csv(os.path.join(self.checkpoint_folder, checkpoint_file_name),
-        #                        index=False, header=False, sep="\t")
+            df_file_name = os.path.join(self.checkpoint_output, working_df_filename_dict[k])
+            v.to_csv(f"{df_file_name}.csv", index=False, header=True, sep='\t')
+            with open(f"{df_file_name}_dtypes.txt", 'w') as f:
+                f.write(json.dumps(v.dtypes.astype(str).to_dict()) + '\n')
+
         with open(os.path.join(self.checkpoint_output, "info.txt"), 'w') as f:
             f.write(get_timestamp_now_utc_iso8601() + '\n')
             f.write(f"{module},{step}\n")
@@ -245,9 +256,9 @@ class TIRLearner:
 
         # print(os.listdir(self.checkpoint_folder)) # TODO debug only
         if not self.flag_debug:
-            # shutil.rmtree(self.checkpoint_folder)
             remove_file_set = (set(os.listdir(self.checkpoint_output)) -
-                               set(working_df_filename_dict.values()) -
+                               set(map("{}.csv".format, working_df_filename_dict.values())) -
+                               set(map("{}_dtypes.txt".format, working_df_filename_dict.values())) -
                                {"info.txt", self.processed_de_novo_result_file})
             # print(remove_file_set) # TODO debug only
             for f in remove_file_set:
