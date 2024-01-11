@@ -118,10 +118,11 @@ my $count_base = "$script_path/util/count_base.pl";
 my $make_masked = "$script_path/util/make_masked.pl";
 my $make_gff3 = "$script_path/util/make_gff3_with_RMout.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
-my $rice_LTR = "$script_path/database/rice6.9.5.liban.LTR";
-my $rice_nonLTR = "$script_path/database/rice6.9.5.liban.nonLTR";
-my $rice_TIR = "$script_path/database/rice6.9.5.liban.TIR";
-my $rice_helitron = "$script_path/database/rice6.9.5.liban.Helitron";
+my $rice_LTR = "$script_path/database/rice7.0.0.liban.LTR";
+my $rice_SINE = "$script_path/database/rice7.0.0.liban.SINE";
+my $rice_LINE = "$script_path/database/rice7.0.0.liban.LINE";
+my $rice_TIR = "$script_path/database/rice7.0.0.liban.TIR";
+my $rice_helitron = "$script_path/database/rice7.0.0.liban.Helitron";
 my $rename_TE = "$script_path/util/rename_TE.pl";
 #my $rename_RM = "$script_path/util/rename_RM_TE.pl";
 my $call_seq = "$script_path/util/call_seq_by_list.pl";
@@ -240,7 +241,8 @@ die "The script make_masked.pl is not found in $make_masked!\n" unless -s $make_
 die "The script make_gff3_with_RMout.pl is not found in $make_gff3!\n" unless -s $make_gff3;
 die "The protein-coding sequence library is not found in $protlib!\n" unless -s $protlib;
 die "The rice LTR sequence library is not found in $rice_LTR!\n" unless -s $rice_LTR;
-die "The rice nonLTR sequence library is not found in $rice_nonLTR!\n" unless -s $rice_nonLTR;
+die "The rice SINE sequence library is not found in $rice_SINE!\n" unless -s $rice_SINE;
+die "The rice LINE sequence library is not found in $rice_LINE!\n" unless -s $rice_LINE;
 die "The rice TIR sequence library is not found in $rice_TIR!\n" unless -s $rice_TIR;
 die "The rice Helitron sequence library is not found in $rice_helitron!\n" unless -s $rice_helitron;
 die "The script rename_TE.pl is not found in $rename_TE!\n" unless -s $rename_TE;
@@ -465,8 +467,8 @@ chdir "$genome.EDTA.raw";
 if ($force eq 1){
 	`cp $rice_LTR $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
 	`cp $rice_LTR $genome.LTR.intact.raw.fa` unless -s "$genome.LTR.intact.raw.fa";
-	`cp $rice_nonLTR $genome.LINE.raw.fa` unless -s "$genome.LINE.raw.fa";
-	`cp $rice_nonLTR $genome.SINE.raw.fa` unless -s "$genome.SINE.raw.fa";
+	`cp $rice_LINE $genome.LINE.raw.fa` unless -s "$genome.LINE.raw.fa";
+	`cp $rice_SINE $genome.SINE.raw.fa` unless -s "$genome.SINE.raw.fa";
 	`cp $rice_TIR $genome.TIR.intact.raw.fa` unless -s "$genome.TIR.intact.raw.fa";
 	`cp $rice_helitron $genome.Helitron.intact.raw.fa` unless -s "$genome.Helitron.intact.raw.fa";
 	}
@@ -504,8 +506,7 @@ print "$date\tPerform EDTA advance filtering for raw TE candidates and generate 
 `rm ./$genome.EDTA.combine/* 2>/dev/null` if $overwrite == 1;
 
 # Filter raw TE candidates and the make stage 1 library
-`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -ltrint $genome.EDTA.raw/$genome.LTR.intact.raw.fa -line $genome.EDTA.raw/$genome.LINE.raw.fa -sine $genome.EDTA.raw/$genome.SINE.raw.fa -tir $genome.EDTA.raw/$genome.TIR.intact.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.intact.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads`; #new processor
-#`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -nonltr $genome.EDTA.raw/$genome.nonLTR.raw.fa -tir $genome.EDTA.raw/$genome.TIR.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads -protlib $protlib`; #old processor
+`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -ltrint $genome.EDTA.raw/$genome.LTR.intact.raw.fa -line $genome.EDTA.raw/$genome.LINE.raw.fa -sine $genome.EDTA.raw/$genome.SINE.raw.fa -tir $genome.EDTA.raw/$genome.TIR.intact.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.intact.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads`;
 
 # check results, remove intermediate files, and report status
 die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.EDTA.fa.stg1" unless -s "$genome.EDTA.combine/$genome.EDTA.fa.stg1";
@@ -613,7 +614,7 @@ if ($HQlib ne ''){
 	}
 
 # reclassify intact TEs with the TE lib #113
-`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa.cln2 2>/dev/null` unless -s "$genome.EDTA.intact.fa.cln2.out" and $overwrite == 0;
+`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa.cln2 2>/dev/null` unless (-s "$genome.EDTA.intact.fa.cln2.out" and $overwrite == 0);
 die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The RepeatMasker annotation on this file may be failed. Please check the $genome.EDTA.TElib.fa file for sequence naming formats especially when you provide a library via --curatedlib.\n" unless -s "$genome.EDTA.intact.fa.cln2.out";
 `perl $reclassify -seq $genome.EDTA.intact.fa.cln2 -RM $genome.EDTA.intact.fa.cln2.out -cov 80 -len 80 -iden 60`; # 80-80-60
 
@@ -723,7 +724,7 @@ if ($anno == 1){
 	chomp $tot_TE;
 
 	# make low-threshold masked genome for MAKER
-	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude` unless -s "$genome.MAKER.masked" and $overwrite == 0;
+	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude` unless (-s "$genome.MAKER.masked" and $overwrite == 0);
 	`mv $genome.new.masked $genome.MAKER.masked`;
 	my $maker_TE = `perl $count_base $genome.MAKER.masked`;
 	$maker_TE = (split /\s+/, $maker_TE)[3];
