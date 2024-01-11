@@ -49,7 +49,7 @@ Download the latest EDTA:
 
 Find the yml file in the folder and run:
 
-`conda env create -f EDTA.yml`
+`conda env create -f EDTA_2.2.x.yml`
 
 The default `conda env` name is `EDTA` specified by the first line of the `EDTA.yml` file. You may change that to different names. Once the conda environment is set up, you can use it to drive other versions of EDTA. For example, if you have the EDTA v1.9.6 installed via conda, you may `git clone` the latest version, activate the v1.9.6 conda env, then specify the path to the freshly cloned EDTA to use it.
 
@@ -68,15 +68,14 @@ The 'simplest' and the slowest way (not recommended):
 
 `conda install -c bioconda -c conda-forge edta`
 
-More specifications help to find the right dependencies:
-
-`conda install -c conda-forge -c bioconda edta python=3.6 tensorflow=1.14 'h5py<3'`
-
-Use [mamba](https://github.com/mamba-org/mamba) to acclerate the installation:
+More specifications help to find the right dependencies, and use [mamba](https://github.com/mamba-org/mamba) to acclerate the installation:
 
 `conda install -c conda-forge mamba`
 
-`mamba install -c conda-forge -c bioconda edta python=3.6 tensorflow=1.14 'h5py<3'`
+`mamba create -n EDTA2.6_v2 -c bioconda -c conda-forge -c r perl cd-hit repeatmodeler muscle mdust openjdk perl-text-soundex multiprocess regex tensorflow keras scikit-learn biopython pandas glob2 h5py python tesorter genericrepeatfinder genometools-genometools ltr_retriever ltr_finder coreutils blast==2.10.1 seqtk minimap2 swifter bedtools r-base r-ggplot2 r-dplyr r-tidyr r-here`
+
+`mamba install -c bioconda -c conda-forge 'h5py>3'`
+
 </details>
 
 Usage:
@@ -144,7 +143,7 @@ You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five
 
 ```
 cd ./EDTA/test
-perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
+perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --threads 10
 ```
 
 If your test fails, you may check out this [collection of issues](https://github.com/oushujun/EDTA/wiki/Installations,-builds,-and-tests-Q&A) for possible reasons and solutions. If none works, you may open a new issue.
@@ -162,14 +161,16 @@ Optional:
 ## Outputs
 A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice6.9.5.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./util/TE_Sequence_Ontology.txt).
 
-Optional:
+Optional 1:
 1. Novel TE families: $genome.mod.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).
-2. Whole-genome TE annotation: $genome.mod.EDTA.TEanno.gff3. This file contains both structurally intact and fragmented TE annotations (`--anno 1` required).
-3. Summary of whole-genome TE annotation: $genome.mod.EDTA.TEanno.sum (`--anno 1` required).
-4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. In practice, this approach will reduce overmasking for genic regions, which can improve gene prediction quality. However, initial gene models should contain TEs and need further filtering (`--anno 1` required).
-5. Annotation inconsistency for simple TEs: $genome.mod.EDTA.TE.fa.stat.redun.sum (`--evaluate 1` required).
-6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum (`--evaluate 1` required).
-7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum (`--evaluate 1` required).
+
+Optional 2, when you specify the `--anno 1` parameter, you will get:
+2. Whole-genome TE annotation: $genome.mod.EDTA.TEanno.gff3. This file contains both structurally intact and fragmented TE annotations.
+3. Summary of whole-genome TE annotation: $genome.mod.EDTA.TEanno.sum.
+4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. In practice, this approach will reduce overmasking for genic regions, which can improve gene prediction quality. However, initial gene models should contain TEs and need further filtering.
+5. Annotation inconsistency for simple TEs: $genome.mod.EDTA.TE.fa.stat.redun.sum.
+6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum.
+7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum.
 
 
 ## EDTA Usage
@@ -212,7 +213,8 @@ Optional:
     perl EDTA_raw.pl [options]
       --genome	[File]	The genome FASTA
       --species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-      --type	[ltr|tir|helitron|all]	Specify which type of raw TE candidates you want to get. Default: all
+      --type	[ltr|tir|helitron|line|sine|all]
+				Specify which type of raw TE candidates you want to get. Default: all
       --overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
       --threads|-t	[int]	Number of theads to run this script
       --help|-h	Display this help info
