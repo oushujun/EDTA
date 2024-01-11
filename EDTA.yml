@@ -1,4 +1,4 @@
-name: EDTA2
+name: EDTA
 channels:
   - bioconda
   - conda-forge
