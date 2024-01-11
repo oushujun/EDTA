@@ -82,7 +82,7 @@ def select_full_coverage(TIRLearner_instance) -> pd.DataFrame:
 
 def select_eighty_similarity(TIRLearner_instance) -> pd.DataFrame:
     print("Module 2, Step 7: Select 80% similar entries from blast results")
-    mp_args_list = [(TIRLearner_instance.processed_de_novo_result_file, TIRLearner_instance.species, TIR_type)
+    mp_args_list = [(TIRLearner_instance.processed_de_novo_result_file_name, TIRLearner_instance.species, TIR_type)
                     for TIR_type in prog_const.TIR_types]
     with mp.Pool(int(TIRLearner_instance.cpu_cores)) as pool:
         df_list = pool.starmap(process_homology_eighty_similarity, mp_args_list)

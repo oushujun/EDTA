@@ -12,6 +12,7 @@ sys.path.insert(0, f"{os.path.dirname(__file__)}/bin")
 # Use if True to suppress the PEP8: E402 warning
 if True:  # noqa: E402
     from bin.main import TIRLearner
+    from bin import prog_const
 
 
 if __name__ == "__main__":
@@ -37,9 +38,8 @@ if __name__ == "__main__":
                         default=os.path.dirname(shutil.which("grf-main")))
     parser.add_argument("--gt_path", help="Path to genometools program (Optional)",
                         default=os.path.dirname(shutil.which("gt")))
-    parser.add_argument("--force", help="Ou (Optional)", default="")
-    # usages for force is available: grf_mode, checkpoint_off, skip_tirvish, skip_grf
-    # --force "<args>", e.g. --force "grf_mode"
+    parser.add_argument("-a", "--additional_args", help="Ou (Optional)", default="")
+    # see prog_const for what additional args are acceptable
     # TODO write help information
 
     parsed_args = parser.parse_args()
@@ -64,10 +64,7 @@ if __name__ == "__main__":
     GRF_path = parsed_args.grf_path.replace('"', "")
     gt_path = parsed_args.gt_path.replace('"', "")
 
-    force_list = parsed_args.force.split(" ")
-
-    if "skip_tirvish" in force_list and "skip_grf" in force_list:
-        raise SystemExit("ERROR: \"skip_tirvish\" and \"skip_grf\" cannot be specified at the same time!")
+    additional_args = prog_const.process_additional_args(parsed_args.additional_args.split(" "))
 
     # Transforming the possible relative path into absolute path
     genome_file = os.path.abspath(genome_file)
@@ -81,4 +78,4 @@ if __name__ == "__main__":
 
     TIRLearner_instance = TIRLearner(genome_file, genome_name, species, TIR_length,
                                      cpu_cores, GRF_mode, working_dir, output_dir, checkpoint_input,
-                                     flag_verbose, flag_debug, GRF_path, gt_path, force_list)
+                                     flag_verbose, flag_debug, GRF_path, gt_path, additional_args)

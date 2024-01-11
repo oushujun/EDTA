@@ -31,14 +31,17 @@ def blast_de_novo_result_in_ref_lib(file_name, ref_lib, ref_lib_file_path, cpu_c
 
 def blast_genome_file(TIRLearner_instance):
     print("Module 1, Step 1: Blast reference library in genome file")
-    genome_db = TIRLearner_instance.genome_file + prog_const.spliter + "db"
-    mkDB = f"makeblastdb -in {TIRLearner_instance.genome_file} -out {genome_db} -parse_seqids -dbtype nucl 2>/dev/null"
+    genome_db = TIRLearner_instance.genome_file_path + prog_const.spliter + "db"
+    mkDB = (f"makeblastdb -in {TIRLearner_instance.genome_file_path} -out {genome_db} "
+            f"-parse_seqids -dbtype nucl 2>/dev/null")
     subprocess.Popen(mkDB, shell=True).wait()
 
-    ref_lib_list = [f"{TIRLearner_instance.species}_{TIR_type}_RefLib" for TIR_type in prog_const.TIR_types]
     mp_args_list = [(genome_db, TIRLearner_instance.genome_name,
-                     ref_lib, os.path.join(prog_const.program_root_dir, "RefLib", ref_lib),
-                     TIRLearner_instance.cpu_cores) for ref_lib in ref_lib_list]
+                     ref_lib, os.path.join(prog_const.ref_lib_dir_path, ref_lib),
+                     TIRLearner_instance.cpu_cores)
+                    for ref_lib in prog_const.ref_lib_file_dict[TIRLearner_instance.species]]
+
+    print(mp_args_list)
 
     with mp.Pool(int(TIRLearner_instance.cpu_cores)) as pool:
         pool.starmap(blast_ref_lib_in_genome_file, mp_args_list)
@@ -48,10 +51,10 @@ def blast_genome_file(TIRLearner_instance):
 
 def blast_de_novo_result(TIRLearner_instance):
     print("Module 2, Step 6: Blast GRF and TIRvish result in reference library")
-    ref_lib_list = [f"{TIRLearner_instance.species}_{TIR_type}_RefLib" for TIR_type in prog_const.TIR_types]
-    mp_args_list = [(TIRLearner_instance.processed_de_novo_result_file,
-                     ref_lib, os.path.join(prog_const.program_root_dir, "RefLib", ref_lib),
-                     TIRLearner_instance.cpu_cores) for ref_lib in ref_lib_list]
+    mp_args_list = [(TIRLearner_instance.processed_de_novo_result_file_name,
+                     ref_lib, os.path.join(prog_const.ref_lib_dir_path, ref_lib),
+                     TIRLearner_instance.cpu_cores)
+                    for ref_lib in prog_const.ref_lib_file_dict[TIRLearner_instance.species]]
 
     with mp.Pool(int(TIRLearner_instance.cpu_cores)) as pool:
         pool.starmap(blast_de_novo_result_in_ref_lib, mp_args_list)

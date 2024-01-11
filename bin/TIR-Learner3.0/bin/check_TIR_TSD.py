@@ -196,7 +196,7 @@ def process_result(df_in, module):
 
 
 def execute(TIRLearner_instance, module: str) -> pd.DataFrame | None:
-    df = TIRLearner_instance.working_df_dict["base"].copy()
+    df = TIRLearner_instance["base"].copy()
     df["len"] = df["end"] - df["start"]
     df = df[df["len"] >= 450].reset_index(drop=True)
     df["l_TIR"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(check_TIR, axis=1)

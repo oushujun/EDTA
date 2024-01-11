@@ -186,34 +186,32 @@ def get_final_fasta_file(df_in, genome_file, genome_name, cpu_cores, flag_verbos
     df.to_csv(file_path, index=False, header=False, sep="\n")
 
 
-def execute(TIRLearner_instance):
-    genome_file = TIRLearner_instance.genome_file
+def execute(TIRLearner_instance, raw_result_df_list):
+    genome_file = TIRLearner_instance.genome_file_path
     genome_name = TIRLearner_instance.genome_name
-    output_dir = TIRLearner_instance.output_dir
+    output_dir = TIRLearner_instance.output_dir_path
     cpu_cores = TIRLearner_instance.cpu_cores
     flag_verbose = TIRLearner_instance.flag_verbose
 
-    df_list = TIRLearner_instance.df_list
-
     print("############################################################ Post Processing  "
           "#########################################################")
-    output_folder_path = os.path.join(output_dir, "TIR-Learner-Result")
-    os.makedirs(output_folder_path, exist_ok=True)
+    result_output_dir_path = os.path.join(output_dir, "TIR-Learner-Result")
+    os.makedirs(result_output_dir_path, exist_ok=True)
 
     print("  Step 1/6: Combining all results")
-    df_combined = combine_all(df_list, flag_verbose)
+    df_combined = combine_all(raw_result_df_list, flag_verbose)
     if df_combined.shape[0] == 0:
         print("NOTICE: No TIR found. Post-processing will be terminated and no result will be produced.")
         return
 
     print("  Step 2/6: Preparing gff3 attributes for all sequences")
     df_gff3 = format_df_in_gff3_format(df_combined, flag_verbose)
-    df_gff3.to_csv(os.path.join(output_folder_path, f"{genome_name}_FinalAnn.gff3"), index=False, header=False,
+    df_gff3.to_csv(os.path.join(result_output_dir_path, f"{genome_name}_FinalAnn.gff3"), index=False, header=False,
                    sep="\t")
 
     print("  Step 3/6: Generating raw fasta file")
     get_final_fasta_file(df_gff3, genome_file, genome_name, cpu_cores, flag_verbose,
-                         os.path.join(output_folder_path, f"{genome_name}_FinalAnn.fa"))
+                         os.path.join(result_output_dir_path, f"{genome_name}_FinalAnn.fa"))
     del df_gff3
 
     df_combined_groupby_seqid = df_combined.groupby("seqid")
@@ -229,10 +227,10 @@ def execute(TIRLearner_instance):
 
     print("  Step 5/6: Preparing gff3 attributes for all sequences")
     df_gff3_filtered = format_df_in_gff3_format(df_filtered, flag_verbose)
-    df_gff3_filtered.to_csv(os.path.join(output_folder_path, f"{genome_name}_FinalAnn_filter.gff3"), index=False,
+    df_gff3_filtered.to_csv(os.path.join(result_output_dir_path, f"{genome_name}_FinalAnn_filter.gff3"), index=False,
                             header=False, sep="\t")
 
     print("  Step 6/6: Generating final fasta file")
     get_final_fasta_file(df_gff3_filtered, genome_file, genome_name, cpu_cores, flag_verbose,
-                         os.path.join(output_folder_path, f"{genome_name}_FinalAnn_filter.fa"))
+                         os.path.join(result_output_dir_path, f"{genome_name}_FinalAnn_filter.fa"))
     del df_gff3_filtered

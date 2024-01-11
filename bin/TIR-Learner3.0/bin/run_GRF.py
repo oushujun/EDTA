@@ -216,7 +216,7 @@ def get_GRF_result_df(GRF_result_dir_name):
 
 
 def execute(TIRLearner_instance):
-    genome_file = TIRLearner_instance.genome_file
+    genome_file = TIRLearner_instance.genome_file_path
     genome_name = TIRLearner_instance.genome_name
     cpu_cores = TIRLearner_instance.cpu_cores
     GRF_path = TIRLearner_instance.GRF_path
@@ -231,11 +231,13 @@ def execute(TIRLearner_instance):
     # for i in os.listdir(os.getcwd()):
     #     shutil.copyfile(os.path.join(os.getcwd(), i), os.path.join(TIRLearner_instance.output_dir, i))
 
+    print()
     if GRF_mode == "mix":
         run_GRF_mix(records_split_file_name, filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
     elif GRF_mode == "boost":
         run_GRF_boost(records_split_file_name, GRF_result_dir_name, GRF_path, cpu_cores, TIR_length)
     else:
         run_GRF_native(filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
+    print()
 
     return get_GRF_result_df(GRF_result_dir_name)

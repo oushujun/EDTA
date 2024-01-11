@@ -62,7 +62,7 @@ def get_TIRvish_result_df(TIRvish_result_gff3_file_name):
 
 
 def execute(TIRLearner_instance):
-    genome_file = TIRLearner_instance.genome_file
+    genome_file = TIRLearner_instance.genome_file_path
     genome_name = TIRLearner_instance.genome_name
     cpu_cores = TIRLearner_instance.cpu_cores
     TIR_length = TIRLearner_instance.TIR_length

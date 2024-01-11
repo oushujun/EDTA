@@ -91,13 +91,13 @@ def postprocessing(df_in, flag_verbose):
 
 
 def execute(TIRLearner_instance) -> pd.DataFrame:
-    df = TIRLearner_instance.working_df_dict["base"].copy()
+    df = TIRLearner_instance["base"].copy()
     print("  Step 1/6: Getting sequence fragment for prediction")
     df["seq_frag"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(get_sequence_fragment, axis=1)
     df = df.drop(columns="seq")
 
     df = feature_encoding(df, TIRLearner_instance.flag_verbose)
-    df = predict(df, TIRLearner_instance.genome_file,
-                 os.path.join(prog_const.program_root_dir, prog_const.CNN_model_file))
+    df = predict(df, TIRLearner_instance.genome_file_path,
+                 os.path.join(prog_const.program_root_dir_path, prog_const.CNN_model_dir_name))
     df = postprocessing(df, TIRLearner_instance.flag_verbose)
     return df

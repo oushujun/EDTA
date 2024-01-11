@@ -66,8 +66,8 @@ def get_fasta_pieces_SeqIO(genome_file: str, df_in: pd.DataFrame, cpu_cores, fla
 
 
 def execute(TIRLearner_instance) -> pd.DataFrame:
-    df = get_start_end(TIRLearner_instance.genome_file, TIRLearner_instance.working_df_dict["base"],
+    df = get_start_end(TIRLearner_instance.genome_file_path, TIRLearner_instance["base"],
                        TIRLearner_instance.flag_verbose)
     # return get_fasta_pieces_bedtools(genome_file, df)
-    return get_fasta_pieces_SeqIO(TIRLearner_instance.genome_file, df, TIRLearner_instance.cpu_cores,
+    return get_fasta_pieces_SeqIO(TIRLearner_instance.genome_file_path, df, TIRLearner_instance.cpu_cores,
                                   TIRLearner_instance.flag_verbose)

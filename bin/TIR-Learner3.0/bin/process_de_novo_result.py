@@ -92,7 +92,7 @@ def process_GRF_result(TIRLearner_instance):
 
 
 def process_TIRvish_result(TIRLearner_instance):
-    df_in = TIRLearner_instance.working_df_dict["TIRvish"]
+    df_in = TIRLearner_instance["TIRvish"]
     df = df_in[df_in["end"] - df_in["start"] + 1 >= 50].copy()
 
     print("  Step 1/5: Getting TIR")
@@ -135,11 +135,7 @@ def process_TIRvish_result(TIRLearner_instance):
 
 
 def combine_de_novo_result(TIRLearner_instance):
-    df = pd.concat((TIRLearner_instance.working_df_dict.get("TIRvish", None),
-                    TIRLearner_instance.working_df_dict.get("GRF", None)),
-                   ignore_index=True)
-    df.to_csv(TIRLearner_instance.processed_de_novo_result_file, sep='\n', header=False, index=False)
-    TIRLearner_instance.working_df_dict["TIRvish"] = None
-    TIRLearner_instance.working_df_dict["GRF"] = None
-    del TIRLearner_instance.working_df_dict["TIRvish"]
-    del TIRLearner_instance.working_df_dict["GRF"]
+    df = pd.concat((TIRLearner_instance.get("TIRvish", None), TIRLearner_instance.get("GRF", None)), ignore_index=True)
+    df.to_csv(TIRLearner_instance.processed_de_novo_result_file_name, sep='\n', header=False, index=False)
+    del TIRLearner_instance["TIRvish"]
+    del TIRLearner_instance["GRF"]
