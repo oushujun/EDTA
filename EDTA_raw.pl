@@ -92,7 +92,6 @@ my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
 my $GRF = ''; #path to GRF
 my $annosine = ""; #path to the AnnoSINE program
-my $beta2 = 1; #0, beta2 is not ready. 1, try it out.
 my $help = undef;
 
 # read parameters
@@ -234,8 +233,10 @@ die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32
 # GRF
 chomp ($GRF = `which grf-main 2>/dev/null`) if $GRF eq '';
 $GRF =~ s/\n$//;
-`$GRF 2>/dev/null`;
-die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF\n" if $?==32256;
+my $grfp= dirname ($GRF);
+$grfp =~ s/\n$//;
+`${grfp}grf-main 2>/dev/null`;
+die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp\n" if $?==32256;
 
 
 # make a softlink to the genome
@@ -371,16 +372,12 @@ if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
 `${mdust}mdust $genome.LTR.intact.fa.ori > $genome.LTR.intact.fa.ori.dusted`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.LTR.intact.fa.ori.dusted > $genome.LTR.intact.fa.ori.dusted.cln`;
 
-if ($beta2 == 1){
-	# annotate and remove not LTR candidates
-	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
-	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
-	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.raw.fa`;
-	`mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.raw.fa.anno.list`;
-	`cp $genome.LTR.intact.raw.fa.anno.list ../`;
-	} else {
-	`mv $genome.LTR.intact.raw.fa.ori.dusted.cln $genome.LTR.intact.raw.fa`;
-	}
+# annotate and remove not LTR candidates
+`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
+`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
+`mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.raw.fa`;
+`mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.raw.fa.anno.list`;
+`cp $genome.LTR.intact.raw.fa.anno.list ../`;
 
 # generate annotated output and gff
 `perl $output_by_list 1 $genome.LTR.intact.fa.ori 1 $genome.LTR.intact.raw.fa -FA -ex|grep \\>|perl -nle 's/>//; print "Name\\t\$_"' > $genome.LTR.intact.fa.ori.rmlist`;
@@ -424,10 +421,10 @@ chdir "$genome.EDTA.raw/SINE";
 # Remove existing results
 `rm -rf Seed_SINE.fa Step* HMM_out 2>/dev/null` if $overwrite eq 1;
 
-# run AnnoSINE2
+# run AnnoSINE_v2
 my $status; # record status of AnnoSINE execution
 if (-s "Seed_SINE.fa"){
-	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE2.\n\n";
+	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
 	} else { 
 	$status = system("python3 ${annosine}annosine2 -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
 	#`rm $_` for grep { /^.\/${genome}_([0-9a-f]{32})\.mod$/i } glob("./*"); # remove duplicated genome file
@@ -559,7 +556,6 @@ print STDERR "$date\tStart to find TIR candidates.\n\n";
 
 # pre-set parameters
 my $genome_file_real_path=File::Spec->rel2abs($genome); # the genome file with real path
-my $grfp=`dirname $GRF`;
 
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/TIR";
@@ -567,17 +563,21 @@ chdir "$genome.EDTA.raw/TIR";
 
 # Try to recover existing results
 chomp ($date = `date`);
-if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.TIR.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intact.fa")){
+	print STDERR "$date\tExisting result file $genome.TIR.intact.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
 	print STDERR "Species: $species\n";
 
 	# run TIR-Learner
-	`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
-	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
+	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
+		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\t\t\tWill use this for further analyses.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+		} else {
+		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
+		}
 
 	# clean raw predictions with flanking alignment
+	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
 	`perl $get_ext_seq $genome $genome.TIR`;
 	`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
 
@@ -588,16 +588,12 @@ if ($overwrite eq 0 and -s "$genome.TIR.raw.fa"){
 	`${mdust}mdust $genome.TIR.ext30.fa.pass.fa.ori > $genome.TIR.ext30.fa.pass.fa.dusted`;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
 
-	if ($beta2 == 1){
 	# annotate and remove non-TIR candidates
 	`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.intact.raw.fa`;
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.raw.fa.anno.list`;
 	`cp $genome.TIR.intact.raw.fa.anno.list ../`;
-	} else {
-	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln $genome.TIR.intact.raw.fa`;
-	}
 
 	# get gff3 of intact TIR elements
 	`perl -nle 's/\\-\\+\\-/_Len:/; my (\$chr, \$method, \$supfam, \$s, \$e, \$anno) = (split)[0,1,2,3,4,8]; my \$class='DNA'; \$class='MITE' if \$e-\$s+1 <= 600; my (\$tir, \$iden, \$tsd)=(\$1, \$2/100, \$3) if \$anno=~/TIR:(.*)_([0-9.]+)_TSD:([a-z0-9._]+)_LEN/i; print "\$chr \$s \$e \$chr:\$s..\$e \$class/\$supfam structural \$iden . . . TSD=\$tsd;TIR=\$tir"' ./TIR-Learner-Result/TIR-Learner_FinalAnn.gff3 | perl $output_by_list 4 - 1 $genome.TIR.intact.raw.fa -MSU0 -MSU1 > $genome.TIR.intact.raw.bed`;
@@ -656,16 +652,12 @@ if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Heli
 `${mdust}mdust $genome.HelitronScanner.filtered.fa.pass.fa > $genome.HelitronScanner.filtered.fa.pass.fa.dusted`;
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.fa.pass.fa.dusted | perl -nle 's/^(>.*)\\s+(.*)\$/\$1#DNA\\/Helitron\\t\$2/; print \$_' > $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln`;
 
-if ($beta2 == 1){
 # annotate and remove non-Helitron candidates
 `${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
 `perl $cleanup_misclas $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 `mv $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln $genome.Helitron.intact.raw.fa`;
 `cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.raw.fa.anno.list`;
 `cp $genome.Helitron.intact.raw.fa.anno.list ../`;
-} else {
-`cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln $genome.Helitron.intact.raw.fa`;
-}
 
 # get intact Helitrons and gff3
 `perl $make_bed $genome.Helitron.intact.raw.fa > $genome.Helitron.intact.raw.bed`;
