@@ -4,6 +4,7 @@ LABEL maintainer "Shujun Ou (shujun.ou.1@gmail.com)"
 LABEL image_type "EDTA: an Extensive de-novo TE Annotator for eukaryotic genomes"
 
 ENV LC_ALL="C"
+ENV BLASTDB_LMDB_MAP_SIZE=100000000
 
 RUN conda config --add channels defaults
 RUN conda config --add channels bioconda
