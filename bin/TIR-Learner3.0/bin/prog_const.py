@@ -19,7 +19,7 @@ sandbox_dir_name = "[DO_NOT_ALTER]_TIR-Learner_sandbox_directory"
 program_root_dir_path = os.path.abspath(str(os.path.dirname(os.path.dirname(__file__))))
 
 ref_lib_dir_name = "RefLib"
-ref_lib_available_species = ["rice", "maize"]
+ref_lib_available_species = ("rice", "maize")
 ref_lib_file_dict = {species: [f"{species}_{TIR_type}_RefLib" for TIR_type in TIR_types]
                      for species in ref_lib_available_species}
 ref_lib_dir_path = os.path.join(program_root_dir_path, ref_lib_dir_name)

@@ -45,6 +45,10 @@ def process_GRF_result(TIRLearner_instance):
     df_in = TIRLearner_instance.working_df_dict["GRF"]
     df = df_in[df_in["len"] >= 50].copy()
 
+    if df.shape[0] == 0:
+        print("NOTICE: No TIR found by GRF.")
+        return None
+
     print("  Step 1/7: Getting TIR")
     df["TIR_len"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(
         lambda x: find_digits_sum(x["id"].split(":")[-2]), axis=1)
@@ -94,6 +98,10 @@ def process_GRF_result(TIRLearner_instance):
 def process_TIRvish_result(TIRLearner_instance):
     df_in = TIRLearner_instance["TIRvish"]
     df = df_in[df_in["end"] - df_in["start"] + 1 >= 50].copy()
+
+    if df.shape[0] == 0:
+        print("NOTICE: No TIR found by TIRvish.")
+        return None
 
     print("  Step 1/5: Getting TIR")
     df["TIR1_start"] = df["TIR1_start"] - df["start"]
