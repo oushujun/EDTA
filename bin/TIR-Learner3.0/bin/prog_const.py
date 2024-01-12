@@ -1,10 +1,10 @@
 import os
 
 # Acceptable additional args
-FORCE_GRF_MODE = 1
-CHECKPOINT_OFF = 2
-SKIP_TIRVISH = 3
-SKIP_GRF = 4
+FORCE_GRF_MODE = "FORCE_GRF_MODE"
+CHECKPOINT_OFF = "CHECKPOINT_OFF"
+SKIP_TIRVISH = "SKIP_TIRVISH"
+SKIP_GRF = "SKIP_GRF"
 
 spliter = "-+-"
 TIR_types = ("DTA", "DTC", "DTH", "DTM", "DTT")
@@ -19,7 +19,7 @@ sandbox_dir_name = "[DO_NOT_ALTER]_TIR-Learner_sandbox_directory"
 program_root_dir_path = os.path.abspath(str(os.path.dirname(os.path.dirname(__file__))))
 
 ref_lib_dir_name = "RefLib"
-ref_lib_available_species = ["rice", "maize"]
+ref_lib_available_species = ("rice", "maize")
 ref_lib_file_dict = {species: [f"{species}_{TIR_type}_RefLib" for TIR_type in TIR_types]
                      for species in ref_lib_available_species}
 ref_lib_dir_path = os.path.join(program_root_dir_path, ref_lib_dir_name)
