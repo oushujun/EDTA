@@ -195,7 +195,7 @@ def process_result(df_in, module):
     return df
 
 
-def execute(TIRLearner_instance, module: str) -> pd.DataFrame:
+def execute(TIRLearner_instance, module: str) -> pd.DataFrame | None:
     df = TIRLearner_instance["base"].copy()
     df["len"] = df["end"] - df["start"]
     df = df[df["len"] >= 450].reset_index(drop=True)
