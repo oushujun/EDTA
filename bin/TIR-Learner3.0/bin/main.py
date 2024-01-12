@@ -35,7 +35,7 @@ class TIRLearner:
     def __init__(self, genome_file_path: str, genome_name: str, species: str, TIR_length: int,
                  cpu_cores: int, GRF_mode: str,
                  working_dir_path: str, output_dir_path: str, checkpoint_dir_input_path: str,
-                 flag_verbose: bool, flag_debug: bool, GRF_path: str, gt_path: str, additional_args: list):
+                 flag_verbose: bool, flag_debug: bool, GRF_path: str, gt_path: str, additional_args: tuple):
         self.genome_file_path = genome_file_path
         self.genome_name = genome_name
         self.species = species
@@ -96,7 +96,7 @@ class TIRLearner:
         self.working_df_dict.clear()
 
     def execute(self):
-        self.mount_working_dir()
+        temp_dir = self.mount_working_dir()
         self.load_checkpoint_file()
         self.pre_scan_fasta_file()
         # print(os.getcwd())  # TODO ONLY FOR DEBUG REMOVE AFTER FINISHED
@@ -114,8 +114,12 @@ class TIRLearner:
         if prog_const.CHECKPOINT_OFF not in self.additional_args and not self.flag_debug:
             shutil.rmtree(self.checkpoint_dir_output_path)
 
-        subprocess.Popen(["unlink", self.genome_file_path]).wait()
-        os.rmdir(self.working_dir_path)
+        # subprocess.Popen(["unlink", self.genome_file_path]).wait()
+        # os.rmdir(self.working_dir_path)
+        if temp_dir is not None:
+            shutil.rmtree(temp_dir)
+        else:
+            shutil.rmtree(self.working_dir_path)
 
     def pre_scan_fasta_file(self):
         # names = [record.id for record in SeqIO.parse(self.genome_file, "fasta")]
@@ -166,14 +170,17 @@ class TIRLearner:
 
     def mount_working_dir(self):
         if self.working_dir_path is None:
-            self.working_dir_path = tempfile.mkdtemp()
+            temp_dir = tempfile.mkdtemp()
+            self.working_dir_path = temp_dir
         # self.load_genome_file()
         else:
+            temp_dir = None
             os.makedirs(self.working_dir_path, exist_ok=True)
         self.working_dir_path = os.path.join(self.working_dir_path, prog_const.sandbox_dir_name)
         os.makedirs(self.working_dir_path, exist_ok=True)
         self.working_dir_path = os.path.abspath(self.working_dir_path)
         os.chdir(self.working_dir_path)
+        return temp_dir
 
     # def load_genome_file(self):
     #     genome_file_soft_link = os.path.join(self.execution_dir, "genome_file_soft_link.fa.lnk")

@@ -69,6 +69,8 @@ def execute(TIRLearner_instance):
     flag_verbose = TIRLearner_instance.flag_verbose
     gt_path = TIRLearner_instance.gt_path
 
+    print("  Step 1/2: Executing TIRvish")
     TIRvish_result_gff3_file_name = run_TIRvish(genome_file, genome_name, TIR_length, gt_path)
+    print("  Step 2/2: Getting TIRvish result")
     df = get_TIRvish_result_df(TIRvish_result_gff3_file_name)
     return get_fasta_pieces_SeqIO(genome_file, df, cpu_cores, flag_verbose)

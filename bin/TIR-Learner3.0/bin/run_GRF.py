@@ -181,9 +181,10 @@ def cpu_cores_allocation_GRF_boost(cpu_cores, job_bound_type="cpu_bound"):
         num_threads_total = cpu_cores
 
     num_processes = int(math.sqrt(num_threads_total))
-    num_threads_per_process = int(num_threads_total / num_processes)
-    num_extra_threads = num_threads_per_process - num_processes * num_threads_per_process
-    num_extra_threads = 0 if num_extra_threads < 0 else num_extra_threads
+    num_threads_per_process = int(num_threads_total / num_processes) * 4
+    # num_extra_threads = num_threads_per_process - num_processes * num_threads_per_process
+    # num_extra_threads = 0 if num_extra_threads < 0 else num_extra_threads
+    num_extra_threads = 0
     return num_processes, num_threads_per_process, num_extra_threads
 
 
@@ -231,7 +232,7 @@ def execute(TIRLearner_instance):
     # for i in os.listdir(os.getcwd()):
     #     shutil.copyfile(os.path.join(os.getcwd(), i), os.path.join(TIRLearner_instance.output_dir, i))
 
-    print()
+    print("  Step 1/2: Executing GRF\n")
     if GRF_mode == "mix":
         run_GRF_mix(records_split_file_name, filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
     elif GRF_mode == "boost":
@@ -240,4 +241,5 @@ def execute(TIRLearner_instance):
         run_GRF_native(filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
     print()
 
+    print("  Step 2/2: Getting GRF result")
     return get_GRF_result_df(GRF_result_dir_name)

@@ -30,8 +30,9 @@ mix_split_percent_threshold = 0.05
 mix_short_seq_process_num = 2
 
 
-def process_additional_args(additional_args: list) -> list:
-    processed_additional_args = list(map(additional_args_mapping_dict.get, additional_args))
+def process_additional_args(additional_args: list) -> tuple:
+    processed_additional_args = tuple(i for i in
+                                      tuple(map(additional_args_mapping_dict.get, additional_args)) if i is not None)
     if SKIP_TIRVISH in processed_additional_args and SKIP_GRF in processed_additional_args:
         raise SystemExit("ERROR: \"skip_tirvish\" and \"skip_grf\" cannot be specified at the same time!")
     return processed_additional_args
