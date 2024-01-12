@@ -1,5 +1,7 @@
 import os
 import multiprocessing as mp
+import sys
+
 import numpy as np
 import pandas as pd
 import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
@@ -166,7 +168,8 @@ def remove_overlap(df_in, flag_verbose):
                                           df.iloc[ptr2, idx_tstart], df.iloc[ptr2, idx_tend])):
             # dropped_index_list.append(df.iloc[[ptr1, ptr2], df.columns.get_loc("len")].idxmin())
             dropped_index_list.append(df.loc[[ptr1, ptr2], "len"].idxmin())
-            print(f"      Sequence {dropped_index_list[-1]} of genome {seqid} removed")
+            if flag_verbose:
+                print(f"      Sequence {dropped_index_list[-1]} of genome {seqid} removed")
         ptr1 += 1
         ptr2 += 1
     df = df.drop(dropped_index_list)
