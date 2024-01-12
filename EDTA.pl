@@ -269,11 +269,11 @@ $genometools = dirname($genometools) unless -d $genometools;
 $genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
 die "Error: gt is not found in the genometools path $genometools!\n" unless -X "${genometools}gt";
 # AnnoSINE
-chomp ($annosine=`which annosine2 2>/dev/null`) if $annosine eq '';
+chomp ($annosine=`which AnnoSINE_v2 2>/dev/null`) if $annosine eq '';
 $annosine =~ s/\s+$//;
 $annosine = dirname($annosine) unless -d $annosine;
 $annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
-die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2.py" or -X "${annosine}/bin/AnnoSINE_v2.py" or -X "${annosine}annosine2");
+die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2");
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;

@@ -48,7 +48,6 @@ perl EDTA_raw.pl [options]
 	--mdust		[path]	Path to the mdust program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
 	--repeatmodeler	[path]	Path to the RepeatModeler2 program. (default: find from ENV)
-	--annosine	[path]  The directory containing AnnoSINE (default: read from ENV)
 	--threads|-t	[int]	Number of theads to run this script. Default: 4
 	--help|-h	Display this help info
 \n";
@@ -195,11 +194,11 @@ $repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
 $repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
 die "Error: RepeatModeler is not found in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
 # AnnoSINE
-chomp ($annosine=`which annosine2 2>/dev/null`) if $annosine eq '';
+chomp ($annosine=`which AnnoSINE_v2 2>/dev/null`) if $annosine eq '';
 $annosine =~ s/\s+$//;
 $annosine = dirname($annosine) unless -d $annosine;
 $annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
-die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2.py" or -X "${annosine}/bin/AnnoSINE_v2.py" or -X "${annosine}annosine2");
+die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2");
 # LTR_retriever
 chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
@@ -426,7 +425,7 @@ my $status; # record status of AnnoSINE execution
 if (-s "Seed_SINE.fa"){
 	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
 	} else { 
-	$status = system("python3 ${annosine}annosine2 -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
+	$status = system("python3 ${annosine}AnnoSINE_v2 -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
 	#`rm $_` for grep { /^.\/${genome}_([0-9a-f]{32})\.mod$/i } glob("./*"); # remove duplicated genome file
 	}
 
@@ -573,7 +572,8 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\t\t\tWill use this for further analyses.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
+		#`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
+		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
 		}
 
 	# clean raw predictions with flanking alignment
