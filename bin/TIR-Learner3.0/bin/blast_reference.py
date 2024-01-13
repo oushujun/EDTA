@@ -41,7 +41,7 @@ def blast_genome_file(TIRLearner_instance):
                      TIRLearner_instance.cpu_cores)
                     for ref_lib in prog_const.ref_lib_file_dict[TIRLearner_instance.species]]
 
-    print(mp_args_list)
+    # print(mp_args_list)  # TODO only for debug
 
     with mp.Pool(int(TIRLearner_instance.cpu_cores)) as pool:
         pool.starmap(blast_ref_lib_in_genome_file, mp_args_list)
