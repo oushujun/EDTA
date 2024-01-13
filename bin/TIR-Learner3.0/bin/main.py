@@ -268,11 +268,11 @@ class TIRLearner:
                     with open(df_dtype_file_name, 'r') as df_dtype_file:
                         if os.path.getsize(df_dtype_file_name) == 0:
                             raise EOFError(df_dtype_file_name)
-                        df_dtypes_dict = json.loads(df_dtype_file.readline().rstrip())
-                        # df_dtypes_dict = {k: eval(v) for k, v in json.loads(df_dtype_file.readline().rstrip()).items()}
-                    # self[k] = pd.read_csv(f"{df_file_name}.csv", sep='\t', header=0, dtype=df_dtypes_dict,
-                    #                       engine='c', memory_map=True)
-                    self[k] = pd.read_csv(f"{df_file_name}.csv", sep='\t', header=0, engine='c', memory_map=True)
+                        # df_dtypes_dict = json.loads(df_dtype_file.readline().rstrip())
+                        df_dtypes_dict = {k: eval(v) for k, v in json.loads(df_dtype_file.readline().rstrip()).items()}
+                    self[k] = pd.read_csv(f"{df_file_name}.csv", sep='\t', header=0, dtype=df_dtypes_dict,
+                                          engine='c', memory_map=True)
+                    # self[k] = pd.read_csv(f"{df_file_name}.csv", sep='\t', header=0, engine='c', memory_map=True)
                     # self[k] = pd.read_csv(f"{df_file_name}.csv", sep='\t', header=0,
                     #                       engine='c', memory_map=True).astype()
 

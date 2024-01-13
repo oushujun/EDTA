@@ -1,6 +1,5 @@
 import os
 import multiprocessing as mp
-import sys
 
 import numpy as np
 import pandas as pd
@@ -12,7 +11,7 @@ from process_de_novo_result import TA_repeats_check
 import prog_const
 
 
-def combine_all(df_list, flag_verbose):
+def combine_all(df_list):
     if len(df_list) > 1:
         df = pd.concat(df_list, ignore_index=True)
     else:
@@ -23,7 +22,7 @@ def combine_all(df_list, flag_verbose):
     df = df.drop_duplicates(["seqid", "sstart"], keep="first", ignore_index=True)
     df = df.drop_duplicates(["seqid", "send"], keep="first", ignore_index=True)
 
-    df["TIR_pair_str"] = df["TIR"].swifter.progress_bar(flag_verbose).apply("".join)
+    df["TIR_pair_str"] = df["TIR1"] + df["TIR2"]
     df = TA_repeats_check(df, "TIR_pair_str")
     df = df.drop(columns="TIR_pair_str")
 
@@ -36,8 +35,8 @@ def combine_all(df_list, flag_verbose):
 def format_df_in_gff3_format(df_in, flag_verbose):
     df = df_in.copy()
     df["attributes"] = df.swifter.progress_bar(flag_verbose).apply(
-        lambda x: (f"TIR:{x['TIR'][0]}_{x['TIR'][1]}_{x['p_TIR']}_"
-                   f"TSD:{x['TSD'][0]}_{x['TSD'][1]}_{x['p_TSD']}{prog_const.spliter}{x['len']}"), axis=1)
+        lambda x: (f"TIR:{x['TIR1']}_{x['TIR2']}_{x['TIR_percent']}_"
+                   f"TSD:{x['TSD1']}_{x['TSD2']}_{x['TSD_percent']}{prog_const.spliter}{x['len']}"), axis=1)
     df = df.loc[:, ["seqid", "source", "type", "sstart", "send", "attributes"]]
     df.insert(5, "phase", ".")
     df.insert(5, "strand", ".")
@@ -142,7 +141,7 @@ def remove_overlap(df_in, flag_verbose):
     """
     df = df_in.sort_values(by=["sstart", "send"], ignore_index=True)
     seqid = df.loc[0, "seqid"]
-    df["TIR_len"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: len(x["TIR"][0]), axis=1)
+    df["TIR_len"] = df["TIR1"].str.len()
     df["tstart"] = df.loc[:, "sstart"] - df.loc[:, "TIR_len"]
     df["tend"] = df.loc[:, "send"] + df.loc[:, "TIR_len"]
     idx_sstart = df.columns.get_loc("sstart")
@@ -170,6 +169,8 @@ def remove_overlap(df_in, flag_verbose):
             dropped_index_list.append(df.loc[[ptr1, ptr2], "len"].idxmin())
             if flag_verbose:
                 print(f"      Sequence {dropped_index_list[-1]} of genome {seqid} removed")
+            else:
+                print('*', end=None)
         ptr1 += 1
         ptr2 += 1
     df = df.drop(dropped_index_list)
@@ -202,7 +203,7 @@ def execute(TIRLearner_instance, raw_result_df_list):
     os.makedirs(result_output_dir_path, exist_ok=True)
 
     print("  Step 1/6: Combining all results")
-    df_combined = combine_all(raw_result_df_list, flag_verbose)
+    df_combined = combine_all(raw_result_df_list)
     if df_combined.shape[0] == 0:
         print("NOTICE: No TIR found. Post-processing will be terminated and no result will be produced.")
         return
