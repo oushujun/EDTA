@@ -143,7 +143,7 @@ You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five
 
 ```
 cd ./EDTA/test
-perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice6.9.5.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --threads 10
+perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice7.0.0.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --threads 10
 ```
 
 If your test fails, you may check out this [collection of issues](https://github.com/oushujun/EDTA/wiki/Installations,-builds,-and-tests-Q&A) for possible reasons and solutions. If none works, you may open a new issue.
