@@ -14,6 +14,7 @@ if True:  # noqa: E402
     from sklearn.preprocessing import LabelEncoder
     # Attention: sklearn does not automatically import its subpackages
     import tensorflow as tf
+    from tensorflow.python.framework.errors_impl import InternalError
     from keras.utils import to_categorical
     from keras.models import load_model
 
@@ -41,11 +42,11 @@ def feature_encoding(df_in, flag_verbose):
     feature_int_encoder.fit(voc)
 
     df = df_in.loc[:, ["id", "seq_frag"]].copy()
-    print("  Step 2/8: Label Encoding - Transforming non-numerical labels to numerical labels")
+    print("  Step 2/7: Label Encoding - Transforming non-numerical labels to numerical labels")
     df["int_enc"] = df.swifter.progress_bar(flag_verbose).apply(
         lambda x: np.array(feature_int_encoder.transform(list(x["seq_frag"]))).reshape(-1, 1), axis=1)
     df = df.drop(columns="seq_frag")
-    print("  Step 3/8: One-Hot Encoding - Converting class vectors to binary class matrices")
+    print("  Step 3/7: One-Hot Encoding - Converting class vectors to binary class matrices")
     df["feature"] = df.swifter.progress_bar(flag_verbose).apply(
         lambda x: to_categorical(x["int_enc"], num_classes=num_classes), axis=1)
     df = df.drop(columns="int_enc")
@@ -70,11 +71,15 @@ def predict(df_in, genome_file, path_to_model):
     target_int_encoded = target_int_encoder.transform(l_class)
     d = dict(zip(target_int_encoded, l_class))
 
-    print("  Step 5/8: Converting feature to tensor")
-    with tf.device("/cpu:0"):
-        pre_feature_tensor = tf.convert_to_tensor(np.stack(pre_feature), np.float32)
+    print("  Step 4/7: CNN prediction")
+    try:
+        predicted_labels = model.predict(np.stack(pre_feature))
+    except InternalError as e:
+        print(e)
+        with tf.device("/cpu:0"):
+            pre_feature_tensor = tf.convert_to_tensor(np.stack(pre_feature), np.float32)
+            predicted_labels = model.predict(pre_feature_tensor)
 
-    predicted_labels = model.predict(pre_feature_tensor)
     df["percent"] = pd.Series(predicted_labels.max(axis=-1))
     y_classes = predicted_labels.argmax(axis=-1)
     df["TIR_type"] = pd.Series([d[i] for i in y_classes])
@@ -84,11 +89,11 @@ def predict(df_in, genome_file, path_to_model):
 def postprocessing(df_in, flag_verbose):
     df = df_in.loc[:, ["id", "TIR_type"]]
     df = df[df["TIR_type"] != "NonTIR"].reset_index(drop=True)
-    print("  Step 6/8: Retrieving sequence ID")
+    print("  Step 5/7: Retrieving sequence ID")
     df["seqid"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: x["id"].split(":")[0], axis=1)
-    print("  Step 7/8: Retrieving sequence starting coordinate")
+    print("  Step 6/7: Retrieving sequence starting coordinate")
     df["sstart"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: int(x["id"].split(":")[1]), axis=1)
-    print("  Step 8/8: Retrieving sequence ending coordinate")
+    print("  Step 7/7: Retrieving sequence ending coordinate")
     df["send"] = df.swifter.progress_bar(flag_verbose).apply(lambda x: int(x["id"].split(":")[2]), axis=1)
     df = df.loc[:, ["TIR_type", "id", "seqid", "sstart", "send"]]
     df = df.sort_values(["TIR_type", "seqid", "sstart", "send"], ignore_index=True)
@@ -98,13 +103,12 @@ def postprocessing(df_in, flag_verbose):
 def execute(TIRLearner_instance) -> pd.DataFrame:
     df = TIRLearner_instance["base"].copy()
 
-    print("  Step 1/8: Getting sequence fragment for prediction")
+    print("  Step 1/7: Getting sequence fragment for prediction")
     df["seq_frag"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(get_sequence_fragment, axis=1)
     df = df.drop(columns="seq")
 
     df = feature_encoding(df, TIRLearner_instance.flag_verbose)
 
-    print("  Step 4/8: CNN prediction")
     df = predict(df, TIRLearner_instance.genome_file_path,
                  os.path.join(prog_const.program_root_dir_path, prog_const.CNN_model_dir_name))
 

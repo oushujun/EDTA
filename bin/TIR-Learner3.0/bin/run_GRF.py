@@ -56,7 +56,7 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
                 SeqIO.write(record, file_name, "fasta")
                 records_split_file_name.append(file_name)
         os.chdir("../")
-        return records_split_file_name, filtered_genome_file_name
+        return records_split_file_name, filtered_genome_file_name, len(records_split_file_name)
 
     if GRF_mode == "mix":
         records_long = []
@@ -74,7 +74,8 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
         os.chdir("../")
         SeqIO.write(records_long, filtered_genome_file_name, "fasta")
         records_split_file_name = [f"{record.id}.fa" for record in records_short]
-        return records_split_file_name, filtered_genome_file_name
+        num_seq = len(records_long) + len(records_short)
+        return records_split_file_name, filtered_genome_file_name, num_seq
 
 
 
@@ -110,7 +111,7 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
         if len(record.seq) > drop_seq_len:
             records.append(record)
     SeqIO.write(records, filtered_genome_file_name, "fasta")
-    return None, filtered_genome_file_name
+    return None, filtered_genome_file_name, len(records)
 
 
 def GRF(GRF_path, file, cpu_cores, TIR_length):
@@ -145,14 +146,16 @@ def GRF_mp(GRF_path, fasta_files_list, TIR_length, num_GRF_instance, num_threads
 
 
 def run_GRF_native(filtered_genome_file_name, GRF_path, cpu_cores, TIR_length):
-    GRF(GRF_path, filtered_genome_file_name, cpu_cores, TIR_length)
+    GRF(GRF_path, filtered_genome_file_name, int(cpu_cores * prog_const.thread_core_ratio), TIR_length)
     subprocess.Popen(["unlink", filtered_genome_file_name])
 
 
 def run_GRF_mix(fasta_files_list, filtered_genome_file_name, GRF_path, cpu_cores, TIR_length):
-    process_long_seq = mp.Process(target=GRF, args=(GRF_path, filtered_genome_file_name, cpu_cores, TIR_length))
+    process_long_seq = mp.Process(target=GRF, args=(GRF_path, filtered_genome_file_name,
+                                                    int(cpu_cores * prog_const.thread_core_ratio), TIR_length))
     process_short_seq = mp.Process(target=GRF_mp, args=(GRF_path, fasta_files_list,
-                                                        TIR_length, prog_const.mix_short_seq_process_num, 1))
+                                                        TIR_length, prog_const.mix_short_seq_process_num,
+                                                        int(cpu_cores * prog_const.thread_core_ratio / 2)))
 
     process_long_seq.start()
     process_short_seq.start()
@@ -164,31 +167,40 @@ def run_GRF_mix(fasta_files_list, filtered_genome_file_name, GRF_path, cpu_cores
     subprocess.Popen(["rm", "-rf", "GRFmite_mp"])
 
 
-def run_GRF_boost(fasta_files_list, GRF_result_dir_name, GRF_path, cpu_cores, TIR_length):
-    num_processes, num_threads_per_process, num_extra_threads = cpu_cores_allocation_GRF_boost(cpu_cores, "cpu_bound")
+def run_GRF_boost(fasta_files_list, filtered_genome_file_name, num_seq, GRF_path, cpu_cores, TIR_length):
+    num_processes, num_threads_per_process = cpu_cores_allocation_GRF_boost(cpu_cores, num_seq)
     # print(num_processes, num_threads_per_process, num_extra_threads) # TODO debug only
     GRF_mp(GRF_path, fasta_files_list, TIR_length, num_processes, num_threads_per_process)
-    collect_results(fasta_files_list, GRF_result_dir_name)
+    collect_results(fasta_files_list, filtered_genome_file_name)
+    # subprocess.Popen(["unlink", filtered_genome_file_name])
     subprocess.Popen(["rm", "-rf", "GRFmite_mp"])
 
 
-def cpu_cores_allocation_GRF_boost(cpu_cores, job_bound_type="cpu_bound"):
-    if job_bound_type == "cpu_bound":
-        num_threads_total = cpu_cores + 1  # CPU Bound: N+1
-    elif job_bound_type == "io_bound":
-        num_threads_total = 2 * cpu_cores  # I/O Bound: 2N
-    else:
-        num_threads_total = cpu_cores
+# def cpu_cores_allocation_GRF_boost(cpu_cores, job_bound_type="cpu_bound"):
+#     if job_bound_type == "cpu_bound":
+#         num_threads_total = cpu_cores + 1  # CPU Bound: N+1
+#     elif job_bound_type == "io_bound":
+#         num_threads_total = 2 * cpu_cores  # I/O Bound: 2N
+#     else:
+#         num_threads_total = cpu_cores
+#
+#     num_processes = int(math.sqrt(num_threads_total))
+#     num_threads_per_process = int(num_threads_total / num_processes) * 4
+#     # num_extra_threads = num_threads_per_process - num_processes * num_threads_per_process
+#     # num_extra_threads = 0 if num_extra_threads < 0 else num_extra_threads
+#     num_extra_threads = 0
+#     return num_processes, num_threads_per_process, num_extra_threads
 
-    num_processes = int(math.sqrt(num_threads_total))
-    num_threads_per_process = int(num_threads_total / num_processes) * 4
-    # num_extra_threads = num_threads_per_process - num_processes * num_threads_per_process
-    # num_extra_threads = 0 if num_extra_threads < 0 else num_extra_threads
-    num_extra_threads = 0
-    return num_processes, num_threads_per_process, num_extra_threads
+
+def cpu_cores_allocation_GRF_boost(cpu_cores, num_seq):
+    num_threads = int(cpu_cores * prog_const.thread_core_ratio)
+    num_process = int(math.sqrt(num_threads/16) + 1) * int(1 + num_seq/2)
+    # num_process = floor((num_threads/16)^(1/2) + 1) * floor(1 + num_seq/2)
+    return num_process, num_threads
 
 
-def collect_results(fasta_files_list, GRF_result_dir_name):
+def collect_results(fasta_files_list, filtered_genome_file_name):
+    GRF_result_dir_name = f"{filtered_genome_file_name}_GRFmite"
     GRF_result_files_list = [f"{file}_GRFmite" for file in fasta_files_list]
     os.makedirs(GRF_result_dir_name, exist_ok=True)
     with open(os.path.join(GRF_result_dir_name, "candidate.fasta"), "wb") as des:
@@ -200,7 +212,8 @@ def collect_results(fasta_files_list, GRF_result_dir_name):
                 continue
 
 
-def get_GRF_result_df(GRF_result_dir_name):
+def get_GRF_result_df(filtered_genome_file_name):
+    GRF_result_dir_name = f"{filtered_genome_file_name}_GRFmite"
     GRF_result_file_path = os.path.join(GRF_result_dir_name, "candidate.fasta")
 
     # df_data_dict = {"id": [rec.id for rec in SeqIO.parse(GRF_result_file_path, "fasta")],
@@ -210,10 +223,8 @@ def get_GRF_result_df(GRF_result_dir_name):
     df_data_dict = [{"id": rec.id, "seq": str(rec.seq), "len": len(rec)}
                     for rec in SeqIO.parse(GRF_result_file_path, "fasta")]
 
-    df_type = {"len": int}
-
     subprocess.Popen(["rm", "-rf", GRF_result_dir_name])
-    return pd.DataFrame(df_data_dict, columns=["id", "seq", "len"]).astype(df_type)
+    return pd.DataFrame(df_data_dict, columns=["id", "seq", "len"]).astype({"len": int})
 
 
 def execute(TIRLearner_instance):
@@ -225,8 +236,8 @@ def execute(TIRLearner_instance):
     GRF_mode = TIRLearner_instance.GRF_mode
 
     drop_seq_len = int(TIR_length) + 500
-    records_split_file_name, filtered_genome_file_name = prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len)
-    GRF_result_dir_name = f"{filtered_genome_file_name}_GRFmite"
+    records_split_file_name, filtered_genome_file_name, num_seq = prepare_fasta(genome_file, genome_name,
+                                                                                GRF_mode, drop_seq_len)
 
     # print(os.listdir(os.getcwd()))
     # for i in os.listdir(os.getcwd()):
@@ -236,10 +247,10 @@ def execute(TIRLearner_instance):
     if GRF_mode == "mix":
         run_GRF_mix(records_split_file_name, filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
     elif GRF_mode == "boost":
-        run_GRF_boost(records_split_file_name, GRF_result_dir_name, GRF_path, cpu_cores, TIR_length)
+        run_GRF_boost(records_split_file_name, filtered_genome_file_name, num_seq, GRF_path, cpu_cores, TIR_length)
     else:
         run_GRF_native(filtered_genome_file_name, GRF_path, cpu_cores, TIR_length)
     print()
 
     print("  Step 2/2: Getting GRF result")
-    return get_GRF_result_df(GRF_result_dir_name)
+    return get_GRF_result_df(filtered_genome_file_name)
