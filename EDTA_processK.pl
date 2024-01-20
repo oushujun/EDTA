@@ -168,7 +168,7 @@ sub Purifier() {
 if (-s "$LINE"){
 	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $LINE $LTR 2>&1`;
 	if ($err !~ /done/) {
-        	`ln -s $LTR $LTR.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: $1/s;
+        	`ln -s $LTR $LTR.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/s;
 	        print STDERR "\n$err\n";
         	}
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $LTR.masked > $LTR.cln`;
@@ -181,7 +181,7 @@ if (-s "$SINE"){
 	`cat $LTR.cln $LINE > $genome.LINE_LTR.raw.fa`;
 	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LINE_LTR.raw.fa $SINE 2>&1`;
 	if ($err !~ /done/) {
-        	`ln -s $SINE $SINE.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: $1/s;
+        	`ln -s $SINE $SINE.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/s;
 	        print STDERR "\n$err\n";
         	}
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -f $SINE.masked > $SINE.cln`;
@@ -195,7 +195,7 @@ if (-s "$SINE"){
 `cat $LTR.HQ $SINE.cln $LINE > $genome.LTR.SINE.LINE.fa`;
 $err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.SINE.LINE.fa $genome.TIR.Helitron.fa.stg1.raw 2>&1`;
 if ($err !~ /done/) {
-	`ln -s $genome.TIR.Helitron.fa.stg1.raw $genome.TIR.Helitron.fa.stg1.raw.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: $1/s;
+	`ln -s $genome.TIR.Helitron.fa.stg1.raw $genome.TIR.Helitron.fa.stg1.raw.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/s;
 	print STDERR "\n$err\n";
 	}
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.Helitron.fa.stg1.raw.masked > $genome.TIR.Helitron.fa.stg1.raw.cln`;

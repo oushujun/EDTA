@@ -572,8 +572,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\t\t\tWill use this for further analyses.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		#`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
-		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
+		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
 		}
 
 	# clean raw predictions with flanking alignment
