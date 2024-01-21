@@ -1,12 +1,10 @@
-import multiprocessing as mp
-# import subprocess
-import pandas as pd
-import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
-from Bio import SeqIO
+# import multiprocessing as mp
+# # import subprocess
+# import pandas as pd
+# import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+# from Bio import SeqIO
 
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-#     from main import TIRLearner
+from prog_const import *
 
 
 def get_start_end(genome_file, df_in, flag_verbose, length=200):

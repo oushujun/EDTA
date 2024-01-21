@@ -1,7 +1,9 @@
-import regex as re
-import numpy as np
-import pandas as pd
-import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+# import regex as re
+# import numpy as np
+# import pandas as pd
+# import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+
+from prog_const import *
 
 
 def TA_repeats_check(df_in: pd.DataFrame, column: str = "seq", percent_threshold: float = 0.7) -> pd.DataFrame:

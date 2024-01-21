@@ -1,24 +1,26 @@
-import os
-import warnings
+# import os
+# import warnings
+#
+# os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'  # mute all tensorflow info, warnings, and error msgs. #shujun
+# os.environ["KMP_WARNINGS"] = '0'  # mute all OpenMP warnings. #shujun
+# warnings.filterwarnings("ignore", category=FutureWarning)  # mute tensorflow warnings #shujun
+#
+# # Use if True to suppress the PEP8: E402 warning
+# if True:  # noqa: E402
+#     import numpy as np
+#     import pandas as pd
+#     import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+#
+#     from sklearn.preprocessing import LabelEncoder
+#     # Attention: sklearn does not automatically import its subpackages
+#     import tensorflow as tf
+#     from tensorflow.python.framework.errors_impl import InternalError
+#     from keras.utils import to_categorical
+#     from keras.models import load_model
+#
+#     import prog_const
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'  # mute all tensorflow info, warnings, and error msgs. #shujun
-os.environ["KMP_WARNINGS"] = '0'  # mute all OpenMP warnings. #shujun
-warnings.filterwarnings("ignore", category=FutureWarning)  # mute tensorflow warnings #shujun
-
-# Use if True to suppress the PEP8: E402 warning
-if True:  # noqa: E402
-    import numpy as np
-    import pandas as pd
-    import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
-
-    from sklearn.preprocessing import LabelEncoder
-    # Attention: sklearn does not automatically import its subpackages
-    import tensorflow as tf
-    from tensorflow.python.framework.errors_impl import InternalError
-    from keras.utils import to_categorical
-    from keras.models import load_model
-
-    import prog_const
+from prog_const import *
 
 
 def get_sequence_fragment(x, featureSize=200):
@@ -110,6 +112,6 @@ def execute(TIRLearner_instance) -> pd.DataFrame:
     df = feature_encoding(df, TIRLearner_instance.flag_verbose)
 
     df = predict(df, TIRLearner_instance.genome_file_path,
-                 os.path.join(prog_const.program_root_dir_path, prog_const.CNN_model_dir_name))
+                 os.path.join(program_root_dir_path, CNN_model_dir_name))
 
     return postprocessing(df, TIRLearner_instance.flag_verbose)

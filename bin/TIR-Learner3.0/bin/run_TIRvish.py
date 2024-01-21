@@ -1,20 +1,23 @@
-import os
-import subprocess
-import pandas as pd
-import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+# import os
+# import subprocess
+# import pandas as pd
+# import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+# from get_fasta_sequence import get_fasta_pieces_SeqIO
+#
+# import prog_const
+
+from prog_const import *
+
 from get_fasta_sequence import get_fasta_pieces_SeqIO
-
-import prog_const
-
 
 def run_TIRvish(genome_file, genome_name, TIR_length, gt_path):
     gt_bin_path = os.path.join(gt_path, "gt")
-    gt_index_file_name = genome_name + prog_const.spliter + "gt_index"
+    gt_index_file_name = genome_name + spliter + "gt_index"
     subprocess.Popen(
         [gt_bin_path, "suffixerator", "-db", genome_file, "-indexname", gt_index_file_name,
          "-tis", "-suf", "-lcp", "-des", "-ssp", "-sds", "-dna", "-mirrored"]).wait()
 
-    TIRvish_result_gff3_file_name = f"{genome_name}{prog_const.spliter}TIRvish.gff3"
+    TIRvish_result_gff3_file_name = f"{genome_name}{spliter}TIRvish.gff3"
     gt_tirvish = (f"\"{gt_bin_path}\" tirvish -index {gt_index_file_name} -seed 20 -mintirlen 10 -maxtirlen 1000 "
                   f"-mintirdist 10 -maxtirdist {str(TIR_length)} -similar 80 -mintsd 2 -maxtsd 11 "
                   f"-vic 13 -seqids \"yes\" > {TIRvish_result_gff3_file_name}")

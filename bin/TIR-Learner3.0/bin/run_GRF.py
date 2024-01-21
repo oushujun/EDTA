@@ -1,13 +1,15 @@
-import math
-import os
-import shutil
-import subprocess
-import pandas as pd
-import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
-import multiprocessing as mp
-from Bio import SeqIO
+# import math
+# import os
+# import shutil
+# import subprocess
+# import pandas as pd
+# import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+# import multiprocessing as mp
+# from Bio import SeqIO
+#
+# import prog_const
 
-import prog_const
+from prog_const import *
 
 
 def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
@@ -44,7 +46,7 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
           half of the available CPUs (determined by the available CPU number `t`) ...
           TODO documentation needs complete revision!
     """
-    filtered_genome_file_name = f"{genome_name}{prog_const.spliter}filtered.fa"
+    filtered_genome_file_name = f"{genome_name}{spliter}filtered.fa"
 
     if GRF_mode == "boost":
         records_split_file_name = []
@@ -66,7 +68,7 @@ def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):
         for record in SeqIO.parse(genome_file, "fasta"):
             record_len = len(record.seq)
             if record_len > drop_seq_len:
-                if record_len > prog_const.short_seq_len:
+                if record_len > short_seq_len:
                     records_long.append(record)
                 else:
                     records_short.append(record)
@@ -146,16 +148,16 @@ def GRF_mp(GRF_path, fasta_files_list, TIR_length, num_GRF_instance, num_threads
 
 
 def run_GRF_native(filtered_genome_file_name, GRF_path, cpu_cores, TIR_length):
-    GRF(GRF_path, filtered_genome_file_name, int(cpu_cores * prog_const.thread_core_ratio), TIR_length)
+    GRF(GRF_path, filtered_genome_file_name, int(cpu_cores * thread_core_ratio), TIR_length)
     subprocess.Popen(["unlink", filtered_genome_file_name])
 
 
 def run_GRF_mix(fasta_files_list, filtered_genome_file_name, GRF_path, cpu_cores, TIR_length):
     process_long_seq = mp.Process(target=GRF, args=(GRF_path, filtered_genome_file_name,
-                                                    int(cpu_cores * prog_const.thread_core_ratio), TIR_length))
+                                                    int(cpu_cores * thread_core_ratio), TIR_length))
     process_short_seq = mp.Process(target=GRF_mp, args=(GRF_path, fasta_files_list,
-                                                        TIR_length, prog_const.mix_short_seq_process_num,
-                                                        int(cpu_cores * prog_const.thread_core_ratio / 2)))
+                                                        TIR_length, mix_short_seq_process_num,
+                                                        int(cpu_cores * thread_core_ratio / 2)))
 
     process_long_seq.start()
     process_short_seq.start()
@@ -193,7 +195,7 @@ def run_GRF_boost(fasta_files_list, filtered_genome_file_name, num_seq, GRF_path
 
 
 def cpu_cores_allocation_GRF_boost(cpu_cores, num_seq):
-    num_threads = int(cpu_cores * prog_const.thread_core_ratio)
+    num_threads = int(cpu_cores * thread_core_ratio)
     num_process = int(math.sqrt(num_threads/16) + 1) * int(1 + num_seq/2)
     # num_process = floor((num_threads/16)^(1/2) + 1) * floor(1 + num_seq/2)
     return num_process, num_threads
