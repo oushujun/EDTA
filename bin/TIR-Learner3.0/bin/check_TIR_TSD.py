@@ -1,8 +1,10 @@
-import re
-import numpy as np
-import pandas as pd
-import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
-from Bio.Seq import Seq
+# import re
+# import numpy as np
+# import pandas as pd
+# import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+# from Bio.Seq import Seq
+
+from prog_const import *
 
 # DTA:8
 # DTC:2/3

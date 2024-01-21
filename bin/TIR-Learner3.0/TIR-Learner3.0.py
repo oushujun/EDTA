@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # Tianyu Lu (tlu83@wisc.edu)
-# 2024-01-13
+# 2024-01-20
 
-import argparse
 import os
-import shutil
-
 import sys
 sys.path.insert(0, f"{os.path.dirname(__file__)}/bin")
 
 # Use if True to suppress the PEP8: E402 warning
 if True:  # noqa: E402
+    import argparse
+    import shutil
+
     from bin.main import TIRLearner
-    from bin import prog_const
+    from bin.prog_const import process_additional_args
 
 
 if __name__ == "__main__":
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     GRF_path = parsed_args.grf_path.replace('"', "")
     gt_path = parsed_args.gt_path.replace('"', "")
-    additional_args = prog_const.process_additional_args(parsed_args.additional_args.split(" "))
+    additional_args = process_additional_args(parsed_args.additional_args.split(" "))
     if len(additional_args) != 0:
         print(f"INFO: Additional args: {additional_args} accepted.")
 

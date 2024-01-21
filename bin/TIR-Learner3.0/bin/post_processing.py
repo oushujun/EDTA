@@ -1,14 +1,16 @@
-import os
-import multiprocessing as mp
+# import os
+# import multiprocessing as mp
+#
+# import numpy as np
+# import pandas as pd
+# import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 
-import numpy as np
-import pandas as pd
-import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
+from prog_const import *
 
 from get_fasta_sequence import get_fasta_pieces_SeqIO
 from process_de_novo_result import TA_repeats_check
 
-import prog_const
+# import prog_const
 
 
 def combine_all(df_list):
@@ -36,7 +38,7 @@ def format_df_in_gff3_format(df_in, flag_verbose):
     df = df_in.copy()
     df["attributes"] = df.swifter.progress_bar(flag_verbose).apply(
         lambda x: (f"TIR:{x['TIR1']}_{x['TIR2']}_{x['TIR_percent']}_"
-                   f"TSD:{x['TSD1']}_{x['TSD2']}_{x['TSD_percent']}{prog_const.spliter}{x['len']}"), axis=1)
+                   f"TSD:{x['TSD1']}_{x['TSD2']}_{x['TSD_percent']}{spliter}{x['len']}"), axis=1)
     df = df.loc[:, ["seqid", "source", "type", "sstart", "send", "attributes"]]
     df.insert(5, "phase", ".")
     df.insert(5, "strand", ".")

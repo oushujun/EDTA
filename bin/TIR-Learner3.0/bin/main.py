@@ -2,30 +2,38 @@
 # Tianyu Lu (tlu83@wisc.edu)
 # 2024-01-09
 
-import datetime
-import json
-import os
-import re
-import shutil
-import subprocess
-import tempfile
+# import datetime
+# import json
+# import os
+# import re
+# import shutil
+# import subprocess
+# import tempfile
+#
+# import warnings
+# warnings.simplefilter(action='ignore', category=FutureWarning)
+#
+# import pandas as pd
+# import swifter
+#
+# from Bio import SeqIO
+# from Bio.Seq import Seq
 
-import numpy
-import pandas as pd
-from Bio import SeqIO
-from Bio.Seq import Seq
+from prog_const import *
 
-import blast_reference
-import process_homology
-import run_TIRvish
-import run_GRF
-import process_de_novo_result
-import prepare_data
-import CNN_predict
-import get_fasta_sequence
-import check_TIR_TSD
-import post_processing
-import prog_const
+# Use if True to suppress the PEP8: E402 warning
+if True:  # noqa: E402
+    import blast_reference
+    import process_homology
+    import run_TIRvish
+    import run_GRF
+    import process_de_novo_result
+    import prepare_data
+    import CNN_predict
+    import get_fasta_sequence
+    import check_TIR_TSD
+    import post_processing
+    # import prog_const
 
 
 def get_timestamp_now_utc_iso8601():
@@ -57,9 +65,9 @@ class TIRLearner:
         # self.flag_checkpoint = flag_checkpoint
         self.additional_args = additional_args
 
-        self.processed_de_novo_result_file_name = f"{self.genome_name}{prog_const.spliter}processed_de_novo_result.fa"
+        self.processed_de_novo_result_file_name = f"{self.genome_name}{spliter}processed_de_novo_result.fa"
 
-        if prog_const.CHECKPOINT_OFF not in additional_args:
+        if CHECKPOINT_OFF not in additional_args:
             self.checkpoint_dir_output_path = os.path.join(
                 self.output_dir_path, f"TIR-Learner_v3_checkpoint_{get_timestamp_now_utc_iso8601()}")
             os.makedirs(self.checkpoint_dir_output_path)
@@ -81,8 +89,10 @@ class TIRLearner:
     def __delitem__(self, key):
         try:
             del self.working_df_dict[key]
+            return 0
         except KeyError:
-            pass
+            # pass
+            return -1
 
     def keys(self):
         return self.working_df_dict.keys()
@@ -102,7 +112,7 @@ class TIRLearner:
         self.pre_scan_fasta_file()
         # print(os.getcwd())  # TODO ONLY FOR DEBUG REMOVE AFTER FINISHED
 
-        if self.species in prog_const.ref_lib_available_species:
+        if self.species in ref_lib_available_species:
             self.execute_M1()
             self.execute_M2()
             self.execute_M3()
@@ -112,7 +122,7 @@ class TIRLearner:
             raw_result_df_list = [self["m4"]]
 
         post_processing.execute(self, raw_result_df_list)
-        if prog_const.CHECKPOINT_OFF not in self.additional_args and not self.flag_debug:
+        if CHECKPOINT_OFF not in self.additional_args and not self.flag_debug:
             shutil.rmtree(self.checkpoint_dir_output_path)
 
         # subprocess.Popen(["unlink", self.genome_file_path]).wait()
@@ -143,17 +153,17 @@ class TIRLearner:
                 print(f"WARN: Unknown character exist in sequence {record.id} will be replaced by \'N\'.")
                 record.seq = Seq(re.sub("[^ACGTN]", "N", sequence_str))
 
-            if prog_const.spliter in record.id:
-                print((f"WARN: Sequence name \"{record.id}\" has reserved string \"{prog_const.spliter}\", "
+            if spliter in record.id:
+                print((f"WARN: Sequence name \"{record.id}\" has reserved string \"{spliter}\", "
                        "which makes it incompatible with TIR-Learner and will be replaced with \'_\'."))
-                record.id = record.id.replace(prog_const.spliter, "_")
+                record.id = record.id.replace(spliter, "_")
 
-            if len(sequence_str) < prog_const.short_seq_len:
+            if len(sequence_str) < short_seq_len:
                 self.genome_file_stat["short_seq_num"] += 1
 
             self.genome_file_stat["total_len"] += len(sequence_str)
             records.append(record)
-        checked_genome_file = f"{self.genome_name}{prog_const.spliter}checked.fa"
+        checked_genome_file = f"{self.genome_name}{spliter}checked.fa"
         SeqIO.write(records, checked_genome_file, "fasta")
         self.genome_file_stat["short_seq_perc"] = (self.genome_file_stat["short_seq_num"] /
                                                    self.genome_file_stat["num"])
@@ -177,7 +187,7 @@ class TIRLearner:
         else:
             temp_dir = None
             os.makedirs(self.working_dir_path, exist_ok=True)
-        self.working_dir_path = os.path.join(self.working_dir_path, prog_const.sandbox_dir_name)
+        self.working_dir_path = os.path.join(self.working_dir_path, sandbox_dir_name)
         os.makedirs(self.working_dir_path, exist_ok=True)
         self.working_dir_path = os.path.abspath(self.working_dir_path)
         os.chdir(self.working_dir_path)
@@ -212,7 +222,7 @@ class TIRLearner:
         return latest_checkpoint_dir_path
 
     def load_checkpoint_file(self):
-        if prog_const.CHECKPOINT_OFF in self.additional_args or self.checkpoint_dir_input_path is None:
+        if CHECKPOINT_OFF in self.additional_args or self.checkpoint_dir_input_path is None:
             return
 
         if self.checkpoint_dir_input_path == "auto":
@@ -310,7 +320,7 @@ class TIRLearner:
     def save_checkpoint_file(self):
         # if not self.flag_debug and self.checkpoint_input is None:
         #     return
-        if prog_const.CHECKPOINT_OFF in self.additional_args:
+        if CHECKPOINT_OFF in self.additional_args:
             return
 
         # print(self.current_step) # TODO debug only
@@ -346,7 +356,7 @@ class TIRLearner:
                 subprocess.Popen(["unlink", os.path.join(self.checkpoint_dir_output_path, f)])
 
     def save_processed_de_novo_result_checkpoint_file(self):
-        if prog_const.CHECKPOINT_OFF in self.additional_args:
+        if CHECKPOINT_OFF in self.additional_args:
             return
 
         shutil.copy(self.processed_de_novo_result_file_name,
@@ -367,34 +377,34 @@ class TIRLearner:
                 (self.current_step[0] == executing_module and self.current_step[1] < executing_step))
 
     def GRF_execution_mode_check(self):
-        if (prog_const.SKIP_GRF in self.additional_args or prog_const.FORCE_GRF_MODE in self.additional_args or
+        if (SKIP_GRF in self.additional_args or FORCE_GRF_MODE in self.additional_args or
                 self.GRF_mode in ("native", "boost")):
             return
 
-        if self.genome_file_stat["num"] <= prog_const.general_split_num_threshold:
+        if self.genome_file_stat["num"] <= general_split_num_threshold:
             if self.GRF_mode == "smart":
                 print("  \"native\" mode is selected due to insufficient number of sequences.")
             else:
                 print(f"   Number of sequences insufficient "
-                      f"(expect >= {prog_const.general_split_num_threshold}"
+                      f"(expect >= {general_split_num_threshold}"
                       f" but actually got {self.genome_file_stat['num']}), "
                       f"{self.GRF_mode} mode unneeded, redirect to \"native\" mode.")
             self.GRF_mode = "native"
             return
 
-        if self.GRF_mode == "mix" and self.cpu_cores < 2 * prog_const.mix_short_seq_process_num:
+        if self.GRF_mode == "mix" and self.cpu_cores < 2 * mix_short_seq_process_num:
             if self.GRF_mode == "smart":
                 print("  \"native\" mode is selected due to insufficient number of available cpu cores.")
             else:
                 print(f"   Number of available cpu cores insufficient "
-                      f"(expect >= {2 * prog_const.mix_short_seq_process_num}"
+                      f"(expect >= {2 * mix_short_seq_process_num}"
                       f" but actually got {self.cpu_cores}), "
                       f"\"mix\" mode unavailable, redirect to \"native\" mode.")
             self.GRF_mode = "native"
 
         # "mix" mode or "smart" mode
         drop_seq_len = int(self.TIR_length) + 500
-        if drop_seq_len >= prog_const.short_seq_len:
+        if drop_seq_len >= short_seq_len:
             if self.GRF_mode == "mix":
                 print("  Short sequence does not exist after dropping, "
                       "\"mix\" mode unneeded, redirect to \"native\" mode.")
@@ -403,10 +413,10 @@ class TIRLearner:
             self.GRF_mode = "native"
             return
 
-        if self.genome_file_stat["short_seq_perc"] < prog_const.mix_split_percent_threshold:
+        if self.genome_file_stat["short_seq_perc"] < mix_split_percent_threshold:
             if self.GRF_mode == "mix":
                 print(f"  Percentage of short sequences insufficient "
-                      f"(expect >= {prog_const.mix_split_percent_threshold * 100}%"
+                      f"(expect >= {mix_split_percent_threshold * 100}%"
                       f" but actually got {self.genome_file_stat['short_seq_perc'] * 100}%), "
                       f"\"mix\" mode unneeded, redirect to \"native\" mode")
             else:
@@ -414,10 +424,10 @@ class TIRLearner:
             self.GRF_mode = "native"
             return
 
-        if self.genome_file_stat["short_seq_perc"] > 1 - prog_const.mix_split_percent_threshold:
+        if self.genome_file_stat["short_seq_perc"] > 1 - mix_split_percent_threshold:
             if self.GRF_mode == "mix":
                 print(f"  Percentage of short sequences too high "
-                      f"(expect < {(1 - prog_const.mix_split_percent_threshold) * 100}%"
+                      f"(expect < {(1 - mix_split_percent_threshold) * 100}%"
                       f" but actually got {self.genome_file_stat['short_seq_perc'] * 100}%), "
                       f"\"mix\" mode inappropriate, redirect to \"boost\" mode")
             else:
@@ -486,28 +496,28 @@ class TIRLearner:
         # os.chdir(os.path.join(dir, module))
 
         # Module 2, Step 1: Run TIRvish to find inverted repeats
-        if self.module_step_execution_check(2, 1) and prog_const.SKIP_TIRVISH not in self.additional_args:
+        if self.module_step_execution_check(2, 1) and SKIP_TIRVISH not in self.additional_args:
             print("Module 2, Step 1: Run TIRvish to find inverted repeats")
             self["TIRvish"] = run_TIRvish.execute(self)
             self.current_step = [2, 1]
             self.save_checkpoint_file()
 
         # Module 2, Step 2: Process TIRvish results
-        if self.module_step_execution_check(2, 2) and prog_const.SKIP_TIRVISH not in self.additional_args:
+        if self.module_step_execution_check(2, 2) and SKIP_TIRVISH not in self.additional_args:
             print("Module 2, Step 2: Process TIRvish results")
             self["TIRvish"] = process_de_novo_result.process_TIRvish_result(self)
             self.current_step = [2, 2]
             self.save_checkpoint_file()
 
         # Module 2, Step 3: Run GRF to find inverted repeats
-        if self.module_step_execution_check(2, 3) and prog_const.SKIP_GRF not in self.additional_args:
+        if self.module_step_execution_check(2, 3) and SKIP_GRF not in self.additional_args:
             print("Module 2, Step 3: Run GRF to find inverted repeats")
             self["GRF"] = run_GRF.execute(self)
             self.current_step = [2, 3]
             self.save_checkpoint_file()
 
         # Module 2, Step 4: Process GRF results
-        if self.module_step_execution_check(2, 4) and prog_const.SKIP_GRF not in self.additional_args:
+        if self.module_step_execution_check(2, 4) and SKIP_GRF not in self.additional_args:
             print("Module 2, Step 4: Process GRF results")
             self["GRF"] = process_de_novo_result.process_GRF_result(self)
             self.current_step = [2, 4]
@@ -615,28 +625,28 @@ class TIRLearner:
         # os.chdir(os.path.join(dir, module))
 
         # Module 4, Step 1: Run TIRvish to find inverted repeats
-        if self.module_step_execution_check(4, 1) and prog_const.SKIP_TIRVISH not in self.additional_args:
+        if self.module_step_execution_check(4, 1) and SKIP_TIRVISH not in self.additional_args:
             print("Module 4, Step 1: Run TIRvish to find inverted repeats")
             self["TIRvish"] = run_TIRvish.execute(self)
             self.current_step = [4, 1]
             self.save_checkpoint_file()
 
         # Module 4, Step 2: Process TIRvish results
-        if self.module_step_execution_check(4, 2) and prog_const.SKIP_TIRVISH not in self.additional_args:
+        if self.module_step_execution_check(4, 2) and SKIP_TIRVISH not in self.additional_args:
             print("Module 4, Step 2: Process TIRvish results")
             self["TIRvish"] = process_de_novo_result.process_TIRvish_result(self)
             self.current_step = [4, 2]
             self.save_checkpoint_file()
 
         # Module 4, Step 3: Run GRF to find inverted repeats
-        if self.module_step_execution_check(4, 3) and prog_const.SKIP_GRF not in self.additional_args:
+        if self.module_step_execution_check(4, 3) and SKIP_GRF not in self.additional_args:
             print("Module 4, Step 3: Run GRF to find inverted repeats")
             self["GRF"] = run_GRF.execute(self)
             self.current_step = [4, 3]
             self.save_checkpoint_file()
 
         # Module 4, Step 4: Process GRF results
-        if self.module_step_execution_check(4, 4) and prog_const.SKIP_GRF not in self.additional_args:
+        if self.module_step_execution_check(4, 4) and SKIP_GRF not in self.additional_args:
             print("Module 4, Step 4: Process GRF results")
             self["GRF"] = process_de_novo_result.process_GRF_result(self)
             self.current_step = [4, 4]

@@ -1,4 +1,36 @@
 import os
+import warnings
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'  # mute all tensorflow info, warnings, and error msgs. #shujun
+os.environ["KMP_WARNINGS"] = '0'  # mute all OpenMP warnings. #shujun
+warnings.filterwarnings("ignore", category=FutureWarning)  # mute tensorflow warnings and pyarrow warning
+warnings.filterwarnings("ignore", category=UserWarning)  # mute h5py warning
+
+# Use if True to suppress the PEP8: E402 warning
+if True:  # noqa: E402
+    import datetime
+    import json
+    import math
+    import multiprocessing as mp
+    import regex as re
+    import shutil
+    import subprocess
+    import tempfile
+
+    import numpy as np
+    import pandas as pd
+    import swifter
+
+    from Bio import SeqIO
+    from Bio.Seq import Seq
+
+    from sklearn.preprocessing import LabelEncoder
+    # Attention: sklearn does not automatically import its subpackages
+    import tensorflow as tf
+    from tensorflow.python.framework.errors_impl import InternalError
+    from keras.utils import to_categorical
+    from keras.models import load_model
+
 
 # Acceptable additional args
 FORCE_GRF_MODE = "FORCE_GRF_MODE"
