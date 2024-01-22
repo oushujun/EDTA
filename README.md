@@ -39,7 +39,7 @@ For pan-genome annotations, you need to annotate each genome with EDTA, generate
 
 ## Installation
 
-There are several ways to install EDTA. You just need to find the one that works for your system. If you are not using macOS, you may try the conda appraoch before the Singularity apprapch.
+There are several ways to install EDTA. You just need to find the one that works for your system. If you are not using macOS, you may try the conda approach before the Singularity approach.
 
 ### Install with conda/[mamba](https://github.com/mamba-org/mamba) (Linux64)
 
@@ -62,7 +62,7 @@ Download the latest EDTA:
 
 Find the yml file in the EDTA folder and run:
 
-`conda env create -f EDTA_2.2.x.yml`
+`mamba env create -f EDTA_2.2.x.yml`
 
 The default `conda env` name is `EDTA2` specified by the first line of the yml file. You may change that to different names.
 
@@ -80,7 +80,8 @@ perl EDTA.pl
 
 You can use the conda ENV to execute the latest EDTA from GitHub:
 ```
-perl your_path_to/EDTA/EDTA/pl
+git clone https://github.com/oushujun/EDTA.git
+perl ./EDTA/EDTA/pl
 ```
 
 ### Install with [Singularity](https://sylabs.io/docs/) (good for HPC users)
@@ -104,15 +105,15 @@ Where `{path}` is the path you build the EDTA singularity image.
 
 ### Install with [Docker](https://www.docker.com/) (good for root/macOS/Apple M-chip users)
 
-`docker pull quay.io/biocontainers/edta:<tag>`
+`sudo docker pull quay.io/biocontainers/edta:<tag>`
 
 Usage:
 
-`docker run -v $PWD:/in -w /in quay.io/biocontainers/edta:<tag> EDTA.pl --genome genome.fa [other parameters]`
+`sudo docker run -v $PWD:/in -w /in quay.io/biocontainers/edta:<tag> EDTA.pl --genome genome.fa [other parameters]`
 
 Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) repository for a list of available tags (e.g., `2.2.0--hdfd78af_1`).
 
-Note: Because only the current directory is mounted to the EDTA docker container, you need to copy all used files to the current directory and provide them to EDTA without path specifications (even providing the absolute path to the file located in this folder won't work). Softlinked files are considered "with path" and won't work. Similarily, specifying your own dependency programs (i.e., repeatmasker, repeatmodeler) won't work.
+Note: Because only the current directory is mounted to the EDTA docker container, you have to copy all needed files to the current directory and provide them to EDTA without path specifications. Even providing the absolute path to the file located in this folder won't work. Softlinked files are considered "with path" and won't work. Similarily, specifying your own versions of dependency programs (i.e., repeatmasker, repeatmodeler) won't work because they have paths.
 
 
 ## Testing
@@ -141,12 +142,12 @@ A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will 
 Optional 1:
 1. Novel TE families: $genome.mod.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).
 
-Optional 2, when you specify the `--anno 1` parameter, you will get:
-2. Whole-genome TE annotation: $genome.mod.EDTA.TEanno.gff3. This file contains both structurally intact and fragmented TE annotations.
-3. Summary of whole-genome TE annotation: $genome.mod.EDTA.TEanno.sum.
-4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. In practice, this approach will reduce overmasking for genic regions, which can improve gene prediction quality. However, initial gene models should contain TEs and need further filtering.
-5. Annotation inconsistency for simple TEs: $genome.mod.EDTA.TE.fa.stat.redun.sum.
-6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum.
+Optional 2, when you specify the `--anno 1` parameter, you will get:  
+2. Whole-genome TE annotation: $genome.mod.EDTA.TEanno.gff3. This file contains both structurally intact and fragmented TE annotations.  
+3. Summary of whole-genome TE annotation: $genome.mod.EDTA.TEanno.sum.   
+4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. In practice, this approach will reduce overmasking for genic regions, which can improve gene prediction quality. However, initial gene models should contain TEs and need further filtering.   
+5. Annotation inconsistency for simple TEs: $genome.mod.EDTA.TE.fa.stat.redun.sum.  
+6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum.   
 7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum.
 
 
