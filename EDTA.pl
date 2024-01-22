@@ -288,7 +288,7 @@ $repeatmasker = dirname($repeatmasker) unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
-my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
+my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
 die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand* 2>/dev/null`;
 # RepeatModeler
@@ -545,7 +545,7 @@ chdir "$genome.EDTA.final";
 if ($sensitive == 1 and -s "$genome.RM2.fa"){
 	print "\t\t\t\tIdentify TE families from RepeatModeler results that are missed by structure-based methods.\n\n";
 	chomp ($date = `date`);
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>/dev/null`;
 	`cp $genome.RM2.fa $genome.RM2.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	# clean up tandem and coding sequences in the RM2 library
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.fa.masked > $genome.RM2.fa.stg1`;
@@ -575,13 +575,13 @@ if (-s "$cds"){
 
 	# remove cds-related sequences in the EDTA library
 	print "\t\t\t\tRemove CDS-related sequences in the EDTA library.\n\n";
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
 	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 
 	# remove cds-related sequences in intact TEs
 	print "\t\t\t\tRemove CDS-related sequences in intact TEs.\n\n";
-	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>/dev/null`;
+	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>/dev/null`;
 	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.cln.masked > $genome.EDTA.intact.fa.cln.rmCDS`;
 	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa.cln2`;
@@ -605,7 +605,7 @@ if ($HQlib ne ''){
 	print "$date\tCombine the high-quality TE library $HQlib with the EDTA library:\n\n";
 
 	# remove known TEs in the EDTA library
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
 	`cp $genome.EDTA.TElib.fa $genome.EDTA.TElib.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	rename "$genome.EDTA.TElib.fa", "$genome.EDTA.TElib.ori.fa";
@@ -614,7 +614,7 @@ if ($HQlib ne ''){
 	}
 
 # reclassify intact TEs with the TE lib #113
-`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa.cln2 2>/dev/null` unless (-s "$genome.EDTA.intact.fa.cln2.out" and $overwrite == 0);
+`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $genome.EDTA.TElib.fa $genome.EDTA.intact.fa.cln2 2>/dev/null` unless (-s "$genome.EDTA.intact.fa.cln2.out" and $overwrite == 0);
 die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The RepeatMasker annotation on this file may be failed. Please check the $genome.EDTA.TElib.fa file for sequence naming formats especially when you provide a library via --curatedlib.\n" unless -s "$genome.EDTA.intact.fa.cln2.out";
 `perl $reclassify -seq $genome.EDTA.intact.fa.cln2 -RM $genome.EDTA.intact.fa.cln2.out -cov 80 -len 80 -iden 60`; # 80-80-60
 
@@ -622,6 +622,19 @@ die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The Re
 `perl $output_by_list 1 $genome.EDTA.intact.fa.cln2.rename 1 $genome.EDTA.intact.fa.cln2.false.list -ex -FA > $genome.EDTA.intact.fa`;
 
 ## generate clean intact gff3
+my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.ensembl.org/info/website/upload/gff3.html
+##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the Sequence_ontology in Column 9 uses the closest parent SO.
+##Column 9: 
+##      ID: unique ID for this feature in the genome.
+##      Classification: Same as Column 3 but formatted following the RepeatMasker naming convention.
+##      Sequence_ontology: Sequence Ontology ID of the feature.
+##      Identity: Sequence identity (0-1) between terminal sequences for structurally annotated TIR elements.
+##      ltr_identity: Sequence identity (0-1) between the left and right LTR regions for structurally annotated LTR elements.
+##      Name: Repeat family name. Some may be shown as coordinates, which are single-copy and structrually identified elements that are not included in the repeat library.
+##      Method=structural: Indicate this entry is produced by structural annotation.
+##      motif/TSD/TIR: structural features of structurally annotated LTR and TIR elements.
+##For more details about this file, please refer to the EDTA wiki: https://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A
+##seqid source sequence_ontology start end score strand phase attributes";
 # update the family names in the intact.raw.gff3 file
 `perl $rename_by_list $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.fa.cln2.rename.list 1 > $genome.EDTA.intact.raw.gff3.rename`;
 `sed 's/.*Name=//; s/;Classifica.*//' $genome.EDTA.intact.raw.gff3.rename | sort -u > $genome.EDTA.intact.raw.gff3.rename.famlist`;
@@ -631,7 +644,8 @@ die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The Re
 `perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > $genome.EDTA.intact.gff3`;
 # remake the remove list an purge again
 `perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\\t\$id\nName\\t\$id" if defined \$id' $genome.EDTA.intact.raw.gff3.rename.removed >> $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
-`perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > $genome.EDTA.intact.gff3`;
+`echo "##gff-version 3\n##date $date\n##This file contains repeats annotated by EDTA $version based on structural features.\n$intact_gff_head" > $genome.EDTA.intact.gff3`;
+`perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist >> $genome.EDTA.intact.gff3`;
 
 # check results
 die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
@@ -673,6 +687,21 @@ if ($anno == 1){
 	`cp ../$exclude ./` if $exclude ne '';
 	`ln -s ../$genome $genome` unless -e $genome;
 
+	my $gff_head = "##This file follows the ENSEMBL standard: https://useast.ensembl.org/info/website/upload/gff3.html
+##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the Sequence_ontology in Column 9 uses the closest parent SO.
+##Column 7: The Smith-Waterman score generated by RepeatMasker, only available for homology entries.
+##Column 9: 
+##	ID: unique ID for this feature in the genome.
+##	Classification: Same as Column 3 but formatted following the RepeatMasker naming convention.
+##	Sequence_ontology: Sequence Ontology ID of the feature.
+##	Identity: Sequence identity (0-1) between the library sequence and the target region.
+##	ltr_identity: Sequence identity (0-1) between the left and right LTR regions for structurally annotated LTR elements.
+##	Name: Repeat family name. Some may be shown as coordinates, which are single-copy and structrually identified elements that are not included in the repeat library.
+##	Method: Indicate if this entry is produced by structural annotation or homology annotation.
+##	motif/TSD/TIR: structural features of structurally annotated LTR and TIR elements.
+##For more details about this file, please refer to the EDTA wiki: https://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A
+##seqid source sequence_ontology start end score strand phase attributes";
+
 	# annotate TEs using RepeatMasker
 	if ($rmout ne ''){
 		print STDERR "$date\tA RepeatMasker result file $rmout is provided! Will use this file without running RepeatMasker.\n\n";
@@ -685,7 +714,7 @@ if ($anno == 1){
 		`ln -s $rmout $genome.out`;
 		} else {
 		print STDERR "$date\tHomology-based annotation of TEs using $genome.EDTA.TElib.fa from scratch.\n\n";
-		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div $maxdiv -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div $maxdiv -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
 		}
 	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out" or -s "$genome.mod.out";
 
@@ -707,13 +736,14 @@ if ($anno == 1){
 	`sort -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed.homo $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.homo.bed`;
 	`perl $bed2gff $genome.EDTA.homo.bed TE_homo > $genome.EDTA.homo.gff3`;
 	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
-	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##Identity: Sequence identity (0-1) between the library sequence and the target region.\\n##ltr_identity: Sequence identity (0-1) between the left and right LTR regions.\\n##tsd: target site duplication.\\n##seqid source sequence_ontology start end score strand phase attributes\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
+	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\\n$gff_head\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
 	`rm $genome.EDTA.TEanno.gff3.raw 2>/dev/null`;
 
 	# make non-overlapping annotation
 	`perl $gff2bed $genome.EDTA.TEanno.gff3 structural > $genome.EDTA.TEanno.bed`;
 	`perl $split_overlap $genome.EDTA.TEanno.bed $genome.EDTA.TEanno.split.bed`;
-	`perl $bed2gff $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.split.gff3`;
+	`echo "##gff-version 3\n##date $date\n##This file contains all repeats annotated by EDTA $version in the split format (non-overlapping). Repeats can be broken into pieces by nested insertions.\n$gff_head" > $genome.EDTA.TEanno.split.gff3`;
+	`perl $bed2gff $genome.EDTA.TEanno.split.bed | grep -v '^#' >> $genome.EDTA.TEanno.split.gff3`;
 	`perl $gff2RMout $genome.EDTA.TEanno.split.gff3 $genome.EDTA.TEanno.split.out`;
 
 	# make summary table for the non-overlapping annotation
