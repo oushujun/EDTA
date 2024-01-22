@@ -74,7 +74,7 @@ while (<List>){
 	# get novel seqs based on -curatedlib
 	if (-s $HQlib and $lib_file !~ /mod.EDTA.TElib.novel.fa/){
 		print "\tIdentify novel sequences in this library.\t" if -s $HQlib;
-		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $HQlib $lib_file 2>/dev/null`;
+		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $HQlib $lib_file 2>/dev/null`;
 		`perl $cleanup_tandem -misschar N -nc 50000 -nr $min_cov -minlen $min_len -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $lib_file.masked > $lib_file.novel.fa`;
 		`rm $lib_file.masked $lib_file.cat.gz`;
 		$lib_file = "$lib_file.novel.fa";

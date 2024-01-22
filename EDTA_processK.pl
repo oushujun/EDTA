@@ -166,7 +166,7 @@ sub Purifier() {
 ## Purge contaminants in non-redundant libraries
 # clean LINEs in LTRs
 if (-s "$LINE"){
-	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $LINE $LTR 2>&1`;
+	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -lib $LINE $LTR 2>&1`;
 	if ($err !~ /done/) {
         	`ln -s $LTR $LTR.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/s;
 	        print STDERR "\n$err\n";
@@ -179,7 +179,7 @@ if (-s "$LINE"){
 # clean LINEs and LTRs in SINEs
 if (-s "$SINE"){
 	`cat $LTR.cln $LINE > $genome.LINE_LTR.raw.fa`;
-	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LINE_LTR.raw.fa $SINE 2>&1`;
+	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -lib $genome.LINE_LTR.raw.fa $SINE 2>&1`;
 	if ($err !~ /done/) {
         	`ln -s $SINE $SINE.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/s;
 	        print STDERR "\n$err\n";
@@ -193,7 +193,7 @@ if (-s "$SINE"){
 ## clean LTRs and nonLTRs in TIRs and Helitrons
 `cat $TIR.cln $HEL.cln | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.TIR.Helitron.fa.stg1.raw`;
 `cat $LTR.HQ $SINE.cln $LINE > $genome.LTR.SINE.LINE.fa`;
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.SINE.LINE.fa $genome.TIR.Helitron.fa.stg1.raw 2>&1`;
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -lib $genome.LTR.SINE.LINE.fa $genome.TIR.Helitron.fa.stg1.raw 2>&1`;
 if ($err !~ /done/) {
 	`ln -s $genome.TIR.Helitron.fa.stg1.raw $genome.TIR.Helitron.fa.stg1.raw.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/s;
 	print STDERR "\n$err\n";

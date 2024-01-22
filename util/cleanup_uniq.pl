@@ -36,9 +36,9 @@ if (1){
 }
 
 # mask uniq regions in $candidate
-`${RepatMasker}RepeatMasker -e ncbi -pa $threads -qq -no_is -norna -nolow -div 0.0001 -xsmall -small -lib $candidate.list.uniq.max$max_uniq_len.fa $candidate`;
+`${RepatMasker}RepeatMasker -e ncbi -pa $threads -qq -no_is -nolow -div 0.0001 -xsmall -small -lib $candidate.list.uniq.max$max_uniq_len.fa $candidate`;
 `perl ~/las/git_bin/EDTA/util/cleanup_tandem.pl -nr 1 -minlen $min_can_len -misschar l -cleanN 1 -cleanT 1 -minrm $max_uniq_len -trf 0 -f $candidate.masked > $candidate.max$max_uniq_len.cln`;
 
 # quick test
-`${RepatMasker}RepeatMasker -e ncbi -pa 16 -q -no_is -norna -nolow -div 40 -lib $candidate.max$max_uniq_len.cln -cutoff 225 rice6.9.5.liban.TIR`;
-#`${RepatMasker}RepeatMasker -e ncbi -pa 16 -q -no_is -norna -nolow -div 40 -lib $candidate.max$max_uniq_len.cln -cutoff 225 rice6.9.5.liban.Helitron`;
+`${RepatMasker}RepeatMasker -e ncbi -pa 16 -q -no_is -nolow -div 40 -lib $candidate.max$max_uniq_len.cln -cutoff 225 rice6.9.5.liban.TIR`;
+#`${RepatMasker}RepeatMasker -e ncbi -pa 16 -q -no_is -nolow -div 40 -lib $candidate.max$max_uniq_len.cln -cutoff 225 rice6.9.5.liban.Helitron`;

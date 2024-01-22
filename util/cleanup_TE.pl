@@ -56,13 +56,13 @@ $cds = "$cds.code";
 `perl $output_by_list 1 $cds 1 $cds.TE.list -FA > $cds.TE`;
 
 # 2nd attempt to identify TEs in CDS based on repeatedness
-`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -cutoff 225 -lib $cds.rmTE $rawlib 2>/dev/null`;
+`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds.rmTE $rawlib 2>/dev/null`;
 `awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA >> $cds.TE`; #CDS seqs appears >=10 times in masking the TE rawlib are considered TEs and removed from the CDS file
 `awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA -ex > $cds.rmTE2`;
 
 # 3rd attempt, mask remaining TE seqs in cds with potential TE seqs identified in cds ($cds.TE)
 if (-s "$cds.TE"){
-	`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -norna -nolow -div 40 -lib $cds.TE -cutoff 225 $cds.rmTE2`;
+	`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $cds.TE -cutoff 225 $cds.rmTE2`;
 	if (-s "$cds.rmTE2.masked"){
 		`perl $cleanup -Nscreen 1 -nc 300 -nc 0.3 -minlen $minlen -maxlen 300000 -cleanN 1 -cleanT 0 -trf 0 -f $cds.rmTE2.masked > $cds.noTE`;
 		} else {

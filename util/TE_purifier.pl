@@ -100,7 +100,7 @@ $/ = "\n";
 # Repeatmask TE1 with TE2; make blast db for $TE1 and $TE2
 my $div = 100 - $miniden;
 my $err = '';
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -norna -nolow -div $div -lib $TE2 $TE1 >/dev/null`;
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -nolow -div $div -lib $TE2 $TE1 >/dev/null`;
 `${blastplus}makeblastdb -in $TE1 -out $TE1 -dbtype nucl 2> /dev/null`;
 `${blastplus}makeblastdb -in $TE2 -out $TE2 -dbtype nucl 2> /dev/null`;
 print STDERR "$err\n" if $err ne '';
@@ -181,6 +181,7 @@ sub purifier(){
 			my $seq_te1_len = 0;
 			foreach (@blast_te1){
 				my ($id, $iden, $len) = (split)[1,2,3];
+				next unless (defined $id && defined $iden && defined $len);
 				next if $iden < $miniden or $len < $minlen;
 				$seq_te1_len += $len;
 				}
