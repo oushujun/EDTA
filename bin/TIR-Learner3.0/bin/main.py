@@ -353,7 +353,8 @@ class TIRLearner:
             # print(remove_file_set) # TODO debug only
             for f in remove_file_set:
                 # os.remove(os.path.join(self.checkpoint_output, f))
-                subprocess.Popen(["unlink", os.path.join(self.checkpoint_dir_output_path, f)])
+                subprocess.Popen(["unlink", os.path.join(self.checkpoint_dir_output_path, f)],
+                                 stderr=subprocess.DEVNULL)
 
     def save_processed_de_novo_result_checkpoint_file(self):
         if CHECKPOINT_OFF in self.additional_args:
