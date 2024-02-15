@@ -141,6 +141,10 @@ my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $format_TElib = "$script_path/util/format_TElib.pl";
+my $div_table = "$script_path/util/div_table2.pl";
+my $div_plot = "$script_path/util/div_plot2.R";
+my $density_table = "$script_path/util/density_table.py";
+my $density_plot = "$script_path/util/density_plot.R";
 my $LTR_retriever = "";
 my $genometools = "";
 my $repeatmodeler = "";
@@ -261,6 +265,10 @@ die "The script split_overlap.pl is not found in $split_overlap!\n" unless -s $s
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
+die "The script div_table2.pl is not found in $div_table!\n" unless -s $div_table;
+die "The script div_plot2.R is not found in $div_plot!\n" unless -s $div_plot;
+die "The script density_table.py is not found in $density_table!\n" unless -s $density_table;
+die "The script density_plot.R is not found in $density_plot!\n" unless -s $density_plot;
 
 # GenomeTools
 chomp ($genometools=`which gt 2>/dev/null`) if $genometools eq '';
@@ -537,13 +545,13 @@ chdir "$genome.EDTA.final";
 `cp ../$cds ./` if $cds ne '';
 `cp ../$HQlib ./` if $HQlib ne '';
 `cp ../$genome.EDTA.combine/$genome.EDTA.intact.fa.cln ./$genome.EDTA.intact.fa.cln`;
-`cp ../$genome.EDTA.raw/$genome.EDTA.intact.raw.fa ./`;
+#`cp ../$genome.EDTA.raw/$genome.EDTA.intact.raw.fa ./`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.raw.gff3 ./`;
 `cp ../$exclude ./` if $exclude ne '';
 
 # identify remaining TEs in the filtered RM2 library
 if ($sensitive == 1 and -s "$genome.RM2.fa"){
-	print "\t\t\t\tIdentify TE families from RepeatModeler results that are missed by structure-based methods.\n\n";
+	print "\t\t\t\tFilter RepeatModeler results that are ignored in the raw step.\n\n";
 	chomp ($date = `date`);
 	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>/dev/null`;
 	`cp $genome.RM2.fa $genome.RM2.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
@@ -623,15 +631,15 @@ die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The Re
 
 ## generate clean intact gff3
 my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.ensembl.org/info/website/upload/gff3.html
-##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the Sequence_ontology in Column 9 uses the closest parent SO.
+##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the sequence_ontology in Column 9 uses the closest parent SO.
 ##Column 9: 
 ##      ID: unique ID for this feature in the genome.
-##      Classification: Same as Column 3 but formatted following the RepeatMasker naming convention.
-##      Sequence_ontology: Sequence Ontology ID of the feature.
-##      Identity: Sequence identity (0-1) between terminal sequences for structurally annotated TIR elements.
+##      classification: Same as Column 3 but formatted following the RepeatMasker naming convention.
+##      sequence_ontology: Sequence Ontology ID of the feature.
+##      identity: Sequence identity (0-1) between terminal sequences for structurally annotated TIR elements.
 ##      ltr_identity: Sequence identity (0-1) between the left and right LTR regions for structurally annotated LTR elements.
 ##      Name: Repeat family name. Some may be shown as coordinates, which are single-copy and structrually identified elements that are not included in the repeat library.
-##      Method=structural: Indicate this entry is produced by structural annotation.
+##      method=structural: Indicate this entry is produced by structural annotation.
 ##      motif/TSD/TIR: structural features of structurally annotated LTR and TIR elements.
 ##For more details about this file, please refer to the EDTA wiki: https://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A
 ##seqid source sequence_ontology start end score strand phase attributes";
@@ -688,16 +696,16 @@ if ($anno == 1){
 	`ln -s ../$genome $genome` unless -e $genome;
 
 	my $gff_head = "##This file follows the ENSEMBL standard: https://useast.ensembl.org/info/website/upload/gff3.html
-##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the Sequence_ontology in Column 9 uses the closest parent SO.
+##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the sequence_ontology in Column 9 uses the closest parent SO.
 ##Column 7: The Smith-Waterman score generated by RepeatMasker, only available for homology entries.
 ##Column 9: 
 ##	ID: unique ID for this feature in the genome.
-##	Classification: Same as Column 3 but formatted following the RepeatMasker naming convention.
-##	Sequence_ontology: Sequence Ontology ID of the feature.
-##	Identity: Sequence identity (0-1) between the library sequence and the target region.
+##	classification: Same as Column 3 but formatted following the RepeatMasker naming convention.
+##	sequence_ontology: Sequence Ontology ID of the feature.
+##	identity: Sequence identity (0-1) between the library sequence and the target region.
 ##	ltr_identity: Sequence identity (0-1) between the left and right LTR regions for structurally annotated LTR elements.
 ##	Name: Repeat family name. Some may be shown as coordinates, which are single-copy and structrually identified elements that are not included in the repeat library.
-##	Method: Indicate if this entry is produced by structural annotation or homology annotation.
+##	method: Indicate if this entry is produced by structural annotation or homology annotation.
 ##	motif/TSD/TIR: structural features of structurally annotated LTR and TIR elements.
 ##For more details about this file, please refer to the EDTA wiki: https://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A
 ##seqid source sequence_ontology start end score strand phase attributes";
@@ -746,6 +754,13 @@ if ($anno == 1){
 	`perl $bed2gff $genome.EDTA.TEanno.split.bed | grep -v '^#' >> $genome.EDTA.TEanno.split.gff3`;
 	`perl $gff2RMout $genome.EDTA.TEanno.split.gff3 $genome.EDTA.TEanno.split.out`;
 
+	# make plots
+	`perl $div_table $genome.EDTA.TEanno.bed $genome $genome`;
+	`Rscript $div_plot $genome.div_long $genome 2>/dev/null`;
+	`python $density_table -genome $genome -gff $genome.EDTA.TEanno.split.gff3 > $genome.EDTA.TEanno.split.density`;
+	`Rscript $density_plot $genome.EDTA.TEanno.split.density 2>/dev/null`;
+	`mv chromosome_density_plots.pdf $genome.EDTA.TEanno.density_plots.pdf`;
+
 	# make summary table for the non-overlapping annotation
 	`perl $count_base $genome > $genome.stats`;
 	`perl -nle 'my (\$chr, \$s, \$e, \$anno, \$dir, \$supfam)=(split)[0,1,2,3,8,12]; print "10000 0.001 0.001 0.001 \$chr \$s \$e NA \$dir \$anno \$supfam"' $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.out`;
@@ -759,7 +774,7 @@ if ($anno == 1){
 	my $maker_TE = `perl $count_base $genome.MAKER.masked`;
 	$maker_TE = (split /\s+/, $maker_TE)[3];
 	$maker_TE = sprintf("%.2f%%", $maker_TE*100);
-
+	
 	# check results and report status
 	die "ERROR: TE annotation results not found in $genome.EDTA.TEanno.gff3!\n\n" unless -s "$genome.EDTA.TEanno.gff3";
 	print "ERROR: The masked genome for MAKER annotation is not found in $genome.MAKER.masked!\n\n" unless -s "$genome.MAKER.masked";
@@ -767,10 +782,16 @@ if ($anno == 1){
 	print "$date\tTE annotation using the EDTA library has finished! Check out:\n";
 	print "\t\t\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff3\n";
 	print "\t\t\t\tWhole-genome TE annotation summary: $genome.EDTA.TEanno.sum\n";
+	print "\t\t\t\tWhole-genome TE divergence plot: ${genome}_divergence_plot.pdf\n";
+	print "\t\t\t\tWhole-genome TE density plot: $genome.EDTA.TEanno.density_plots.pdf\n";
 	print "\t\t\t\tLow-threshold TE masking for MAKER gene annotation (masked: $maker_TE): $genome.MAKER.masked\n\n";
+
+	# copy results out
 	`cp $genome.MAKER.masked ../`; # make no backup for this file
 	copy_file("$genome.EDTA.TEanno.gff3", "..");
 	copy_file("$genome.EDTA.TEanno.sum", "..");
+	copy_file("${genome}_divergence_plot.pdf", "..");
+	copy_file("$genome.EDTA.TEanno.density_plots.pdf", "..");
 
 	# evaluate the annotation consistency
 	if ($evaluate == 1){
