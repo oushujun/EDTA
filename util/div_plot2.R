@@ -69,7 +69,7 @@ genome_label <- paste(species_accession, " (", formatted_genome_size, " Mb)", se
 output_file_name <- paste(species_accession, "_divergence_plot.pdf", sep="")
 
 # Start PDF output
-pdf(file = output_file_name)
+pdf(file = output_file_name, width = 6, height = 4)
 
 # Plot TE divergence
 div_p <- long_div %>%
