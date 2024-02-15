@@ -31,14 +31,14 @@ while (<GFF>){
 	$class = 'non_LTRretrotransposon' if $class eq "non_LTR_retrotransposon"; #avoid confusing the LTR processing
 	# combine LTR subclass
 	if ($class =~ /(LTR_retrotransposon|_LTR_retrotransposon|long_terminal_repeat|TRIM|LARD)/i){
-		$class =~ s/_LTR_retrotransposon//i;
+		$class =~ s/_LTR_retrotransposon//i; #eg: Gypsy_LTR_retrotransposon becomes Gypsy
 		$class = "unknown" if $class eq "LTR_retrotransposon";
 		$class = "LTR/$class";
 		$type = "LTR";
 		}
 	# combine TIR subclass
 	if ($class =~ /(terminal_inverted_repeat|TIR_transposon|polinton|MITE)/i){
-		$class =~ s/_TIR_transposon//i;
+		$class =~ s/_TIR_transposon//i; #eg: PILE_TIR_transposon becomes PILE
 		$class =~ s/terminal_inverted_repeat_element/unknown/i;
 		$class =~ s/terminal_inverted_repeat/TIR/i;
 		$class = "TIR/$class";
@@ -47,14 +47,14 @@ while (<GFF>){
 	# combine LINE subclass
 	if ($class =~ /(LINE|LINE_element|LINE_retrotransposon|RIL)/i){
 		$class = "unknown" if $class eq "LINE_element";
-		$class =~ s/_LINE_retrotransposon//i;
+		$class =~ s/_LINE_retrotransposon//i; #eg: L1_LINE_retrotransposon becomes L1
 		$class = "LINE/$class";
 		$type = "LINE";
 		}
 	# combine SINE subclass
 	if ($class =~ /(SINE|SINE_element|SINE_retrotransposon|RIS)/i){
 		$class = "unknown" if $class eq "SINE_element";
-		$class =~ s/_SINE_retrotransposon//i;
+		$class =~ s/_SINE_retrotransposon//i; #eg: Alu_SINE_retrotransposon becomes Alu
 		$class = "SINE/$class";
 		$type = "SINE";
 		}
@@ -88,7 +88,7 @@ while (<GFF>){
 	$type = "Crypton" if $sequence_ontology =~ /Crypton_YR_transposon/i;
 	$type = "plastid" if $sequence_ontology =~ /chloroplast|plastid|mitochondri/i;
 	$type = "repeat_region" if $sequence_ontology =~ /(repeat_region|DNA_transposon|^retrotransposon$)/i;
-	$type = 'repeat_region' if $sequence_ontology =~ /Unknown|Unspecified/i; #suggested by Changfu Jia
+	$type = 'repeat_fragment' if $sequence_ontology =~ /(repeat_fragment|Unknown|Unspecified)/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
 	# get assortive structural info
