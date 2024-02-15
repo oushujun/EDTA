@@ -57,7 +57,7 @@ while (<BED>){
 		} else {
 		$extra = ";$extra";
 		}
-	$info = "ID=${ID_name}_$i;Name=$TE_ID;Classification=$TE_class;Sequence_ontology=$SO{$so};Identity=$iden;Method=${method}$extra";
+	$info = "ID=${ID_name}_$i;Name=$TE_ID;classification=$TE_class;sequence_ontology=$SO{$so};identity=$iden;method=${method}$extra";
 	print "$chr\t$annotator\t$so\t$element_start\t$element_end\t$score\t$strand\t$phase\t$info\n";
 	$i++;
 	}
