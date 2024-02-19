@@ -96,7 +96,11 @@ outfile=$(basename $genome_list 2>/dev/null)
 
 ### Begin panEDTA and print all parameters
 printf "\n%s\n" "$(date)"
-echo "Pan-genome Extensive de-novo TE Annotator (panEDTA)"
+echo "###############################################################"
+echo "##### Pan-genome Extensive de-novo TE Annotator (panEDTA) #####"
+echo "##### Shujun Ou (shujun.ou.1@gmail.com)                   #####"
+echo "###############################################################"
+echo ""
 echo "   Output directory: $dir"
 echo "   Genome files: $genome_list"
 echo "   Coding sequences: $cds"
@@ -224,29 +228,16 @@ for genome in $genomes; do
 	if [ -s "$curatedlib" ]; then
 		# a) if --curatedlib is provided
 		for j in $(cat "$genome.mod.EDTA.TElib.fa.keep.list"); do
-#		cat "$genome.mod.EDTA.TElib.fa.keep.list" | while read -r j; do
 			grep "$j" "$genome.mod.EDTA.TElib.novel.fa"; 
 		done | \
 			perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.novel.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
 
-#		while read -r j; do
-#			grep "$j" "$genome.mod.EDTA.TElib.novel.fa";
-#		done < "$genome.mod.EDTA.TElib.fa.keep.list" | \
-#			perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.novel.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
-
 	else
 		# b) if --curatedlib is not provided
-	#	for j in $(cat "$genome.mod.EDTA.TElib.fa.keep.list"); do 
 		for j in `cat "$genome.mod.EDTA.TElib.fa.keep.list"`; do 
-	#	cat "$genome.mod.EDTA.TElib.fa.keep.list" | while read -r j; do
 			grep "$j" "$genome.mod.EDTA.TElib.fa"; 
 		done | \
         		perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
-
-#		while read -r j; do
-#			grep "$j" "$genome.mod.EDTA.TElib.fa";
-#		done < "$genome.mod.EDTA.TElib.fa.keep.list" | \
-#			perl "$path/util/output_by_list.pl" 1 "$genome.mod.EDTA.TElib.fa" 1 - -FA > "$genome.mod.EDTA.TElib.fa.keep.ori"
 
 	fi
 done
@@ -269,7 +260,6 @@ if [ -s "$curatedlib" ]; then
 fi
 printf "\n%s\n" "$(date)"
 printf "\tpanEDTA library of %s is generated: %s.panEDTA.TElib.fa\n" "$genome_list" "$outfile"
-#printf "\tPan-genome library: %s.panEDTA.TElib.fa\n" "$outfile"
 
 ## Step 3, re-annotate all genomes with the panEDTA library, consider to submit each RepeatMasker and EDTA job to different nodes.
 if [ "$anno" = '1' ]; then

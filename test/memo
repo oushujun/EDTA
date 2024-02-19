@@ -1,9 +1,0 @@
-bash ../../panEDTA.sh -g ../genome.cds.list -c ../genome.cds.fa -l ../../database/athrep.updated.nonredun.fasta -t 20 -f 3 &
-rm -rf *mod* *fa *EDTA* RM_*
-
-bash ../../panEDTA.sh -g genome.cds.list -c ../genome.cds.fa -l ../../database/athrep.updated.nonredun.fasta -t 20 -f 3 -o 1 & 
-perl ~/bin/EDTA/util/call_seq_by_list.pl <(echo Alyrata_2M 1:10000000..11000000) -C ~/data/projects/TE/Arabidopsis/Arabidopsis_lyrata.v.1.0.dna.toplevel.fa.mod > Alyrata_test.fa
-
-
-
-bash ../../panEDTA.sh -g genome.cds.list -c ../genome.cds.fa -t 20 -f 3 -o 1 &
