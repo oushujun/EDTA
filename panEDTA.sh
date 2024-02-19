@@ -159,7 +159,8 @@ while IFS= read -r i; do
 
 
 	# check if current folder has EDTA results
-	if [ `realpath "$genome_file.mod.EDTA.TEanno.sum"` = `realpath "$genome.mod.EDTA.TEanno.sum"` ] && [ $overwrite = 0 ]; then
+	#if [ -s "$genome_file.mod.EDTA.TEanno.sum" || -s "$genome.mod.EDTA.TEanno.sum"] && [ `realpath "$genome_file.mod.EDTA.TEanno.sum"` = `realpath "$genome.mod.EDTA.TEanno.sum"` ] && [ $overwrite = 0 ]; then
+	if { [ -s "$genome_file.mod.EDTA.TEanno.sum" ] || [ -s "$genome.mod.EDTA.TEanno.sum" ]; } && [ "$(realpath "$genome_file.mod.EDTA.TEanno.sum")" = "$(realpath "$genome.mod.EDTA.TEanno.sum")" ] && [ "$overwrite" = 0 ]; then
 		echo "ERROR: Existing EDTA result found for $genome and the Overwrite parameter (-o) is $overwrite!"
 		exit 1
 	fi
@@ -173,10 +174,11 @@ while IFS= read -r i; do
 		ln -s "$genome_file.mod.EDTA.TElib.novel.fa" "$genome.mod.EDTA.TElib.novel.fa" 2>/dev/null
 		mkdir "$genome.mod.EDTA.raw" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.RM2.fa" "$genome.mod.EDTA.raw/" 2>/dev/null
-		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.EDTA.intact.fa" "$genome.mod.EDTA.raw/" 2>/dev/null
-		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.EDTA.intact.gff3" "$genome.mod.EDTA.raw/" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.EDTA.intact.raw.fa" "$genome.mod.EDTA.raw/" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.raw/$genome.mod.EDTA.intact.raw.gff3" "$genome.mod.EDTA.raw/" 2>/dev/null
 		mkdir "$genome.mod.EDTA.combine" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.combine/$genome.mod.EDTA.fa.stg1" "$genome.mod.EDTA.combine/" 2>/dev/null
+		ln -s "$genome_file.mod.EDTA.combine/$genome.mod.EDTA.intact.fa.cln" "$genome.mod.EDTA.combine/" 2>/dev/null
 
 		mkdir "$genome.mod.EDTA.anno" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.anno/$genome.mod.EDTA.RM.out" "$genome.mod.EDTA.anno/" 2>/dev/null
@@ -295,7 +297,7 @@ while IFS= read -r i; do
                 cds_ind=$cds
         fi
 
-	echo "Reannotate genome $genome with the panEDTA library - structural"
+	printf "\n%s\nReannotate genome %s with the panEDTA library - structural\n" "$(date)" $genome
 	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out
 done < $genome_list
 

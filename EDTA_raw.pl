@@ -522,12 +522,10 @@ if (-s "$genome-families.fa"){
 	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA -ex > $genome.RM2.fa`;
 	} else {
 	print "\t\t\t\tRepeatModeler is finished, but the $genome-families.fa file is not produced.\n\n";
-	`touch $genome.LINE.raw.fa $genome.RM2.fa`;
+	`touch $genome.RM2.raw.fa $genome.LINE.raw.fa $genome.RM2.fa`;
 	}
 
 # copy result files out
-`touch $genome.LINE.raw.fa` unless -e "$genome.LINE.raw.fa";
-`touch $genome.RM2.fa` unless -e "$genome.RM2.fa";
 `cp $genome.LINE.raw.fa $genome.RM2.fa ../`; #update the filtered RM2 result in the EDTA/raw folder
 `cp $genome.RM2.raw.fa ../../`; #update the raw RM2 result in the EDTA folder
 chdir '../..';

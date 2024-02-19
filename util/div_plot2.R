@@ -32,11 +32,11 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(scales)
-library(here)
+#library(here)
 
 # Set the working directory to the script's location
 script_dir <- dirname(Sys.getenv("R_SCRIPT"))
-setwd(here())
+#setwd(here())
 
 data_file <- args[1]  # Data file name (e.g., 'testmaize.txt')
 species_accession <- args[2]  # Species accession label (e.g., 'Maize_B73')
