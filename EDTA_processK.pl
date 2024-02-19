@@ -142,11 +142,6 @@ sub Purifier() {
 #################################
 
 ## Purge contaminants in redundant libraries
-# purify intact LTR
-&Purifier("$LTRint", "$TIR", $mindiff_LTR);
-&Purifier("$LTRint.HQ", "$HEL", $mindiff_LTR);
-`mv $LTRint.HQ.HQ $LTRint.cln`;
-
 # purify raw LTR (clean LTR library is better than dirty intact LTR for purging LTRs from other TEs)
 &Purifier("$LTR", "$TIR", $mindiff_LTR);
 &Purifier("$LTR.HQ", "$HEL", $mindiff_LTR);
@@ -155,13 +150,20 @@ sub Purifier() {
 # purify Helitron
 &Purifier("$HEL", "$TIR", $mindiff_HEL);
 &Purifier("$HEL.HQ", "$LTR", $mindiff_LTR);
+`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $HEL.HQ-$LTR.fa > $HEL.int.cln`; # more relaxed in filtering intact helitrons
 `mv $HEL.HQ.HQ $HEL.cln`;
 
 # purify TIR
 &Purifier("$TIR", "$LTR", $mindiff_TIR);
 &Purifier("$TIR.HQ", "$HEL", $mindiff_TIR);
+`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $TIR.HQ-$HEL.fa > $TIR.int.cln`; # more relaxed in filtering intact TIRs
 `mv $TIR.HQ.HQ $TIR.cln`;
 
+# purify intact LTR from TIRs. Including Helitron is too damaging for now.
+&Purifier("$LTRint", "$TIR.cln", 10); # 10 is permissive
+`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $LTRint-$TIR.cln.fa > $LTRint.cln`;
+#&Purifier("$LTRint.HQ", "$HEL.cln", 10); # 10 is permissive
+#`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $LTRint.HQ-$HEL.cln.fa > $LTRint.cln`; # more relaxed in filtering intact LTRs
 
 ## Purge contaminants in non-redundant libraries
 # clean LINEs in LTRs
@@ -206,7 +208,7 @@ if ($err !~ /done/) {
 `cat $LTR.cln $LINE $SINE.cln $genome.TIR.Helitron.fa.stg1.raw.cln.cln > $genome.EDTA.fa.stg1`;
 
 ## generate clean intact TEs
-`cat $LTRint.cln $LINE $SINE.cln $TIR.cln $HEL.cln > $genome.EDTA.intact.fa.cln`;
+`cat $LTRint.cln $LINE $SINE.cln $TIR.int.cln $HEL.int.cln > $genome.EDTA.intact.fa.cln`;
 
 ## clean up the folder
 `rm *.ndb *.not *.ntf *.nto *.cat.gz *.cat *.masked *.ori.out *.nhr *.nin *.nsq 2>/dev/null`;
