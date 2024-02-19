@@ -5,6 +5,7 @@
 #	2. Individual TE libraries will be combined by panEDTA
 #	3. Each genome will be reannotated by the panEDTA library
 # Shujun Ou (shujun.ou.1@gmail.com) 
+# 02/19/2024 v0.3
 # 06/21/2023 v0.2
 # 10/10/2022 v0.1
 
@@ -23,7 +24,7 @@
 helpFunction()
 {
    echo "\nPan-genome annnotation of TEs using EDTA"
-   echo "Usage: bash $0 -g genome_list.txt -c cds.fasta -t 10"
+   echo "Usage: sh $0 -g genome_list.txt -c cds.fasta -t 10"
    echo "   -g	A list of genome files with paths accessible from the working directory.
 			Required: You can provide only a list of genomes in this file (one column, one genome each row).
 			Option 1: You can also provide both genomes and CDS files in this file (two columns, one genome and 
