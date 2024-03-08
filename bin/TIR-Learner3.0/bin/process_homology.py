@@ -5,7 +5,7 @@
 #
 # import prog_const
 
-from prog_const import *
+from const import *
 
 blast_header_full_coverage = ("qacc", "sacc", "length", "pident", "gaps", "mismatch",
                               "qstart", "qend", "sstart", "send", "evalue", "qcovhsp")

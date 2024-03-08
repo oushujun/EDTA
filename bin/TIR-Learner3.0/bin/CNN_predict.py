@@ -20,7 +20,7 @@
 #
 #     import prog_const
 
-from prog_const import *
+from const import *
 
 
 def get_sequence_fragment(x, featureSize=200):

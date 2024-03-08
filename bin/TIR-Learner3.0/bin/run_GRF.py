@@ -9,7 +9,7 @@
 #
 # import prog_const
 
-from prog_const import *
+from const import *
 
 
 def prepare_fasta(genome_file, genome_name, GRF_mode, drop_seq_len):

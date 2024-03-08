@@ -5,7 +5,7 @@
 # import pandas as pd
 # import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 
-from prog_const import *
+from const import *
 
 from get_fasta_sequence import get_fasta_pieces_SeqIO
 from process_de_novo_result import TA_repeats_check

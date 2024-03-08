@@ -4,7 +4,7 @@
 # import swifter  # ATTENTION: DO NOT REMOVE "swifter" EVEN IF IDE SHOWS IT IS NOT USED!
 # from Bio import SeqIO
 
-from prog_const import *
+from const import *
 
 
 def get_start_end(genome_file, df_in, flag_verbose, length=200):

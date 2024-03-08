@@ -19,7 +19,7 @@
 # from Bio import SeqIO
 # from Bio.Seq import Seq
 
-from prog_const import *
+from const import *
 
 # Use if True to suppress the PEP8: E402 warning
 if True:  # noqa: E402
@@ -335,7 +335,8 @@ class TIRLearner:
             v.to_csv(f"{df_file_name}.csv", index=False, header=True, sep='\t')
             with open(f"{df_file_name}_dtypes.txt", 'w') as f:
                 # f.write(json.dumps(v.dtypes.astype(str).to_dict()) + '\n')
-                f.write(json.dumps(v.loc[0, :].apply(type).apply(str).str[8:-2].to_dict()) + '\n')
+                f.write(json.dumps(v.loc[0, :].apply(type).apply(str).str[8:-2].str.replace("numpy", "np").to_dict()) +
+                        '\n')
 
         with open(os.path.join(self.checkpoint_dir_output_path, "info.txt"), 'w') as f:
             f.write(get_timestamp_now_utc_iso8601() + '\n')

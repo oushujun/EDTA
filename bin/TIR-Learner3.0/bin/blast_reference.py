@@ -3,7 +3,7 @@
 # import multiprocessing as mp
 #
 # import prog_const
-from prog_const import *
+from const import *
 
 
 def blast_ref_lib_in_genome_file(genome_db, genome_name, ref_lib, ref_lib_file_path, cpu_cores):

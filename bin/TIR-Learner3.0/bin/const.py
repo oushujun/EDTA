@@ -23,6 +23,7 @@ if True:  # noqa: E402
 
     from Bio import SeqIO
     from Bio.Seq import Seq
+    from Bio.SeqRecord import SeqRecord
 
     from sklearn.preprocessing import LabelEncoder
     # Attention: sklearn does not automatically import its subpackages
@@ -38,12 +39,13 @@ CHECKPOINT_OFF = "CHECKPOINT_OFF"
 SKIP_TIRVISH = "SKIP_TIRVISH"
 SKIP_GRF = "SKIP_GRF"
 
-spliter = "-+-"
-TIR_types = ("DTA", "DTC", "DTH", "DTM", "DTT")
 additional_args_mapping_dict = {"force_grf_mode": FORCE_GRF_MODE,
                                 "checkpoint_off": CHECKPOINT_OFF,
                                 "skip_tirvish": SKIP_TIRVISH,
                                 "skip_grf": SKIP_GRF}
+
+spliter = "-+-"
+TIR_types = ("DTA", "DTC", "DTH", "DTM", "DTT")
 
 CNN_model_dir_name = "cnn0912_tf_savedmodel"
 sandbox_dir_name = "[DO_NOT_ALTER]_TIR-Learner_sandbox_directory"
@@ -56,6 +58,14 @@ ref_lib_file_dict = {species: [f"{species}_{TIR_type}_RefLib" for TIR_type in TI
                      for species in ref_lib_available_species}
 ref_lib_dir_path = os.path.join(program_root_dir_path, ref_lib_dir_name)
 
+# TIRvish_split_seq_len = 5 * (10 ** 6)  # 5 mb
+# TIRvish_overlap_seq_len = 50 * (10 ** 3)  # 50 kb
+
+# TODO only for debug
+TIRvish_split_seq_len = 300
+TIRvish_overlap_seq_len = 200
+
+
 short_seq_len = 2000
 general_split_num_threshold = 5
 mix_split_percent_threshold = 0.05
@@ -67,6 +77,6 @@ thread_core_ratio = 2
 def process_additional_args(additional_args: list) -> tuple:
     processed_additional_args = tuple(i for i in
                                       tuple(map(additional_args_mapping_dict.get, additional_args)) if i is not None)
-    if SKIP_TIRVISH in processed_additional_args and SKIP_GRF in processed_additional_args:
+    if (SKIP_TIRVISH in processed_additional_args) and (SKIP_GRF in processed_additional_args):
         raise SystemExit("ERROR: \"skip_tirvish\" and \"skip_grf\" cannot be specified at the same time!")
     return processed_additional_args

@@ -2,7 +2,7 @@
 # import pandas as pd
 # from Bio import SeqIO
 
-from prog_const import *
+from const import *
 
 
 # def getNonHomo(file, df_homo):
