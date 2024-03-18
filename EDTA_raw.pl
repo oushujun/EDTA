@@ -569,7 +569,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\t\t\tWill use this for further analyses.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
+		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools -w $genome_file_real_path.EDTA.raw/TIR`;
 		}
 
 	# clean raw predictions with flanking alignment
@@ -597,7 +597,6 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	}
 
 # copy result files out
-`touch $genome.TIR.intact.raw.fa` unless -e "$genome.TIR.intact.raw.fa";
 `cp $genome.TIR.intact.bed ../$genome.TIR.intact.raw.bed` if -s "$genome.TIR.intact.bed"; # recover <EDTA2.2 results
 `cp $genome.TIR.intact.gff3 ../$genome.TIR.intact.raw.gff3` if -s "$genome.TIR.intact.gff3";
 `cp $genome.TIR.intact.fa ../$genome.TIR.intact.raw.fa` if -s "$genome.TIR.intact.fa";
@@ -662,7 +661,6 @@ if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Heli
 	}
 
 # copy result files out
-`touch $genome.Helitron.intact.raw.fa` unless -e "$genome.Helitron.intact.raw.fa";
 `cp $genome.Helitron.intact.bed ../$genome.Helitron.intact.raw.bed` if -s "$genome.Helitron.intact.bed"; # recover <EDTA2.2 results
 `cp $genome.Helitron.intact.gff3 ../$genome.Helitron.intact.raw.gff3` if -s "$genome.Helitron.intact.gff3";
 `cp $genome.Helitron.intact.fa ../$genome.Helitron.intact.raw.fa` if -s "$genome.Helitron.intact.fa";
