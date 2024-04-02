@@ -10,8 +10,6 @@ from const import *
 from get_fasta_sequence import get_fasta_pieces_SeqIO
 from process_de_novo_result import TA_repeats_check
 
-# import prog_const
-
 
 def combine_all(df_list):
     if len(df_list) > 1:
@@ -172,7 +170,7 @@ def remove_overlap(df_in, flag_verbose):
             if flag_verbose:
                 print(f"      Sequence {dropped_index_list[-1]} of genome {seqid} removed")
             else:
-                print('*', end=None)
+                print('*', end="")
         ptr1 += 1
         ptr2 += 1
     df = df.drop(dropped_index_list)
@@ -226,8 +224,12 @@ def execute(TIRLearner_instance, raw_result_df_list):
     del df_combined, df_combined_groupby_seqid, df_combined_seqid_list
 
     print("  Step 4/6: Removing the shorter one among two overlapped sequences")
+    if not flag_verbose:
+        print("    ", end="")
     with mp.Pool(int(cpu_cores)) as pool:
         df_filtered_list = pool.starmap(remove_overlap, df_combined_mp)
+    if not flag_verbose:
+        print('\n', end="")
     df_filtered = pd.concat(df_filtered_list, ignore_index=True)
     del df_filtered_list
 

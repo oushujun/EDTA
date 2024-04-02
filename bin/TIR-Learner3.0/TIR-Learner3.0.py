@@ -4,6 +4,7 @@
 
 import os
 import sys
+
 sys.path.insert(0, f"{os.path.dirname(__file__)}/bin")
 
 # Use if True to suppress the PEP8: E402 warning
@@ -12,8 +13,7 @@ if True:  # noqa: E402
     import shutil
 
     from bin.main import TIRLearner
-    from bin.prog_const import process_additional_args
-
+    from bin.const import process_additional_args
 
 if __name__ == "__main__":
 
@@ -25,22 +25,32 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument("-l", "--length", help="Max length of TIR (Optional)", default=5000)
     parser.add_argument("-t", "--processor", help="Number of processors allowed (Optional)", default=os.cpu_count())
-    parser.add_argument('-m', '--mode', help=("Execution mode of GRF, one of the following: \"boost\", \"mix\""
-                                              " or \"native\" (Optional)"), default="smart")
-    parser.add_argument("-w", "--working_dir", help="Ou(Optional)", default=None)
+    # TODO add pyboost, pystrict, gnu three parallel execution mode, also add more detailed help info
+    parser.add_argument('-m', '--mode', help=("Parallel execution mode, one of the following: \"pyboost\", "
+                                              "\"pystrict\" and \"gnup\" (Optional)"), default="pyboost")
+    parser.add_argument("-w", "--working_dir", help="The path to the working directory (Optional). "
+                                                    "An isolated sandbox directory for storing all the temporary files "
+                                                    "will be created in the working directory. This sandbox directory "
+                                                    "will only persist during the program execution. DO NOT TOUCH "
+                                                    "THE SANDBOX DIRECTORY IF IT IS NOT FOR DEBUGGING!", default=None)
     parser.add_argument("-o", "--output_dir", help="Output directory (Optional)", default=None)
-    parser.add_argument("-c", "--checkpoint", help="Ou (Optional)", nargs='?', const="auto", default=None)
-    parser.add_argument("-v", "--verbose", help="Verbose mode, will show interactive progress bar (Optional)",
+    parser.add_argument("-c", "--checkpoint_dir", help="The path to the checkpoint directory (Optional). "
+                                                       "If not specified, the program will automatically search for it "
+                                                       "in the genome file directory and the output directory.",
+                        nargs='?', const="auto", default=None)
+    parser.add_argument("-v", "--verbose", help="Verbose mode (Optional). "
+                                                "Will show interactive progress bar and more execution details.",
                         action="store_true")
-    parser.add_argument("-d", "--debug", help="Ou (Optional)", action="store_true")
-    # parser.add_argument('-c', '--checkpoint', help="Ou (Optional)", action="store_true")
+    parser.add_argument("-d", "--debug", help="Debug mode (Optional). If activated, data for all completed steps "
+                                              "will be stored in the checkpoint file. Meanwhile, the temporary files "
+                                              "in the working directory will also be kept.", action="store_true")
     parser.add_argument("--grf_path", help="Path to GRF program (Optional)",
                         default=os.path.dirname(shutil.which("grf-main")))
     parser.add_argument("--gt_path", help="Path to genometools program (Optional)",
                         default=os.path.dirname(shutil.which("gt")))
-    parser.add_argument("-a", "--additional_args", help="Ou (Optional)", default="")
+    parser.add_argument("-a", "--additional_args", help="Additional arguments (Optional). "
+                                                        "See documentation for more details.", default="")
     # see prog_const for what additional args are acceptable
-    # TODO write help information
 
     parsed_args = parser.parse_args()
 
@@ -56,7 +66,7 @@ if __name__ == "__main__":
     output_dir = parsed_args.output_dir
     if output_dir is None:
         output_dir = os.path.dirname(genome_file)
-    checkpoint_input = parsed_args.checkpoint
+    checkpoint_input = parsed_args.checkpoint_dir
 
     flag_verbose = parsed_args.verbose
     flag_debug = parsed_args.debug
@@ -65,7 +75,7 @@ if __name__ == "__main__":
     gt_path = parsed_args.gt_path.replace('"', "")
     additional_args = process_additional_args(parsed_args.additional_args.split(" "))
     if len(additional_args) != 0:
-        print(f"INFO: Additional args: {additional_args} accepted.")
+        print(f"INFO: Additional args: {additional_args} captured.")
 
     # Transforming the possible relative path into absolute path
     genome_file = os.path.abspath(genome_file)

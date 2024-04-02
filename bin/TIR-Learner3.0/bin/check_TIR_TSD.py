@@ -205,14 +205,15 @@ def execute(TIRLearner_instance, module: str):
 
     print("  Step 1/6: Checking TIR")
     df["TIR_len"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(check_TIR, axis=1)
+    df.to_csv("test1")
     print("  Step 2/6: Checking TSD")
     df["TSD_len"] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(check_TSD, axis=1)
+    df.to_csv("test2")
     df = df.dropna(ignore_index=True)
     df = df.astype({"TIR_len": int, "TSD_len": int})
 
     if df.shape[0] == 0:
-        return None
-    # TODO possible throw SystemExit
+        return df
 
     print("  Step 3/6: Retrieving TIR")
     df[["TIR1", "TIR2"]] = df.swifter.progress_bar(TIRLearner_instance.flag_verbose).apply(get_TIR, axis=1)

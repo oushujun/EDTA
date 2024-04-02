@@ -36,12 +36,12 @@ def split_sequence_evenly(seq_record, split_seq_len, overlap_seq_len):
         segment_end = min(segment_start + split_seq_len, seq_len)
         segment_seq = seq_record.seq[segment_start:segment_end]
         part_id = f"{seq_record.id}_split_{i + 1}of{total_parts}"
-        records.append(SeqRecord(segment_seq, id=part_id))
+        records.append(SeqRecord(segment_seq, id=part_id, description=""))
         if overlap_seg_half_len > 0 and segment_end != seq_len:
             overlap_seg = seq_record.seq[segment_end - overlap_seg_half_len:
                                          min(segment_end + overlap_seg_half_len, seq_len)]
             overlap_id = f"{seq_record.id}_split_{i + 1}.5of{total_parts}"
-            records.append(SeqRecord(overlap_seg, id=overlap_id))
+            records.append(SeqRecord(overlap_seg, id=overlap_id, description=""))
     return records
 
 
@@ -71,9 +71,9 @@ def split_sequence_evenly(seq_record, split_seq_len, overlap_seq_len):
 
 def save_fasta_file(seq_record):
     fasta_file_name = f"{seq_record.id}.fasta"
-    TIRvish_working_dir_name = f"{fasta_file_name}_TIRvish"
-    os.makedirs(TIRvish_working_dir_name, exist_ok=True)
-    fasta_file_path = os.path.join(TIRvish_working_dir_name, fasta_file_name)
+    working_dir_name = f"{fasta_file_name}_{splited_fasta_tag}"
+    os.makedirs(working_dir_name, exist_ok=True)
+    fasta_file_path = os.path.join(working_dir_name, fasta_file_name)
     SeqIO.write(seq_record, fasta_file_path, "fasta")
     return fasta_file_path
 
@@ -99,6 +99,21 @@ def process_fasta(genome_file, split_seq_len, overlap_seq_len):
     return split_fasta_files_path_list
 
 
+def retrieve_split_sequence_offset(segment_position, split_seq_len, overlap_seq_len):
+    offset = 0
+    if split_seq_len == 0:
+        raise ValueError("When split happens, split_seq_len cannot be zero.")
+    try:
+        # Normal segment, segment_position is like: <x>of<y>, where x and y are integers
+        segment_index = int(segment_position.split("of")[0])
+        offset = (segment_index - 1) * split_seq_len
+    except ValueError:
+        # Overlap segment, segment_position is like: <x>.5of<y>, where x and y are integers
+        segment_index = int(segment_position.split("of")[0][:-2])  # remove the .5
+        offset = segment_index * split_seq_len - overlap_seq_len // 2
+    return offset
+
+
 def TIRvish(genome_file, genome_name, TIR_length, gt_path):
     # print(os.listdir())  # TODO only for debug
     gt_bin_path = os.path.join(gt_path, "gt")
@@ -112,7 +127,7 @@ def TIRvish(genome_file, genome_name, TIR_length, gt_path):
                   f"-mintirdist 10 -maxtirdist {str(TIR_length)} -similar 80 -mintsd 2 -maxtsd 11 "
                   f"-vic 13 -seqids \"yes\" > {TIRvish_result_gff3_file_name}")
     subprocess.Popen(gt_tirvish, shell=True).wait()
-    # subprocess.Popen(["find", ".", "-name", f"{gt_index_file_name}*", "-delete"])
+    subprocess.Popen(["find", ".", "-name", f"{gt_index_file_name}*", "-delete"])
     return TIRvish_result_gff3_file_name
 
 
@@ -125,7 +140,7 @@ def TIRvish_mp(genome_file_path, genome_name, TIR_length, gt_path):
     return os.path.join(TIRvish_working_dir, TIRvish_result_gff3_file_name)
 
 
-def get_TIRvish_result_df(TIRvish_result_gff3_file_path, split_seq_len=0, overlap_seq_len=0):
+def get_TIRvish_result_df(TIRvish_result_gff3_file_path, flag_debug, split_seq_len=0, overlap_seq_len=0):
     df_data_dict = {"seqid": [], "start": [], "end": [], "TIR1_start": [], "TIR1_end": [], "TIR2_start": [],
                     "TIR2_end": [], "id": []}
     df_type = {"start": int, "end": int, "TIR1_start": int, "TIR1_end": int, "TIR2_start": int, "TIR2_end": int}
@@ -149,21 +164,13 @@ def get_TIRvish_result_df(TIRvish_result_gff3_file_path, split_seq_len=0, overla
                 offset = 0
                 # Offset for segment of sequence from splitting
                 if "_split_" in seqid:
-                    if split_seq_len == 0:
-                        raise ValueError("When split happens, split_seq_len cannot be zero. "
-                                         "You might have forgotten to pass the value of split_seq_len.")
                     # seqid = <original_seqid>_split_<segment_position>
                     segment_position = seqid.split("_split_")[1]
                     seqid = seqid.split("_split_")[0]  # reassign original_seqid to seqid
-                    try:
-                        # Normal segment, segment_position is like: <x>of<y>, where x and y are integers
-                        segment_index = int(segment_position.split("of")[0])
-                        offset = (segment_index - 1) * split_seq_len
-                    except ValueError:
-                        # Overlap segment, segment_position is like: <x>.5of<y>, where x and y are integers
-                        segment_index = int(segment_position.split("of")[0][:-2])  # remove the .5
-                        offset = segment_index * split_seq_len - overlap_seq_len // 2
+                    offset = retrieve_split_sequence_offset(segment_position, split_seq_len, overlap_seq_len)
 
+                # -1 at start coordinates are internal adjustments for get_fasta_sequence of TIR-Learner
+                # Actual start coordinates are without the -1 adjustments, i.e. start + offset
                 df_data_dict["seqid"].append(seqid)
                 df_data_dict["start"].append(start - 1 + offset)
                 df_data_dict["end"].append(end + offset)
@@ -176,33 +183,34 @@ def get_TIRvish_result_df(TIRvish_result_gff3_file_path, split_seq_len=0, overla
                     f"tsd1_{TSD1[0] + offset}_{TSD1[1] + offset}_tsd2_{TSD2[0] + offset}_{TSD2[1] + offset}_"
                     f"tir1_{TIR1[0] + offset}_{TIR1[1] + offset}_tir2_{TIR2[0] + offset}_{TIR2[1] + offset}")
 
-    subprocess.Popen(["unlink", TIRvish_result_gff3_file_path])
+    if not flag_debug:
+        subprocess.Popen(["unlink", TIRvish_result_gff3_file_path])
     return pd.DataFrame(df_data_dict).astype(df_type)
 
 
-def run_TIRvish_native(genome_file, genome_name, TIR_length, gt_path):
+def run_TIRvish_native(genome_file, genome_name, TIR_length, flag_debug, gt_path):
     print("  Step 1/2: Executing TIRvish in native mode")
     TIRvish_result_gff3_file_name = TIRvish(genome_file, genome_name, TIR_length, gt_path)
     print("  Step 2/2: Getting TIRvish result")
-    return get_TIRvish_result_df(TIRvish_result_gff3_file_name)
+    return get_TIRvish_result_df(TIRvish_result_gff3_file_name, flag_debug)
 
 
-def run_TIRvish_boost(genome_file, genome_name, cpu_cores, TIR_length, gt_path):
-    os.makedirs("TIRvish_mp", exist_ok=True)
-    os.chdir("./TIRvish_mp")
+def run_TIRvish_py_para(genome_file, genome_name, TIR_length, cpu_cores, flag_debug, gt_path, fasta_files_path_list):
+    os.makedirs(f"{splited_fasta_tag}_mp", exist_ok=True)
+    os.chdir(f"./{splited_fasta_tag}_mp")
 
-    print("  Step 1/3: Processing FASTA files for TIRvish")
-    fasta_files_path_list = process_fasta(genome_file, TIRvish_split_seq_len, TIRvish_overlap_seq_len)
+    print("  Step 1/3: Processing FASTA files")
+    fasta_files_path_list.extend(process_fasta(genome_file, TIRvish_split_seq_len, TIRvish_overlap_seq_len))
 
-    print("  Step 2/3: Executing TIRvish in boost mode")
+    print("  Step 2/3: Executing TIRvish with python multiprocess")
     mp_args_list = [(file_path, genome_name, TIR_length, gt_path) for file_path in fasta_files_path_list]
     with mp.Pool(cpu_cores) as pool:
         TIRvish_result_gff3_file_path_list = pool.starmap(TIRvish_mp, mp_args_list)
 
     print("  Step 3/3: Getting TIRvish result")
-    mp_args_list = [(file_path, TIRvish_split_seq_len, TIRvish_overlap_seq_len) for file_path in
+    mp_args_list = [(file_path, flag_debug, TIRvish_split_seq_len, TIRvish_overlap_seq_len) for file_path in
                     TIRvish_result_gff3_file_path_list]
-    with mp.Pool(cpu_cores) as pool:
+    with mp.Pool(cpu_cores * thread_core_ratio) as pool:
         TIRvish_result_df_list = pool.starmap(get_TIRvish_result_df, mp_args_list)
 
     os.chdir("../")
@@ -212,12 +220,22 @@ def run_TIRvish_boost(genome_file, genome_name, cpu_cores, TIR_length, gt_path):
 def execute(TIRLearner_instance):
     genome_file = TIRLearner_instance.genome_file_path
     genome_name = TIRLearner_instance.genome_name
-    cpu_cores = TIRLearner_instance.cpu_cores
     TIR_length = TIRLearner_instance.TIR_length
+    cpu_cores = TIRLearner_instance.cpu_cores
+    para_mode = TIRLearner_instance.para_mode
+    # TODO add GNU Parallel support
     flag_verbose = TIRLearner_instance.flag_verbose
+    flag_debug = TIRLearner_instance.flag_debug
     gt_path = TIRLearner_instance.gt_path
+    additional_args = TIRLearner_instance.additional_args
+    fasta_files_path_list = TIRLearner_instance.split_fasta_files_path_list
 
-    # df = run_TIRvish_native(genome_file, genome_name, TIR_length, gt_path)
-    df = run_TIRvish_boost(genome_file, genome_name, cpu_cores, TIR_length, gt_path)
+    if NO_PARALLEL in additional_args:
+        df = run_TIRvish_native(genome_file, genome_name, TIR_length, flag_debug, gt_path)
+    elif para_mode == "gnup":
+        raise NotImplementedError()
+    else:
+        df = run_TIRvish_py_para(genome_file, genome_name, TIR_length, cpu_cores, flag_debug, gt_path,
+                                 fasta_files_path_list)
 
     return get_fasta_pieces_SeqIO(genome_file, df, cpu_cores, flag_verbose)
