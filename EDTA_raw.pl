@@ -157,7 +157,7 @@ die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FIND
 die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
 die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
-die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
+die "The script rename_LTR_skim.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
