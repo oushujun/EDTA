@@ -141,6 +141,8 @@ my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $format_TElib = "$script_path/util/format_TElib.pl";
+my $format_intact_gff3 = "$script_path/util/format_intact_gff3.pl";
+my $add_id = "$script_path/util/add_id.pl";
 my $div_table = "$script_path/util/div_table2.pl";
 my $div_plot = "$script_path/util/div_plot2.R";
 my $density_table = "$script_path/util/density_table.py";
@@ -265,6 +267,8 @@ die "The script split_overlap.pl is not found in $split_overlap!\n" unless -s $s
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
+die "The script format_intact_gff3.pl is not found in $format_intact_gff3!\n" unless -s $format_intact_gff3;
+die "The script add_id.pl is not found in $add_id!\n" unless -s $add_id;
 die "The script div_table2.pl is not found in $div_table!\n" unless -s $div_table;
 die "The script div_plot2.R is not found in $div_plot!\n" unless -s $div_plot;
 die "The script density_table.py is not found in $density_table!\n" unless -s $density_table;
@@ -629,6 +633,7 @@ die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The Re
 # remove inconsistently classified intact TEs and generate the final intact TEs
 `perl $output_by_list 1 $genome.EDTA.intact.fa.cln2.rename 1 $genome.EDTA.intact.fa.cln2.false.list -ex -FA > $genome.EDTA.intact.fa`;
 
+
 ## generate clean intact gff3
 my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.ensembl.org/info/website/upload/gff3.html
 ##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the sequence_ontology in Column 9 uses the closest parent SO.
@@ -643,17 +648,27 @@ my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.
 ##      motif/TSD/TIR: structural features of structurally annotated LTR and TIR elements.
 ##For more details about this file, please refer to the EDTA wiki: https://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A
 ##seqid source sequence_ontology start end score strand phase attributes";
+
 # update the family names in the intact.raw.gff3 file
 `perl $rename_by_list $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.fa.cln2.rename.list 1 > $genome.EDTA.intact.raw.gff3.rename`;
 `sed 's/.*Name=//; s/;Classifica.*//' $genome.EDTA.intact.raw.gff3.rename | sort -u > $genome.EDTA.intact.raw.gff3.rename.famlist`;
+
 # get a dirty list of intact.gff
 `grep \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.rename.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
+
 # first attempt purging the gff3
 `perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > $genome.EDTA.intact.gff3`;
-# remake the remove list an purge again
+
+# remake the remove list and purge again
 `perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\\t\$id\nName\\t\$id" if defined \$id' $genome.EDTA.intact.raw.gff3.rename.removed >> $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
 `echo "##gff-version 3\n##date $date\n##This file contains repeats annotated by EDTA $version based on structural features.\n$intact_gff_head" > $genome.EDTA.intact.gff3`;
 `perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist >> $genome.EDTA.intact.gff3`;
+
+# format intact gff3
+`perl $format_intact_gff3 -f $genome.EDTA.intact.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.intact.gff3`;
+
+# add TE_IDs to the intact.fa sequence IDs
+`perl $add_id -fa $genome.EDTA.intact.fa -gff $genome.EDTA.intact.gff3 > $genome.EDTA.intact.fa.renamed; mv $genome.EDTA.intact.fa.renamed $genome.EDTA.intact.fa`;
 
 # check results
 die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
@@ -745,6 +760,7 @@ if ($anno == 1){
 	`perl $bed2gff $genome.EDTA.homo.bed TE_homo > $genome.EDTA.homo.gff3`;
 	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
 	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\\n$gff_head\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
+	`perl $format_intact_gff3 -f $genome.EDTA.TEanno.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.gff3`;
 	`rm $genome.EDTA.TEanno.gff3.raw 2>/dev/null`;
 
 	# make non-overlapping annotation
@@ -752,6 +768,7 @@ if ($anno == 1){
 	`perl $split_overlap $genome.EDTA.TEanno.bed $genome.EDTA.TEanno.split.bed`;
 	`echo "##gff-version 3\n##date $date\n##This file contains all repeats annotated by EDTA $version in the split format (non-overlapping). Repeats can be broken into pieces by nested insertions.\n$gff_head" > $genome.EDTA.TEanno.split.gff3`;
 	`perl $bed2gff $genome.EDTA.TEanno.split.bed | grep -v '^#' >> $genome.EDTA.TEanno.split.gff3`;
+	`perl $format_intact_gff3 -f $genome.EDTA.TEanno.split.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.split.gff3`;
 	`perl $gff2RMout $genome.EDTA.TEanno.split.gff3 $genome.EDTA.TEanno.split.out`;
 
 	# make plots
@@ -825,8 +842,9 @@ if ($anno == 1){
 
 sub copy_file {
 	my ($file, $path) = ($_[0], $_[1]);
-	# Generate new name with current date and time
-	my $new_name = $file . "_" . strftime("%Y%m%d_%H%M%S", localtime);
+	# Generate new name with the last modified date and time
+	my $mod_time = (stat($file))[9];
+	my $new_name = $file . "_" . strftime("%Y%m%d_%H%M%S", localtime($mod_time));
 	
 	# resolve symlinks and existing files
 	if (-l "$path/$file") {
