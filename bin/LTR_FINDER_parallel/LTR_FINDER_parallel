@@ -82,7 +82,7 @@ if ($help) {
                  -message => "$usage\n" } );
 }
 
-$ltr_finder=`which ltr_finder 2>/dev/null` if $ltr_finder eq '';
+$ltr_finder=`command -v ltr_finder 2>/dev/null` if $ltr_finder eq '';
 $ltr_finder = "$script_path/bin/LTR_FINDER.x86_64-1.0.7/ltr_finder" if $ltr_finder eq ''; #use default ltr_finder if not ENV
 $ltr_finder=~s/ltr_finder\n?//;
 $ltr_finder="$ltr_finder/" if $ltr_finder ne '' and $ltr_finder !~ /\/$/;
