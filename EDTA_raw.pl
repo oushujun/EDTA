@@ -65,7 +65,6 @@ my $threads = 4;
 my $script_path = $FindBin::Bin;
 my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
 my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";
-my $TIR_Learner = "$script_path/bin/TIR-Learner3.0";
 my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $get_range = "$script_path/util/get_range.pl";
@@ -91,6 +90,8 @@ my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
 my $GRF = ''; #path to GRF
 my $annosine = ""; #path to the AnnoSINE program
+# my $TIR_Learner = "$script_path/bin/TIR-Learner3/";  #tianyulu
+my $TIR_Learner = ""; #path to TIR-Learner3 program  #tianyulu
 my $help = undef;
 
 # read parameters
@@ -155,7 +156,7 @@ print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\
 # check files and dependencies
 die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
 die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
-die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
+# die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
@@ -237,6 +238,26 @@ $grfp =~ s/\n$//;
 `${grfp}grf-main 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp\n" if $?==32256;
 
+# # TIR-Learner3  #TianyuLu
+# chomp ($TIR_Learner = `which TIR-Learner 2>/dev/null`) if $TIR_Learner eq '';
+# $TIR_Learner =~ s/\n$//;
+# my $tirp= dirname ($TIR_Learner);
+# $tirp =~ s/\n$//;
+# `${tirp}TIR-Learner 2>/dev/null`;
+# die "Error: TIR-Learner3 is not found in the TIR-Learner path: $tirp\n" if $?==32256;
+
+# TIR-Learner  #TianyuLu
+if ($TIR_Learner eq "") {
+	chomp ($TIR_Learner=`which TIR-Learner 2>/dev/null`);
+	$TIR_Learner =~ s/\s+$//;
+} else {
+	$TIR_Learner =~ s/\s+$//;
+	$TIR_Learner = dirname($TIR_Learner) unless -d $TIR_Learner;
+	$TIR_Learner = "$TIR_Learner/" if $TIR_Learner ne '' and $TIR_Learner !~ /\/$/;
+	$TIR_Learner = "python3 $TIR_Learner/TIR-Learner.py";
+}
+`$TIR_Learner 2>/dev/null`;
+die "Error: TIR-Learner is not found in the TIR-Learner path $TIR_Learner!\n" if $?==32256 || $?==2;
 
 # make a softlink to the genome
 my $genome_file = basename($genome);
@@ -569,7 +590,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\t\t\tWill use this for further analyses.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		`python3 $TIR_Learner/TIR-Learner3.0.py -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;
+		`$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;  #TianyuLu
 		}
 
 	# clean raw predictions with flanking alignment
