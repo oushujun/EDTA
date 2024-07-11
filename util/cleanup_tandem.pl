@@ -68,7 +68,7 @@ foreach (@ARGV){
 	}
 
 # check TRF
-$trf_path=`which trf 2>/dev/null` if $trf_path eq '';
+$trf_path=`command -v trf 2>/dev/null` if $trf_path eq '';
 $trf_path=~s/\n$//;
 `$trf_path 2>/dev/null`;
 die "Error: No Tandem Repeat Finder is working on the current system.
