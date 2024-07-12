@@ -37,7 +37,7 @@ die $usage unless -s $genome;
 die $usage unless -s $RMout;
 
 #get blast path
-$blast=`which blastn 2>/dev/null` if $blast eq '';
+$blast=`command -v blastn 2>/dev/null` if $blast eq '';
 $blast=~s/blastn\n//;
 $blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "blastn is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastn";

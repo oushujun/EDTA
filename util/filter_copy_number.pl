@@ -14,7 +14,7 @@ my $set_cdhit="-c 0.8 -G 0.8 -s 0.8 -aL 0.8 -aS 0.8 -M 0"; #set parameters for c
 my $cdhitpath='';
 
 #check cd-hit
-$cdhitpath=`which cd-hit-est 2>/dev/null` if $cdhitpath eq '';
+$cdhitpath=`command -v cd-hit-est 2>/dev/null` if $cdhitpath eq '';
 $cdhitpath=~s/cd-hit-est\n//;
 die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" unless -X "${cdhitpath}cd-hit-est";
 die "\nThe fasta file is not found!\n$usage" unless -s $seq;

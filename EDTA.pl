@@ -271,26 +271,26 @@ die "The script density_table.py is not found in $density_table!\n" unless -s $d
 die "The script density_plot.R is not found in $density_plot!\n" unless -s $density_plot;
 
 # GenomeTools
-chomp ($genometools=`which gt 2>/dev/null`) if $genometools eq '';
+chomp ($genometools=`command -v gt 2>/dev/null`) if $genometools eq '';
 $genometools =~ s/\s+$//;
 $genometools = dirname($genometools) unless -d $genometools;
 $genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
 die "Error: gt is not found in the genometools path $genometools!\n" unless -X "${genometools}gt";
 # AnnoSINE
-chomp ($annosine=`which AnnoSINE_v2 2>/dev/null`) if $annosine eq '';
+chomp ($annosine=`command -v AnnoSINE_v2 2>/dev/null`) if $annosine eq '';
 $annosine =~ s/\s+$//;
 $annosine = dirname($annosine) unless -d $annosine;
 $annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
 die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2");
 # LTR_retriever
-chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
+chomp ($LTR_retriever=`command -v LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
 $LTR_retriever = dirname($LTR_retriever) unless -d $LTR_retriever;
 $LTR_retriever="$LTR_retriever/" if $LTR_retriever ne '' and $LTR_retriever !~ /\/$/;
 die "Error: LTR_retriever is not found in the LTR_retriever path $LTR_retriever!\n" unless -X "${LTR_retriever}LTR_retriever";
 # RepeatMasker
 my $rand=int(rand(1000000));
-chomp ($repeatmasker=`which RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
+chomp ($repeatmasker=`command -v RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
 $repeatmasker =~ s/\s+$//;
 $repeatmasker = dirname($repeatmasker) unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
@@ -300,13 +300,13 @@ my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -nolow dummy060
 die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand* 2>/dev/null`;
 # RepeatModeler
-chomp ($repeatmodeler=`which RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
+chomp ($repeatmodeler=`command -v RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
 $repeatmodeler =~ s/\s+$//;
 $repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
 $repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
 die "Error: RepeatModeler is not found in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
 # makeblastdb, blastn, blastx
-chomp ($blastplus=`which makeblastdb 2>/dev/null`) if $blastplus eq '';
+chomp ($blastplus=`command -v makeblastdb 2>/dev/null`) if $blastplus eq '';
 $blastplus =~ s/\s+$//;
 $blastplus = dirname($blastplus) unless -d $blastplus;
 $blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
@@ -314,24 +314,24 @@ die "Error: makeblastdb is not found in the BLAST+ path $blastplus!\n" unless -X
 die "Error: blastn is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
 die "Error: blastx is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
 # TEsorter
-chomp ($TEsorter=`which TEsorter 2>/dev/null`) if $TEsorter eq '';
+chomp ($TEsorter=`command -v TEsorter 2>/dev/null`) if $TEsorter eq '';
 $TEsorter =~ s/\s+$//;
 $TEsorter = dirname($TEsorter) unless -d $TEsorter;
 $TEsorter="$TEsorter/" if $TEsorter ne '' and $TEsorter !~ /\/$/;
 die "Error: TEsorter is not found in the TEsorter path $TEsorter!\n" unless -X "${TEsorter}TEsorter";
 # mdust
-chomp ($mdust=`which mdust 2>/dev/null`) if $mdust eq '';
+chomp ($mdust=`command -v mdust 2>/dev/null`) if $mdust eq '';
 $mdust =~ s/\s+$//;
 $mdust = dirname($mdust) unless -d $mdust;
 $mdust = "$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
 # trf
-chomp ($trf=`which trf 2>/dev/null`) if $trf eq '';
+chomp ($trf=`command -v trf 2>/dev/null`) if $trf eq '';
 $trf=~s/\n$//;
 `$trf 2>/dev/null`;
 die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32256;
 # GRF
-chomp ($GRF = `which grf-main 2>/dev/null`) if $GRF eq '';
+chomp ($GRF = `command -v grf-main 2>/dev/null`) if $GRF eq '';
 $GRF =~ s/\n$//;
 `$GRF 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF\n" if $?==32256;
