@@ -30,7 +30,12 @@ This package is developed for automated whole-genome *de-novo* TE annotation and
 
 The EDTA package was designed to filter out false discoveries in raw TE candidates and generate a high-quality non-redundant TE library for whole-genome TE annotations. Selection of initial search programs were based on benckmarkings on the annotation performance using a manually curated TE library in the rice genome.
 
-<img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true">
+[//]: # (<img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true">)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" width="480" srcset="./development/EDTA workflow_black_for light mode.png">
+  <img width="480" alt="The EDTA workflow" src="./development/EDTA workflow_white_for dark mode.png">
+</picture>
 
 To benchmark the annotation quality of a new library/method, I have provided the TE annotation with the curated rice TE library (v7.0.0) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
 
