@@ -104,8 +104,11 @@ while (<RM>){
 
 	# combine LTR region and internal reigon into one family
 	# note: if $qso=copia and $sso=other LTRs (gypsy or unknown), or $qso=gyp and $sso=others, or $qso=unk and $sso=others, they are all counted in coverage and thus the final $qso may not equal to $sso. The final fix will be improving the library and have these discripencies blocked.
-	$subject =~ s/(_I_nonauto|_I_auto|-I_nonauto|-I_nona|-I_auto|_LTR_nonauto|_LTR_auto|\-LTR|\-I|_I|_INT|_LTR|I|LTR)$//i;
+	$subject =~ s/(_I_nonauto|_I_auto|-I_nonauto|-I_nona|-I_auto|_LTR_nonauto|_LTR_auto|\-LTR|\-I|\-int|_I|_INT|_LTR|I|LTR)$//i;
 
+	# if query is not Helitron but subject is Helitron, skip this line because helitron annotation is overall low-confidence. subject-Helitron could be false annotation
+	next if $query !~ /Helitron/i and $sso =~ /Helitron/i;
+	
 	# store query-sso-subject matches. SSO is the bigger category including many subjects. For each query-subject match, here stores the matched length. 
 	if (defined $lib{$query}{$sso}{$subject}){
 		$lib{$query}{$sso}{$subject} += $len;
@@ -167,6 +170,7 @@ foreach my $id (@lib){
 	if ($max_sso ne "NA" and $total_coverage >= $min_cov and $top_coverage >= 30){
 		# new classification match the old classification, thus rename
 		$id = $max_subject;
+		$id =~ s/(_INT|-int|_LTR|-ltr)//gi;
 		if (($qso eq $max_sso) or 
 		    ($qso =~ /LTR_retrotransposon/ && $max_sso =~ /LTR_retrotransposon/) or
 		    ($qso =~ /TIR_transposon/ && $max_sso =~ /TIR_transposon/) or
