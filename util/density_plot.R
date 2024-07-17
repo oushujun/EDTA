@@ -1,4 +1,5 @@
-# Function to print help and usage instructions.
+# Chris Benson
+# 2024-03-25
 print_help <- function() {
   cat("
 Usage: Rscript density_plotter.R <filename> <chrom_string> [merge] <threshold> [no_size_cutoff]
@@ -9,7 +10,7 @@ Usage: Rscript density_plotter.R <filename> <chrom_string> [merge] <threshold> [
 <threshold>     : Optional. Exclusionary threshold for plotting repeat types. Types that do not exceed this density percentage at any position will be excluded [00-100]. ie, '02' would exclude types that do not exceed 2% density in any window.
 [no_size_cutoff]: Optional. Boolean flag. If 'no_size_cutoff' is specified, all chromosomes and scaffolds will be plotted. 
 
-This script plots the distribution of EDTA annotations across chromosomes.
+This script plots the distribution of EDTA annotations across chromosomes. Sliding windows are 1Mb in length, with a step size of 500kb
 
 Dependencies: ggplot2, dplyr for plotting. R and its packages can be installed with conda.
 For installation:
@@ -80,10 +81,28 @@ excluded_types <- c('target_site_duplication', 'repeat_region', 'long_terminal_r
 repeats <- subset(repeats, !type %in% excluded_types)
 
 # Replace 'Copia' with 'Ty1' and 'Gypsy' with 'Ty3'.
+# Also mutate other nomenclatures. 
+# Others may need to be added based on the input.
 library(dplyr)
 repeats <- repeats %>%
-    mutate(type = gsub("Copia_LTR_retrotransposon", "Ty1_LTR_retrotransposon", type)) %>%
-    mutate(type = gsub("Gypsy_LTR_retrotransposon", "Ty3_LTR_retrotransposon", type))
+    mutate(type = gsub("Copia_LTR_retrotransposon", "LTR/Ty1", type)) %>%
+    mutate(type = gsub("Gypsy_LTR_retrotransposon", "LTR/Ty3", type)) %>%
+    mutate(type = gsub("knob", "Knob", type)) %>%
+    mutate(type = gsub("LINE_element", "LINE/unknown", type)) %>%
+    mutate(type = gsub("SINE_element", "SINE/unknown", type)) %>%
+    mutate(type = gsub("rDNA_intergenic_spacer_element", "rDNA intergenic spacer", type)) %>%
+    mutate(type = gsub("L1_LINE_retrotransposon", "LINE/L1", type)) %>%
+    mutate(type = gsub("satellite_DNA", "Satellite", type)) %>%
+    mutate(type = gsub("PIF_Harbinger_TIR_transposon", "TIR/PIF_Harbinger", type)) %>%
+    mutate(type = gsub("helitron", "Helitron", type)) %>%
+    mutate(type = gsub("RTE_LINE_retrotransposon", "LINE/RTE", type)) %>%
+    mutate(type = gsub("LTR_retrotransposon", "LTR/unknown", type)) %>%
+    mutate(type = gsub("hAT_TIR_transposon", "TIR/hAT", type)) %>%
+    mutate(type = gsub("CACTA_TIR_transposon", "TIR/CACTA", type)) %>%
+    mutate(type = gsub("Tc1_Mariner_TIR_transposon", "TIR/Tc1_Mariner", type)) %>%
+    mutate(type = gsub("subtelomere", "Subtelomere", type)) %>%
+    mutate(type = gsub("non_LTR_retrotransposon", "nonLTR/unknown", type)) %>%
+    mutate(type = gsub("Mutator_TIR_transposon", "TIR/Mutator", type))
 
 # Reorder the type factor to move 'Ty1_LTR_retrotransposon' higher up.
 # This is so that Ty1 and Ty3 dont end up plotted as similar colors.
@@ -104,6 +123,18 @@ if (!is.null(threshold)) {
   repeats <- subset(repeats, type %in% included_types)
 }
 
+# Calculate median density for each type and sort types by this median density in the legend.
+median_density <- aggregate(density ~ type, data = repeats, median)
+ordered_types <- median_density[order(-median_density$density), "type"]
+
+# If there are more than 14 types, keep only the top 14.
+if (length(ordered_types) > 14) {
+  ordered_types <- ordered_types[1:14]
+  repeats <- subset(repeats, type %in% ordered_types)
+}
+
+repeats$type <- factor(repeats$type, levels = ordered_types)
+
 # Convert chromosome names to a factor with the correct order.
 chrom_levels <- unique(repeats$chrom)
 chrom_levels_sorted <- chrom_levels[order(as.numeric(gsub("[^0-9]", "", chrom_levels)))]
@@ -114,7 +145,7 @@ library(ggplot2)
 
 # Define a shuffled color palette using hcl.colors with the 'Dark 3' palette.
 num_categories <- length(unique(repeats$type))
-set.seed(46) # Change the seed for a new shuffle of colors. 
+set.seed(44) # Change the seed for a new shuffle of colors.
 color_palette <- sample(hcl.colors(num_categories, "Dark 3"))
 
 plot_border_theme <- theme(
@@ -125,9 +156,10 @@ plot_border_theme <- theme(
 )
 
 if (merge_plots) {
-
+  # Merged plot logic
   p <- ggplot(repeats, aes(x = coord / 1e6, y = density * 100, color = type)) + 
        geom_line() +
+       geom_point(size = 0, show.legend = TRUE) +  # Invisible points ensure a point entry in the legend, customized to squares via guide_legend.
        facet_wrap(~ chrom, scales = "free_x") + 
        labs(title = "Density of Repeat Types on Chromosomes (%)", 
             x = "Position on chromosome (Mb)", 
@@ -135,32 +167,32 @@ if (merge_plots) {
             color = "Type") + 
        theme_minimal() +
        plot_border_theme +
-       scale_color_manual(values = color_palette) +
+       scale_color_manual(values = color_palette, guide = guide_legend(override.aes = list(shape = 15, size = 6))) + # Thicker legend symbols.
        scale_x_continuous(expand = c(0, 0)) + # Tighten grey plot border for x-axis.
        scale_y_continuous(expand = expansion(mult = c(0.005, 0.01))) # Tighten grey plot border for y-axis.
 
-  # Save the plot to a PDF file.
+  # Save the plot to a PDF file
   pdf("chromosome_density_plots_merged.pdf", width = 16, height = 6)
   print(p)
   dev.off()
   
 } else {
-  
-  # Unmerged plot logic.
+  # Unmerged plot logic
   pdf("chromosome_density_plots.pdf", width = 12, height = 4)
   for (chr in unique(repeats$chrom)) {
     subset_df <- repeats[repeats$chrom == chr,]
     
     if (nrow(subset_df) > 1) {
       p <- ggplot(subset_df, aes(x = coord / 1e6, y = density * 100, group = interaction(chrom, type), color = type)) + 
-           geom_line() + 
+           geom_line() +
+           geom_point(size = 0, show.legend = TRUE) +  # Invisible points ensure a point entry in the legend, customized to squares via guide_legend.
            labs(title = paste("Density of Repeat Types on", chr, "(%)"), 
                 x = "Position on chromosome (Mb)", 
                 y = "Percent repeat type in window (%)", 
                 color = "Type") +
            theme_minimal() +
            plot_border_theme +
-           scale_color_manual(values = color_palette) +
+           scale_color_manual(values = color_palette, guide = guide_legend(override.aes = list(shape = 15, size = 6))) + # Thicker legend symbols.
            scale_x_continuous(expand = c(0, 0)) + # Tighten grey plot border for x-axis.
            scale_y_continuous(expand = expansion(mult = c(0.005, 0.01))) 
       print(p)
@@ -169,4 +201,3 @@ if (merge_plots) {
     }
   }
   dev.off()
-}
