@@ -47,8 +47,8 @@ while (<BED>){
 	if (exists $class{$TE_class}){
 		$so = $class{$TE_class}
 		} else {
-		print STDERR "\nWarning: $TE_class not found in the TE_SO database, will use the general term 'repeat_region\tSO:0000657' to replace it.\n";
-		$so = "repeat_region";
+		print STDERR "\nWarning: $TE_class not found in the TE_SO database, will use the generic term 'repeat_fragment\tSO:0001050' to replace it.\n";
+		$so = "repeat_fragment";
 		}
 	$extra = '' unless defined $extra;
 	$extra = '' if $extra eq 'NA' or $extra eq '.';

@@ -68,7 +68,7 @@ while (<RMout>){
 		print GFF "##sequence-region $chr 1 $chr_len\n";
 		}
 	$iden = 1 - $div/100;
-	my $info = "ID=TE_annot_$i;Name=$TE_ID#$TE_class;Classification=$TE_class;Sequence_ontology=$SO{$so};Identity=$iden;Method=homology";
+	my $info = "ID=TE_annot_$i;Name=$TE_ID#$TE_class;classification=$TE_class;sequence_ontology=$SO{$so};identity=$iden;method=homology";
 	print GFF "$chr\t$annotator\t$so\t$element_start\t$element_end\t$SW_score\t$strand\t.\t$info\n";
 	$i++; #annotation count
 	}

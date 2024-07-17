@@ -158,7 +158,7 @@ die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FIND
 die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
 # die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
-die "The script rename_LTR.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
+die "The script rename_LTR_skim.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
 die "The script call_seq_by_list.pl is not found in $call_seq!\n" unless -s $call_seq;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
@@ -301,7 +301,7 @@ my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
 if ($id_len > $id_len_max){
 	chomp ($date = `date`);
 	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
-	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
+	print "\tTrying to reformat seq IDs...\n\t\tAttempt 1...\n";
 	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.$rand.mod > $genome.$rand.temp`;
 	my $new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 	chomp ($date = `date`);
@@ -311,7 +311,7 @@ if ($id_len > $id_len_max){
 		`rm $genome.$rand.mod 2>/dev/null`;
 		print "$date\tSeq ID conversion successful!\n\n";
 		} else {
-		print "\t\t\t\tAttempt 2...\n";
+		print "\t\tAttempt 2...\n";
 		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.$rand.mod > $genome.$rand.temp`;
 		$new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 		if ($old_id == $new_id){
@@ -356,27 +356,27 @@ chdir "$genome.EDTA.raw/LTR";
 # Try to recover existing results
 chomp ($date = `date`);
 if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
-	print STDERR "$date\tExisting result file $genome.LTR.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.LTR.raw.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
 # run LTRharvest
 if ($overwrite eq 0 and -s "$genome.harvest.combine.scn"){
-	print STDERR "$date\tExisting raw result $genome.harvest.scn found!\n\t\t\t\tWill use this for further analyses.\n\n";
+	print STDERR "$date\tExisting raw result $genome.harvest.scn found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	`perl $LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300`;
 	}
 
 # run LTR_FINDER_parallel
 if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
-	print STDERR "$date\tExisting raw result $genome.finder.combine.scn found!\n\t\t\t\tWill use this for further analyses.\n\n";
+	print STDERR "$date\tExisting raw result $genome.finder.combine.scn found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	`perl $LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;
 	}
 
 # run LTR_retriever
 if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
-	print STDERR "$date\tExisting LTR_retriever result $genome.LTRlib.fa found!\n\t\t\t\tWill use this for further analyses.\n\n";
+	print STDERR "$date\tExisting LTR_retriever result $genome.LTRlib.fa found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 	`${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
@@ -444,7 +444,7 @@ chdir "$genome.EDTA.raw/SINE";
 # run AnnoSINE_v2
 my $status; # record status of AnnoSINE execution
 if (-s "Seed_SINE.fa"){
-	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
+	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
 	} else { 
 	$status = system("python3 ${annosine}AnnoSINE_v2 -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
 	}
@@ -452,7 +452,7 @@ if (-s "Seed_SINE.fa"){
 # filter and reclassify AnnoSINE candidates with TEsorter and make SINE library
 if (-s "Seed_SINE.fa"){
 	# annotate and remove non-SINE candidates
-	`awk '{print \$1}' Seed_SINE.fa > $genome.AnnoSINE.raw.fa`;
+	`awk '{gsub(/Unknown/, "unknown"); print \$1}' Seed_SINE.fa > $genome.AnnoSINE.raw.fa`;
 	`${TEsorter}TEsorter $genome.AnnoSINE.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
 	`touch $genome.AnnoSINE.raw.fa.rexdb.cls.tsv` unless -e "$genome.AnnoSINE.raw.fa.rexdb.cls.tsv";
 	`perl $cleanup_misclas $genome.AnnoSINE.raw.fa.rexdb.cls.tsv`;
@@ -461,11 +461,11 @@ if (-s "Seed_SINE.fa"){
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.AnnoSINE.raw.fa.cln > $genome.SINE.raw.fa`;
 	}
 elsif ($status == 0) {
-	print "\t\t\t\tAnnoSINE is finished without error, but the Seed_SINE.fa file is not produced.\n\n";
+	print "\t\tAnnoSINE is finished without error, but the Seed_SINE.fa file is not produced.\n\n";
        	`touch $genome.SINE.raw.fa`;
 	}
 else {
-	print "\t\t\t\tAnnoSINE exited with error, please test run AnnoSINE to make sure it's working.\n\n";
+	print "\t\tAnnoSINE exited with error, please test run AnnoSINE to make sure it's working.\n\n";
 	}
 
 # copy result files out
@@ -502,14 +502,14 @@ chdir "$genome.EDTA.raw/LINE";
 chomp ($date = `date`);
 if ($overwrite eq 0 and -s $RMlib){
 	if (-s "$genome-families.fa"){
-		print STDERR "$date\tExisting result file $genome-families.fa found!\n\t\t\t\tWill not use the provided RepeatModeler2 library since --overwrite 0.\n\t\t\t\tPlease specify --overwrite 1 if you want to use the provided --rmlib file.\n\n";
+		print STDERR "$date\tExisting result file $genome-families.fa found!\n\t\tWill not use the provided RepeatModeler2 library since --overwrite 0.\n\t\tPlease specify --overwrite 1 if you want to use the provided --rmlib file.\n\n";
 		} else {
 		`cp $RMlib "$genome-families.fa" 2>/dev/null`;
 		}
 	}
 
 if ($overwrite eq 0 and -s "$genome-families.fa"){
-	print STDERR "$date\tExisting result file $genome-families.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome-families.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	# run RepeatModeler2
 	print STDERR "$date\tIdentify LINE retrotransposon candidates from scratch.\n\n";
@@ -529,7 +529,7 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 # filter and reclassify RepeatModeler candidates with TEsorter and make LINE library
 if (-s "$genome-families.fa"){
 	# annotate and remove misclassified candidates
-	`awk '{print \$1}' $genome-families.fa > $genome.RM2.raw.fa` if -e "$genome-families.fa";
+	`awk '{gsub(/Unknown/, "unknown"); print \$1}' $genome-families.fa > $genome.RM2.raw.fa` if -e "$genome-families.fa";
 	`${TEsorter}TEsorter $genome.RM2.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
 	`perl $cleanup_misclas $genome.RM2.raw.fa.rexdb.cls.tsv`;
 	
@@ -542,7 +542,7 @@ if (-s "$genome-families.fa"){
 	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA > $genome.LINE.raw.fa`;
 	`grep -P 'LINE|SINE' $genome.RM2.raw.fa.cln2 | perl $output_by_list 1 $genome.RM2.raw.fa.cln2 1 - -FA -ex > $genome.RM2.fa`;
 	} else {
-	print "\t\t\t\tRepeatModeler is finished, but the $genome-families.fa file is not produced.\n\n";
+	print "\t\tRepeatModeler is finished, but the $genome-families.fa file is not produced.\n\n";
 	`touch $genome.RM2.raw.fa $genome.LINE.raw.fa $genome.RM2.fa`;
 	}
 
@@ -581,14 +581,14 @@ chdir "$genome.EDTA.raw/TIR";
 # Try to recover existing results
 chomp ($date = `date`);
 if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intact.fa")){
-	print STDERR "$date\tExisting result file $genome.TIR.intact.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.TIR.intact.raw.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify TIR candidates from scratch.\n\n";
 	print STDERR "Species: $species\n";
 
 	# run TIR-Learner
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
-		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\t\t\tWill use this for further analyses.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\tWill use this for further analyses.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
 		`$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;  #TianyuLu
 		}
@@ -618,7 +618,6 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	}
 
 # copy result files out
-`touch $genome.TIR.intact.raw.fa` unless -e "$genome.TIR.intact.raw.fa";
 `cp $genome.TIR.intact.bed ../$genome.TIR.intact.raw.bed` if -s "$genome.TIR.intact.bed"; # recover <EDTA2.2 results
 `cp $genome.TIR.intact.gff3 ../$genome.TIR.intact.raw.gff3` if -s "$genome.TIR.intact.gff3";
 `cp $genome.TIR.intact.fa ../$genome.TIR.intact.raw.fa` if -s "$genome.TIR.intact.fa";
@@ -653,7 +652,7 @@ chdir "$genome.EDTA.raw/Helitron";
 # Try to recover existing results
 chomp ($date = `date`);
 if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Helitron.intact.fa")){
-	print STDERR "$date\tExisting result file $genome.Helitron.intact.raw.fa found!\n\t\t\t\tWill keep this file without rerunning this module.\n\t\t\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	print STDERR "$date\tExisting result file $genome.Helitron.intact.raw.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
@@ -683,7 +682,6 @@ if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Heli
 	}
 
 # copy result files out
-`touch $genome.Helitron.intact.raw.fa` unless -e "$genome.Helitron.intact.raw.fa";
 `cp $genome.Helitron.intact.bed ../$genome.Helitron.intact.raw.bed` if -s "$genome.Helitron.intact.bed"; # recover <EDTA2.2 results
 `cp $genome.Helitron.intact.gff3 ../$genome.Helitron.intact.raw.gff3` if -s "$genome.Helitron.intact.gff3";
 `cp $genome.Helitron.intact.fa ../$genome.Helitron.intact.raw.fa` if -s "$genome.Helitron.intact.fa";

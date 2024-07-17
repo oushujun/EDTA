@@ -19,6 +19,8 @@ my $usage = "
 				-miniden	[int]	The minimum identity (%) to be considered a real match. Default: 60
 				-mindiff	[float]	The minimum fold difference in richness between TE1 and TE2 for a 
 							sequence to be considered as real to TE1.
+				-reprocess	[0|1]	Skip (1) RepeatMasking and use existing *stat file to regenerate the 
+							TE1-TE2.fa file. Useful to test different -mindiff settings. default 0.
 				-repeatmasker	[path]	The directory containing RepeatMasker (default: read from ENV)
 				-blastplus	[path]	The directory containing Blastn (default: read from ENV)
 				-threads	[int]	Number of theads to run this script
@@ -34,11 +36,13 @@ my $lower = 1; #use lower case (1, default) or Ns (0) to mask qualified contamin
 my $minlen = 50; #shortest length of match to be considered. I choose half the size of the shortest element (100bp) here.
 my $miniden = 60; #minimum identity (%) to be considered a real match
 my $mindiff = "0.4"; #minimum richness difference between $TE1 and $TE2 for a sequence to be considered as real to $TE1
+my $reprocess = 0; #skip (1) RepeatMasking and use existing *stat file to regenerate the TE1-TE2.fa file. default 0.
 my $script_path = $FindBin::Bin;
 my $call_seq = "$script_path/call_seq_by_list.pl";
 my $repeatmasker = "";
 my $blastplus = "";
 my $threads = 36;
+my $queue = Thread::Queue->new();
 
 # read parameters
 my $k=0;
@@ -49,6 +53,7 @@ foreach (@ARGV){
 	$minlen = $ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1] !~ /^-/;
 	$miniden = $ARGV[$k+1] if /^-miniden/i and $ARGV[$k+1] !~ /^-/;
 	$mindiff = $ARGV[$k+1] if /^-mindiff/i and $ARGV[$k+1] !~ /^-/;
+	$reprocess = $ARGV[$k+1] if /^-reprocess/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus = $ARGV[$k+1] if /^-blastplus/i and $ARGV[$k+1] !~ /^-/;
 	$threads = $ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
@@ -68,7 +73,6 @@ my ($TE1_len, $TE2_len) = (0, 0);
 open TE1, "<$TE1" or die $!;
 open TE2, "<$TE2" or die $!;
 my %TE1;
-my %TE1_cln :shared;
 $/ = "\n>";
 while (<TE1>){
 	chomp;
@@ -82,7 +86,6 @@ while (<TE1>){
 	$TE1_len += $len;
 	$TE1{$id} = $seq;
 	}
-%TE1_cln = %TE1;
 
 # count $TE2 total length
 while (<TE2>){
@@ -97,6 +100,9 @@ close TE1;
 close TE2;
 $/ = "\n";
 
+
+if ($reprocess == 0){
+
 # Repeatmask TE1 with TE2; make blast db for $TE1 and $TE2
 my $div = 100 - $miniden;
 my $err = '';
@@ -105,7 +111,7 @@ $err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -nolow -d
 `${blastplus}makeblastdb -in $TE2 -out $TE2 -dbtype nucl 2> /dev/null`;
 print STDERR "$err\n" if $err ne '';
 
-# get masked regions
+# get masked regions of TE1
 open RM, "<$TE1.out" or die $!;
 my %RM;
 while (<RM>){
@@ -118,18 +124,16 @@ while (<RM>){
 	($from, $to) = ($to, $from) if $to < $from;
 	next if $len < $minlen;
 	$RM{$id} .= "$from-$to ";
-	delete $TE1_cln{$id};
 	}
 close RM;
 
-# output files
+###############
+# Identify fold difference between TE1 and TE2
 open STAT, ">$TE1-$TE2.stat" or die $!;
-open Seq, ">$TE1-$TE2.fa" or die $!;
 print STAT "TE1_id\tTE1_len\tTE2_len\tTE1_richness\tTE2_richness\tFold_diff\n";
 
-
 # multi-threading using queue, put candidate regions into queue for parallel computation
-my $queue = Thread::Queue->new();
+$queue = Thread::Queue->new();
 foreach my $id (keys %RM){
 	last unless defined $RM{$id};
 	$queue -> enqueue([$id, $RM{$id}]);
@@ -143,17 +147,36 @@ foreach (1..$threads){
 foreach (threads -> list()){
 	$_->join();
 	}
+close STAT;
+###############
+}
+
+
+# filter sequences based on min_diff
+open STAT, "<$TE1-$TE2.stat" or die $!;
+while (<STAT>){
+	next if /^TE1_id\s+/;
+	my ($info, $diff) = (split)[0,5];
+	my ($id, $from, $to, $seqlen) = ($1, $2, $3, $3-$2+1) if $info =~ /(.*):([0-9]+)\.\.([0-9]+)/;
+	my $ori_seq = $TE1{$id};
+	my $seq = substr $ori_seq, $from-1, $seqlen;
+
+	# convert contaminated TE1 sequences into lowercase
+	substr ($ori_seq, $from-1, $seqlen) = lc $seq if $diff < $mindiff;
+	$TE1{$id} = $ori_seq;
+	}
+
 
 # output unprocessed and clean sequence
-foreach my $id (sort {$a cmp $b} keys %TE1_cln){
-	print Seq ">$id\n$TE1_cln{$id}\n";
+open Seq, ">$TE1-$TE2.fa" or die $!;
+foreach my $id (sort {$a cmp $b} keys %TE1){
+	print Seq ">$id\n$TE1{$id}\n";
 	}
 close STAT;
 close Seq;
 
 # fixing the formatting error created by simutaniously writing the same file
 `perl -i -nle 's/>/\\n>/g unless /^>/; print \$_' $TE1-$TE2.fa`;
-
 
 
 # subrotine for the purifier
@@ -207,13 +230,7 @@ sub purifier(){
 			my $diff = 1000;
 			$diff = $seq_te1_percent/$seq_te2_percent if $seq_te2_percent > 0;
 			print STAT "$id:$from..$to\t$seq_te1_len\t$seq_te2_len\t$seq_te1_percent\t$seq_te2_percent\t$diff\n";
-
-			# judge $seq in TE1 based on its relative richness in $TE2
-			if ($diff < $mindiff){
-				substr ($ori_seq, $from-1, $seqlen) = lc $seq; # convert contaminated TE1 sequences into lowercase
-				}
 			}
-		$TE1_cln{$id} = $ori_seq;
 		}
 	}
 

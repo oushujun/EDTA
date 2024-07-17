@@ -29,7 +29,8 @@ while (my $line = <$gff3_file>) {
     my $strand = $fields[6];
     my $phase = $fields[7];
     my $attributes = $fields[8];
-    my ($family, $classification) = ($1, $2) if $attributes =~ /Name=(.*);Classification=(.*);Sequence_ontology/i;
+    $attributes =~ s/;sequence_ontology.*//i;
+    my ($family, $classification) = ($1, $2) if $attributes =~ /Name=(.*);classification=(.*)/i;
 
     # Format the output for RepeatMasker .out (modify according to the expected format)
     printf $rm_out_file "0 0 0 0\t$seqName\t$start\t$end\tNA\t$strand\t$family\t$classification\tNA NA NA NA\n";

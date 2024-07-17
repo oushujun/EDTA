@@ -88,6 +88,7 @@ while (<FASTA>){
 	s/>//g;
 	next if /^\s+$/;
 	my ($chr,$seq)=(split /\n/, $_, 2);
+	$chr=~s/\s+.*//;
 	$seq=~s/\s+//g;
 	my $len=length $seq;
 	my $N=$seq=~tr/Nn//;

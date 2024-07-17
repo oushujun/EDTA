@@ -94,10 +94,10 @@ while (<GFF>){
 	# get assortive structural info
 	my $TE_ID = "$chr:$element_start..$element_end";
 	$TE_ID = $1 if $extra =~ s/Name=(.*?);//i;
-	$TE_class = $1 if $extra =~ s/Classification=(.*?);//i;
-	$iden = $1 if $extra =~ s/ltr_identity=([0-9.e\-]+);//i or $extra =~ s/Identity=([0-9.e\-]+);//i;
-	$method = $1 if $extra =~ s/Method=(homology|structural)//i;
-	$extra =~ s/ID=.*Sequence_ontology=SO:[0-9]+;//; #rename annotation id based on input order
+	$TE_class = $1 if $extra =~ s/classification=(.*?);//i;
+	$iden = $1 if $extra =~ s/ltr_identity=([0-9.e\-]+);//i or $extra =~ s/identity=([0-9.e\-]+);//i;
+	$method = $1 if $extra =~ s/method=(homology|structural)//i;
+	$extra =~ s/ID=.*sequence_ontology=SO:[0-9]+;//; #rename annotation id based on input order
 	$extra =~ s/^;//;
 	$extra =~ s/;$//;
 	$extra =~ s/;+/;/g;

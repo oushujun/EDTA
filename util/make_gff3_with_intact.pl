@@ -30,7 +30,7 @@ while (<ID>){
 	$element_length = $element_end - $element_start + 1;
 	next if $element_length < 80;
 	$strand = ".";
-	my $info = "ID=TE_annot_$i;Sequence_ontology=$SO{$class{$TE_class}};Name=$TE_ID#$TE_class;Method=structural";
+	my $info = "ID=TE_annot_$i;sequence_ontology=$SO{$class{$TE_class}};Name=$TE_ID#$TE_class;method=structural";
         print GFF "$chr\t$annotator\t$TE_class\t$element_start\t$element_end\t.\t$strand\t.\t$info\n";
 	$i++;
         }
