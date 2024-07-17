@@ -141,7 +141,7 @@ my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
 my $rename_by_list = "$script_path/util/rename_by_list.pl";
 my $output_by_list = "$script_path/util/output_by_list.pl";
 my $format_TElib = "$script_path/util/format_TElib.pl";
-my $format_intact_gff3 = "$script_path/util/format_intact_gff3.pl";
+my $format_gff3 = "$script_path/util/format_gff3.pl";
 my $add_id = "$script_path/util/add_id.pl";
 my $div_table = "$script_path/util/div_table2.pl";
 my $div_plot = "$script_path/util/div_plot2.R";
@@ -267,7 +267,7 @@ die "The script split_overlap.pl is not found in $split_overlap!\n" unless -s $s
 die "The script classify_by_lib_RM.pl is not found in $reclassify!\n" unless -s $reclassify;
 die "The script rename_by_list.pl is not found in $rename_by_list!\n" unless -s $rename_by_list;
 die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s $output_by_list;
-die "The script format_intact_gff3.pl is not found in $format_intact_gff3!\n" unless -s $format_intact_gff3;
+die "The script format_gff3.pl is not found in $format_gff3!\n" unless -s $format_gff3;
 die "The script add_id.pl is not found in $add_id!\n" unless -s $add_id;
 die "The script div_table2.pl is not found in $div_table!\n" unless -s $div_table;
 die "The script div_plot2.R is not found in $div_plot!\n" unless -s $div_plot;
@@ -340,7 +340,7 @@ $GRF =~ s/\n$//;
 `$GRF 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF\n" if $?==32256;
 
-print "\t\t\t\tAll passed!\n\n";
+print "\tAll passed!\n\n";
 exit if $check_dependencies;
 
 # make a softlink to the user-provided files
@@ -368,7 +368,7 @@ my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
 if ($id_len > $id_len_max){
 	chomp ($date = `date`);
 	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
-	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
+	print "\tTrying to reformat seq IDs...\n\t\tAttempt 1...\n";
 	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.$rand.mod > $genome.$rand.temp`;
 	my $new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 	chomp ($date = `date`);
@@ -378,7 +378,7 @@ if ($id_len > $id_len_max){
 		`rm $genome.$rand.mod 2>/dev/null`;
 		print "$date\tSeq ID conversion successful!\n\n";
 		} else {
-		print "\t\t\t\tAttempt 2...\n";
+		print "\t\tAttempt 2...\n";
 		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.$rand.mod > $genome.$rand.temp`;
 		$new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
 		if ($old_id == $new_id){
@@ -500,7 +500,7 @@ die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.
 
 chomp ($date = `date`);
 print "$date\tObtain raw TE libraries finished.
-\t\t\t\tAll intact TEs found by EDTA: \n\t\t\t\t\t$genome.EDTA.intact.raw.fa \n\t\t\t\t\t$genome.EDTA.intact.raw.gff3\n\n";
+\tAll intact TEs found by EDTA: \n\t\t$genome.EDTA.intact.raw.fa \n\t\t$genome.EDTA.intact.raw.gff3\n\n";
 chdir "..";
 
 
@@ -555,7 +555,7 @@ chdir "$genome.EDTA.final";
 
 # identify remaining TEs in the filtered RM2 library
 if ($sensitive == 1 and -s "$genome.RM2.fa"){
-	print "\t\t\t\tFilter RepeatModeler results that are ignored in the raw step.\n\n";
+	print "\tFilter RepeatModeler results that are ignored in the raw step.\n\n";
 	chomp ($date = `date`);
 	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>/dev/null`;
 	`cp $genome.RM2.fa $genome.RM2.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
@@ -565,11 +565,11 @@ if ($sensitive == 1 and -s "$genome.RM2.fa"){
 	if (-s "$genome.RM2.fa.stg1.clean"){
 		`cat $genome.EDTA.fa.stg1 $genome.RM2.fa.stg1.clean > $genome.EDTA.raw.fa`;
 		} else {
-		print "\t\t\t\tNo extra repeat sequences found in the RepeatModeler output.\n\n";
+		print "\t\tNo extra repeat sequences found in the RepeatModeler output.\n\n";
 		`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
 		}
 	} else {
-	print "\t\t\t\tSkipping the RepeatModeler results (--sensitive 0).\n\t\t\t\tRun EDTA.pl --step final --sensitive 1 if you want to add RepeatModeler results.\n\n";
+	print "\tSkipping the RepeatModeler results (--sensitive 0).\n\t\tRun EDTA.pl --step final --sensitive 1 if you want to add RepeatModeler results.\n\n";
 	`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
 	}
 
@@ -586,19 +586,19 @@ if (-s "$cds"){
 	$cds = "$cds.code.noTE";
 
 	# remove cds-related sequences in the EDTA library
-	print "\t\t\t\tRemove CDS-related sequences in the EDTA library.\n\n";
+	print "\tRemove CDS-related sequences in the EDTA library.\n\n";
 	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
 	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 
 	# remove cds-related sequences in intact TEs
-	print "\t\t\t\tRemove CDS-related sequences in intact TEs.\n\n";
+	print "\tRemove CDS-related sequences in intact TEs.\n\n";
 	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>/dev/null`;
 	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.cln.masked > $genome.EDTA.intact.fa.cln.rmCDS`;
 	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa.cln2`;
 	} else {
-	print "\t\t\t\tSkipping the CDS cleaning step (--cds [File]) since no CDS file is provided or it's empty.\n\n";
+	print "\tSkipping the CDS cleaning step (--cds [File]) since no CDS file is provided or it's empty.\n\n";
 	copy_file("$genome.EDTA.raw.fa", "./$genome.EDTA.raw.fa.cln");
 	copy_file("$genome.EDTA.intact.fa.cln", "./$genome.EDTA.intact.fa.cln2");
 	}
@@ -664,8 +664,8 @@ my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.
 `echo "##gff-version 3\n##date $date\n##This file contains repeats annotated by EDTA $version based on structural features.\n$intact_gff_head" > $genome.EDTA.intact.gff3`;
 `perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist >> $genome.EDTA.intact.gff3`;
 
-# format intact gff3
-`perl $format_intact_gff3 -f $genome.EDTA.intact.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.intact.gff3`;
+# format gff3
+`perl $format_gff3 $genome.EDTA.intact.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.intact.gff3`;
 
 # add TE_IDs to the intact.fa sequence IDs
 `perl $add_id -fa $genome.EDTA.intact.fa -gff $genome.EDTA.intact.gff3 > $genome.EDTA.intact.fa.renamed; mv $genome.EDTA.intact.fa.renamed $genome.EDTA.intact.fa`;
@@ -683,10 +683,10 @@ copy_file("$genome.EDTA.intact.gff3", "..");
 # report status
 chomp ($date = `date`);
 print "$date\tEDTA final stage finished! You may check out:
-		\t\tThe final EDTA TE library: $genome.EDTA.TElib.fa\n";
-print "		\t\tFamily names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff3\n" if $HQlib ne '';
-print "\t\t\t\tComparing to the provided library, EDTA found these novel TEs: $genome.EDTA.TElib.novel.fa
-	\t\t\tThe provided library has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
+		The final EDTA TE library: $genome.EDTA.TElib.fa\n";
+print "		Family names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff3\n" if $HQlib ne '';
+print "\tComparing to the provided library, EDTA found these novel TEs: $genome.EDTA.TElib.novel.fa
+	\tThe provided library has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
 chdir "..";
 
 
@@ -731,7 +731,7 @@ if ($anno == 1){
 		if (-e "$genome.out"){
 			my $old_rmout = `ls -l $genome.out|perl -nle 'my (\$month, \$day, \$time) = (split)[6,7,8]; \$time =~ s/://; print "\${month}_\${day}_\$time"'`;
 			chomp $old_rmout;
-			print "\t\t\t\t$genome.out exists in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
+			print "\t$genome.out exists in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
 			`mv $genome.out ${genome}_$old_rmout.out`;
 			}
 		`ln -s $rmout $genome.out`;
@@ -760,7 +760,7 @@ if ($anno == 1){
 	`perl $bed2gff $genome.EDTA.homo.bed TE_homo > $genome.EDTA.homo.gff3`;
 	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
 	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\\n$gff_head\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
-	`perl $format_intact_gff3 -f $genome.EDTA.TEanno.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.gff3`;
+	`perl $format_gff3 $genome.EDTA.TEanno.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.gff3`;
 	`rm $genome.EDTA.TEanno.gff3.raw 2>/dev/null`;
 
 	# make non-overlapping annotation
@@ -768,7 +768,7 @@ if ($anno == 1){
 	`perl $split_overlap $genome.EDTA.TEanno.bed $genome.EDTA.TEanno.split.bed`;
 	`echo "##gff-version 3\n##date $date\n##This file contains all repeats annotated by EDTA $version in the split format (non-overlapping). Repeats can be broken into pieces by nested insertions.\n$gff_head" > $genome.EDTA.TEanno.split.gff3`;
 	`perl $bed2gff $genome.EDTA.TEanno.split.bed | grep -v '^#' >> $genome.EDTA.TEanno.split.gff3`;
-	`perl $format_intact_gff3 -f $genome.EDTA.TEanno.split.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.split.gff3`;
+	`perl $format_gff3 $genome.EDTA.TEanno.split.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.split.gff3`;
 	`perl $gff2RMout $genome.EDTA.TEanno.split.gff3 $genome.EDTA.TEanno.split.out`;
 
 	# make plots
@@ -797,11 +797,11 @@ if ($anno == 1){
 	print "ERROR: The masked genome for MAKER annotation is not found in $genome.MAKER.masked!\n\n" unless -s "$genome.MAKER.masked";
 	chomp ($date = `date`);
 	print "$date\tTE annotation using the EDTA library has finished! Check out:\n";
-	print "\t\t\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff3\n";
-	print "\t\t\t\tWhole-genome TE annotation summary: $genome.EDTA.TEanno.sum\n";
-	print "\t\t\t\tWhole-genome TE divergence plot: ${genome}_divergence_plot.pdf\n";
-	print "\t\t\t\tWhole-genome TE density plot: $genome.EDTA.TEanno.density_plots.pdf\n";
-	print "\t\t\t\tLow-threshold TE masking for MAKER gene annotation (masked: $maker_TE): $genome.MAKER.masked\n\n";
+	print "\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff3\n";
+	print "\t\tWhole-genome TE annotation summary: $genome.EDTA.TEanno.sum\n";
+	print "\t\tWhole-genome TE divergence plot: ${genome}_divergence_plot.pdf\n";
+	print "\t\tWhole-genome TE density plot: $genome.EDTA.TEanno.density_plots.pdf\n";
+	print "\t\tLow-threshold TE masking for MAKER gene annotation (masked: $maker_TE): $genome.MAKER.masked\n\n";
 
 	# copy results out
 	`cp $genome.MAKER.masked ../`; # make no backup for this file
@@ -830,8 +830,8 @@ if ($anno == 1){
 				Non-nested: $genome.EDTA.TE.fa.stat.redun.sum\n\n";
 		}
 
-	print "\t\t\t\tIf you want to learn more about the formatting and information of these files, please visit:
-	\t\t\t\thttps://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A\n\n";
+	print "\t\tIf you want to learn more about the formatting and information of these files, please visit:
+	\t\thttps://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A\n\n";
 
 	}
 
