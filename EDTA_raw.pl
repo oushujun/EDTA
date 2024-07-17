@@ -171,14 +171,14 @@ die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
 die "The script make_bed_with_intact.pl is not found in $make_bed!\n" unless -s $make_bed;
 
 # GenomeTools
-chomp ($genometools=`which gt 2>/dev/null`) if $genometools eq '';
+chomp ($genometools=`command -v gt 2>/dev/null`) if $genometools eq '';
 $genometools =~ s/\s+$//;
 $genometools = dirname($genometools) unless -d $genometools;
 $genometools="$genometools/" if $genometools ne '' and $genometools !~ /\/$/;
 die "Error: gt is not found in the genometools path $genometools!\n" unless -X "${genometools}gt";
 # RepeatMasker
 my $rand=int(rand(1000000));
-chomp ($repeatmasker=`which RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
+chomp ($repeatmasker=`command -v RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
 $repeatmasker =~ s/\s+$//;
 $repeatmasker = dirname($repeatmasker) unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
@@ -188,49 +188,49 @@ my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -nolow dummy060
 die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
 # RepeatModeler
-chomp ($repeatmodeler=`which RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
+chomp ($repeatmodeler=`command -v RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
 $repeatmodeler =~ s/\s+$//;
 $repeatmodeler = dirname($repeatmodeler) unless -d $repeatmodeler;
 $repeatmodeler="$repeatmodeler/" if $repeatmodeler ne '' and $repeatmodeler !~ /\/$/;
 die "Error: RepeatModeler is not found in the RepeatModeler path $repeatmodeler!\n" unless -X "${repeatmodeler}RepeatModeler";
 # AnnoSINE
-chomp ($annosine=`which AnnoSINE_v2 2>/dev/null`) if $annosine eq '';
+chomp ($annosine=`command -v AnnoSINE_v2 2>/dev/null`) if $annosine eq '';
 $annosine =~ s/\s+$//;
 $annosine = dirname($annosine) unless -d $annosine;
 $annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
 die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2");
 # LTR_retriever
-chomp ($LTR_retriever=`which LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
+chomp ($LTR_retriever=`command -v LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
 $LTR_retriever = dirname($LTR_retriever) unless -d $LTR_retriever;
 $LTR_retriever="$LTR_retriever/" if $LTR_retriever ne '' and $LTR_retriever !~ /\/$/;
 die "Error: LTR_retriever is not found in the LTR_retriever path $LTR_retriever!\n" unless -X "${LTR_retriever}LTR_retriever";
 # TEsorter
-chomp ($TEsorter=`which TEsorter 2>/dev/null`) if $TEsorter eq '';
+chomp ($TEsorter=`command -v TEsorter 2>/dev/null`) if $TEsorter eq '';
 $TEsorter =~ s/\s+$//;
 $TEsorter = dirname($TEsorter) unless -d $TEsorter;
 $TEsorter="$TEsorter/" if $TEsorter ne '' and $TEsorter !~ /\/$/;
 die "Error: TEsorter is not found in the TEsorter path $TEsorter!\n" unless -X "${TEsorter}TEsorter";
 # makeblastdb, blastn
-chomp ($blastplus=`which makeblastdb 2>/dev/null`) if $blastplus eq '';
+chomp ($blastplus=`command -v makeblastdb 2>/dev/null`) if $blastplus eq '';
 $blastplus =~ s/\s+$//;
 $blastplus = dirname($blastplus) unless -d $blastplus;
 $blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 die "Error: makeblastdb is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
 die "Error: blastn is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
 # mdust
-chomp ($mdust=`which mdust 2>/dev/null`) if $mdust eq '';
+chomp ($mdust=`command -v mdust 2>/dev/null`) if $mdust eq '';
 $mdust =~ s/\s+$//;
 $mdust = dirname($mdust) unless -d $mdust;
 $mdust = "$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
 # trf
-chomp ($trf=`which trf 2>/dev/null`) if $trf eq '';
+chomp ($trf=`command -v trf 2>/dev/null`) if $trf eq '';
 $trf=~s/\n$//;
 `$trf 2>/dev/null`;
 die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32256;
 # GRF
-chomp ($GRF = `which grf-main 2>/dev/null`) if $GRF eq '';
+chomp ($GRF = `command -v grf-main 2>/dev/null`) if $GRF eq '';
 $GRF =~ s/\n$//;
 my $grfp= dirname ($GRF);
 $grfp =~ s/\n$//;
