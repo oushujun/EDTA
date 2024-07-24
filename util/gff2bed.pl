@@ -89,6 +89,8 @@ while (<GFF>){
 	$type = "plastid" if $sequence_ontology =~ /chloroplast|plastid|mitochondri/i;
 	$type = "repeat_region" if $sequence_ontology =~ /(repeat_region|DNA_transposon|^retrotransposon$)/i;
 	$type = 'repeat_fragment' if $sequence_ontology =~ /(repeat_fragment|Unknown|Unspecified)/i; #suggested by Changfu Jia
+  $type = "snRNA" if $sequence_ontology =~ /snRNA/i;
+  $type = "scRNA" if $sequence_ontology =~ /scRNA/i;
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
 	# get assortive structural info
