@@ -2,6 +2,7 @@
 ### This script was modified from https://github.com/mcstitzer/maize_v4_TE_annotation/blob/master/helitron/run_helitron_scanner.sh
 ### Original author: Michelle Stitzer, Apr 11, 2018
 ### Modifier: Shujun Ou (shujun.ou.1@gmail.com), May 1, 2019
+### Revised: Tianyu Lu (tianyu@lu.fm), July 26, 2024
 
 ### specify the genome file
 GENOME=$1
@@ -10,7 +11,18 @@ GENOME=$1
 path=$(dirname "$0")
 
 ## where to find HelitronScanner.jar
-HSDIR=$path/../bin/HelitronScanner
+#HSDIR=$path/../bin/HelitronScanner
+
+# Find original directory of bash script, resolving symlinks
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in/246128#246128
+SOURCE=$3
+echo $SOURCE
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+HSDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 ### preset CPU and max memory
 CPU=4

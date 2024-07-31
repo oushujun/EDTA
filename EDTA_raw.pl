@@ -63,9 +63,6 @@ my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Le
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
 my $script_path = $FindBin::Bin;
-my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";
-my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";
-my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
 my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
 my $get_range = "$script_path/util/get_range.pl";
 my $rename_LTR = "$script_path/util/rename_LTR_skim.pl";
@@ -90,8 +87,17 @@ my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
 my $GRF = ''; #path to GRF
 my $annosine = ""; #path to the AnnoSINE program
+
 # my $TIR_Learner = "$script_path/bin/TIR-Learner3/";  #tianyulu
+# my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";  #tianyulu
+# my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";  #tianyulu
+my $HelitronScanner_Runner = "$script_path/util/run_helitron_scanner.sh";
+
 my $TIR_Learner = ""; #path to TIR-Learner3 program  #tianyulu
+my $LTR_FINDER = ""; #path to LTR_FINDER_parallel program  #tianyulu
+my $LTR_HARVEST = ""; #path to LTR_HARVEST_parallel program  #tianyulu
+my $HelitronScanner = ""; #path to HelitronScanner program  #tianyulu
+
 my $help = undef;
 
 # read parameters
@@ -154,9 +160,9 @@ chomp (my $date = `date`);
 print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
 
 # check files and dependencies
-die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;
-die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;
-# die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";
+# die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;  #tianyulu
+# die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;  #tianyulu
+# die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";  #tianyulu
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR_skim.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
@@ -165,7 +171,7 @@ die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s 
 die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unless -s $rename_tirlearner;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script get_ext_seq.pl is not found in $get_ext_seq!\n" unless -s $get_ext_seq;
-die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;
+# die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;  #tianyulu
 die "The script format_helitronscanner_out.pl is not found in $format_helitronscanner!\n" unless -s $format_helitronscanner;
 die "The script flanking_filter.pl is not found in $flank_filter!\n" unless -s $flank_filter;
 die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
@@ -184,7 +190,8 @@ $repeatmasker =~ s/\s+$//;
 $repeatmasker = dirname($repeatmasker) unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
-`cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
+# `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
+`cp \"$script_path/database/dummy060817.fa\" ./dummy060817.fa.$rand`;  #tianyulu
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
 die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
@@ -238,7 +245,7 @@ $grfp =~ s/\n$//;
 `${grfp}grf-main 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp\n" if $?==32256;
 
-# # TIR-Learner3  #TianyuLu
+# # TIR-Learner3
 # chomp ($TIR_Learner = `which TIR-Learner 2>/dev/null`) if $TIR_Learner eq '';
 # $TIR_Learner =~ s/\n$//;
 # my $tirp= dirname ($TIR_Learner);
@@ -246,18 +253,67 @@ die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp\
 # `${tirp}TIR-Learner 2>/dev/null`;
 # die "Error: TIR-Learner3 is not found in the TIR-Learner path: $tirp\n" if $?==32256;
 
-# TIR-Learner  #TianyuLu
+# TIR-Learner  #tianyuLu
+# Remove any trailing whitespace
+$TIR_Learner =~ s/\s+$//;
 if ($TIR_Learner eq "") {
-	chomp ($TIR_Learner=`which TIR-Learner 2>/dev/null`);
-	$TIR_Learner =~ s/\s+$//;
+	# Find TIR-Learner path and remove any trailing newline
+	chomp ($TIR_Learner=`command -v TIR-Learner 2>/dev/null`);
+	die "Error: TIR-Learner not installed!\n" if $TIR_Learner eq "";
+	# $TIR_Learner =~ s/\s+$//;
 } else {
-	$TIR_Learner =~ s/\s+$//;
-	$TIR_Learner = dirname($TIR_Learner) unless -d $TIR_Learner;
-	$TIR_Learner = "$TIR_Learner/" if $TIR_Learner ne '' and $TIR_Learner !~ /\/$/;
-	$TIR_Learner = "python3 $TIR_Learner/TIR-Learner.py";
+	# # Extract directory name from path if path is not a directory
+	# $TIR_Learner = dirname($TIR_Learner) unless -d $TIR_Learner;
+	# If path is directory
+	if (-d $TIR_Learner) {
+		# # Add trailing slash if path not empty string and not already end with slash
+		# $TIR_Learner .= "/" if $TIR_Learner ne "" and $TIR_Learner !~ /\/$/;
+		# Add trailing slash if path not already end with slash
+		$TIR_Learner .= "/" if $TIR_Learner !~ /\/$/;
+		$TIR_Learner = "python3 $TIR_Learner/TIR-Learner.py";
+	}
 }
 `$TIR_Learner 2>/dev/null`;
-die "Error: TIR-Learner is not found in the TIR-Learner path $TIR_Learner!\n" if $?==32256 || $?==2;
+die "Error: TIR-Learner is not found in the path $TIR_Learner!\n" if $?==32256 || $?==2;
+
+# LTR_FINDER_parallel  #tianyuLu
+$LTR_FINDER =~ s/\s+$//;
+if ($LTR_FINDER eq "") {
+    chomp ($LTR_FINDER=`command -v LTR_FINDER_parallel 2>/dev/null`);
+	die "Error: LTR_FINDER_parallel not installed!\n" if $LTR_FINDER eq "";
+} else {
+    if (-d $LTR_FINDER) {
+        $LTR_FINDER .= "/" if $LTR_FINDER !~ /\/$/;
+        $LTR_FINDER = "perl $LTR_FINDER/LTR_FINDER_parallel";
+    }
+}
+`$LTR_FINDER 2>/dev/null`;
+die "Error: LTR_FINDER_parallel is not found in the path $LTR_FINDER!\n" if $?==32256 || $?==2;
+
+# LTR_HARVEST_parallel  #tianyuLu
+$LTR_HARVEST =~ s/\s+$//;
+if ($LTR_HARVEST eq "") {
+    chomp ($LTR_HARVEST=`command -v LTR_HARVEST_parallel 2>/dev/null`);
+	die "Error: LTR_HARVEST_parallel not installed!\n" if $LTR_HARVEST eq "";
+} else {
+    if (-d $LTR_HARVEST) {
+        $LTR_HARVEST .= "/" if $LTR_HARVEST !~ /\/$/;
+        $LTR_HARVEST = "perl $LTR_HARVEST/LTR_HARVEST_parallel";
+    }
+}
+`$LTR_HARVEST 2>/dev/null`;
+die "Error: LTR_HARVEST_parallel is not found in the path $LTR_HARVEST!\n" if $?==32256 || $?==2;
+
+# HelitronScanner  #tianyuLu
+$HelitronScanner =~ s/\s+$//;
+if ($HelitronScanner eq "") {
+    chomp ($HelitronScanner=`command -v HelitronScanner 2>/dev/null`);
+    die "Error: HelitronScanner not installed!\n" if $HelitronScanner eq "";
+} else {
+    if (-d $HelitronScanner) {
+        $HelitronScanner .= "/" if $HelitronScanner !~ /\/$/;
+    }
+}
 
 # make a softlink to the genome
 my $genome_file = basename($genome);
@@ -364,14 +420,16 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 if ($overwrite eq 0 and -s "$genome.harvest.combine.scn"){
 	print STDERR "$date\tExisting raw result $genome.harvest.scn found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
-	`perl $LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300`;
+	# `perl $LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300`;
+	`$LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300`;  #tianyulu
 	}
 
 # run LTR_FINDER_parallel
 if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 	print STDERR "$date\tExisting raw result $genome.finder.combine.scn found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
-	`perl $LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;
+	# `perl $LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;
+	`$LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;  #tianyulu
 	}
 
 # run LTR_retriever
@@ -657,7 +715,7 @@ if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Heli
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
 # run HelitronScanner
-`sh $HelitronScanner $genome $threads`;
+`$HelitronScanner_Runner $genome $threads \"$HelitronScanner\"`;
 
 # filter candidates based on repeatness of flanking regions
 `perl $format_helitronscanner -genome $genome -sitefilter 1 -minscore 12 -keepshorter 1 -extlen 30 -extout 1`;
