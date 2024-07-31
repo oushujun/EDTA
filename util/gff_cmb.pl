@@ -24,7 +24,7 @@ print "##gff-version 3\n##date $date
 
 my $i = 0; #annotation ID
 while (<GFF>){
-	chmod;
+	chomp;
 	next if /^#/;
 	my ($SW_score, $div, $iden, $chr, $chr_len, $element_start, $element_end, $element_length, $left_len, $strand, $TE_ID, $TE_class);
 	(

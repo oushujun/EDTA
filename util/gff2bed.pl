@@ -19,7 +19,7 @@ my $method = $ARGV[1];
 open GFF, "<$ARGV[0]" or die $usage;
 
 while (<GFF>){
-	chmod;
+	chomp;
 	next if /^#/;
 
 	my ($method, $type, $TE_class, $class, $iden) = (undef, undef, undef, undef, 'NA');
