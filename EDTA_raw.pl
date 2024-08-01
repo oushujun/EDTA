@@ -573,10 +573,10 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 	print STDERR "$date\tIdentify LINE retrotransposon candidates from scratch.\n\n";
 	my $status; # record status of RepeatModeler execution
 	`${repeatmodeler}BuildDatabase -name $genome $genome`;
-	$status = system("${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome > /dev/null 2>&1");
+	$status = system("${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome  > repeatmodeler.log 2>&1");
 	if ($status != 0) {
 		# Execute the old version of RepeatModeler
-		$status = system("${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome > /dev/null 2>&1");
+		$status = system("${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome > repeatmodeler.log 2>&1");
 		print "ERROR: RepeatModeler did not run correctly. Please test run this command:
 			${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome
 			" and exit unless $status == 0;
