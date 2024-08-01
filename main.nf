@@ -1,4 +1,4 @@
-!/usr/bin/env nextflow
+#!/usr/bin/env nextflow
 
 nextflow.enable.dsl = 2
 
@@ -15,6 +15,7 @@ params.maxdiv           = 40
 params.evaluate         = true
 params.exclude          = ''
 params.maxint           = 5000
+params.outdir           = 'results'
 
 // TODO: Check inputed repeat libraries, CDS, etc...
 // TODO: Check exclude file
@@ -23,22 +24,31 @@ params.maxint           = 5000
 // TODO: Put fffx on bioconda or somewhere so it just runs, otherwise tiny container
 process sanitize {
     tag "${x.baseName}"
+
+    // On Linux conda is not needed for this process
+    container "${ workflow.containerEngine == 'singularity' || workflow.containerEngine == 'apptainer'
+        ? 'https://depot.galaxyproject.org/singularity/ubuntu:20.04'
+        : 'nf-core/ubuntu:20.04' }"
+    
+    publishDir "${params.outdir}/sanitized_genomes"
+    time "10m"
+    memory 3.GB
+    cpus 1
+    
     input:
         path x
     output:
         tuple val("${x.baseName}"), path("${x.baseName}_sanitized.fasta"), path("${x.baseName}_sanitized.translation_table.tsv")
-    publishDir 'sanitized_genomes'
-    time "10m"
-    memory 3.GB
-    cpus 1
 
-"""
-fffx length-filter ${x} filtered.fa 1000
-fffx sanitize filtered.fa ${x.baseName}_sanitized
-"""
+    """
+    fffx length-filter ${x} filtered.fa 1000
+    fffx sanitize filtered.fa ${x.baseName}_sanitized
+    """
 }
 
-workflow WORKFLOW_A {
+// Test run: 
+// ./main.nf --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta -profile docker
+workflow {
     // - All nf-core pipelines/modules the [ [`meta`], data] pattern. I think we should follow that
     // so that our local and nf-core modules are interoperable
     //
