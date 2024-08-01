@@ -43,6 +43,10 @@ jobs:
       # - name: Disk space cleanup
       #   uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
       # Will be needed with large data sets. Can take long to run
+
+      - name: Setup apptainer
+        if: matrix.profile == 'singularity'
+        uses: eWaterCycle/setup-apptainer@main
       
       - name: Set up Singularity
         if: matrix.profile == 'singularity'
