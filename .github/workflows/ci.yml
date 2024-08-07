@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         nextflow:
-          - '23.04.0'
+          - '24.04.0'
         profile:
           - docker
           - singularity
