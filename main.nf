@@ -36,7 +36,6 @@ workflow {
     ch_meta_genome                         = ch_genome.map { genome -> 
         meta                            = [:]
         meta.id                         = genome.baseName
-        meta.file                       = genome
         return tuple(meta, genome)
     }
 
