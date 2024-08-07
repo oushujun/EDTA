@@ -2,8 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-params.genomes          = 'genomes/*' // To allow for more flexibility when specifying params.
-// I'll be testing the whole pipeline with a single public chromosome from nf-core test datasets
+params.genomes          = 'genomes/*'
 params.species          = 'others'
 params.cds              = ''
 params.curatedlib       = ''
@@ -17,45 +16,31 @@ params.exclude          = ''
 params.maxint           = 5000
 params.outdir           = 'results'
 
+// Max resource options
+params.max_cpus         = 12
+params.max_memory       = '16.GB'
+params.max_time         = '1.hour'
+
 // TODO: Check inputed repeat libraries, CDS, etc...
 // TODO: Check exclude file
 
-// Rename FASTA headers (just makes everything easier later)
-// TODO: Put fffx on bioconda or somewhere so it just runs, otherwise tiny container
-process sanitize {
-    tag "${x.baseName}"
-
-    // On Linux conda is not needed for this process
-    container "${ workflow.containerEngine == 'singularity' || workflow.containerEngine == 'apptainer'
-        ? 'https://depot.galaxyproject.org/singularity/ubuntu:20.04'
-        : 'nf-core/ubuntu:20.04' }"
-    
-    publishDir "${params.outdir}/sanitized_genomes"
-    time "10m"
-    memory 3.GB
-    cpus 1
-    
-    input:
-        path x
-    output:
-        tuple val("${x.baseName}"), path("${x.baseName}_sanitized.fasta"), path("${x.baseName}_sanitized.translation_table.tsv")
-
-    """
-    fffx length-filter ${x} filtered.fa 1000
-    fffx sanitize filtered.fa ${x.baseName}_sanitized
-    """
-}
+include { SANITIZE_HEADERS } from './modules/local/sanitize/main.nf'
 
 // Test run: 
 // ./main.nf --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta -profile docker
+// ./main.nf --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta -profile conda
 workflow {
-    // - All nf-core pipelines/modules the [ [`meta`], data] pattern. I think we should follow that
-    // so that our local and nf-core modules are interoperable
-    //
-    // - I am also adding a bit of personal code style, please rever it if you don't like it
 
-    ch_genome                           = Channel.fromPath(params.genomes) // The channel emits a single genome at a time. That's why ch_genome
-    
-    // MODULE: sanitize - All modules and workflow names should follow CAPITAL_SNAKE
-    sanitize ( ch_genome )
+    ch_genome                           = Channel.fromPath(params.genomes)
+
+    // Create a meta object for each genome
+    ch_meta_genome                      = ch_genome.map { genome -> 
+                                            meta        = [:]
+                                            meta.id     = genome.baseName
+                                            
+                                            [ meta, genome ]
+                                        }
+
+    // MODULE: SANITIZE_HEADERS
+    SANITIZE_HEADERS ( ch_meta_genome )
 }
