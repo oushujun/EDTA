@@ -1,6 +1,6 @@
 // Rename FASTA headers (just makes everything easier later)
 
-process SANITIZE {
+process SANITIZE_HEADERS {
     tag "$meta.id"
     label 'process_single'
 
