@@ -17,6 +17,11 @@ params.exclude          = ''
 params.maxint           = 5000
 params.outdir           = 'results'
 
+// Max resource options
+params.max_cpus         = 12
+params.max_memory       = '16.GB'
+params.max_time         = '1.hour'
+
 // TODO: Check inputed repeat libraries, CDS, etc...
 // TODO: Check exclude file
 

@@ -1,6 +1,6 @@
 // Rename FASTA headers (just makes everything easier later)
 
-process SANITIZE_HEADERS {
+process SANITIZE {
     tag "$meta.id"
     label 'process_single'
 
@@ -20,10 +20,6 @@ process SANITIZE_HEADERS {
     tuple val(meta), path('*.sanitized.translation_table.tsv'), emit: translation_table
     eval('fffx --version'), topic: versions 
 
-    // todo use nf-core resource profiles?
-    time "10m"
-    memory 3.GB
-    cpus 1
 
     when:
     task.ext.when == null || task.ext.when
