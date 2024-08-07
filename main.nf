@@ -31,7 +31,7 @@ include { SANITIZE_HEADERS } from './modules/local/sanitize/main.nf'
 // ./main.nf --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta -profile conda
 workflow {
 
-    ch_genome                           = Channel.fromPath(params.genomes) // The channel emits a single genome at a time. That's why ch_genome
+    ch_genome                           = Channel.fromPath(params.genomes)
 
     // Create a meta object for each genome
     ch_meta_genome                      = ch_genome.map { genome -> 
