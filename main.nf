@@ -20,31 +20,7 @@ params.outdir           = 'results'
 // TODO: Check inputed repeat libraries, CDS, etc...
 // TODO: Check exclude file
 
-// Rename FASTA headers (just makes everything easier later)
-// TODO: Put fffx on bioconda or somewhere so it just runs, otherwise tiny container
-process sanitize {
-    tag "${x.baseName}"
-
-    // On Linux conda is not needed for this process
-    container "${ workflow.containerEngine == 'singularity' || workflow.containerEngine == 'apptainer'
-        ? 'https://depot.galaxyproject.org/singularity/ubuntu:20.04'
-        : 'nf-core/ubuntu:20.04' }"
-    
-    publishDir "${params.outdir}/sanitized_genomes"
-    time "10m"
-    memory 3.GB
-    cpus 1
-    
-    input:
-        path x
-    output:
-        tuple val("${x.baseName}"), path("${x.baseName}_sanitized.fasta"), path("${x.baseName}_sanitized.translation_table.tsv")
-
-    """
-    fffx length-filter ${x} filtered.fa 1000
-    fffx sanitize filtered.fa ${x.baseName}_sanitized
-    """
-}
+include { SANITIZE_HEADERS } from './modules/local/sanitize/main.nf'
 
 // Test run: 
 // ./main.nf --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta -profile docker
@@ -55,7 +31,16 @@ workflow {
     // - I am also adding a bit of personal code style, please rever it if you don't like it
 
     ch_genome                           = Channel.fromPath(params.genomes) // The channel emits a single genome at a time. That's why ch_genome
-    
+
+    // Create a meta object for each genome
+    ch_meta_genome                         = ch_genome.map { genome -> 
+        meta                            = [:]
+        meta.id                         = genome.baseName
+        meta.file                       = genome
+        return tuple(meta, genome)
+    }
+
     // MODULE: sanitize - All modules and workflow names should follow CAPITAL_SNAKE
-    sanitize ( ch_genome )
+
+    SANITIZE_HEADERS ( ch_meta_genome )
 }
