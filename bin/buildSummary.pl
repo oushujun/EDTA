@@ -189,7 +189,7 @@ my $gapLen = 0;
 my $totalSeqLen = 0;
 my $totalSeqNum = 0;
 if ( defined $options{'stats'} ){
-	my $info = `grep -P '^All' $options{'stats'}`;
+	my $info = `grep '^All' $options{'stats'}`;
 	($rawSeqLen, $gapLen, $totalSeqNum) = (split /\s+/, $info)[1,2,4];
 	$totalSeqLen = $rawSeqLen - $gapLen;
 } else {
