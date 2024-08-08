@@ -180,7 +180,7 @@ dependencies:
   - libxml2=2.10.3=hca2bb57_4
   - libzlib=1.2.13=hd590300_5
   - locket=1.0.0=pyhd8ed1ab_0
-  - ltr_finder=1.07=h4ac6f70_3
+  - ltr_finder_parallel-1.1-hdfd78af_1
   - ltr_harvest_parallel=hdfd78af_1
   - ltr_retriever=2.9.9=hdfd78af_0
   - lz4=4.3.3=py39h79d96da_0

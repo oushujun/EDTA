@@ -279,7 +279,7 @@ die "Error: TIR-Learner is not found in the path $TIR_Learner!\n" if $?==32256 |
 # LTR_FINDER_parallel  #tianyuLu
 $LTR_FINDER =~ s/\s+$//;
 if ($LTR_FINDER eq "") {
-    chomp ($LTR_FINDER=`command -v ltr_finder 2>/dev/null`); #fayefang: change from LTR_FINDER_parallel to actual ltr_finder
+    chomp ($LTR_FINDER=`command -v LTR_FINDER_parallel 2>/dev/null`); 
 	die "Error: LTR_FINDER_parallel not installed!\n" if $LTR_FINDER eq "";
 } else {
     if (-d $LTR_FINDER) {
@@ -293,13 +293,10 @@ die "Error: LTR_FINDER_parallel is not found in the path $LTR_FINDER!\n" if $?==
 # LTR_HARVEST_parallel  #tianyuLu
 $LTR_HARVEST =~ s/\s+$//;
 if ($LTR_HARVEST eq "") {
-  print '/n conda /n';
     chomp ($LTR_HARVEST=`command -v LTR_HARVEST_parallel 2>/dev/null`);
 	die "Error: LTR_HARVEST_parallel not installed!\n" if $LTR_HARVEST eq "";
 } else {
-  print '/n ? /n';
     if (-d $LTR_HARVEST) {
-    print '/n ?? /n';
         $LTR_HARVEST .= "/" if $LTR_HARVEST !~ /\/$/;
         $LTR_HARVEST = "perl $LTR_HARVEST/LTR_HARVEST_parallel";
     }
