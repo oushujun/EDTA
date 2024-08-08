@@ -63,20 +63,20 @@ my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Le
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
 my $script_path = $FindBin::Bin;
-my $cleanup_misclas = "$script_path/util/cleanup_misclas.pl";
-my $get_range = "$script_path/util/get_range.pl";
-my $rename_LTR = "$script_path/util/rename_LTR_skim.pl";
-my $rename_RM = "$script_path/util/rename_RM_TE.pl";
-my $filter_gff = "$script_path/util/filter_gff3.pl";
-my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
-my $call_seq = "$script_path/util/call_seq_by_list.pl";
-my $output_by_list = "$script_path/util/output_by_list.pl";
-my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
-my $get_ext_seq = "$script_path/util/get_ext_seq.pl";
-my $format_helitronscanner = "$script_path/util/format_helitronscanner_out.pl";
-my $flank_filter = "$script_path/util/flanking_filter.pl";
-my $make_bed = "$script_path/util/make_bed_with_intact.pl";
-my $bed2gff = "$script_path/util/bed2gff.pl";
+my $cleanup_misclas = "$script_path/bin/cleanup_misclas.pl";
+my $get_range = "$script_path/bin/get_range.pl";
+my $rename_LTR = "$script_path/bin/rename_LTR_skim.pl";
+my $rename_RM = "$script_path/bin/rename_RM_TE.pl";
+my $filter_gff = "$script_path/bin/filter_gff3.pl";
+my $rename_tirlearner = "$script_path/bin/rename_tirlearner.pl";
+my $call_seq = "$script_path/bin/call_seq_by_list.pl";
+my $output_by_list = "$script_path/bin/output_by_list.pl";
+my $cleanup_tandem = "$script_path/bin/cleanup_tandem.pl";
+my $get_ext_seq = "$script_path/bin/get_ext_seq.pl";
+my $format_helitronscanner = "$script_path/bin/format_helitronscanner_out.pl";
+my $flank_filter = "$script_path/bin/flanking_filter.pl";
+my $make_bed = "$script_path/bin/make_bed_with_intact.pl";
+my $bed2gff = "$script_path/bin/bed2gff.pl";
 my $genometools = ''; #path to the genometools program
 my $repeatmasker = ''; #path to the RepeatMasker program
 my $repeatmodeler = ''; #path to the RepeatModeler program
@@ -91,7 +91,7 @@ my $annosine = ""; #path to the AnnoSINE program
 # my $TIR_Learner = "$script_path/bin/TIR-Learner3/";  #tianyulu
 # my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";  #tianyulu
 # my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";  #tianyulu
-my $HelitronScanner_Runner = "$script_path/util/run_helitron_scanner.sh";
+my $HelitronScanner_Runner = "$script_path/bin/run_helitron_scanner.sh";
 
 my $TIR_Learner = ""; #path to TIR-Learner3 program  #tianyulu
 my $LTR_FINDER = ""; #path to LTR_FINDER_parallel program  #tianyulu
@@ -279,7 +279,7 @@ die "Error: TIR-Learner is not found in the path $TIR_Learner!\n" if $?==32256 |
 # LTR_FINDER_parallel  #tianyuLu
 $LTR_FINDER =~ s/\s+$//;
 if ($LTR_FINDER eq "") {
-    chomp ($LTR_FINDER=`command -v LTR_FINDER_parallel 2>/dev/null`);
+    chomp ($LTR_FINDER=`command -v ltr_finder 2>/dev/null`); #fayefang: change from LTR_FINDER_parallel to actual ltr_finder
 	die "Error: LTR_FINDER_parallel not installed!\n" if $LTR_FINDER eq "";
 } else {
     if (-d $LTR_FINDER) {
@@ -293,10 +293,13 @@ die "Error: LTR_FINDER_parallel is not found in the path $LTR_FINDER!\n" if $?==
 # LTR_HARVEST_parallel  #tianyuLu
 $LTR_HARVEST =~ s/\s+$//;
 if ($LTR_HARVEST eq "") {
+  print '/n conda /n';
     chomp ($LTR_HARVEST=`command -v LTR_HARVEST_parallel 2>/dev/null`);
 	die "Error: LTR_HARVEST_parallel not installed!\n" if $LTR_HARVEST eq "";
 } else {
+  print '/n ? /n';
     if (-d $LTR_HARVEST) {
+    print '/n ?? /n';
         $LTR_HARVEST .= "/" if $LTR_HARVEST !~ /\/$/;
         $LTR_HARVEST = "perl $LTR_HARVEST/LTR_HARVEST_parallel";
     }

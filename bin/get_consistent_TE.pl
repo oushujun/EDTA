@@ -4,8 +4,8 @@ use warnings;
 #usage: This script helps to find TEs that are consistently annotated in a genome
 #Shujun Ou (shujun.ou.1@gmail.com) 04/25/2021
 #usage:
-#	perl ~/bin/EDTA/util/evaluation.pl -anno genome.RM.out -maxcount 0 -threads 50 -genome genome.fa 
-#	perl ~/bin/EDTA/util/find_flTE.pl genome.RM.out | perl get_consistent_TE.pl - genome.RM.out.TE.fa.stat|sort -k2,2 -nr|less -S
+#	perl ~/bin/EDTA/bin/evaluation.pl -anno genome.RM.out -maxcount 0 -threads 50 -genome genome.fa 
+#	perl ~/bin/EDTA/bin/find_flTE.pl genome.RM.out | perl get_consistent_TE.pl - genome.RM.out.TE.fa.stat|sort -k2,2 -nr|less -S
 
 my $rmout = $ARGV[0]; #the original RepeatMasker out file can be preprocess by find_flTE.pl to find full-length TEs
 my $stat = $ARGV[1];

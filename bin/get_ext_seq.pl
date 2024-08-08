@@ -7,7 +7,7 @@ my $genome = $ARGV[0];
 my $seq = $ARGV[1];
 my $extlen = 30;
 my $ori_name = 1; #1 will use the original coordinate as seq name.
-#my $call_seq = "~/las/git_bin/EDTA/util/call_seq_by_list.pl ";
+#my $call_seq = "~/las/git_bin/EDTA/bin/call_seq_by_list.pl ";
 my $call_seq = "$FindBin::Bin/call_seq_by_list.pl";
 
 open Seq, "<$seq" or die $!;

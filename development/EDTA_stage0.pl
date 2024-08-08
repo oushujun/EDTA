@@ -39,12 +39,12 @@ my $Helitronraw = '';
 # pre-defined
 my $threads = 4;
 my $script_path = $FindBin::Bin;
-my $rename_TE = "$script_path/util/rename_TE.pl";
-my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
+my $rename_TE = "$script_path/bin/rename_TE.pl";
+my $cleanup_tandem = "$script_path/bin/cleanup_tandem.pl";
 my $MITE_Hunter = "$script_path/bin/MITE-Hunter2/MITE_Hunter_manager.pl";
-my $HelitronScanner = "$script_path/util/run_helitron_scanner.sh";
-my $output_by_list = "$script_path/util/output_by_list.pl";
-my $rename_tirlearner = "$script_path/util/rename_tirlearner.pl";
+my $HelitronScanner = "$script_path/bin/run_helitron_scanner.sh";
+my $output_by_list = "$script_path/bin/output_by_list.pl";
+my $rename_tirlearner = "$script_path/bin/rename_tirlearner.pl";
 my $genometools = "$script_path/bin/genometools-1.5.10/bin/gt";
 my $repeatmasker = "";
 

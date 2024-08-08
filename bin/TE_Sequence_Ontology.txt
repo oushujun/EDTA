@@ -16,7 +16,7 @@
 #######################
 ####### Warning #######
 #######################
-# Everytime you add new SO entries to this file (new line), you also need to update the EDTA/util/gff2bed.pl file, 
+# Everytime you add new SO entries to this file (new line), you also need to update the EDTA/bin/gff2bed.pl file, 
 #  so that $type can be correctly recognized from Sequence Ontologies listed on the first column of this file.
 
 

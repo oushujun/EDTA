@@ -141,7 +141,7 @@ Optional:
 
 
 ## Outputs
-A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice7.0.0.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./util/TE_Sequence_Ontology.txt).
+A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice7.0.0.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./bin/TE_Sequence_Ontology.txt).
 
 Optional 1:
 1. Novel TE families: $genome.mod.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).
