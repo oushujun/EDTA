@@ -103,6 +103,7 @@ dependencies:
   - gxx_impl_linux-64=13.2.0=h338b0a0_3
   - h5py=3.9.0=nompi_py39h4dfffb9_100
   - harfbuzz=6.0.0=h8e241bc_0
+  - helitronscanner=hdfd78af_0
   - hdf5=1.14.0=nompi_hb72d44e_103
   - hmmer=3.4=hdbdd923_0
   - htslib=1.10=h244ad75_0
@@ -180,6 +181,7 @@ dependencies:
   - libzlib=1.2.13=hd590300_5
   - locket=1.0.0=pyhd8ed1ab_0
   - ltr_finder=1.07=h4ac6f70_3
+  - ltr_harvest_parallel=hdfd78af_1
   - ltr_retriever=2.9.9=hdfd78af_0
   - lz4=4.3.3=py39h79d96da_0
   - lz4-c=1.9.4=hcb278e6_0

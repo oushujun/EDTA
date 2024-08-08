@@ -73,7 +73,7 @@ The default `conda env` name is `EDTA2` specified by the first line of the yml f
 
 2. Install by specifying all dependencies:
 
-`mamba create -n EDTA2.2 -c conda-forge -c bioconda -c r annosine2 biopython cd-hit coreutils genericrepeatfinder genometools-genometools glob2 tir-learner ltr_finder ltr_retriever mdust multiprocess muscle openjdk perl perl-text-soundex r-base r-dplyr regex repeatmodeler r-ggplot2 r-here r-tidyr tesorter samtools bedtools`
+`mamba create -n EDTA2.2 -c conda-forge -c bioconda -c r annosine2 biopython cd-hit coreutils genericrepeatfinder genometools-genometools glob2 tir-learner ltr_finder ltr_retriever mdust multiprocess muscle openjdk perl perl-text-soundex r-base r-dplyr regex repeatmodeler r-ggplot2 r-here r-tidyr tesorter samtools bedtools LTR_HARVEST_parallel HelitronScanner`
 </details>
 
 Usage:
@@ -85,7 +85,7 @@ perl EDTA.pl
 You can use the conda ENV to execute the latest EDTA from GitHub:
 ```
 git clone https://github.com/oushujun/EDTA.git
-perl ./EDTA/EDTA/pl
+perl ./EDTA/EDTA.pl
 ```
 
 ### Install with [Singularity](https://sylabs.io/docs/) (good for HPC users)
