@@ -1,0 +1,17 @@
+{
+  "name": "",
+  "homePage": "",
+  "repos": {
+    "https://github.com/nf-core/modules.git": {
+      "modules": {
+        "nf-core": {
+          "ltrharvest": {
+            "branch": "master",
+            "git_sha": "78575b0b1469a12b4e5bf3427aa81011f8de4a4d",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    }
+  }
+}

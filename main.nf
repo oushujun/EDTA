@@ -24,13 +24,18 @@ params.max_time         = '1.hour'
 // TODO: Check inputed repeat libraries, CDS, etc...
 // TODO: Check exclude file
 
-include { SANITIZE_HEADERS } from './modules/local/sanitize/main.nf'
+include { SANITIZE_HEADERS  } from './modules/local/sanitize/main.nf'
+include { LTRHARVEST        } from './modules/nf-core/ltrharvest/main.nf'
 
 // Test run: 
-// ./main.nf --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta -profile docker
-// ./main.nf --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta -profile conda
+// ./main.nf -profile docker,test
+// ./main.nf -profile conda,test
 workflow {
 
+    // Versions channel
+    ch_versions                         = Channel.empty()
+
+    
     ch_genome                           = Channel.fromPath(params.genomes)
 
     // Create a meta object for each genome
@@ -43,4 +48,14 @@ workflow {
 
     // MODULE: SANITIZE_HEADERS
     SANITIZE_HEADERS ( ch_meta_genome )
+
+    ch_sanitized_fasta                  = SANITIZE_HEADERS.out.fasta
+
+    // MODULE: LTRHARVEST
+    LTRHARVEST ( ch_sanitized_fasta )
+
+    ch_ltrharvest_gff3                  = LTRHARVEST.out.gff3
+    ch_ltrharvest_scn                   = LTRHARVEST.out.scn
+
+    ch_versions                         = ch_versions.mix(LTRHARVEST.out.versions)
 }
