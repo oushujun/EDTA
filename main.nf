@@ -55,11 +55,17 @@ workflow {
     // MODULE: LTRHARVEST
     LTRHARVEST ( ch_sanitized_fasta )
 
-    // MODULE: LTRFINDER
-    LTRFINDER  { ch_sanitized_fasta }
-
     ch_ltrharvest_gff3                  = LTRHARVEST.out.gff3
     ch_ltrharvest_scn                   = LTRHARVEST.out.scn
 
     ch_versions                         = ch_versions.mix(LTRHARVEST.out.versions)
+
+    // MODULE: LTRFINDER
+    LTRFINDER  { ch_sanitized_fasta }
+
+    ch_ltrfinder_gff3                   = LTRFINDER.out.gff3
+    ch_ltrfinder_scn                    = LTRFINDER.out.scn
+
+    ch_versions                         = ch_versions.mix(LTRFINDER.out.versions)
+
 }
