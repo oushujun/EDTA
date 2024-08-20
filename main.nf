@@ -26,6 +26,7 @@ params.max_time         = '1.hour'
 
 include { SANITIZE_HEADERS  } from './modules/local/sanitize/main.nf'
 include { LTRHARVEST        } from './modules/nf-core/ltrharvest/main.nf'
+include { LTRFINDER         } from './modules/nf-core/ltrfinder/main'
 
 // Test run: 
 // ./main.nf -profile docker,test
@@ -53,6 +54,9 @@ workflow {
 
     // MODULE: LTRHARVEST
     LTRHARVEST ( ch_sanitized_fasta )
+
+    // MODULE: LTRFINDER
+    LTRFINDER  { ch_sanitized_fasta }
 
     ch_ltrharvest_gff3                  = LTRHARVEST.out.gff3
     ch_ltrharvest_scn                   = LTRHARVEST.out.scn
