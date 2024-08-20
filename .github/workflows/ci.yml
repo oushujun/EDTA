@@ -75,8 +75,4 @@ jobs:
         run: |
           nextflow run \
             ${GITHUB_WORKSPACE} \
-            -profile ${{ matrix.profile }} \
-            --genomes https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta \
-            --outdir ./results \
-            --max_cpus 4 \
-            --max_memory '8.GB'
+            -profile ${{ matrix.profile }},test
