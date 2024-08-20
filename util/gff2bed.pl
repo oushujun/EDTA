@@ -91,6 +91,12 @@ while (<GFF>){
 	$type = 'repeat_fragment' if $sequence_ontology =~ /(repeat_fragment|Unknown|Unspecified)/i; #suggested by Changfu Jia
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
+	# Add handling for snRNA
+	$type = "snRNA" if $sequence_ontology =~ /snRNA/i;
+
+	# Default assignment to avoid uninitialized $type
+	$type ||= "unknown";
+
 	# get assortive structural info
 	my $TE_ID = "$chr:$element_start..$element_end";
 	$TE_ID = $1 if $extra =~ s/Name=(.*?);//i;
