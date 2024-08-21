@@ -2,9 +2,25 @@
   "name": "",
   "homePage": "",
   "repos": {
+    "https://github.com/GallVp/nxf-components.git": {
+      "modules": {
+        "gallvp": {
+          "annosine": {
+            "branch": "main",
+            "git_sha": "e465cc205174ad19209780302e22a96e0d6e4e48",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    },
     "https://github.com/nf-core/modules.git": {
       "modules": {
         "nf-core": {
+          "ltrfinder": {
+            "branch": "master",
+            "git_sha": "be4f907729fce59ca73b6d79545cd220544729c7",
+            "installed_by": ["modules"]
+          },
           "ltrharvest": {
             "branch": "master",
             "git_sha": "78575b0b1469a12b4e5bf3427aa81011f8de4a4d",
