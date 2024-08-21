@@ -58,4 +58,8 @@ workflow {
     ch_ltrharvest_scn                   = LTRHARVEST.out.scn
 
     ch_versions                         = ch_versions.mix(LTRHARVEST.out.versions)
+
+    // These can also run in parallel
+    // SUBWORKFLOW: ANNOSINE
+    ANNOSINE (ch_genome_all )
 }
