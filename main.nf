@@ -26,6 +26,7 @@ params.max_time         = '1.hour'
 
 include { SANITIZE_HEADERS  } from './modules/local/sanitize/main.nf'
 include { LTRHARVEST        } from './modules/nf-core/ltrharvest/main.nf'
+include { ANNOSINE          } from './modules/local/annosine/main.nf'
 
 // Test run: 
 // ./main.nf -profile docker,test
@@ -61,5 +62,5 @@ workflow {
 
     // These can also run in parallel
     // SUBWORKFLOW: ANNOSINE
-    ANNOSINE (ch_genome_all )
+    ANNOSINE (ch_meta_genome )
 }

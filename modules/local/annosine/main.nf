@@ -1,18 +1,22 @@
 process ANNOSINE {
     tag "${meta.id}"
-    label 'process_low'
+    label 'process_low' // maybe medium, previously had 12h and 16Gb ram
     
     input:
-        tuple val(data), path(assembly)
+        tuple val(meta), path(assembly)
 
     output:
-        tuple val(data), path(assembly), path("${meta.id}.Seed_SINE.fa"), emit: seed_sine
+        tuple val(meta), path(assembly), path("${meta.id}.Seed_SINE.fa"), emit: seed_sine
 
-        // todo test
-        eval("AnnoSINE_v2 --version"), topic: versions
+        // Program does not output version, so must be hardcoded to what is specifed in conda/docker
+        eval("echo '2.0.7'"), topic: versions
     
     conda 'bioconda::annosine2'
-    container 'https://depot.galaxyproject.org/singularity/annosine2%3A2.0.7--pyh7cba7a3_0'
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/annosine2%3A2.0.7--pyh7cba7a3_0':
+        'quay.io/biocontainers/annosine2:2.0.7--pyh7cba7a3_0' }"
+    
+    
 
     when:
     task.ext.when == null || task.ext.when
@@ -29,7 +33,7 @@ process ANNOSINE {
         --copy_number 3 \\
         --shift 100 \\
         $args \\
-        -auto 1 3 ${data.assembly} .
+        -auto 1 3 ${assembly} ${prefix}
 
     mv Seed_SINE.fa ${prefix}.Seed_SINE.fa
     """
