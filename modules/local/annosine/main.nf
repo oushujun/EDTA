@@ -16,8 +16,6 @@ process ANNOSINE {
         'https://depot.galaxyproject.org/singularity/annosine2%3A2.0.7--pyh7cba7a3_0':
         'quay.io/biocontainers/annosine2:2.0.7--pyh7cba7a3_0' }"
     
-    
-
     when:
     task.ext.when == null || task.ext.when
 
