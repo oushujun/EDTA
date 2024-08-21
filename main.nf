@@ -64,9 +64,9 @@ workflow {
     // MODULE: ANNOSINE
     ANNOSINE (ch_meta_genome )
 
-    ch_versions                         = ch_versions.mix(ANNOSINE.out.versions)
     // Currently it's a topic, so need to fix that
-    // cb_annosine_seed_sine               = ANNOSINE.out.seed_sine
+    // ch_versions                         = ch_versions.mix(ANNOSINE.out.versions)
+    cb_annosine_seed_sine               = ANNOSINE.out.seed_sine
 
 
 }
