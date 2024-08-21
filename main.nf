@@ -63,7 +63,7 @@ workflow {
     // MODULE: LTRFINDER
     LTRFINDER  { ch_sanitized_fasta }
 
-    ch_ltrfinder_gff3                   = LTRFINDER.out.gff3
+    ch_ltrfinder_gff3                   = LTRFINDER.out.gff
     ch_ltrfinder_scn                    = LTRFINDER.out.scn
 
     ch_versions                         = ch_versions.mix(LTRFINDER.out.versions)
