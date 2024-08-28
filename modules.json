@@ -2,6 +2,17 @@
   "name": "",
   "homePage": "",
   "repos": {
+    "https://github.com/GallVp/nxf-components.git": {
+      "modules": {
+        "gallvp": {
+          "tirlearner": {
+            "branch": "main",
+            "git_sha": "27db941e5420f464a1f60efeec8d5b25a408261d",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    },
     "https://github.com/nf-core/modules.git": {
       "modules": {
         "nf-core": {
