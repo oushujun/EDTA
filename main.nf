@@ -24,9 +24,12 @@ params.max_time         = '1.hour'
 // TODO: Check inputed repeat libraries, CDS, etc...
 // TODO: Check exclude file
 
+// nf-core -v modules -g https://github.com/GallVp/nxf-components.git install
+
 include { SANITIZE_HEADERS  } from './modules/local/sanitize/main.nf'
 include { LTRHARVEST        } from './modules/nf-core/ltrharvest/main.nf'
-include { LTRFINDER         } from './modules/nf-core/ltrfinder/main.nf'
+include { LTRFINDER         } from './modules/nf-core/ltrfinder/main'
+include { ANNOSINE          } from './modules/gallvp/annosine/main.nf'
 include { TIRLEARNER        } from './modules/gallvp/tirlearner/main.nf'
 
 // Test run: 
@@ -68,6 +71,17 @@ workflow {
     ch_ltrfinder_scn                    = LTRFINDER.out.scn
 
     ch_versions                         = ch_versions.mix(LTRFINDER.out.versions)
+
+    // These can also run in parallel
+    // MODULE: ANNOSINE
+    ANNOSINE (
+        ch_sanitized_fasta,
+        3 // mode
+    )
+
+    // Currently it's a topic, so need to fix that
+    ch_versions                         = ch_versions.mix(ANNOSINE.out.versions)
+    cb_annosine_seed_sine               = ANNOSINE.out.fa
 
     // MODULE: TIRLEARNER
     TIRLEARNER (
