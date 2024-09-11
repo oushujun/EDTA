@@ -74,7 +74,10 @@ workflow {
 
     // These can also run in parallel
     // MODULE: ANNOSINE
-    ANNOSINE (ch_sanitized_fasta, 3)
+    ANNOSINE (
+        ch_sanitized_fasta,
+        3 // mode
+    )
 
     // Currently it's a topic, so need to fix that
     ch_versions                         = ch_versions.mix(ANNOSINE.out.versions)
