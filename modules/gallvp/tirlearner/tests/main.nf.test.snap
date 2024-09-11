@@ -1,0 +1,155 @@
+{
+    "sarscov2-genome": {
+        "content": [
+            [
+                "versions.yml:md5,9db74013377c09d8452530315592acdf"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-08-22T13:03:25.394783"
+    },
+    "actinidia_chinensis-genome_1_fasta_gz-success": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.fa:md5,65987decb67d1e3f95b993f86d14c0d0"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.gff3:md5,90bf040e7b29763351237207297dc801"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.filtered.fa:md5,65987decb67d1e3f95b993f86d14c0d0"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.filtered.gff3:md5,90bf040e7b29763351237207297dc801"
+                ]
+            ],
+            [
+                "versions.yml:md5,9db74013377c09d8452530315592acdf"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-08-22T13:21:08.136874"
+    },
+    "stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.filtered.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.filtered.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "5": [
+                    "versions.yml:md5,9db74013377c09d8452530315592acdf"
+                ],
+                "fasta": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "filtered_fasta": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.filtered.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "filtered_gff": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.filtered.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "gff": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,9db74013377c09d8452530315592acdf"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-08-22T12:56:16.022839"
+    }
+}

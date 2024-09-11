@@ -7,7 +7,12 @@
         "gallvp": {
           "annosine": {
             "branch": "main",
-            "git_sha": "e465cc205174ad19209780302e22a96e0d6e4e48",
+            "git_sha": "004aba06875a2fee13207e2ffaa04deb2190a35d",
+            "installed_by": ["modules"]
+          },
+          "tirlearner": {
+            "branch": "main",
+            "git_sha": "27db941e5420f464a1f60efeec8d5b25a408261d",
             "installed_by": ["modules"]
           }
         }

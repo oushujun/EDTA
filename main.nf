@@ -30,6 +30,8 @@ include { SANITIZE_HEADERS  } from './modules/local/sanitize/main.nf'
 include { LTRHARVEST        } from './modules/nf-core/ltrharvest/main.nf'
 include { LTRFINDER         } from './modules/nf-core/ltrfinder/main'
 include { ANNOSINE          } from './modules/gallvp/annosine/main.nf'
+include { TIRLEARNER        } from './modules/gallvp/tirlearner/main.nf'
+
 
 // Test run: 
 // ./main.nf -profile docker,test
@@ -71,7 +73,6 @@ workflow {
 
     ch_versions                         = ch_versions.mix(LTRFINDER.out.versions)
 
-
     // These can also run in parallel
     // MODULE: ANNOSINE
     ANNOSINE (ch_meta_genome, ch_sanitized_fasta, mode: 3)
@@ -80,5 +81,13 @@ workflow {
     ch_versions                         = ch_versions.mix(ANNOSINE.out.versions)
     cb_annosine_seed_sine               = ANNOSINE.out.fa
 
+    // MODULE: TIRLEARNER
+    TIRLEARNER (
+        ch_sanitized_fasta,
+        params.species
+    )
+
+    ch_tirlearner_filtered_gff          = TIRLEARNER.out.filtered_gff
+    ch_versions                         = ch_versions.mix(TIRLEARNER.out.versions)
 
 }
