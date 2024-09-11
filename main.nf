@@ -32,7 +32,6 @@ include { LTRFINDER         } from './modules/nf-core/ltrfinder/main'
 include { ANNOSINE          } from './modules/gallvp/annosine/main.nf'
 include { TIRLEARNER        } from './modules/gallvp/tirlearner/main.nf'
 
-
 // Test run: 
 // ./main.nf -profile docker,test
 // ./main.nf -profile conda,test
@@ -75,7 +74,7 @@ workflow {
 
     // These can also run in parallel
     // MODULE: ANNOSINE
-    ANNOSINE (ch_meta_genome, ch_sanitized_fasta, mode: 3)
+    ANNOSINE (ch_sanitized_fasta, 3)
 
     // Currently it's a topic, so need to fix that
     ch_versions                         = ch_versions.mix(ANNOSINE.out.versions)
