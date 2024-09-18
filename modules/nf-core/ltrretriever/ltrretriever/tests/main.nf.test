@@ -9,7 +9,7 @@ nextflow_process {
     tag "modules_nfcore"
     tag "ltrretriever"
     tag "ltrretriever/ltrretriever"
-    tag "gunzip/main"
+    tag "gunzip"
     tag "ltrharvest"
     tag "ltrfinder"
     tag "cat/cat"
@@ -19,7 +19,7 @@ nextflow_process {
         setup {
 
             run("LTRHARVEST") {
-                script "../../../ltrharvest"
+                script "../../../ltrharvest/main.nf"
 
                 process {
                     """
@@ -32,7 +32,7 @@ nextflow_process {
             }
 
             run("LTRFINDER") {
-                script "../../../ltrfinder"
+                script "../../../ltrfinder/main.nf"
 
                 process {
                     """
@@ -45,7 +45,7 @@ nextflow_process {
             }
 
             run("CAT_CAT") {
-                script "../../../cat/cat"
+                script "../../../cat/cat/main.nf"
 
                 process {
                     """
@@ -85,7 +85,7 @@ nextflow_process {
         setup {
 
             run('GUNZIP') {
-                script "../../../gunzip/main"
+                script "../../../gunzip/main.nf"
 
                 process {
                     """
@@ -98,7 +98,7 @@ nextflow_process {
             }
 
             run("LTRHARVEST") {
-                script "../../../ltrharvest"
+                script "../../../ltrharvest/main.nf"
 
                 process {
                     """
@@ -108,7 +108,7 @@ nextflow_process {
             }
 
             run("LTRFINDER") {
-                script "../../../ltrfinder"
+                script "../../../ltrfinder/main.nf"
 
                 process {
                     """
@@ -118,7 +118,7 @@ nextflow_process {
             }
 
             run("CAT_CAT") {
-                script "../../../cat/cat"
+                script "../../../cat/cat/main.nf"
 
                 process {
                     """
