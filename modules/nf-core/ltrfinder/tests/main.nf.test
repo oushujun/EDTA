@@ -7,13 +7,13 @@ nextflow_process {
     tag "modules"
     tag "modules_nfcore"
     tag "ltrfinder"
-    tag "gunzip/main"
+    tag "gunzip"
 
     test("actinidia_chinensis-genome_21_fasta_gz-success") {
 
         setup {
             run('GUNZIP') {
-                script "../../gunzip/main"
+                script "../../gunzip/main.nf"
 
                 process {
                     """

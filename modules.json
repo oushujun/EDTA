@@ -7,12 +7,12 @@
         "gallvp": {
           "annosine": {
             "branch": "main",
-            "git_sha": "004aba06875a2fee13207e2ffaa04deb2190a35d",
+            "git_sha": "a203a6035aed3f9b345ee380f5d497ca98504d98",
             "installed_by": ["modules"]
           },
           "tirlearner": {
             "branch": "main",
-            "git_sha": "27db941e5420f464a1f60efeec8d5b25a408261d",
+            "git_sha": "a203a6035aed3f9b345ee380f5d497ca98504d98",
             "installed_by": ["modules"]
           }
         }
@@ -28,17 +28,17 @@
           },
           "ltrfinder": {
             "branch": "master",
-            "git_sha": "be4f907729fce59ca73b6d79545cd220544729c7",
+            "git_sha": "94ae259d776e2b715a2829d3919d1642e40e8155",
             "installed_by": ["modules"]
           },
           "ltrharvest": {
             "branch": "master",
-            "git_sha": "78575b0b1469a12b4e5bf3427aa81011f8de4a4d",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
             "installed_by": ["modules"]
           },
           "ltrretriever/ltrretriever": {
             "branch": "master",
-            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "git_sha": "94ae259d776e2b715a2829d3919d1642e40e8155",
             "installed_by": ["modules"]
           }
         }
