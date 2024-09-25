@@ -1,4 +1,3 @@
----
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
 name: "ltrfinder"
 description: |
@@ -19,41 +18,52 @@ tools:
       tool_dev_url: "https://github.com/oushujun/LTR_FINDER_parallel"
       doi: "10.1186/s13100-019-0193-0"
       licence: ["MIT"]
+      identifier: ""
   - "LTR_Finder":
-      description: An efficient program for finding full-length LTR retrotranspsons in genome sequences
+      description: An efficient program for finding full-length LTR retrotranspsons
+        in genome sequences
       homepage: "https://github.com/xzhub/LTR_Finder"
       documentation: "https://github.com/xzhub/LTR_Finder"
       tool_dev_url: "https://github.com/xzhub/LTR_Finder"
       doi: "10.1093/nar/gkm286"
       licence: ["MIT"]
+      identifier: ""
 input:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. `[ id:'sample1' ]`
-  - fasta:
-      type: file
-      description: Genome sequences in fasta format
-      pattern: "*.{fsa,fa,fasta}"
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - fasta:
+        type: file
+        description: Genome sequences in fasta format
+        pattern: "*.{fsa,fa,fasta}"
 output:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. `[ id:'sample1' ]`
   - scn:
-      type: file
-      description: Annotation in LTRharvest or LTR_FINDER format
-      pattern: "*.scn"
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.scn":
+          type: file
+          description: Annotation in LTRharvest or LTR_FINDER format
+          pattern: "*.scn"
   - gff:
-      type: file
-      description: Annotation in gff3 format
-      pattern: "*.gff3"
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.gff3":
+          type: file
+          description: Annotation in gff3 format
+          pattern: "*.gff3"
   - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
 authors:
   - "@GallVp"
 maintainers:
