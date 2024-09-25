@@ -7,12 +7,12 @@
         "gallvp": {
           "annosine": {
             "branch": "main",
-            "git_sha": "a203a6035aed3f9b345ee380f5d497ca98504d98",
+            "git_sha": "a8939d36280e7d9037c7cf164eeede19e46546a4",
             "installed_by": ["modules"]
           },
           "tirlearner": {
             "branch": "main",
-            "git_sha": "a203a6035aed3f9b345ee380f5d497ca98504d98",
+            "git_sha": "a8939d36280e7d9037c7cf164eeede19e46546a4",
             "installed_by": ["modules"]
           }
         }
@@ -23,22 +23,22 @@
         "nf-core": {
           "cat/cat": {
             "branch": "master",
-            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
           "ltrfinder": {
             "branch": "master",
-            "git_sha": "94ae259d776e2b715a2829d3919d1642e40e8155",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
           "ltrharvest": {
             "branch": "master",
-            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
           "ltrretriever/ltrretriever": {
             "branch": "master",
-            "git_sha": "94ae259d776e2b715a2829d3919d1642e40e8155",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           }
         }
