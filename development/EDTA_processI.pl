@@ -49,11 +49,11 @@ my $mindiff_HEL = 2;
 
 my $threads = 4;
 my $script_path = $FindBin::Bin;
-my $TE_purifier = "$script_path/util/TE_purifier.pl";
-my $rename_TE = "$script_path/util/rename_TE.pl";
-my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
-my $cleanup_nested = "$script_path/util/cleanup_nested.pl";
-my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
+my $TE_purifier = "$script_path/bin/TE_purifier.pl";
+my $rename_TE = "$script_path/bin/rename_TE.pl";
+my $cleanup_tandem = "$script_path/bin/cleanup_tandem.pl";
+my $cleanup_nested = "$script_path/bin/cleanup_nested.pl";
+my $cleanup_proteins = "$script_path/bin/cleanup_proteins.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
 my $repeatmasker = " ";
 my $blast = " ";

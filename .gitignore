@@ -1,3 +1,4 @@
+/.idea/
 bin/TIR-Learner*/Module3/Maize_model.sav
 work/
 .nextflow.log*

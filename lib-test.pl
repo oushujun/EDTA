@@ -132,31 +132,31 @@ if ($category eq "mite" or $category eq "tir"){
 	}
 
 ## bed arithmetics
-`perl $script_path/util/combine_overlap.pl $std_out.$category.cvg $std_out.$category.cvg.cbi`;
-`perl $script_path/util/combine_overlap.pl  $tst_out.$category.cvg $tst_out.$category.cvg.cbi`;
+`perl $script_path/bin/combine_overlap.pl $std_out.$category.cvg $std_out.$category.cvg.cbi`;
+`perl $script_path/bin/combine_overlap.pl  $tst_out.$category.cvg $tst_out.$category.cvg.cbi`;
 
-`perl $script_path/util/substract_parallel.pl $tst_out.$category.cvg.cbi $std_out.$category.cvg.cbi $threads`;
-`perl $script_path/util/substract_parallel.pl $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi $threads`;
-`perl $script_path/util/substract_parallel.pl $std_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi $threads`;
+`perl $script_path/bin/substract_parallel.pl $tst_out.$category.cvg.cbi $std_out.$category.cvg.cbi $threads`;
+`perl $script_path/bin/substract_parallel.pl $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi $threads`;
+`perl $script_path/bin/substract_parallel.pl $std_out.$category.cvg.cbi $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi $threads`;
 `cat $std_out.$category.cvg.cbi $tst_out.$category.cvg.cbi > ${std_out}_$tst_out.$category-cmb`;
-`perl $script_path/util/combine_overlap.pl  ${std_out}_$tst_out.$category-cmb ${std_out}_$tst_out.$category-cmb.cbi`;
-`perl $script_path/util/substract_parallel.pl $genome.list ${std_out}_$tst_out.$category-cmb.cbi $threads`;
+`perl $script_path/bin/combine_overlap.pl  ${std_out}_$tst_out.$category-cmb ${std_out}_$tst_out.$category-cmb.cbi`;
+`perl $script_path/bin/substract_parallel.pl $genome.list ${std_out}_$tst_out.$category-cmb.cbi $threads`;
 
 ## FP - false positive
 my ($FP, $FN, $TP, $TN, $sens, $spec, $accu, $prec, $FDR, $F1) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-$FP=`perl $script_path/util/count_mask.pl $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi`;
+$FP=`perl $script_path/bin/count_mask.pl $tst_out.$category.cvg.cbi-$std_out.$category.cvg.cbi`;
 chomp $FP;
 
 ## FN - false negative
-$FN=`perl $script_path/util/count_mask.pl $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
+$FN=`perl $script_path/bin/count_mask.pl $std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
 chomp $FN;
 
 ## TP - true positive
-$TP=`perl $script_path/util/count_mask.pl $std_out.$category.cvg.cbi-$std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
+$TP=`perl $script_path/bin/count_mask.pl $std_out.$category.cvg.cbi-$std_out.$category.cvg.cbi-$tst_out.$category.cvg.cbi`;
 chomp $TP;
 
 ## TN - true negative
-$TN=`perl $script_path/util/count_mask.pl $genome.list-${std_out}_$tst_out.$category-cmb.cbi`;
+$TN=`perl $script_path/bin/count_mask.pl $genome.list-${std_out}_$tst_out.$category-cmb.cbi`;
 chomp $TN;
 
 $sens=$TP/($TP+$FN) if $TP+$FN > 0;

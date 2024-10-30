@@ -30,7 +30,12 @@ This package is developed for automated whole-genome *de-novo* TE annotation and
 
 The EDTA package was designed to filter out false discoveries in raw TE candidates and generate a high-quality non-redundant TE library for whole-genome TE annotations. Selection of initial search programs were based on benckmarkings on the annotation performance using a manually curated TE library in the rice genome.
 
-<img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true">
+[//]: # (<img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true">)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" width="480" srcset="./development/EDTA workflow_black_for light mode.png">
+  <img width="480" alt="The EDTA workflow" src="./development/EDTA workflow_white_for dark mode.png">
+</picture>
 
 To benchmark the annotation quality of a new library/method, I have provided the TE annotation with the curated rice TE library (v7.0.0) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
 
@@ -68,8 +73,7 @@ The default `conda env` name is `EDTA2` specified by the first line of the yml f
 
 2. Install by specifying all dependencies:
 
-`mamba create -n EDTA2.2 -c conda-forge -c bioconda -c r annosine2 biopython blast cd-hit coreutils genericrepeatfinder genometools-genometools glob2 h5py==3.9 keras==2.11 ltr_finder ltr_retriever mdust multiprocess muscle openjdk pandas perl perl-text-soundex pyarrow python r-base r-dplyr regex repeatmodeler r-ggplot2 r-here r-tidyr scikit-learn swifter tensorflow==2.11 tesorter`
-
+`mamba create -n EDTA2.2 -c conda-forge -c bioconda -c r annosine2 biopython cd-hit coreutils genericrepeatfinder genometools-genometools glob2 tir-learner ltr_finder_parallel ltr_retriever mdust multiprocess muscle openjdk perl perl-text-soundex r-base r-dplyr regex repeatmodeler r-ggplot2 r-here r-tidyr tesorter samtools bedtools LTR_HARVEST_parallel HelitronScanner`
 </details>
 
 Usage:
@@ -81,7 +85,7 @@ perl EDTA.pl
 You can use the conda ENV to execute the latest EDTA from GitHub:
 ```
 git clone https://github.com/oushujun/EDTA.git
-perl ./EDTA/EDTA/pl
+perl ./EDTA/EDTA.pl
 ```
 
 ### Install with [Singularity](https://sylabs.io/docs/) (good for HPC users)
@@ -137,7 +141,7 @@ Optional:
 
 
 ## Outputs
-A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice7.0.0.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./util/TE_Sequence_Ontology.txt).
+A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice7.0.0.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./bin/TE_Sequence_Ontology.txt).
 
 Optional 1:
 1. Novel TE families: $genome.mod.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).

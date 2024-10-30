@@ -58,7 +58,7 @@ ln -s ../$Helitronstg0HQ $genome.Helitron.fa.stg0.HQ
 # remove mite and helitron in LTR candidates
 #cat $genome.TIR.fa.stg0.HQ $genome.Helitron.fa.stg0.HQ > $genome.TIR.Helitron.fa.stg0.HQ
 #RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR.Helitron.fa.stg0.HQ $genome.LTR.fa.stg0
-#perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0 > $genome.LTR.fa.stg1
+#perl ~/las/git_bin/TElib_benchmark/bin/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0 > $genome.LTR.fa.stg1
 
 # copy LTR.stg0 as LTR.stg1
 cp $genome.LTR.fa.stg0 $genome.LTR.fa.stg1
@@ -66,15 +66,15 @@ cp $genome.LTR.fa.stg0 $genome.LTR.fa.stg1
 # remove LTR and helitron in TIR candidates
 #cat $genome.LTR.fa.stg0.HQ $genome.Helitron.fa.stg0.HQ > $genome.LTR.Helitron.fa.stg0.HQ
 #RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.Helitron.fa.stg0.HQ $genome.TIR.fa.stg0
-#perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1
+#perl ~/las/git_bin/TElib_benchmark/bin/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1
 
 # remove LTR in TIR candidates
 RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg0
-perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1
+perl ~/las/git_bin/TElib_benchmark/bin/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.fa.stg0.masked > $genome.TIR.fa.stg1
 
 # remove TIR in LTR candidates
 #RepeatMasker -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.TIR.fa.stg1 $genome.LTR.fa.stg0
-#perl ~/las/git_bin/TElib_benchmark/util/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0.masked > $genome.LTR.fa.stg1
+#perl ~/las/git_bin/TElib_benchmark/bin/cleanup_tandem.pl -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.LTR.fa.stg0.masked > $genome.LTR.fa.stg1
 
 # remove LTR and TIR in Helitron candidates
 cat $genome.LTR.fa.stg0.HQ $genome.TIR.fa.stg1 > $genome.LTR.TIR.fa.stg0.HQ

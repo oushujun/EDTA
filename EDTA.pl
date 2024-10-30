@@ -8,7 +8,7 @@ use Pod::Usage;
 use POSIX qw(strftime);
 use Cwd qw(abs_path);
 
-my $version = "v2.2.1";
+my $version = "v2.2.2";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -22,6 +22,7 @@ my $version = "v2.2.1";
 #v2.0 11/25/2021
 #v2.1 10/10/2022
 #v2.2 01/05/2024
+#v2.2.2 08/08/2024
 
 print "
 #########################################################
@@ -109,44 +110,44 @@ my $maxdiv = 40; # maximum divergence from lib sequences for fragmented repeats
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
 my $EDTA_process = "$script_path/EDTA_processK.pl";
-my $cleanup_proteins = "$script_path/util/cleanup_proteins.pl";
-my $cleanup_TE = "$script_path/util/cleanup_TE.pl";
-my $cleanup_tandem = "$script_path/util/cleanup_tandem.pl";
-my $cleanup_nested = "$script_path/util/cleanup_nested.pl";
-my $count_nested = "$script_path/util/count_nested.pl";
-my $count_base = "$script_path/util/count_base.pl";
-my $make_masked = "$script_path/util/make_masked.pl";
-my $make_gff3 = "$script_path/util/make_gff3_with_RMout.pl";
+my $cleanup_proteins = "$script_path/bin/cleanup_proteins.pl";
+my $cleanup_TE = "$script_path/bin/cleanup_TE.pl";
+my $cleanup_tandem = "$script_path/bin/cleanup_tandem.pl";
+my $cleanup_nested = "$script_path/bin/cleanup_nested.pl";
+my $count_nested = "$script_path/bin/count_nested.pl";
+my $count_base = "$script_path/bin/count_base.pl";
+my $make_masked = "$script_path/bin/make_masked.pl";
+my $make_gff3 = "$script_path/bin/make_gff3_with_RMout.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
 my $rice_LTR = "$script_path/database/rice7.0.0.liban.LTR";
 my $rice_SINE = "$script_path/database/rice7.0.0.liban.SINE";
 my $rice_LINE = "$script_path/database/rice7.0.0.liban.LINE";
 my $rice_TIR = "$script_path/database/rice7.0.0.liban.TIR";
 my $rice_helitron = "$script_path/database/rice7.0.0.liban.Helitron";
-my $rename_TE = "$script_path/util/rename_TE.pl";
-#my $rename_RM = "$script_path/util/rename_RM_TE.pl";
-my $call_seq = "$script_path/util/call_seq_by_list.pl";
-my $buildSummary = "$script_path/util/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
-my $filter_gff = "$script_path/util/filter_gff3.pl";
-my $combine_RMrows = "$script_path/util/combine_RMrows.pl";
-my $RMout2bed = "$script_path/util/RMout2bed.pl";
-my $gff2RMout = "$script_path/util/gff2RMout.pl";
-my $bed2gff = "$script_path/util/bed2gff.pl";
-my $gff2bed = "$script_path/util/gff2bed.pl";
-my $get_frag = "$script_path/util/get_frag.pl";
-my $keep_nest = "$script_path/util/keep_nest.pl";
-my $combine_overlap = "$script_path/util/combine_overlap.pl";
-my $split_overlap = "$script_path/util/split_overlap.pl";
-my $reclassify = "$script_path/util/classify_by_lib_RM.pl";
-my $rename_by_list = "$script_path/util/rename_by_list.pl";
-my $output_by_list = "$script_path/util/output_by_list.pl";
-my $format_TElib = "$script_path/util/format_TElib.pl";
-my $format_gff3 = "$script_path/util/format_gff3.pl";
-my $add_id = "$script_path/util/add_id.pl";
-my $div_table = "$script_path/util/div_table2.pl";
-my $div_plot = "$script_path/util/div_plot2.R";
-my $density_table = "$script_path/util/density_table.py";
-my $density_plot = "$script_path/util/density_plot.R";
+my $rename_TE = "$script_path/bin/rename_TE.pl";
+#my $rename_RM = "$script_path/bin/rename_RM_TE.pl";
+my $call_seq = "$script_path/bin/call_seq_by_list.pl";
+my $buildSummary = "$script_path/bin/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
+my $filter_gff = "$script_path/bin/filter_gff3.pl";
+my $combine_RMrows = "$script_path/bin/combine_RMrows.pl";
+my $RMout2bed = "$script_path/bin/RMout2bed.pl";
+my $gff2RMout = "$script_path/bin/gff2RMout.pl";
+my $bed2gff = "$script_path/bin/bed2gff.pl";
+my $gff2bed = "$script_path/bin/gff2bed.pl";
+my $get_frag = "$script_path/bin/get_frag.pl";
+my $keep_nest = "$script_path/bin/keep_nest.pl";
+my $combine_overlap = "$script_path/bin/combine_overlap.pl";
+my $split_overlap = "$script_path/bin/split_overlap.pl";
+my $reclassify = "$script_path/bin/classify_by_lib_RM.pl";
+my $rename_by_list = "$script_path/bin/rename_by_list.pl";
+my $output_by_list = "$script_path/bin/output_by_list.pl";
+my $format_TElib = "$script_path/bin/format_TElib.pl";
+my $format_gff3 = "$script_path/bin/format_gff3.pl";
+my $add_id = "$script_path/bin/add_id.pl";
+my $div_table = "$script_path/bin/div_table2.pl";
+my $div_plot = "$script_path/bin/div_plot2.R";
+my $density_table = "$script_path/bin/density_table.py";
+my $density_plot = "$script_path/bin/density_plot.R";
 my $LTR_retriever = "";
 my $genometools = "";
 my $repeatmodeler = "";
@@ -636,7 +637,7 @@ die "ERROR: The masked file for $genome.EDTA.intact.fa.cln2 is not found! The Re
 
 ## generate clean intact gff3
 my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.ensembl.org/info/website/upload/gff3.html
-##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the sequence_ontology in Column 9 uses the closest parent SO.
+##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/bin/TE_Sequence_Ontology.txt (Enhancement notes), and the sequence_ontology in Column 9 uses the closest parent SO.
 ##Column 9: 
 ##      ID: unique ID for this feature in the genome.
 ##      classification: Same as Column 3 but formatted following the RepeatMasker naming convention.
@@ -711,7 +712,7 @@ if ($anno == 1){
 	`ln -s ../$genome $genome` unless -e $genome;
 
 	my $gff_head = "##This file follows the ENSEMBL standard: https://useast.ensembl.org/info/website/upload/gff3.html
-##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/util/TE_Sequence_Ontology.txt (Enhancement notes), and the sequence_ontology in Column 9 uses the closest parent SO.
+##Column 3: Sequence Ontology of repeat features. Please refer to the SO database for more details: http://www.sequenceontology.org/. In cases where the SO database does not have the repeat feature, tentative SO names are used, with a full list included in EDTA/bin/TE_Sequence_Ontology.txt (Enhancement notes), and the sequence_ontology in Column 9 uses the closest parent SO.
 ##Column 7: The Smith-Waterman score generated by RepeatMasker, only available for homology entries.
 ##Column 9: 
 ##	ID: unique ID for this feature in the genome.
