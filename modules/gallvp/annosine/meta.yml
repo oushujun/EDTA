@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "annosine"
+description: Accelerating de novo SINE annotation in plant and animal genomes
+keywords:
+  - genomics
+  - SINE
+  - annotation
+  - plant
+tools:
+  - "annosine":
+      description: "AnnoSINE_v2 - SINE Annotation Tool for Plant and Animal Genomes"
+      homepage: "https://github.com/liaoherui/AnnoSINE_v2"
+      documentation: "https://github.com/liaoherui/AnnoSINE_v2"
+      tool_dev_url: "https://github.com/liaoherui/AnnoSINE_v2"
+      doi: "10.1101/2024.03.01.582874"
+      licence: ["MIT"]
+      identifier: biotools:annosine
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - fasta:
+        type: file
+        description: Input genome assembly
+        pattern: "*.{fasta,fa,fsa}"
+  - - mode:
+        type: integer
+        description: Run mode
+output:
+  - fa:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.fa":
+          type: file
+          description: Non-redundant SINE library with serial number
+          pattern: "*.fa"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"

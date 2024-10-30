@@ -1,0 +1,72 @@
+{
+    "actinidia_chinensis - fasta": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.fa:md5,fc3bd39555133a1b50623bccc7d4cf9b"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,e4a37dd3eccd5ff39c2262542db40e98"
+                ],
+                "fa": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.fa:md5,fc3bd39555133a1b50623bccc7d4cf9b"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e4a37dd3eccd5ff39c2262542db40e98"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.2"
+        },
+        "timestamp": "2024-07-02T15:32:32.714269"
+    },
+    "actinidia_chinensis - fasta - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,e4a37dd3eccd5ff39c2262542db40e98"
+                ],
+                "fa": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e4a37dd3eccd5ff39c2262542db40e98"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.2"
+        },
+        "timestamp": "2024-07-02T15:32:37.586287"
+    }
+}
