@@ -201,4 +201,4 @@ if (merge_plots) {
     }
   }
   dev.off()
-  }
+}
