@@ -413,3 +413,4 @@ dependencies:
   - zlib-ng=2.2.2=h5888daf_0
   - zstandard=0.23.0=py312hef9b889_1
   - zstd=1.5.6=ha6fb4c9_0
+prefix: /home/bin/micromamba/envs/EDTA2

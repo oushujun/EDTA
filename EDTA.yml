@@ -1,4 +1,4 @@
-name: /home/shujun/micromamba/envs/EDTA_standard
+name: /home/bin/micromamba/envs/EDTA
 channels:
   - conda-forge
   - bioconda
@@ -437,4 +437,4 @@ dependencies:
   - zlib-ng=2.2.2=h5888daf_0
   - zstandard=0.23.0=py310ha39cb0e_1
   - zstd=1.5.6=ha6fb4c9_0
-prefix: /home/shujun/micromamba/envs/EDTA_standard
+prefix: /home/micromamba/envs/EDTA
