@@ -33,7 +33,7 @@ while (my $line = <$gff3_file>) {
     my ($family, $classification) = ($1, $2) if $attributes =~ /Name=(.*);classification=(.*)/i;
 
     # Format the output for RepeatMasker .out (modify according to the expected format)
-    printf $rm_out_file "0 0 0 0\t$seqName\t$start\t$end\tNA\t$strand\t$family\t$classification\tNA NA NA NA\n";
+    printf $rm_out_file "10000 0.001 0.001 0.001\t$seqName\t$start\t$end\tNA\t$strand\t$family\t$classification\tNA NA NA NA\n";
 }
 
 # Close the filehandles
