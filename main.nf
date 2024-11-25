@@ -16,11 +16,6 @@ params.exclude          = ''
 params.maxint           = 5000
 params.outdir           = 'results'
 
-// Max resource options
-params.max_cpus         = 12
-params.max_memory       = '16.GB'
-params.max_time         = '1.hour'
-
 // TODO: Check inputed repeat libraries, CDS, etc...
 // TODO: Check exclude file
 
@@ -30,10 +25,11 @@ include { LTRFINDER                     } from './modules/nf-core/ltrfinder/main
 include { CAT_CAT                       } from './modules/nf-core/cat/cat/main.nf'
 include { LTRRETRIEVER_LTRRETRIEVER     } from './modules/nf-core/ltrretriever/ltrretriever/main.nf'
 include { TIRLEARNER                    } from './modules/gallvp/tirlearner/main.nf'
-// nf-core -v modules -g https://github.com/GallVp/nxf-components.git install
 include { ANNOSINE                      } from './modules/gallvp/annosine/main.nf'
 include { REPEATMODELER_BUILDDATABASE   } from './modules/nf-core/repeatmodeler/builddatabase/main.nf'
 include { REPEATMODELER_REPEATMODELER   } from './modules/nf-core/repeatmodeler/repeatmodeler/main.nf'
+
+include { softwareVersionsToYAML        } from './modules/local/utils/main.nf'
 
 // Test run: 
 // ./main.nf -profile docker,test
@@ -48,7 +44,7 @@ workflow {
 
     // Create a meta object for each genome
     ch_meta_genome                      = ch_genome.map { genome -> 
-                                            meta        = [:]
+                                            def meta    = [:]
                                             meta.id     = genome.baseName
                                             
                                             [ meta, genome ]
@@ -151,5 +147,16 @@ workflow {
 
     ch_repeatmodeler_fasta              = REPEATMODELER_REPEATMODELER.out.fasta
     ch_versions                         = ch_versions.mix(REPEATMODELER_REPEATMODELER.out.versions.first())
+
+
+    // Function: Save versions
+    ch_versions_yml                     = softwareVersionsToYAML(ch_versions)
+                                        | collectFile(
+                                            storeDir: "${params.outdir}/pipeline_info",
+                                            name: 'software_versions.yml',
+                                            sort: true,
+                                            newLine: true,
+                                            cache: false
+                                        )
 
 }
