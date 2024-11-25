@@ -1,78 +1,99 @@
 name: EDTA Nextflow CI
 on:
-  push:
-    branches:
-      - nextflow_reboot
   pull_request:
-    branches:
-      - nextflow_reboot
 
 env:
   NXF_ANSI_LOG: false
-  NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
-  NXF_SINGULARITY_LIBRARYDIR: ${{ github.workspace }}/.singularity
+  NFT_WORKDIR: "~"
+  NFT_DIFF: "pdiff"
+  NFT_DIFF_ARGS: "--line-numbers --expand-tabs=2"
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   cancel-in-progress: true
-
 jobs:
+  nf-test-changes:
+    name: Check for changes
+    runs-on: ubuntu-latest
+    outputs:
+      nf_test_files: ${{ steps.list.outputs.components }}
+    steps:
+      - uses: actions/checkout@v4.2.1
+        with:
+          fetch-depth: 0
+
+      - name: List nf-test files
+        id: list
+        uses: adamrtalbot/detect-nf-test-changes@v0.0.4
+        with:
+          head: ${{ github.sha }}
+          base: origin/${{ github.base_ref }}
+          include: .github/include.yaml
+
+      - name: print list of nf-test files
+        run: |
+          echo ${{ steps.list.outputs.components }}
+
   test:
-    name: Run pipeline with test data
-    # Only run on push if this is the jguhlin nextflow_reboot branch (merged PRs)
-    if: "${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'jguhlin/EDTA') }}"
+    name: ${{ matrix.nf_test_files }} ${{ matrix.profile }} NF-${{ matrix.NXF_VER }}
+    needs: [nf-test-changes]
+    if: needs.nf-test-changes.outputs.nf_test_files != '[]'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        nextflow:
-          - '24.04.4'
+        NXF_VER:
+          - "24.04.2"
+
+        nf_test_files: ["${{ fromJson(needs.nf-test-changes.outputs.nf_test_files) }}"]
         profile:
-          - docker
-          - singularity
-          - conda
+          - "docker"
 
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+        uses: actions/checkout@v4.2.1
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
         with:
-          version: ${{ matrix.nextflow }}
+          version: "${{ matrix.NXF_VER }}"
 
-      # - name: Disk space cleanup
-      #   uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
-      # Will be needed with large data sets. Can take long to run
-
-      - name: Setup apptainer
-        if: matrix.profile == 'singularity'
-        uses: eWaterCycle/setup-apptainer@main
-      
-      - name: Set up Singularity
-        if: matrix.profile == 'singularity'
-        run: |
-          mkdir -p $NXF_SINGULARITY_CACHEDIR
-          mkdir -p $NXF_SINGULARITY_LIBRARYDIR
-      
-      - name: Set up miniconda
-        if: matrix.profile == 'conda'
-        uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3
+      - uses: actions/setup-python@v5.2.0
         with:
-          miniconda-version: "latest"
-          auto-update-conda: true
-          channels: conda-forge,bioconda
+          python-version: "3.11"
+          architecture: "x64"
 
-      - name: Conda setup
-        if: matrix.profile == 'conda'
+      - name: Install pdiff to see diff between nf-test snapshots
         run: |
-          conda clean -a
-          conda install -n base conda-libmamba-solver
-          conda config --set solver libmamba
-          echo $(realpath $CONDA)/condabin >> $GITHUB_PATH
-          echo $(realpath python) >> $GITHUB_PATH
+          python -m pip install --upgrade pip
+          pip install pdiff
 
-      - name: Run pipeline with test data
+      - uses: nf-core/setup-nf-test@v1.1.2
+        with:
+          version: 0.9.0
+
+      - name: Disk space cleanup
+        if: matrix.nf_test_files == 'tests/stub/main.nf.test'
+        uses: jlumbroso/free-disk-space@v1.3.1
+
+      - name: Run nf-test
         run: |
-          nextflow run \
-            ${GITHUB_WORKSPACE} \
-            -profile ${{ matrix.profile }},test
+          nf-test test --verbose ${{ matrix.nf_test_files }} --profile "+${{ matrix.profile }}"
+
+  confirm-pass:
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always()
+    steps:
+      - name: All tests ok
+        if: ${{ !contains(needs.*.result, 'failure') }}
+        run: exit 0
+      - name: One or more tests failed
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
+
+      - name: debug-print
+        if: always()
+        run: |
+          echo "toJSON(needs) = ${{ toJSON(needs) }}"
+          echo "toJSON(needs.*.result) = ${{ toJSON(needs.*.result) }}"

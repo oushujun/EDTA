@@ -1,0 +1,10 @@
+".":
+  - ./.github/workflows/**
+  - ./nf-test.config
+tests:
+  - ./assets/*
+  - ./bin/*
+  - ./conf/*
+  - ./main.nf
+  - ./nextflow_schema.json
+  - ./nextflow.config
