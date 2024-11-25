@@ -150,6 +150,12 @@ workflow {
 
 
     // Function: Save versions
+    ch_versions                         = ch_versions
+                                        | unique
+                                        | map { yml ->
+                                            if ( yml ) { yml }
+                                        }
+    
     ch_versions_yml                     = softwareVersionsToYAML(ch_versions)
                                         | collectFile(
                                             storeDir: "${params.outdir}/pipeline_info",
