@@ -7,10 +7,13 @@ env:
   NFT_WORKDIR: "~"
   NFT_DIFF: "pdiff"
   NFT_DIFF_ARGS: "--line-numbers --expand-tabs=2"
+  NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
+  NXF_SINGULARITY_LIBRARYDIR: ${{ github.workspace }}/.singularity
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   cancel-in-progress: true
+
 jobs:
   nf-test-changes:
     name: Check for changes
@@ -46,8 +49,7 @@ jobs:
           - "24.04.2"
 
         nf_test_files: ["${{ fromJson(needs.nf-test-changes.outputs.nf_test_files) }}"]
-        profile:
-          - "docker"
+        profile: [conda, docker, singularity]
 
     steps:
       - name: Check out pipeline code
@@ -71,10 +73,16 @@ jobs:
       - uses: nf-core/setup-nf-test@v1.1.2
         with:
           version: 0.9.0
+      
+      - name: Setup apptainer
+        if: matrix.profile == 'singularity'
+        uses: eWaterCycle/setup-apptainer@main
 
-      - name: Disk space cleanup
-        if: matrix.nf_test_files == 'tests/stub/main.nf.test'
-        uses: jlumbroso/free-disk-space@v1.3.1
+      - name: Set up Singularity
+        if: matrix.profile == 'singularity'
+        run: |
+          mkdir -p $NXF_SINGULARITY_CACHEDIR
+          mkdir -p $NXF_SINGULARITY_LIBRARYDIR
 
       - name: Run nf-test
         run: |
