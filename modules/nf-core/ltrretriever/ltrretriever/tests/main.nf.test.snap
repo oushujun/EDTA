@@ -1,0 +1,154 @@
+{
+    "versions": {
+        "content": [
+            "\"LTRRETRIEVER_LTRRETRIEVER\":\n    LTR_retriever: v2.9.9\n"
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-02-19T11:17:50.208819"
+    },
+    "stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.pass.list:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.pass.list.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.LTRlib.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.out:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "5": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.out.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "6": [
+                    "versions.yml:md5,3ab159acaee06b342b56e2d35e5e669b"
+                ],
+                "annotation_gff": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.out.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "annotation_out": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.out:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "ltrlib": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.LTRlib.fa:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "pass_list": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.pass.list:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "pass_list_gff": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.pass.list.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,3ab159acaee06b342b56e2d35e5e669b"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-02-19T11:04:15.954424"
+    },
+    "annotation_out": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.out:md5,33d89bea9031f25de8f0d3591ab94d87"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.3"
+        },
+        "timestamp": "2024-07-16T14:18:02.458476"
+    },
+    "versions_no_ltr": {
+        "content": [
+            [
+                "versions.yml:md5,3ab159acaee06b342b56e2d35e5e669b"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.3"
+        },
+        "timestamp": "2024-07-16T14:03:52.324194"
+    }
+}

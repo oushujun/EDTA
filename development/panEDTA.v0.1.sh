@@ -133,7 +133,7 @@ for i in `cat $genome_list`; do
 
 	echo "Annotate genome $genome with EDTA"
 	if [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then # run a new EDTA if annotation of the genome is not existing
-		perl $path/util/count_base.pl $genome -s > $genome.stats
+		perl $path/bin/count_base.pl $genome -s > $genome.stats
 		if [ "$curatedlib" != '' ]; then
 			perl $path/EDTA.pl --genome $genome -t $threads --anno 1 --cds $cds_ind --curatedlib $curatedlib || {
 				echo >&2 ERROR: Initial EDTA failed for $genome
@@ -159,7 +159,7 @@ for i in `cat $genome_list`; do
         fi
 
 	echo "Idenfity full-length TEs for genome $genome"
-	perl $path/util/find_flTE.pl $genome.mod.EDTA.anno/$genome.mod.EDTA.RM.out | \
+	perl $path/bin/find_flTE.pl $genome.mod.EDTA.anno/$genome.mod.EDTA.RM.out | \
 		awk '{print $10}'| \
 		sort| \
 	 	uniq -c |\
@@ -182,13 +182,13 @@ for i in `cat $genome_list`; do
 		for j in `cat $genome.mod.EDTA.TElib.fa.keep.list`; do
 			grep $j $genome.mod.EDTA.TElib.novel.fa; 
 		done | \
-			perl $path/util/output_by_list.pl 1 $genome.mod.EDTA.TElib.novel.fa 1 - -FA > $genome.mod.EDTA.TElib.fa.keep.ori
+			perl $path/bin/output_by_list.pl 1 $genome.mod.EDTA.TElib.novel.fa 1 - -FA > $genome.mod.EDTA.TElib.fa.keep.ori
 	else
 		# b) if --curatedlib is not provided
 		for j in `cat $genome.mod.EDTA.TElib.fa.keep.list`; do 
 			grep $j $genome.mod.EDTA.TElib.fa; 
 		done | \
-        		perl $path/util/output_by_list.pl 1 $genome.mod.EDTA.TElib.fa 1 - -FA > $genome.mod.EDTA.TElib.fa.keep.ori
+        		perl $path/bin/output_by_list.pl 1 $genome.mod.EDTA.TElib.fa 1 - -FA > $genome.mod.EDTA.TElib.fa.keep.ori
 	fi
 done
 
@@ -203,12 +203,12 @@ for j in `cat $genome_list`; do
         fi
 
 	i=$(($i+5000)); 
-	perl $path/util/rename_TE.pl $genome.mod.EDTA.TElib.fa.keep.ori $i; 
-done | perl $path/util/rename_TE.pl - > $genome_list.panEDTA.TElib.fa.raw
+	perl $path/bin/rename_TE.pl $genome.mod.EDTA.TElib.fa.keep.ori $i; 
+done | perl $path/bin/rename_TE.pl - > $genome_list.panEDTA.TElib.fa.raw
 
 # remove redundant
 echo "Generate the panEDTA library"
-perl $path/util/cleanup_nested.pl -in $genome_list.panEDTA.TElib.fa.raw -cov 0.95 -minlen 80 -miniden 80 -t $threads
+perl $path/bin/cleanup_nested.pl -in $genome_list.panEDTA.TElib.fa.raw -cov 0.95 -minlen 80 -miniden 80 -t $threads
 cp $genome_list.panEDTA.TElib.fa.raw.cln $genome_list.panEDTA.TElib.fa
 
 # Extra step if --curatedlib is provided:
