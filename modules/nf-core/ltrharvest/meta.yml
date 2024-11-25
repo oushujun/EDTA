@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "ltrharvest"
+description: |
+  Predicts LTR retrotransposons using the parallel version of GenomeTools gt-ltrharvest
+  utility included in the EDTA toolchain
+keywords:
+  - genomics
+  - genome
+  - annotation
+  - repeat
+  - transposons
+  - retrotransposons
+tools:
+  - "LTR_HARVEST_parallel":
+      description: A Perl wrapper for LTR_harvest
+      homepage: "https://github.com/oushujun/EDTA/tree/v2.2.0/bin/LTR_HARVEST_parallel"
+      documentation: "https://github.com/oushujun/EDTA/tree/v2.2.0/bin/LTR_HARVEST_parallel"
+      tool_dev_url: "https://github.com/oushujun/EDTA/tree/v2.2.0/bin/LTR_HARVEST_parallel"
+      licence: ["MIT"]
+      identifier: ""
+  - "gt":
+      description: "The GenomeTools genome analysis system"
+      homepage: "https://genometools.org/index.html"
+      documentation: "https://genometools.org/documentation.html"
+      tool_dev_url: "https://github.com/genometools/genometools"
+      doi: "10.1109/TCBB.2013.68"
+      licence: ["ISC"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - fasta:
+        type: file
+        description: Input genome fasta
+        pattern: "*.{fsa,fa,fasta}"
+output:
+  - gff3:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.gff3":
+          type: file
+          description: Predicted LTR candidates in gff3 format
+          pattern: "*.gff3"
+  - scn:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.scn":
+          type: file
+          description: Predicted LTR candidates in scn format
+          pattern: "*.scn"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"

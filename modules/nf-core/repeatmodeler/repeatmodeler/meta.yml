@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "repeatmodeler_repeatmodeler"
+description: Performs de novo transposable element (TE) family identification with
+  RepeatModeler
+keywords:
+  - genomics
+  - fasta
+  - repeat
+  - transposable element
+tools:
+  - "repeatmodeler":
+      description: "RepeatModeler is a de-novo repeat family identification and modeling
+        package."
+      homepage: "https://github.com/Dfam-consortium/RepeatModeler"
+      documentation: "https://github.com/Dfam-consortium/RepeatModeler"
+      tool_dev_url: "https://github.com/Dfam-consortium/RepeatModeler"
+      licence: ["Open Software License v2.1"]
+      identifier: biotools:repeatmodeler
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - db:
+        type: file
+        description: RepeatModeler database files generated with REPEATMODELER_BUILDDATABASE
+        pattern: "*"
+output:
+  - fasta:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.fa":
+          type: file
+          description: Consensus repeat sequences
+          pattern: "*.fa"
+  - stk:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.stk":
+          type: file
+          description: Seed alignments
+          pattern: "*.stk"
+  - log:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.log":
+          type: file
+          description: A summarized log of the run
+          pattern: "*.log"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"

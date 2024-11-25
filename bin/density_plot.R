@@ -149,7 +149,7 @@ set.seed(44) # Change the seed for a new shuffle of colors.
 color_palette <- sample(hcl.colors(num_categories, "Dark 3"))
 
 plot_border_theme <- theme(
-  panel.border = element_rect(colour = "grey", fill=NA, linewidth=1),
+  panel.border = element_rect(colour = "grey", fill=NA, size=1),
   axis.text.x = element_text(),
   axis.ticks.x = element_line(),
   plot.margin = margin(1, 1, 1, 1, "lines") # Adjust plot margin.
