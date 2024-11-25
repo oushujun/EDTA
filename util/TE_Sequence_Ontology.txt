@@ -16,7 +16,7 @@
 #######################
 ####### Warning #######
 #######################
-# Everytime you add new SO entries to this file (new line), you also need to update the EDTA/util/gff2bed.pl file, 
+# Everytime you add new SO entries to this file (new line), you also need to update the EDTA/bin/gff2bed.pl file, 
 #  so that $type can be correctly recognized from Sequence Ontologies listed on the first column of this file.
 
 
@@ -52,7 +52,7 @@ Tx1_LINE_retrotransposon	SO:0000194	Tx1_LINE_retrotransposon,LINE/Tx1
 Tad1_LINE_retrotransposon	SO:0000194	Tad1_LINE_retrotransposon,LINE/Tad1,LINE/Tad1?
 Rex_LINE_retrotransposon	SO:0000194	Rex_LINE_retrotransposon,LINE/Rex-Babar,LINE/Rex,LINE/Rex_Babar
 Proto2_LINE_retrotransposon	SO:0000194	Proto2_LINE_retrotransposon,LINE/Proto2
-ERTBV_retrotransposon	SO:0000189	ERTBV_retrotransposon,DNAvirus/ERTBV-A,Evirus/ERTBV-A,DNAvirus/ERTBV-B,Evirus/ERTBV-B,DNAvirus/ERTBV-C,Evirus/ERTBV-C.Evirus/ERTBV,Evirus/Unknown,Evirus/unknown
+ERTBV_retrotransposon	SO:0000189	ERTBV_retrotransposon,DNAvirus/ERTBV-A,Evirus/ERTBV-A,DNAvirus/ERTBV-B,Evirus/ERTBV-B,DNAvirus/ERTBV-C,Evirus/ERTBV-C,Evirus/ERTBV,Evirus/Unknown,Evirus/unknown
 pararetrovirus	SO:0000189	pararetrovirus,pararetrovirus/NA,pararetrovirus/Unknown,pararetrovirus/unknown,LTR/Caulimovirus
 
 
@@ -74,7 +74,7 @@ repeat_region	SO:0000657	repeat_region
 repeat_fragment	SO:0001050	repeat_fragment,Unknown,unknown,unknown/unknown,NA/NA,Unknown/NA,Unknown/unknown,Unspecified,repeat/unknown,repeat/Unknown,Unknown/Unknown,unknown/NA
 retrotransposon	SO:0000180	Class_I,RNA_transposon,retrotransposon,Retroposon,Retroposon/L1_dep
 DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown,DNA/Unknown,DNA,DNA/NA
-snRNA	SO:0000274	snRNA
+snRNA	SO:0000274	snRNA,snRNA/NA
 scRNA	SO:0000013	scRNA
 
 ## rDNA and NOR
@@ -123,13 +123,13 @@ long_terminal_repeat	SO:0000286	long_terminal_repeat
 
 ## nonLTR retrotransposons
 non_LTR_retrotransposon	SO:0000189	non_LTR_retrotransposon,non_LTR,nonLTR/unknown,nonLTR/Unknown
-LINE_element	SO:0000194	LINE_element,LINE/unknown,LINE,LINE/Unknown
+LINE_element	SO:0000194	LINE_element,LINE/unknown,LINE,LINE/Unknown,LINE/NA
 R2_LINE_retrotransposon	SO:0002269	R2_LINE_retrotransposon,LINE/R2,LINE/RIR,nonLTR/RIR,RIR,LINE/R2-Hero,LINE/R2-NeSL,LINE/R2_Hero,LINE/R2_NeSL,LINE/R2-Dualen,LINE/R2_Dualen
 Jockey_LINE_retrotransposon	SO:0002271	Jockey_LINE_retrotransposon,LINE/Jockey,LINE/RIJ,nonLTR/RIJ,RIJ,LINE/I-Jockey
 L1_LINE_retrotransposon	SO:0002272	L1_LINE_retrotransposon,LINE/L1,LINE/RIL,nonLTR/RIL,RIL,LINE-1,LINE/L1-Tx1,LINE/L1_Tx1,LINE/L1?
 I_LINE_retrotransposon	SO:0002273	I_LINE_retrotransposon,LINE/I,LINE/RII,nonLTR/RII,LINE/I-Nimb,LINE/I_Nimb
 RTE_LINE_retrotransposon	SO:0002270	RTE_LINE_retrotransposon,LINE/RTE,LINE/RIT,nonLTR/RIT,RIT,LINE/RTEX,LINE/RTE-X,LINE/RTE-BovB,LINE/RTE_BovB,LINE/RTE_X,LINE/RTE-RTE,LINE/RTE_RTE
-SINE_element	SO:0000206	SINE_element,SINE/unknown,SINE,SINE/Unknown,SINE?,SINE?/NA,SINE/U
+SINE_element	SO:0000206	SINE_element,SINE/unknown,SINE,SINE/Unknown,SINE?,SINE?/NA,SINE/U,SINE/NA
 tRNA_SINE_retrotransposon	SO:0002274	tRNA_SINE_retrotransposon,SINE/tRNA,SINE/RST,nonLTR/RST,RST,tRNA,SINE2/tRNA,SINE/tRNA-Core-RTE,SINE/tRNA-V-CR1,tRNA,SINE/tRNA_CR1,SINE/tRNA_RTE,SINE/tRNA_V_RTE,SINE/tRNA-V-RTE,SINE/tRNA-CR1,SINE/tRNA_Core_RTE,SINE/tRNA_V_CR1,SINE/tRNA-RTE
 5S_SINE_retrotransposon	SO:0002276	5S_SINE_retrotransposon,SINE/5S,SINE/RSS,nonLTR/RSS,RSS,SINE3/5S,SINE/5S-Deu-L2,SINE/5S_Deu_L2
 7SL_SINE_retrotransposon	SO:0002275	7SL_SINE_retrotransposon,SINE/7SL,SINE/RSL,nonLTR/RSL,RSL,SINE1/7SL
