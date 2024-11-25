@@ -8,7 +8,7 @@ use Pod::Usage;
 use POSIX qw(strftime);
 use Cwd qw(abs_path);
 
-my $version = "v2.2.1";
+my $version = "v2.2.2";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
