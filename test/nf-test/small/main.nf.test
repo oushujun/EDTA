@@ -7,7 +7,7 @@ nextflow_pipeline {
 
         when {
             params {
-                genomes = "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz"
+                genomes = "https://raw.githubusercontent.com/jguhlin/EDTA/a2cd9a0777e4ac6e39545bacc3e752f94eb2f389/test/genome.fa"
                 outdir  = "$outputDir"
             }
         }
