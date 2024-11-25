@@ -68,7 +68,7 @@ The default `conda env` name is `EDTA2` specified by the first line of the yml f
 
 2. Install by specifying all dependencies:
 
-`mamba create -n EDTA2.2 -c conda-forge -c bioconda -c r annosine2 biopython blast cd-hit coreutils genericrepeatfinder genometools-genometools glob2 h5py==3.9 keras==2.11 ltr_finder ltr_retriever mdust multiprocess muscle openjdk pandas perl perl-text-soundex pyarrow python r-base r-dplyr regex repeatmodeler r-ggplot2 r-here r-tidyr scikit-learn swifter tensorflow==2.11 tesorter`
+`mamba create -n EDTA2.2 -c conda-forge -c bioconda -c r annosine2 biopython blast cd-hit coreutils genericrepeatfinder genometools-genometools glob2 h5py==3.9 keras==2.11 ltr_finder ltr_retriever mdust multiprocess muscle openjdk pandas perl perl-text-soundex pyarrow python r-base r-dplyr regex repeatmodeler r-ggplot2 r-here r-tidyr scikit-learn swifter tensorflow==2.11 tesorter samtools bedtools`
 
 </details>
 
