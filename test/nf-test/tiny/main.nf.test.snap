@@ -1,0 +1,42 @@
+{
+    "tiny genome": {
+        "content": [
+            {
+                "successful tasks": 7,
+                "versions": {
+                    "ANNOSINE": {
+                        "annosine": "2.0.7"
+                    },
+                    "CAT_CAT": {
+                        "pigz": "2.3.4"
+                    },
+                    "LTRFINDER": {
+                        "LTR_FINDER_parallel": "v1.1",
+                        "ltr_finder": "v1.07"
+                    },
+                    "LTRHARVEST": {
+                        "LTR_HARVEST_parallel": "v1.1",
+                        "genometools": "1.6.5"
+                    },
+                    "LTRRETRIEVER_LTRRETRIEVER": {
+                        "LTR_retriever": "v2.9.9"
+                    },
+                    "TIRLEARNER": {
+                        "TIR-Learner": "v3.0.2 by Tianyu (Sky) Lu (tlu83@wisc.edu) published under GPLv3"
+                    },
+                    "Workflow": {
+                        "jguhlin/EDTA": "v0.1.0dev"
+                    }
+                },
+                "stable paths": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.10.1"
+        },
+        "timestamp": "2024-11-25T13:20:57.770583"
+    }
+}

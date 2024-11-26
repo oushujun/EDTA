@@ -9,3 +9,7 @@ do
     rm -rf "work/$i"
 done
 echo "Cleaned work..."
+
+rm -f .nf-test.log
+rm -rf .nf-test
+echo "Cleaned nf-test..."
