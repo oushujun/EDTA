@@ -128,6 +128,10 @@ workflow EDTA {
     // MODULE: FASTA_HELITRONSCANNER_SCAN_DRAW
     FASTA_HELITRONSCANNER_SCAN_DRAW ( ch_sanitized_fasta )
 
+    ch_helitronscanner_draw             = FASTA_HELITRONSCANNER_SCAN_DRAW.out.helitronscanner_draw
+    ch_helitronscanner_draw_rc          = FASTA_HELITRONSCANNER_SCAN_DRAW.out.helitronscanner_draw_rc
+    ch_versions                         = ch_versions.mix(FASTA_HELITRONSCANNER_SCAN_DRAW.out.versions)
+
 
     // Function: Save versions
     ch_versions                         = ch_versions
