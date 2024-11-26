@@ -1,14 +1,15 @@
-include { SANITIZE_HEADERS              } from '../modules/local/sanitize/main.nf'
-include { LTRHARVEST                    } from '../modules/nf-core/ltrharvest/main.nf'
-include { LTRFINDER                     } from '../modules/nf-core/ltrfinder/main.nf'
-include { CAT_CAT                       } from '../modules/nf-core/cat/cat/main.nf'
-include { LTRRETRIEVER_LTRRETRIEVER     } from '../modules/nf-core/ltrretriever/ltrretriever/main.nf'
-include { TIRLEARNER                    } from '../modules/gallvp/tirlearner/main.nf'
-include { ANNOSINE                      } from '../modules/gallvp/annosine/main.nf'
-include { REPEATMODELER_BUILDDATABASE   } from '../modules/nf-core/repeatmodeler/builddatabase/main.nf'
-include { REPEATMODELER_REPEATMODELER   } from '../modules/nf-core/repeatmodeler/repeatmodeler/main.nf'
+include { SANITIZE_HEADERS                  } from '../modules/local/sanitize/main.nf'
+include { LTRHARVEST                        } from '../modules/nf-core/ltrharvest/main.nf'
+include { LTRFINDER                         } from '../modules/nf-core/ltrfinder/main.nf'
+include { CAT_CAT                           } from '../modules/nf-core/cat/cat/main.nf'
+include { LTRRETRIEVER_LTRRETRIEVER         } from '../modules/nf-core/ltrretriever/ltrretriever/main.nf'
+include { TIRLEARNER                        } from '../modules/gallvp/tirlearner/main.nf'
+include { ANNOSINE                          } from '../modules/gallvp/annosine/main.nf'
+include { REPEATMODELER_BUILDDATABASE       } from '../modules/nf-core/repeatmodeler/builddatabase/main.nf'
+include { REPEATMODELER_REPEATMODELER       } from '../modules/nf-core/repeatmodeler/repeatmodeler/main.nf'
+include { FASTA_HELITRONSCANNER_SCAN_DRAW   } from '../subworkflows/gallvp/fasta_helitronscanner_scan_draw/main.nf'
 
-include { softwareVersionsToYAML        } from '../modules/local/utils/main.nf'
+include { softwareVersionsToYAML            } from '../modules/local/utils/main.nf'
 
 workflow EDTA {
 
@@ -123,6 +124,13 @@ workflow EDTA {
 
     ch_repeatmodeler_fasta              = REPEATMODELER_REPEATMODELER.out.fasta
     ch_versions                         = ch_versions.mix(REPEATMODELER_REPEATMODELER.out.versions.first())
+
+    // MODULE: FASTA_HELITRONSCANNER_SCAN_DRAW
+    FASTA_HELITRONSCANNER_SCAN_DRAW ( ch_sanitized_fasta )
+
+    ch_helitronscanner_draw             = FASTA_HELITRONSCANNER_SCAN_DRAW.out.helitronscanner_draw
+    ch_helitronscanner_draw_rc          = FASTA_HELITRONSCANNER_SCAN_DRAW.out.helitronscanner_draw_rc
+    ch_versions                         = ch_versions.mix(FASTA_HELITRONSCANNER_SCAN_DRAW.out.versions)
 
 
     // Function: Save versions

@@ -2,13 +2,31 @@
     "tiny genome": {
         "content": [
             {
-                "successful tasks": 7,
+                "successful tasks": 13,
                 "versions": {
                     "ANNOSINE": {
                         "annosine": "2.0.7"
                     },
                     "CAT_CAT": {
                         "pigz": "2.3.4"
+                    },
+                    "HELITRONSCANNER_DRAW": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_DRAW_RC": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_HEAD": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_HEAD_RC": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_TAIL": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_TAIL_RC": {
+                        "helitronscanner": "V1.1"
                     },
                     "LTRFINDER": {
                         "LTR_FINDER_parallel": "v1.1",
@@ -37,6 +55,6 @@
             "nf-test": "0.9.0",
             "nextflow": "24.10.1"
         },
-        "timestamp": "2024-11-25T13:20:57.770583"
+        "timestamp": "2024-11-26T22:35:05.489004"
     }
 }

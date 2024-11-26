@@ -1,0 +1,137 @@
+{
+    "actinidia_chinensis - genome_1_fasta_gz": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,434aaaa70c294464e6bae93b2895b13c"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.rc.draw:md5,7aeed0fdf50f8cb2516b2e92f456835e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,42ab90da7ef86125b9dec685f4f08e84",
+                    "versions.yml:md5,9b6a0f2f56d89451cf16702e2f358520",
+                    "versions.yml:md5,a928ae7c94a23e5c62c27915dada660c",
+                    "versions.yml:md5,c417497b1caea1cd51f8440df92daa40",
+                    "versions.yml:md5,d786d80e914a86ce0361cfc0bc62cda9",
+                    "versions.yml:md5,f3b6aa20e81f04fd731fad64f7ea3c14"
+                ],
+                "helitronscanner_draw": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,434aaaa70c294464e6bae93b2895b13c"
+                    ]
+                ],
+                "helitronscanner_draw_rc": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.rc.draw:md5,7aeed0fdf50f8cb2516b2e92f456835e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,42ab90da7ef86125b9dec685f4f08e84",
+                    "versions.yml:md5,9b6a0f2f56d89451cf16702e2f358520",
+                    "versions.yml:md5,a928ae7c94a23e5c62c27915dada660c",
+                    "versions.yml:md5,c417497b1caea1cd51f8440df92daa40",
+                    "versions.yml:md5,d786d80e914a86ce0361cfc0bc62cda9",
+                    "versions.yml:md5,f3b6aa20e81f04fd731fad64f7ea3c14"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-11-21T11:53:51.717511"
+    },
+    "stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.rc.draw:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,42ab90da7ef86125b9dec685f4f08e84",
+                    "versions.yml:md5,9b6a0f2f56d89451cf16702e2f358520",
+                    "versions.yml:md5,a928ae7c94a23e5c62c27915dada660c",
+                    "versions.yml:md5,c417497b1caea1cd51f8440df92daa40",
+                    "versions.yml:md5,d786d80e914a86ce0361cfc0bc62cda9",
+                    "versions.yml:md5,f3b6aa20e81f04fd731fad64f7ea3c14"
+                ],
+                "helitronscanner_draw": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "helitronscanner_draw_rc": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.rc.draw:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,42ab90da7ef86125b9dec685f4f08e84",
+                    "versions.yml:md5,9b6a0f2f56d89451cf16702e2f358520",
+                    "versions.yml:md5,a928ae7c94a23e5c62c27915dada660c",
+                    "versions.yml:md5,c417497b1caea1cd51f8440df92daa40",
+                    "versions.yml:md5,d786d80e914a86ce0361cfc0bc62cda9",
+                    "versions.yml:md5,f3b6aa20e81f04fd731fad64f7ea3c14"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-11-21T11:54:17.824589"
+    },
+    "sarscov2 - genome": {
+        "content": [
+            [
+                "versions.yml:md5,42ab90da7ef86125b9dec685f4f08e84",
+                "versions.yml:md5,9b6a0f2f56d89451cf16702e2f358520",
+                "versions.yml:md5,a928ae7c94a23e5c62c27915dada660c",
+                "versions.yml:md5,c417497b1caea1cd51f8440df92daa40",
+                "versions.yml:md5,d786d80e914a86ce0361cfc0bc62cda9",
+                "versions.yml:md5,f3b6aa20e81f04fd731fad64f7ea3c14"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-11-21T12:03:43.135817"
+    }
+}
