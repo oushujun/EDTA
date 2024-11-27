@@ -10,10 +10,34 @@
             "git_sha": "a8939d36280e7d9037c7cf164eeede19e46546a4",
             "installed_by": ["modules"]
           },
+          "gunzip": {
+            "branch": "main",
+            "git_sha": "ae9714c21ede9199a3118e3c20b65484aa73e232",
+            "installed_by": ["modules"]
+          },
+          "helitronscanner/draw": {
+            "branch": "main",
+            "git_sha": "929d59d82f2e90fe79eb6f93d1ae739f22a894e1",
+            "installed_by": ["fasta_helitronscanner_scan_draw"]
+          },
+          "helitronscanner/scan": {
+            "branch": "main",
+            "git_sha": "929d59d82f2e90fe79eb6f93d1ae739f22a894e1",
+            "installed_by": ["fasta_helitronscanner_scan_draw"]
+          },
           "tirlearner": {
             "branch": "main",
             "git_sha": "a8939d36280e7d9037c7cf164eeede19e46546a4",
             "installed_by": ["modules"]
+          }
+        }
+      },
+      "subworkflows": {
+        "gallvp": {
+          "fasta_helitronscanner_scan_draw": {
+            "branch": "main",
+            "git_sha": "970e3af38229845dd38c13d29b0905651a8e61f0",
+            "installed_by": ["subworkflows"]
           }
         }
       }
@@ -22,6 +46,11 @@
       "modules": {
         "nf-core": {
           "cat/cat": {
+            "branch": "master",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "installed_by": ["modules"]
+          },
+          "gunzip": {
             "branch": "master",
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]

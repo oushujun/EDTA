@@ -1,0 +1,97 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FASTA_HELITRONSCANNER_SCAN_DRAW"
+    script "../main.nf"
+    workflow "FASTA_HELITRONSCANNER_SCAN_DRAW"
+    config "./nextflow.config"
+
+    tag "subworkflows"
+    tag "subworkflows_gallvp"
+    tag "subworkflows/fasta_helitronscanner_scan_draw"
+
+    tag "helitronscanner/draw"
+    tag "helitronscanner/scan"
+    tag "gunzip"
+
+    setup {
+        run('GUNZIP') {
+            script "../../../../modules/gallvp/gunzip/main.nf"
+
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz', checkIfExists: true)
+                ]
+                """
+            }
+        }
+    }
+
+    test("actinidia_chinensis - genome_1_fasta_gz") {
+
+        when {
+            workflow {
+                """
+                input[0] = GUNZIP.out.gunzip
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match() }
+            )
+        }
+
+    }
+
+    test("sarscov2 - genome") {
+
+        when {
+            workflow {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.helitronscanner_draw },       // empty
+                { assert workflow.out.helitronscanner_draw_rc },    // empty
+                { assert snapshot(
+                    workflow.out.versions
+                    ).match()
+                }
+            )
+        }
+
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                input[0] = GUNZIP.out.gunzip
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match() }
+            )
+        }
+
+    }
+}
