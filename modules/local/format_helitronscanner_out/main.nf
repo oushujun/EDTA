@@ -29,14 +29,14 @@ process FORMAT_HELITRONSCANNER_OUT {
     def keepshorter  = task.ext.keepshorter  != null ? task.ext.keepshorter  : 1
     def extlen       = task.ext.extlen       != null ? task.ext.extlen       : 30
     def extout       = task.ext.extout       != null ? task.ext.extout       : 1
-    def prefix       = meta.id
+    def prefix       = task.ext.prefix ?: "${meta.id}"
+    def args         = task.ext.args ?: ''
 
     """
     # Create symbolic links to match expected filenames
     ln -s $hel_fa ${genome}.HelitronScanner.draw.hel.fa
     ln -s $rc_hel_fa ${genome}.HelitronScanner.draw.rc.hel.fa
 
-    # Run the Perl script with the provided arguments
     perl format_helitronscanner_out.pl \\
         -genome $genome \\
         -sitefilter $sitefilter \\
@@ -46,10 +46,9 @@ process FORMAT_HELITRONSCANNER_OUT {
         -extout $extout \\
         &> >(tee "${prefix}.format_helitronscanner_out.log" 2>&1)
 
-    # Capture version information
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        Perl: \$(perl -v | grep 'This is perl' | awk '{print \$4}')
+        perl: \$(perl -v | sed -n 's|This is perl.*(\\(.*\\)).*|\\1|p')
     END_VERSIONS
     """
 }
