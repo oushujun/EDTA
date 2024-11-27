@@ -1,0 +1,90 @@
+nextflow_process {
+
+    name "Test Process FORMAT_HELITRONSCANNER_OUT"
+    script "../main.nf"
+    process "FORMAT_HELITRONSCANNER_OUT"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "format_helitronscanner_out"
+
+    test("homo_sapiens - genome_21_fasta") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/chr21/sequence/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.filtered_tabout,
+                    process.out.log
+                    process.out.versions
+                    ).match()
+                },
+                { assert path(process.out.filtered_tabout[0][1]).text.contains("46510803 46520182 9380 46510803 46510940 138 46520042 46520182 141 86.52 0 chr21") },
+            )
+        }
+
+    }
+
+    test("sarscov2 - genome_fasta - no helitrons") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.gff3,
+                    process.out.versions
+                    ).match()
+                },
+                { assert path(process.out.filtered_tabout[0][1]).text.contains("predictions are reported in the following way") },
+            )
+        }
+
+    }
+
+    test("homo_sapiens - genome_fasta - stub") {
+
+        options '-stub'
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}
