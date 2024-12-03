@@ -8,6 +8,7 @@ include { ANNOSINE                          } from '../modules/gallvp/annosine/m
 include { REPEATMODELER_BUILDDATABASE       } from '../modules/nf-core/repeatmodeler/builddatabase/main.nf'
 include { REPEATMODELER_REPEATMODELER       } from '../modules/nf-core/repeatmodeler/repeatmodeler/main.nf'
 include { FASTA_HELITRONSCANNER_SCAN_DRAW   } from '../subworkflows/gallvp/fasta_helitronscanner_scan_draw/main.nf'
+include { FORMAT_HELITRONSCANNER_OUT        } from '../modules/local/format_helitronscanner_out/main.nf'
 
 include { softwareVersionsToYAML            } from '../modules/local/utils/main.nf'
 
@@ -131,6 +132,24 @@ workflow EDTA {
     ch_helitronscanner_draw             = FASTA_HELITRONSCANNER_SCAN_DRAW.out.helitronscanner_draw
     ch_helitronscanner_draw_rc          = FASTA_HELITRONSCANNER_SCAN_DRAW.out.helitronscanner_draw_rc
     ch_versions                         = ch_versions.mix(FASTA_HELITRONSCANNER_SCAN_DRAW.out.versions)
+
+    // MODULE: FORMAT_HELITRONSCANNER_OUT
+    ch_format_helitronscanner_inputs    = ch_sanitized_fasta
+                                        | join(ch_helitronscanner_draw)
+                                        | join(ch_helitronscanner_draw_rc)
+                                        | multiMap { meta, fasta, draw, draw_rc ->
+                                            genome: [ meta, fasta ]
+                                            hel_fa: draw
+                                            rc_hel_fa: draw_rc
+                                        }
+    
+    FORMAT_HELITRONSCANNER_OUT (
+        ch_format_helitronscanner_inputs.genome,
+        ch_format_helitronscanner_inputs.hel_fa,
+        ch_format_helitronscanner_inputs.rc_hel_fa,
+    )
+
+    ch_versions                         = ch_versions.mix(FORMAT_HELITRONSCANNER_OUT.out.versions.first())
 
 
     // Function: Save versions

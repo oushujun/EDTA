@@ -4,47 +4,48 @@ process FORMAT_HELITRONSCANNER_OUT {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/perl-bioperl:1.7.8--hdfd78af_1':
-        'biocontainers/perl-bioperl:1.7.8--hdfd78af_1' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c0/c0905ae7aa2a1c4135b448b49dd205b4eb370d4733b832594563ee06832ebd09/data':
+        'community.wave.seqera.io/library/perl:67db1a8d53d64b14' }"
 
     input:
     tuple val(meta), path(genome)
-    path hel_fa       // HelitronScanner.draw.hel.fa file
-    path rc_hel_fa    // HelitronScanner.draw.rc.hel.fa file
+    path hel_fa
+    path rc_hel_fa
 
     output:
-    tuple val(meta), path("${meta.id}.HelitronScanner.filtered.tabout"), emit: filtered_tabout
-    tuple val(meta), path("${meta.id}.HelitronScanner.filtered.fa"),     emit: filtered_fa, optional: true
-    tuple val(meta), path("${meta.id}.HelitronScanner.filtered.ext.fa"), emit: filtered_ext_fa, optional: true
-    tuple val(meta), path("${meta.id}.format_helitronscanner_out.log"),  emit: log
-    path "versions.yml",                                                 emit: versions
+    tuple val(meta), path("*.HelitronScanner.filtered.tabout")  , emit: filtered_tabout
+    tuple val(meta), path("*.HelitronScanner.filtered.fa")      , emit: filtered_fa     , optional: true
+    tuple val(meta), path("*.HelitronScanner.filtered.ext.fa")  , emit: filtered_ext_fa , optional: true
+    tuple val(meta), path("*.format_helitronscanner_out.log")   , emit: log
+    path "versions.yml"                                         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    // Set default values for the optional arguments
-    def sitefilter   = task.ext.sitefilter   != null ? task.ext.sitefilter   : 1
-    def minscore     = task.ext.minscore     != null ? task.ext.minscore     : 12
-    def keepshorter  = task.ext.keepshorter  != null ? task.ext.keepshorter  : 1
-    def extlen       = task.ext.extlen       != null ? task.ext.extlen       : 30
-    def extout       = task.ext.extout       != null ? task.ext.extout       : 1
-    def prefix       = task.ext.prefix ?: "${meta.id}"
-    def args         = task.ext.args ?: ''
-
+    def prefix  = task.ext.prefix ?: "$genome"
+    def args    = task.ext.args ?: ''
     """
     # Create symbolic links to match expected filenames
     ln -s $hel_fa ${genome}.HelitronScanner.draw.hel.fa
     ln -s $rc_hel_fa ${genome}.HelitronScanner.draw.rc.hel.fa
 
-    perl format_helitronscanner_out.pl \\
+    format_helitronscanner_out.pl \\
         -genome $genome \\
-        -sitefilter $sitefilter \\
-        -minscore $minscore \\
-        -keepshorter $keepshorter \\
-        -extlen $extlen \\
-        -extout $extout \\
+        $args \\
         &> >(tee "${prefix}.format_helitronscanner_out.log" 2>&1)
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        perl: \$(perl -v | sed -n 's|This is perl.*(\\(.*\\)).*|\\1|p')
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix  = task.ext.prefix ?: "$genome"
+    """
+    touch ${prefix}.HelitronScanner.filtered.tabout
+    touch ${prefix}.format_helitronscanner_out.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
