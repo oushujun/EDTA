@@ -2,13 +2,16 @@
     "small genome": {
         "content": [
             {
-                "successful tasks": 15,
+                "successful tasks": 16,
                 "versions": {
                     "ANNOSINE": {
                         "annosine": "2.0.7"
                     },
                     "CAT_CAT": {
                         "pigz": "2.3.4"
+                    },
+                    "FORMAT_HELITRONSCANNER_OUT": {
+                        "perl": "v5.32.1"
                     },
                     "HELITRONSCANNER_DRAW": {
                         "helitronscanner": "V1.1"
@@ -59,8 +62,8 @@
         ],
         "meta": {
             "nf-test": "0.9.0",
-            "nextflow": "24.10.1"
+            "nextflow": "24.04.4"
         },
-        "timestamp": "2024-11-26T22:38:20.031297"
+        "timestamp": "2024-12-03T14:20:03.748125"
     }
 }

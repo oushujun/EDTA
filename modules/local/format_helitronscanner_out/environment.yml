@@ -4,4 +4,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - "bioconda::perl-bioperl=1.7.8"
+  - "conda-forge::perl=5.32.1"
