@@ -1,2 +1,0 @@
-repeatmodeler/builddatabase:
-  - "modules/nf-core/repeatmodeler/builddatabase/**"

@@ -1,2 +1,0 @@
-repeatmodeler/repeatmodeler:
-  - "modules/nf-core/repeatmodeler/repeatmodeler/**"
