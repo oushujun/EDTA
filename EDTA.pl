@@ -686,8 +686,8 @@ chomp ($date = `date`);
 print "$date\tEDTA final stage finished! You may check out:
 		The final EDTA TE library: $genome.EDTA.TElib.fa\n";
 print "		Family names of intact TEs have been updated by $HQlib: $genome.EDTA.intact.gff3\n" if $HQlib ne '';
-print "\tComparing to the provided library, EDTA found these novel TEs: $genome.EDTA.TElib.novel.fa
-	\tThe provided library has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
+print "		Comparing to the provided library, EDTA found these novel TEs: $genome.EDTA.TElib.novel.fa
+		The provided library has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
 chdir "..";
 
 
@@ -826,9 +826,9 @@ if ($anno == 1){
 		die "ERROR: TE annotation stats results not found in $genome.EDTA.TE.fa.stat!\n\n" unless -s "$genome.EDTA.TE.fa.stat";
 		chomp ($date = `date`);
 		print "$date\tEvaluation of TE annotation finished! Check out these files:\n
-				Overall: $genome.EDTA.TE.fa.stat.all.sum
-				Nested: $genome.EDTA.TE.fa.stat.nested.sum
-				Non-nested: $genome.EDTA.TE.fa.stat.redun.sum\n\n";
+		Overall: $genome.EDTA.TE.fa.stat.all.sum
+		Nested: $genome.EDTA.TE.fa.stat.nested.sum
+		Non-nested: $genome.EDTA.TE.fa.stat.redun.sum\n\n";
 		}
 
 	print "\t\tIf you want to learn more about the formatting and information of these files, please visit:
