@@ -21,6 +21,7 @@ process LTRRETRIEVER_LTRRETRIEVER {
     tuple val(meta), path("*.LTRlib.fa")        , emit: ltrlib          , optional: true
     tuple val(meta), path("${prefix}.out")      , emit: annotation_out  , optional: true
     tuple val(meta), path("*.out.gff3")         , emit: annotation_gff  , optional: true
+    tuple val(meta), path("*.defalse")          , emit: defalse         , optional: true
     path "versions.yml"                         , emit: versions
 
     when:
@@ -66,6 +67,7 @@ process LTRRETRIEVER_LTRRETRIEVER {
     mv "${writable_genome}.LTRlib.fa"       "${prefix}.LTRlib.fa"       || echo ".LTRlib.fa was not produced"
     mv "${writable_genome}.out"             "${prefix}.out"             || echo ".out was not produced"
     mv "${writable_genome}.out.gff3"        "${prefix}.out.gff3"        || echo ".out.gff3 was not produced"
+    mv "${writable_genome}.defalse"         "${prefix}.defalse"         || echo ".defalse was not produced"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

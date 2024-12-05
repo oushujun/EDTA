@@ -1,0 +1,11 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check_binaries
+        name: Check binaries
+        language: system
+        entry: >
+          .github/check_binaries.sh
+        always_run: true
+        fail_fast: true
+        pass_filenames: false
