@@ -4,7 +4,7 @@ process LTR_RETRIEVER_POSTPROCESS {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/64/64d26063bedc2efcba20750a408a21f50907986d0d9aee685b03d7d05d3fbd8b/data':
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/cb/cb105ba7d586ab31c1f39feb04c0255a39cc5a55ae7f6ea53f4bf76cdba8a3e5/data':
         'community.wave.seqera.io/library/mdust_tesorter_trf_perl:3424609103d3b065' }"
 
     input:
