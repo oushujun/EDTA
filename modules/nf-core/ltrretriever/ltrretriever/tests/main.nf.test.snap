@@ -61,6 +61,9 @@
                     ]
                 ],
                 "6": [
+                    
+                ],
+                "7": [
                     "versions.yml:md5,3ab159acaee06b342b56e2d35e5e669b"
                 ],
                 "annotation_gff": [
@@ -78,6 +81,9 @@
                         },
                         "test.out:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
+                ],
+                "defalse": [
+                    
                 ],
                 "log": [
                     [
@@ -117,10 +123,10 @@
             }
         ],
         "meta": {
-            "nf-test": "0.8.4",
-            "nextflow": "23.10.1"
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
         },
-        "timestamp": "2024-02-19T11:04:15.954424"
+        "timestamp": "2024-12-05T12:39:11.669541"
     },
     "annotation_out": {
         "content": [

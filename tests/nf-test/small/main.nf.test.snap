@@ -2,7 +2,7 @@
     "small genome": {
         "content": [
             {
-                "successful tasks": 16,
+                "successful tasks": 17,
                 "versions": {
                     "ANNOSINE": {
                         "annosine": "2.0.7"
@@ -42,6 +42,12 @@
                     "LTRRETRIEVER_LTRRETRIEVER": {
                         "LTR_retriever": "v2.9.9"
                     },
+                    "LTR_RETRIEVER_POSTPROCESS": {
+                        "perl": "v5.32.1",
+                        "trf": 4.09,
+                        "TEsorter": "1.4.7",
+                        "mdust": "2006.10.17"
+                    },
                     "REPEATMODELER_BUILDDATABASE": {
                         "repeatmodeler": "2.0.5"
                     },
@@ -56,7 +62,16 @@
                     }
                 },
                 "stable paths": [
-                    
+                    "genome.pp.LTR.intact.raw.fa.anno.list:md5,51261f020350b448acdf89d8fb625448",
+                    "genome.pp.genome.LTR.intact.raw.fa:md5,ae2336f498897d1af4e8d3be28bb3f25"
+                ],
+                "stable names": [
+                    "ltr",
+                    "ltr/genome.pp.LTR.intact.raw.fa.anno.list",
+                    "ltr/genome.pp.LTR.intact.raw.gff3",
+                    "ltr/genome.pp.LTR.raw.fa",
+                    "ltr/genome.pp.genome.LTR.intact.raw.fa",
+                    "pipeline_info"
                 ]
             }
         ],
@@ -64,6 +79,6 @@
             "nf-test": "0.9.0",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-12-03T14:20:03.748125"
+        "timestamp": "2024-12-05T12:10:52.622584"
     }
 }

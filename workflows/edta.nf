@@ -9,10 +9,13 @@ include { REPEATMODELER_BUILDDATABASE       } from '../modules/nf-core/repeatmod
 include { REPEATMODELER_REPEATMODELER       } from '../modules/nf-core/repeatmodeler/repeatmodeler/main.nf'
 include { FASTA_HELITRONSCANNER_SCAN_DRAW   } from '../subworkflows/gallvp/fasta_helitronscanner_scan_draw/main.nf'
 include { FORMAT_HELITRONSCANNER_OUT        } from '../modules/local/format_helitronscanner_out/main.nf'
+include { LTR_RETRIEVER_POSTPROCESS         } from '../modules/local/ltr_retriever_postprocess/main.nf'
 
 include { softwareVersionsToYAML            } from '../modules/local/utils/main.nf'
 
 workflow EDTA {
+
+    main:
 
     // Versions channel
     ch_versions                         = Channel.empty()
@@ -36,7 +39,6 @@ workflow EDTA {
     // MODULE: LTRHARVEST
     LTRHARVEST ( ch_sanitized_fasta )
 
-    ch_ltrharvest_gff3                  = LTRHARVEST.out.gff3
     ch_ltrharvest_scn                   = LTRHARVEST.out.scn
 
     ch_versions                         = ch_versions.mix(LTRHARVEST.out.versions)
@@ -44,7 +46,6 @@ workflow EDTA {
     // MODULE: LTRFINDER
     LTRFINDER  { ch_sanitized_fasta }
 
-    ch_ltrfinder_gff3                   = LTRFINDER.out.gff
     ch_ltrfinder_scn                    = LTRFINDER.out.scn
 
     ch_versions                         = ch_versions.mix(LTRFINDER.out.versions)
@@ -62,17 +63,17 @@ workflow EDTA {
     ch_ltrretriever_inputs              = ch_sanitized_fasta.join(ch_ltr_candidates)
 
     LTRRETRIEVER_LTRRETRIEVER (
-        ch_ltrretriever_inputs.map { meta, fasta, ltr -> [ meta, fasta ] },
-        ch_ltrretriever_inputs.map { meta, fasta, ltr -> ltr },
+        ch_ltrretriever_inputs.map { meta, fasta, _ltr -> [ meta, fasta ] },
+        ch_ltrretriever_inputs.map { _meta, _fasta, ltr -> ltr },
         [],
         [],
         []
     )
 
-    ch_ltrretriever_log                 = LTRRETRIEVER_LTRRETRIEVER.out.log
     ch_pass_list                        = LTRRETRIEVER_LTRRETRIEVER.out.pass_list
-    ch_annotation_out                   = LTRRETRIEVER_LTRRETRIEVER.out.annotation_out
+    ch_pass_list_gff                    = LTRRETRIEVER_LTRRETRIEVER.out.pass_list_gff
     ch_annotation_gff                   = LTRRETRIEVER_LTRRETRIEVER.out.annotation_gff
+    ch_defalse                          = LTRRETRIEVER_LTRRETRIEVER.out.defalse
     ch_ltrlib                           = LTRRETRIEVER_LTRRETRIEVER.out.ltrlib
     ch_versions                         = ch_versions.mix(LTRRETRIEVER_LTRRETRIEVER.out.versions.first())
 
@@ -102,7 +103,7 @@ workflow EDTA {
                                             def size = fasta.size()
                                             def size_threshold = 100_000 // bytes -> bp
 
-                                            // TODO: Not the best way to set a size threshould
+                                            // TODO: Not the best way to set a size threshold
                                             // but it is simple
                                             // This is needed to avoid,
                                             // Error: Database genome is not large enough ( minimum 40000 bp ) to process with RepeatModeler.
@@ -151,6 +152,32 @@ workflow EDTA {
 
     ch_versions                         = ch_versions.mix(FORMAT_HELITRONSCANNER_OUT.out.versions.first())
 
+    // MODULE: LTR_RETRIEVER_POSTPROCESS
+    ltr_retriever_postprocess_inputs    = ch_sanitized_fasta
+                                        | join(ch_pass_list)
+                                        | join(ch_pass_list_gff)
+                                        | join(ch_annotation_gff)
+                                        | join(ch_defalse)
+                                        | join(ch_ltrlib)
+                                        | multiMap { meta, fasta, pass, p_gff, a_gff, defalse, ltr ->
+                                            genome: [ meta, fasta ]
+                                            pass    : pass
+                                            p_gff   : p_gff
+                                            a_gff   : a_gff
+                                            defalse : defalse
+                                            ltr     : ltr
+                                        }
+    
+    LTR_RETRIEVER_POSTPROCESS (
+        ltr_retriever_postprocess_inputs.genome,
+        ltr_retriever_postprocess_inputs.pass,
+        ltr_retriever_postprocess_inputs.p_gff,
+        ltr_retriever_postprocess_inputs.defalse,
+        ltr_retriever_postprocess_inputs.ltr,
+    )
+
+    ch_versions                         = ch_versions.mix(LTR_RETRIEVER_POSTPROCESS.out.versions.first())
+
 
     // Function: Save versions
     ch_versions                         = ch_versions
@@ -167,5 +194,8 @@ workflow EDTA {
                                             newLine: true,
                                             cache: false
                                         )
+
+    emit:
+    versions_yml                        = ch_versions_yml   // [ software_versions.yml ]
 
 }
