@@ -13,7 +13,28 @@ nextflow_pipeline {
         }
 
         then {
-            def stable_path = getAllFilesFromDir(params.outdir, false, ['pipeline_info/*.{html,json,txt,yml}'], null, ['**'])
+
+            def stable_path = getAllFilesFromDir(
+                params.outdir,
+                false,
+                [
+                    'pipeline_info/*.{html,json,txt,yml}',
+                    'ltr/*.pp.LTR.intact.raw.gff3',
+                    'ltr/*.pp.LTR.raw.fa',
+                ],
+                null,
+                ['**']
+            )
+
+            def stable_name = getAllFilesFromDir(
+                params.outdir,
+                true,
+                [
+                    'pipeline_info/*.{html,json,txt,yml}'
+                ],
+                null,
+                ['**']
+            )
 
             assertAll(
                 { assert workflow.success},
@@ -21,7 +42,8 @@ nextflow_pipeline {
                     [
                         'successful tasks': workflow.trace.succeeded().size(),
                         'versions': removeNextflowVersion("$outputDir/pipeline_info/software_versions.yml"),
-                        'stable paths': stable_path
+                        'stable paths': stable_path,
+                        'stable names': getRelativePath(stable_name, outputDir),
                     ]
                 ).match() }
             )
