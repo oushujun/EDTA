@@ -19,8 +19,8 @@ my \$filter_gff     = '$script_path/filter_gff3.pl';
 
 EOF
 
-sed -n 443,462p "$script_path/EDTA_raw.pl" \
+sed -n 421,440p "$script_path/EDTA_raw.pl" \
     >> input/LTR_retriever_postprocess.pl
 
-sed -n 466,472p "$script_path/EDTA_raw.pl" \
+sed -n 445,450p "$script_path/EDTA_raw.pl" \
     >> input/LTR_retriever_postprocess.pl
