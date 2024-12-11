@@ -1,0 +1,119 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "ltrretriever_ltrretriever"
+description: Identifies LTR retrotransposons using LTR_retriever
+keywords:
+  - genomics
+  - annotation
+  - repeat
+  - long terminal repeat
+  - retrotransposon
+tools:
+  - "LTR_retriever":
+      description: Sensitive and accurate identification of LTR retrotransposons
+      homepage: "https://github.com/oushujun/LTR_retriever"
+      documentation: "https://github.com/oushujun/LTR_retriever"
+      tool_dev_url: "https://github.com/oushujun/LTR_retriever"
+      doi: "10.1104/pp.17.01310"
+      licence: ["GPL v3"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - genome:
+        type: file
+        description: Genomic sequences in fasta format
+        pattern: "*.{fsa,fa,fasta}"
+  - - harvest:
+        type: file
+        description: LTR-RT candidates from GenomeTools ltrharvest in the old tabular
+          format
+        pattern: "*.tabout"
+  - - finder:
+        type: file
+        description: LTR-RT candidates from LTR_FINDER
+        pattern: "*.scn"
+  - - mgescan:
+        type: file
+        description: LTR-RT candidates from MGEScan_LTR
+        pattern: "*.out"
+  - - non_tgca:
+        type: file
+        description: Non-canonical LTR-RT candidates from GenomeTools ltrharvest in
+          the old tabular format
+        pattern: "*.tabout"
+output:
+  - log:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.log":
+          type: file
+          description: Output log from LTR_retriever
+          pattern: "*.log"
+  - pass_list:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - ${prefix}.pass.list:
+          type: file
+          description: Intact LTR-RTs with coordinate and structural information in summary
+            table format
+          pattern: "*.pass.list"
+  - pass_list_gff:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.pass.list.gff3":
+          type: file
+          description: Intact LTR-RTs with coordinate and structural information in gff3
+            format
+          pattern: "*.pass.list.gff3"
+  - ltrlib:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.LTRlib.fa":
+          type: file
+          description: All non-redundant LTR-RTs
+          pattern: "*.LTRlib.fa"
+  - annotation_out:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - ${prefix}.out:
+          type: file
+          description: Whole-genome LTR-RT annotation by the non-redundant library
+          pattern: "*.out"
+  - annotation_gff:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.out.gff3":
+          type: file
+          description: Whole-genome LTR-RT annotation by the non-redundant library in
+            gff3 format
+          pattern: "*.out.gff3"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"

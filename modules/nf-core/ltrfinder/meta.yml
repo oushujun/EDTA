@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "ltrfinder"
+description: |
+  Finds full-length LTR retrotranspsons in genome sequences using the
+  parallel version of LTR_Finder
+keywords:
+  - genomics
+  - annotation
+  - parallel
+  - repeat
+  - long terminal retrotransposon
+  - retrotransposon
+tools:
+  - "LTR_FINDER_parallel":
+      description: A Perl wrapper for LTR_FINDER
+      homepage: "https://github.com/oushujun/LTR_FINDER_parallel"
+      documentation: "https://github.com/oushujun/LTR_FINDER_parallel"
+      tool_dev_url: "https://github.com/oushujun/LTR_FINDER_parallel"
+      doi: "10.1186/s13100-019-0193-0"
+      licence: ["MIT"]
+      identifier: ""
+  - "LTR_Finder":
+      description: An efficient program for finding full-length LTR retrotranspsons
+        in genome sequences
+      homepage: "https://github.com/xzhub/LTR_Finder"
+      documentation: "https://github.com/xzhub/LTR_Finder"
+      tool_dev_url: "https://github.com/xzhub/LTR_Finder"
+      doi: "10.1093/nar/gkm286"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - fasta:
+        type: file
+        description: Genome sequences in fasta format
+        pattern: "*.{fsa,fa,fasta}"
+output:
+  - scn:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.scn":
+          type: file
+          description: Annotation in LTRharvest or LTR_FINDER format
+          pattern: "*.scn"
+  - gff:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.gff3":
+          type: file
+          description: Annotation in gff3 format
+          pattern: "*.gff3"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"

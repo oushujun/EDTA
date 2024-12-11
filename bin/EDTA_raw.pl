@@ -87,16 +87,11 @@ my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
 my $GRF = ''; #path to GRF
 my $annosine = ""; #path to the AnnoSINE program
-
-# my $TIR_Learner = "$script_path/bin/TIR-Learner3/";  #tianyulu
-# my $LTR_FINDER = "$script_path/bin/LTR_FINDER_parallel/LTR_FINDER_parallel";  #tianyulu
-# my $LTR_HARVEST = "$script_path/bin/LTR_HARVEST_parallel/LTR_HARVEST_parallel";  #tianyulu
-my $HelitronScanner_Runner = "$script_path/bin/run_helitron_scanner.sh";
-
 my $TIR_Learner = ""; #path to TIR-Learner3 program  #tianyulu
 my $LTR_FINDER = ""; #path to LTR_FINDER_parallel program  #tianyulu
 my $LTR_HARVEST = ""; #path to LTR_HARVEST_parallel program  #tianyulu
 my $HelitronScanner = ""; #path to HelitronScanner program  #tianyulu
+my $HelitronScanner_Runner = "$script_path/bin/run_helitron_scanner.sh";
 
 my $help = undef;
 
@@ -160,9 +155,6 @@ chomp (my $date = `date`);
 print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
 
 # check files and dependencies
-# die "The LTR_FINDER_parallel is not found in $LTR_FINDER!\n" unless -s $LTR_FINDER;  #tianyulu
-# die "The LTR_HARVEST_parallel is not found in $LTR_HARVEST!\n" unless -s $LTR_HARVEST;  #tianyulu
-# die "The TIR_Learner is not found in $TIR_Learner!\n" unless -s "$TIR_Learner/bin/main.py";  #tianyulu
 die "The script get_range.pl is not found in $get_range!\n" unless -s $get_range;
 die "The script rename_LTR_skim.pl is not found in $rename_LTR!\n" unless -s $rename_LTR;
 die "The script filter_gff3.pl is not found in $filter_gff!\n" unless -s $filter_gff;
@@ -171,7 +163,6 @@ die "The script output_by_list.pl is not found in $output_by_list!\n" unless -s 
 die "The script rename_tirlearner.pl is not found in $rename_tirlearner!\n" unless -s $rename_tirlearner;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script get_ext_seq.pl is not found in $get_ext_seq!\n" unless -s $get_ext_seq;
-# die "The HelitronScanner is not found in $HelitronScanner!\n" unless -s $HelitronScanner;  #tianyulu
 die "The script format_helitronscanner_out.pl is not found in $format_helitronscanner!\n" unless -s $format_helitronscanner;
 die "The script flanking_filter.pl is not found in $flank_filter!\n" unless -s $flank_filter;
 die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
@@ -190,7 +181,6 @@ $repeatmasker =~ s/\s+$//;
 $repeatmasker = dirname($repeatmasker) unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
-# `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
 `cp \"$script_path/database/dummy060817.fa\" ./dummy060817.fa.$rand`;  #tianyulu
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
 die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
@@ -245,14 +235,6 @@ $grfp =~ s/\n$//;
 `${grfp}grf-main 2>/dev/null`;
 die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp\n" if $?==32256;
 
-# # TIR-Learner3
-# chomp ($TIR_Learner = `which TIR-Learner 2>/dev/null`) if $TIR_Learner eq '';
-# $TIR_Learner =~ s/\n$//;
-# my $tirp= dirname ($TIR_Learner);
-# $tirp =~ s/\n$//;
-# `${tirp}TIR-Learner 2>/dev/null`;
-# die "Error: TIR-Learner3 is not found in the TIR-Learner path: $tirp\n" if $?==32256;
-
 # TIR-Learner  #tianyuLu
 # Remove any trailing whitespace
 $TIR_Learner =~ s/\s+$//;
@@ -260,14 +242,10 @@ if ($TIR_Learner eq "") {
 	# Find TIR-Learner path and remove any trailing newline
 	chomp ($TIR_Learner=`command -v TIR-Learner 2>/dev/null`);
 	die "Error: TIR-Learner not installed!\n" if $TIR_Learner eq "";
-	# $TIR_Learner =~ s/\s+$//;
 } else {
 	# # Extract directory name from path if path is not a directory
-	# $TIR_Learner = dirname($TIR_Learner) unless -d $TIR_Learner;
 	# If path is directory
 	if (-d $TIR_Learner) {
-		# # Add trailing slash if path not empty string and not already end with slash
-		# $TIR_Learner .= "/" if $TIR_Learner ne "" and $TIR_Learner !~ /\/$/;
 		# Add trailing slash if path not already end with slash
 		$TIR_Learner .= "/" if $TIR_Learner !~ /\/$/;
 		$TIR_Learner = "python3 $TIR_Learner/TIR-Learner.py";
@@ -715,7 +693,12 @@ if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Heli
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
 # run HelitronScanner
-`$HelitronScanner_Runner $genome $threads \"$HelitronScanner\"`;
+if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genome.HelitronScanner.draw.rc.hel.fa")){
+#cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa
+	print STDERR "$date\tExisting HelitronScanner result files $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa found!\n\t\tWill keep these files without rerunning HelitronScanner\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	} else {
+	`$HelitronScanner_Runner $genome $threads \"$HelitronScanner\"`;
+	}
 
 # filter candidates based on repeatness of flanking regions
 `perl $format_helitronscanner -genome $genome -sitefilter 1 -minscore 12 -keepshorter 1 -extlen 30 -extout 1`;

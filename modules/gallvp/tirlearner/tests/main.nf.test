@@ -1,0 +1,91 @@
+nextflow_process {
+
+    name "Test Process TIRLEARNER"
+    script "../main.nf"
+    process "TIRLEARNER"
+
+    tag "modules"
+    tag "modules_gallvp"
+    tag "tirlearner"
+
+
+    test("actinidia_chinensis-genome_1_fasta_gz-success") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz', checkIfExists: true)
+                ]
+                input[1] = 'others'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.log[0][1]).text.contains('Module 4 Begin') },
+                { assert snapshot(
+                    process.out.fasta,
+                    process.out.gff,
+                    process.out.filtered_fasta,
+                    process.out.filtered_gff,
+                    process.out.versions
+                    ).match()
+                }
+            )
+        }
+
+    }
+
+    test("sarscov2-genome") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                input[1] = 'others'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.log[0][1]).text.contains('ValueError: All objects passed were None') },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz', checkIfExists: true)
+                ]
+                input[1] = 'others'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+}
