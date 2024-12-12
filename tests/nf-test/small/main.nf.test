@@ -19,12 +19,15 @@ nextflow_pipeline {
                 false,
                 [
                     'pipeline_info/*.{html,json,txt,yml}',
-                    'ltr/*.pp.LTR.intact.raw.gff3',
-                    'ltr/*.pp.LTR.raw.fa',
-                    'tir/*.pp.TIR.intact.raw.fa',
-                    'tir/*.pp.TIR.intact.raw.gff3',
-                    'rm2/*.pp.LINE.raw.fa',
-                    'rm2/*.pp.RM2.fa',
+                    'raw/ltr/*.pp.LTR.intact.raw.gff3',
+                    'raw/ltr/*.pp.LTR.raw.fa',
+                    'raw/tir/*.pp.TIR.intact.raw.fa',
+                    'raw/tir/*.pp.TIR.intact.raw.gff3',
+                    'raw/line/*.pp.LINE.raw.fa',
+                    'raw/line/*.pp.RM2.fa',
+                    'raw/helitron/*.Helitron.intact.raw.fa',
+                    'raw/helitron/*.Helitron.intact.raw.fa.anno.list',
+                    'raw/helitron/*.Helitron.intact.raw.gff3'
                 ],
                 null,
                 ['**']
