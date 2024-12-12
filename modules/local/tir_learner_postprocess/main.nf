@@ -1,4 +1,4 @@
-process LTR_RETRIEVER_POSTPROCESS {
+process TIR_LEARNER_POSTPROCESS {
     tag "$meta.id"
     label 'process_low'
 
@@ -9,16 +9,13 @@ process LTR_RETRIEVER_POSTPROCESS {
 
     input:
     tuple val(meta), path(genome, name: 'input/genome')
-    path "input/genome.pass.list"
-    path "input/genome.pass.list.gff3"
-    path "input/genome.defalse"
-    path "input/genome.LTRlib.fa"
+    path "input/TIR-Learner-Result/TIR-Learner_FinalAnn.fa"
+    path "input/TIR-Learner-Result/TIR-Learner_FinalAnn.gff3"
 
     output:
-    tuple val(meta), path('*.LTR.raw.fa')                   , emit: raw_fa
-    tuple val(meta), path('*.LTR.intact.raw.fa')            , emit: intact_raw_fa
-    tuple val(meta), path('*.LTR.intact.raw.gff3')          , emit: intact_raw_gff3
-    tuple val(meta), path('*.LTR.intact.raw.fa.anno.list')  , emit: anno_list
+    tuple val(meta), path('*.TIR.intact.raw.fa')    , emit: intact_raw_fa
+    tuple val(meta), path('*.TIR.intact.raw.gff3')  , emit: intact_raw_gff3
+    tuple val(meta), path('*.TIR.intact.raw.bed')   , emit: intact_raw_bed
     path "versions.yml" , emit: versions
 
     when:
@@ -29,30 +26,26 @@ process LTR_RETRIEVER_POSTPROCESS {
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
     if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    setup_LTR_retriever_postprocess.sh \\
+    setup_TIR-Learner_postprocess.sh \\
         $task.cpus
 
     cd input
     
-    perl LTR_retriever_postprocess.pl
+    perl TIR-Learner_postprocess.pl
     
     cd -
 
     mv \\
-        genome.LTR.raw.fa \\
-        ${prefix}.LTR.raw.fa
+        genome.TIR.intact.raw.fa \\
+        ${prefix}.TIR.intact.raw.fa
     
     mv \\
-        genome.LTR.intact.raw.fa \\
-        ${prefix}.genome.LTR.intact.raw.fa
+        genome.TIR.intact.raw.gff3 \\
+        ${prefix}.TIR.intact.raw.gff3
 
     mv \\
-        genome.LTR.intact.raw.gff3 \\
-        ${prefix}.LTR.intact.raw.gff3
-
-    mv \\
-        genome.LTR.intact.raw.fa.anno.list \\
-        ${prefix}.LTR.intact.raw.fa.anno.list
+        genome.TIR.intact.raw.bed \\
+        ${prefix}.TIR.intact.raw.bed
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -68,10 +61,9 @@ process LTR_RETRIEVER_POSTPROCESS {
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
     if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    touch ${prefix}.LTR.raw.fa
-    touch ${prefix}.genome.LTR.intact.raw.fa
-    touch ${prefix}.LTR.intact.raw.gff3
-    touch ${prefix}.LTR.intact.raw.fa.anno.list
+    touch ${prefix}.TIR.intact.raw.fa
+    touch ${prefix}.TIR.intact.raw.gff3
+    touch ${prefix}.TIR.intact.raw.bed
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
