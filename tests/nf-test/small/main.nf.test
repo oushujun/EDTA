@@ -23,6 +23,8 @@ nextflow_pipeline {
                     'ltr/*.pp.LTR.raw.fa',
                     'tir/*.pp.TIR.intact.raw.fa',
                     'tir/*.pp.TIR.intact.raw.gff3',
+                    'rm2/*.pp.LINE.raw.fa',
+                    'rm2/*.pp.RM2.fa',
                 ],
                 null,
                 ['**']

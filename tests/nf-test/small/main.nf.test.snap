@@ -2,7 +2,7 @@
     "small genome": {
         "content": [
             {
-                "successful tasks": 18,
+                "successful tasks": 19,
                 "versions": {
                     "ANNOSINE": {
                         "annosine": "2.0.7"
@@ -51,6 +51,12 @@
                     "REPEATMODELER_BUILDDATABASE": {
                         "repeatmodeler": "2.0.5"
                     },
+                    "REPEATMODELER_POSTPROCESS": {
+                        "perl": "v5.32.1",
+                        "trf": 4.09,
+                        "TEsorter": "1.4.7",
+                        "mdust": "2006.10.17"
+                    },
                     "REPEATMODELER_REPEATMODELER": {
                         "repeatmodeler": "2.0.5"
                     },
@@ -79,6 +85,9 @@
                     "ltr/genome.pp.LTR.raw.fa",
                     "ltr/genome.pp.genome.LTR.intact.raw.fa",
                     "pipeline_info",
+                    "rm2",
+                    "rm2/genome.pp.LINE.raw.fa",
+                    "rm2/genome.pp.RM2.fa",
                     "tir",
                     "tir/genome.pp.TIR.intact.raw.bed",
                     "tir/genome.pp.TIR.intact.raw.fa",
@@ -90,6 +99,6 @@
             "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-12-12T13:06:43.800123"
+        "timestamp": "2024-12-12T18:08:43.061775"
     }
 }
