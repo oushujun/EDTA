@@ -10,6 +10,7 @@ include { REPEATMODELER_REPEATMODELER       } from '../modules/nf-core/repeatmod
 include { FASTA_HELITRONSCANNER_SCAN_DRAW   } from '../subworkflows/gallvp/fasta_helitronscanner_scan_draw/main.nf'
 include { FORMAT_HELITRONSCANNER_OUT        } from '../modules/local/format_helitronscanner_out/main.nf'
 include { LTR_RETRIEVER_POSTPROCESS         } from '../modules/local/ltr_retriever_postprocess/main.nf'
+include { TIR_LEARNER_POSTPROCESS           } from '../modules/local/tir_learner_postprocess/main.nf'
 
 include { softwareVersionsToYAML            } from '../modules/local/utils/main.nf'
 
@@ -83,7 +84,8 @@ workflow EDTA {
         params.species
     )
 
-    ch_tirlearner_filtered_gff          = TIRLEARNER.out.filtered_gff
+    ch_tirlearner_fasta                 = TIRLEARNER.out.fasta
+    ch_tirlearner_gff                   = TIRLEARNER.out.gff
     ch_versions                         = ch_versions.mix(TIRLEARNER.out.versions.first())
 
     // These can also run in parallel
@@ -153,7 +155,7 @@ workflow EDTA {
     ch_versions                         = ch_versions.mix(FORMAT_HELITRONSCANNER_OUT.out.versions.first())
 
     // MODULE: LTR_RETRIEVER_POSTPROCESS
-    ltr_retriever_postprocess_inputs    = ch_sanitized_fasta
+    ch_ltr_retriever_postprocess_inputs = ch_sanitized_fasta
                                         | join(ch_pass_list)
                                         | join(ch_pass_list_gff)
                                         | join(ch_annotation_gff)
@@ -169,15 +171,31 @@ workflow EDTA {
                                         }
     
     LTR_RETRIEVER_POSTPROCESS (
-        ltr_retriever_postprocess_inputs.genome,
-        ltr_retriever_postprocess_inputs.pass,
-        ltr_retriever_postprocess_inputs.p_gff,
-        ltr_retriever_postprocess_inputs.defalse,
-        ltr_retriever_postprocess_inputs.ltr,
+        ch_ltr_retriever_postprocess_inputs.genome,
+        ch_ltr_retriever_postprocess_inputs.pass,
+        ch_ltr_retriever_postprocess_inputs.p_gff,
+        ch_ltr_retriever_postprocess_inputs.defalse,
+        ch_ltr_retriever_postprocess_inputs.ltr,
     )
 
     ch_versions                         = ch_versions.mix(LTR_RETRIEVER_POSTPROCESS.out.versions.first())
 
+    // MODULE: TIR_LEARNER_POSTPROCESS
+    ch_tir_learner_postprocess_inputs = ch_sanitized_fasta
+                                        | join(ch_tirlearner_fasta)
+                                        | join(ch_tirlearner_gff)
+                                        | multiMap { meta, fasta, tir_fa, tir_gff ->
+                                            genome  : [ meta, fasta ]
+                                            tir_fa  : tir_fa
+                                            tir_gff : tir_gff
+                                        }
+    TIR_LEARNER_POSTPROCESS (
+        ch_tir_learner_postprocess_inputs.genome,
+        ch_tir_learner_postprocess_inputs.tir_fa,
+        ch_tir_learner_postprocess_inputs.tir_gff
+    )
+
+    ch_versions                         = ch_versions.mix(TIR_LEARNER_POSTPROCESS.out.versions.first())
 
     // Function: Save versions
     ch_versions                         = ch_versions
