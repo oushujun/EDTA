@@ -1,29 +1,28 @@
-include { SANITIZE_HEADERS                          } from '../modules/local/sanitize/main.nf'
+include { SANITIZE_HEADERS                          } from '../modules/local/sanitize/main'
 
-include { LTRHARVEST                                } from '../modules/nf-core/ltrharvest/main.nf'
-include { LTRFINDER                                 } from '../modules/nf-core/ltrfinder/main.nf'
-include { CAT_CAT                                   } from '../modules/nf-core/cat/cat/main.nf'
-include { LTRRETRIEVER_LTRRETRIEVER                 } from '../modules/nf-core/ltrretriever/ltrretriever/main.nf'
-include { LTR_RETRIEVER_POSTPROCESS                 } from '../modules/local/ltr_retriever_postprocess/main.nf'
+include { LTRHARVEST                                } from '../modules/nf-core/ltrharvest/main'
+include { LTRFINDER                                 } from '../modules/nf-core/ltrfinder/main'
+include { CAT_CAT                                   } from '../modules/nf-core/cat/cat/main'
+include { LTRRETRIEVER_LTRRETRIEVER                 } from '../modules/nf-core/ltrretriever/ltrretriever/main'
+include { LTR_RETRIEVER_POSTPROCESS                 } from '../modules/local/ltr_retriever_postprocess/main'
 
-include { TIRLEARNER                                } from '../modules/gallvp/tirlearner/main.nf'
-include { TIR_LEARNER_POSTPROCESS                   } from '../modules/local/tir_learner_postprocess/main.nf'
+include { ANNOSINE                                  } from '../modules/gallvp/annosine/main'
+include { ANNOSINE_POSTPROCESS                      } from '../modules/local/annosine_postprocess/main'
 
-include { ANNOSINE                                  } from '../modules/gallvp/annosine/main.nf'
+include { REPEATMODELER_BUILDDATABASE               } from '../modules/nf-core/repeatmodeler/builddatabase/main'
+include { REPEATMODELER_REPEATMODELER               } from '../modules/nf-core/repeatmodeler/repeatmodeler/main'
+include { REPEATMODELER_POSTPROCESS                 } from '../modules/local/repeatmodeler_postprocess/main'
 
-include { REPEATMODELER_BUILDDATABASE               } from '../modules/nf-core/repeatmodeler/builddatabase/main.nf'
-include { REPEATMODELER_REPEATMODELER               } from '../modules/nf-core/repeatmodeler/repeatmodeler/main.nf'
-include { REPEATMODELER_POSTPROCESS                 } from '../modules/local/repeatmodeler_postprocess/main.nf'
+include { TIRLEARNER                                } from '../modules/gallvp/tirlearner/main'
+include { TIR_LEARNER_POSTPROCESS                   } from '../modules/local/tir_learner_postprocess/main'
 
-include { FASTA_HELITRONSCANNER_SCAN_DRAW           } from '../subworkflows/gallvp/fasta_helitronscanner_scan_draw/main.nf'
-include { FORMAT_HELITRONSCANNER_OUT                } from '../modules/local/format_helitronscanner_out/main.nf'
-include { FORMAT_HELITRONSCANNER_OUT as FORMAT_HELITRONSCANNER_OUT_EXT  } from '../modules/local/format_helitronscanner_out/main.nf'
-include { HELITRONSCANNER_POSTPROCESS               } from '../modules/local/helitronscanner_postprocess/main.nf'
+include { FASTA_HELITRONSCANNER_SCAN_DRAW           } from '../subworkflows/gallvp/fasta_helitronscanner_scan_draw/main'
+include { FORMAT_HELITRONSCANNER_OUT                } from '../modules/local/format_helitronscanner_out/main'
+include { FORMAT_HELITRONSCANNER_OUT as FORMAT_HELITRONSCANNER_OUT_EXT  } from '../modules/local/format_helitronscanner_out/main'
+include { HELITRONSCANNER_POSTPROCESS               } from '../modules/local/helitronscanner_postprocess/main'
 
-
-
-include { softwareVersionsToYAML                    } from '../modules/local/utils/main.nf'
-include { idFromFileName                            } from '../modules/local/utils/main.nf'
+include { softwareVersionsToYAML                    } from '../modules/local/utils/main'
+include { idFromFileName                            } from '../modules/local/utils/main'
 
 workflow EDTA {
 
@@ -51,14 +50,14 @@ workflow EDTA {
 
     ch_ltrharvest_scn                               = LTRHARVEST.out.scn
 
-    ch_versions                                     = ch_versions.mix(LTRHARVEST.out.versions)
+    ch_versions                                     = ch_versions.mix(LTRHARVEST.out.versions.first())
 
     // MODULE: LTRFINDER
     LTRFINDER  { ch_sanitized_fasta }
 
     ch_ltrfinder_scn                                = LTRFINDER.out.scn
 
-    ch_versions                                     = ch_versions.mix(LTRFINDER.out.versions)
+    ch_versions                                     = ch_versions.mix(LTRFINDER.out.versions.first())
 
     // MODULE: CAT_CAT
     ch_cat_cat_inputs                               = ch_ltrharvest_scn
@@ -108,40 +107,27 @@ workflow EDTA {
 
     ch_versions                                     = ch_versions.mix(LTR_RETRIEVER_POSTPROCESS.out.versions.first())
 
-    // MODULE: TIRLEARNER
-    TIRLEARNER (
-        ch_sanitized_fasta,
-        params.species
-    )
-
-    ch_versions                                     = ch_versions.mix(TIRLEARNER.out.versions.first())
-
-    // MODULE: TIR_LEARNER_POSTPROCESS
-    ch_tir_learner_postprocess_inputs               = ch_sanitized_fasta
-                                                    | join ( TIRLEARNER.out.fasta   )
-                                                    | join ( TIRLEARNER.out.gff     )
-                                                    | multiMap { meta, fasta, tir_fa, tir_gff ->
-                                                        genome  : [ meta, fasta ]
-                                                        tir_fa  : tir_fa
-                                                        tir_gff : tir_gff
-                                                    }
-    TIR_LEARNER_POSTPROCESS (
-        ch_tir_learner_postprocess_inputs.genome,
-        ch_tir_learner_postprocess_inputs.tir_fa,
-        ch_tir_learner_postprocess_inputs.tir_gff
-    )
-
-    ch_versions                                     = ch_versions.mix(TIR_LEARNER_POSTPROCESS.out.versions.first())
-
     // MODULE: ANNOSINE
     ANNOSINE (
         ch_sanitized_fasta,
         3 // mode
     )
 
-    // Currently it's a topic, so need to fix that
-    ch_versions                                     = ch_versions.mix(ANNOSINE.out.versions)
-    ch_annosine_seed_sine                           = ANNOSINE.out.fa
+    ch_versions                                     = ch_versions.mix(ANNOSINE.out.versions.first())
+
+    // MODULE: ANNOSINE_POSTPROCESS
+    ch_annosine_postprocess_inputs                  = ch_sanitized_fasta
+                                                    | join ( ANNOSINE.out.fa )
+                                                    | multiMap { meta, fasta, anno_fa ->
+                                                        genome  : [ meta, fasta ]
+                                                        anno_fa : anno_fa
+                                                    }
+    ANNOSINE_POSTPROCESS (
+        ch_annosine_postprocess_inputs.genome,
+        ch_annosine_postprocess_inputs.anno_fa
+    )
+
+    ch_versions                                     = ch_versions.mix(ANNOSINE_POSTPROCESS.out.versions.first())
 
     // MODULE: REPEATMODELER_BUILDDATABASE
     ch_repeatmodeler_inputs                         = ch_sanitized_fasta
@@ -181,6 +167,31 @@ workflow EDTA {
     )
 
     ch_versions                                     = ch_versions.mix(REPEATMODELER_POSTPROCESS.out.versions.first())
+
+    // MODULE: TIRLEARNER
+    TIRLEARNER (
+        ch_sanitized_fasta,
+        params.species
+    )
+
+    ch_versions                                     = ch_versions.mix(TIRLEARNER.out.versions.first())
+
+    // MODULE: TIR_LEARNER_POSTPROCESS
+    ch_tir_learner_postprocess_inputs               = ch_sanitized_fasta
+                                                    | join ( TIRLEARNER.out.fasta   )
+                                                    | join ( TIRLEARNER.out.gff     )
+                                                    | multiMap { meta, fasta, tir_fa, tir_gff ->
+                                                        genome  : [ meta, fasta ]
+                                                        tir_fa  : tir_fa
+                                                        tir_gff : tir_gff
+                                                    }
+    TIR_LEARNER_POSTPROCESS (
+        ch_tir_learner_postprocess_inputs.genome,
+        ch_tir_learner_postprocess_inputs.tir_fa,
+        ch_tir_learner_postprocess_inputs.tir_gff
+    )
+
+    ch_versions                                     = ch_versions.mix(TIR_LEARNER_POSTPROCESS.out.versions.first())
 
     // MODULE: FASTA_HELITRONSCANNER_SCAN_DRAW
     FASTA_HELITRONSCANNER_SCAN_DRAW ( ch_sanitized_fasta )
