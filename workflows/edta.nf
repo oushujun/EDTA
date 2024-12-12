@@ -11,6 +11,7 @@ include { FASTA_HELITRONSCANNER_SCAN_DRAW   } from '../subworkflows/gallvp/fasta
 include { FORMAT_HELITRONSCANNER_OUT        } from '../modules/local/format_helitronscanner_out/main.nf'
 include { LTR_RETRIEVER_POSTPROCESS         } from '../modules/local/ltr_retriever_postprocess/main.nf'
 include { TIR_LEARNER_POSTPROCESS           } from '../modules/local/tir_learner_postprocess/main.nf'
+include { REPEATMODELER_POSTPROCESS         } from '../modules/local/repeatmodeler_postprocess/main.nf'
 
 include { softwareVersionsToYAML            } from '../modules/local/utils/main.nf'
 
@@ -22,7 +23,7 @@ workflow EDTA {
     ch_versions                         = Channel.empty()
 
     
-    ch_genome                           = Channel.fromPath(params.genomes)
+    ch_genome                           = Channel.fromPath(params.genome)
 
     // Create a meta object for each genome
     ch_meta_genome                      = ch_genome.map { genome -> 
@@ -196,6 +197,20 @@ workflow EDTA {
     )
 
     ch_versions                         = ch_versions.mix(TIR_LEARNER_POSTPROCESS.out.versions.first())
+
+    // MODULE: REPEATMODELER_POSTPROCESS
+    ch_repeatmodeler_postprocess_inputs = ch_sanitized_fasta
+                                        | join(ch_repeatmodeler_fasta)
+                                        | multiMap { meta, fasta, rm_fa ->
+                                            genome  : [ meta, fasta ]
+                                            rm_fa   : rm_fa
+                                        }
+    REPEATMODELER_POSTPROCESS (
+        ch_repeatmodeler_postprocess_inputs.genome,
+        ch_repeatmodeler_postprocess_inputs.rm_fa,
+    )
+
+    ch_versions                         = ch_versions.mix(REPEATMODELER_POSTPROCESS.out.versions.first())
 
     // Function: Save versions
     ch_versions                         = ch_versions

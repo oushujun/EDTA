@@ -7,7 +7,7 @@ nextflow_pipeline {
 
         when {
             params {
-                genomes = "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta"
+                genome   = "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta"
                 outdir  = "$outputDir"
             }
         }
