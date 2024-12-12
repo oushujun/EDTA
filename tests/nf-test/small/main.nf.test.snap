@@ -2,7 +2,7 @@
     "small genome": {
         "content": [
             {
-                "successful tasks": 19,
+                "successful tasks": 21,
                 "versions": {
                     "ANNOSINE": {
                         "annosine": "2.0.7"
@@ -13,11 +13,20 @@
                     "FORMAT_HELITRONSCANNER_OUT": {
                         "perl": "v5.32.1"
                     },
+                    "FORMAT_HELITRONSCANNER_OUT_EXT": {
+                        "perl": "v5.32.1"
+                    },
                     "HELITRONSCANNER_DRAW": {
                         "helitronscanner": "V1.1"
                     },
                     "HELITRONSCANNER_DRAW_RC": {
                         "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_POSTPROCESS": {
+                        "perl": "v5.32.1",
+                        "trf": 4.09,
+                        "TEsorter": "1.4.7",
+                        "mdust": "2006.10.17"
                     },
                     "HELITRONSCANNER_SCAN_HEAD": {
                         "helitronscanner": "V1.1"
@@ -70,28 +79,35 @@
                         "mdust": "2006.10.17"
                     },
                     "Workflow": {
-                        "jguhlin/EDTA": "v0.1.0dev"
+                        "oushujun/EDTA": "v0.1.0dev"
                     }
                 },
                 "stable paths": [
+                    "genome.pp.Helitron.intact.raw.bed:md5,a8b170a1ee8d36c7f8e3af5ba1e43cb6",
                     "genome.pp.LTR.intact.raw.fa.anno.list:md5,51261f020350b448acdf89d8fb625448",
                     "genome.pp.genome.LTR.intact.raw.fa:md5,ae2336f498897d1af4e8d3be28bb3f25",
                     "genome.pp.TIR.intact.raw.bed:md5,12406184046b11edc2ddadbc82765966"
                 ],
                 "stable names": [
-                    "ltr",
-                    "ltr/genome.pp.LTR.intact.raw.fa.anno.list",
-                    "ltr/genome.pp.LTR.intact.raw.gff3",
-                    "ltr/genome.pp.LTR.raw.fa",
-                    "ltr/genome.pp.genome.LTR.intact.raw.fa",
                     "pipeline_info",
-                    "rm2",
-                    "rm2/genome.pp.LINE.raw.fa",
-                    "rm2/genome.pp.RM2.fa",
-                    "tir",
-                    "tir/genome.pp.TIR.intact.raw.bed",
-                    "tir/genome.pp.TIR.intact.raw.fa",
-                    "tir/genome.pp.TIR.intact.raw.gff3"
+                    "raw",
+                    "raw/helitron",
+                    "raw/helitron/genome.pp.Helitron.intact.raw.bed",
+                    "raw/helitron/genome.pp.Helitron.intact.raw.fa",
+                    "raw/helitron/genome.pp.Helitron.intact.raw.fa.anno.list",
+                    "raw/helitron/genome.pp.Helitron.intact.raw.gff3",
+                    "raw/line",
+                    "raw/line/genome.pp.LINE.raw.fa",
+                    "raw/line/genome.pp.RM2.fa",
+                    "raw/ltr",
+                    "raw/ltr/genome.pp.LTR.intact.raw.fa.anno.list",
+                    "raw/ltr/genome.pp.LTR.intact.raw.gff3",
+                    "raw/ltr/genome.pp.LTR.raw.fa",
+                    "raw/ltr/genome.pp.genome.LTR.intact.raw.fa",
+                    "raw/tir",
+                    "raw/tir/genome.pp.TIR.intact.raw.bed",
+                    "raw/tir/genome.pp.TIR.intact.raw.fa",
+                    "raw/tir/genome.pp.TIR.intact.raw.gff3"
                 ]
             }
         ],
@@ -99,6 +115,6 @@
             "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-12-12T18:08:43.061775"
+        "timestamp": "2024-12-13T11:02:40.702113"
     }
 }
