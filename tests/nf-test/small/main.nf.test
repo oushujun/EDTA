@@ -7,7 +7,7 @@ nextflow_pipeline {
 
         when {
             params {
-                genomes = "https://raw.githubusercontent.com/jguhlin/EDTA/a2cd9a0777e4ac6e39545bacc3e752f94eb2f389/test/genome.fa"
+                genome  = "https://raw.githubusercontent.com/jguhlin/EDTA/a2cd9a0777e4ac6e39545bacc3e752f94eb2f389/test/genome.fa"
                 outdir  = "$outputDir"
             }
         }
