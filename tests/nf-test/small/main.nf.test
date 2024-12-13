@@ -27,7 +27,8 @@ nextflow_pipeline {
                     'raw/line/*.pp.RM2.fa',
                     'raw/helitron/*.Helitron.intact.raw.fa',
                     'raw/helitron/*.Helitron.intact.raw.fa.anno.list',
-                    'raw/helitron/*.Helitron.intact.raw.gff3'
+                    'raw/helitron/*.Helitron.intact.raw.gff3',
+                    'stg1/*.stg1.fasta'
                 ],
                 null,
                 ['**']
