@@ -13,7 +13,7 @@ process REPEATMODELER_POSTPROCESS {
 
     output:
     tuple val(meta), path('*.RM2.fa')       , emit: rm2_fa
-    tuple val(meta), path('*.LINE.raw.fa')  , emit: line_raw
+    tuple val(meta), path('*.LINE.raw.fa')  , emit: line_raw    , optional: true
     path "versions.yml"                     , emit: versions
 
     when:
@@ -37,9 +37,13 @@ process REPEATMODELER_POSTPROCESS {
         genome.RM2.fa \\
         ${prefix}.RM2.fa
     
-    mv \\
-        genome.LINE.raw.fa \\
-        ${prefix}.LINE.raw.fa
+    if [[ -s genome.LINE.raw.fa ]]; then
+        mv \\
+            genome.LINE.raw.fa \\
+            ${prefix}.LINE.raw.fa
+    else
+        rm genome.LINE.raw.fa
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -56,7 +60,6 @@ process REPEATMODELER_POSTPROCESS {
     if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     touch ${prefix}.RM2.fa
-    touch ${prefix}.LINE.raw.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

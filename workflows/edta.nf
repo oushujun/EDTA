@@ -21,6 +21,8 @@ include { FORMAT_HELITRONSCANNER_OUT                } from '../modules/local/for
 include { FORMAT_HELITRONSCANNER_OUT as FORMAT_HELITRONSCANNER_OUT_EXT  } from '../modules/local/format_helitronscanner_out/main'
 include { HELITRONSCANNER_POSTPROCESS               } from '../modules/local/helitronscanner_postprocess/main'
 
+include { PROCESS_K                                 } from '../modules/local/process_k/main'
+
 include { softwareVersionsToYAML                    } from '../modules/local/utils/main'
 include { idFromFileName                            } from '../modules/local/utils/main'
 
@@ -248,6 +250,49 @@ workflow EDTA {
     )
 
     ch_versions                                     = ch_versions.mix(HELITRONSCANNER_POSTPROCESS.out.versions.first())
+
+    // MODULE: PROCESS_K
+    ch_process_k_inputs                             = ch_sanitized_fasta
+                                                    | join ( LTR_RETRIEVER_POSTPROCESS.out.raw_fa                           )
+                                                    | join ( LTR_RETRIEVER_POSTPROCESS.out.intact_raw_fa                    )
+                                                    | join ( ANNOSINE_POSTPROCESS.out.sine_fa           , remainder: true   )
+                                                    | join ( REPEATMODELER_POSTPROCESS.out.line_raw     , remainder: true   )
+                                                    | join ( TIR_LEARNER_POSTPROCESS.out.intact_raw_fa                      )
+                                                    | join ( HELITRONSCANNER_POSTPROCESS.out.raw_fa                         )
+                                                    | multiMap { meta, genome, ltr, ltrint, sine, line, tir, helitron ->
+                                                        genome  : [ meta, genome ]
+                                                        ltr     : ltr       ?: []
+                                                        ltrint  : ltrint    ?: []
+                                                        sine    : sine      ?: []
+                                                        line    : line      ?: []
+                                                        tir     : tir       ?: []
+                                                        helitron: helitron  ?: []
+                                                    }
+
+    PROCESS_K (
+        ch_process_k_inputs.genome,
+        ch_process_k_inputs.ltr,
+        ch_process_k_inputs.ltrint,
+        ch_process_k_inputs.sine,
+        ch_process_k_inputs.line,
+        ch_process_k_inputs.tir,
+        ch_process_k_inputs.helitron,
+    )
+
+    ch_versions                                     = ch_versions.mix(PROCESS_K.out.versions.first())
+
+    // Warn: End of the pipeline if no inputs are available for ProcessK
+    ch_sanitized_fasta
+    | join ( LTR_RETRIEVER_POSTPROCESS.out.raw_fa           , remainder: true )
+    | join ( LTR_RETRIEVER_POSTPROCESS.out.intact_raw_fa    , remainder: true )
+    | join ( TIR_LEARNER_POSTPROCESS.out.intact_raw_fa      , remainder: true )
+    | join ( HELITRONSCANNER_POSTPROCESS.out.raw_fa         , remainder: true )
+    | map { meta, _genome, ltr, ltrint, tir, helitron ->
+        if ( !ltr || !ltrint || !tir || !helitron ) {
+            log.warn "One or more TE classes needed to complete EDTA were not found in genome '$meta.id'" +
+            ". Multiple processing steps are being skipped."
+        }
+    }
 
     // Function: Save versions
     ch_versions                                     = ch_versions
