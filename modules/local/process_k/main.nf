@@ -68,7 +68,6 @@ process PROCESS_K {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         perl: \$(perl -v | sed -n 's|This is perl.*(\\(.*\\)).*|\\1|p')
-        blast: \$(blastn -version | sed -n 's|Package: blast \\(.*\\)|\\1|p')
         repeatmasker: \$(RepeatMasker -v | sed 's/RepeatMasker version //1')
     END_VERSIONS
     """
@@ -82,7 +81,6 @@ process PROCESS_K {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         perl: \$(perl -v | sed -n 's|This is perl.*(\\(.*\\)).*|\\1|p')
-        blast: \$(blastn -version | sed -n 's|Package: blast \\(.*\\)|\\1|p')
         repeatmasker: \$(RepeatMasker -v | sed 's/RepeatMasker version //1')
     END_VERSIONS
     """

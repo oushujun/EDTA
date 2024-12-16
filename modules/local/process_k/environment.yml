@@ -4,5 +4,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::blast=2.16.0=hc155240_3
-  - bioconda::repeatmasker=4.1.7p1=pl5321hdfd78af_1
+  - bioconda::blast=2.16.0
+  - bioconda::repeatmasker=4.1.7
