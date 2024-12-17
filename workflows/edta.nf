@@ -21,7 +21,9 @@ include { FORMAT_HELITRONSCANNER_OUT                } from '../modules/local/for
 include { FORMAT_HELITRONSCANNER_OUT as FORMAT_HELITRONSCANNER_OUT_EXT  } from '../modules/local/format_helitronscanner_out/main'
 include { HELITRONSCANNER_POSTPROCESS               } from '../modules/local/helitronscanner_postprocess/main'
 
+include { COMBINE_INTACT_TES                        } from '../modules/local/combine_intact_tes/main'
 include { PROCESS_K                                 } from '../modules/local/process_k/main'
+include { FINAL_FILTER                              } from '../modules/local/final_filter/main'
 
 include { softwareVersionsToYAML                    } from '../modules/local/utils/main'
 include { idFromFileName                            } from '../modules/local/utils/main'
@@ -251,6 +253,36 @@ workflow EDTA {
 
     ch_versions                                     = ch_versions.mix(HELITRONSCANNER_POSTPROCESS.out.versions.first())
 
+    // MODULE: COMBINE_INTACT_TES
+    ch_combine_intact_tes_inputs                    = ch_sanitized_fasta
+                                                    | join ( LTR_RETRIEVER_POSTPROCESS.out.intact_raw_fa    )
+                                                    | join ( LTR_RETRIEVER_POSTPROCESS.out.intact_raw_gff3  )
+                                                    | join ( TIR_LEARNER_POSTPROCESS.out.intact_raw_fa      )
+                                                    | join ( TIR_LEARNER_POSTPROCESS.out.intact_raw_bed     )
+                                                    | join ( HELITRONSCANNER_POSTPROCESS.out.raw_fa         )
+                                                    | join ( HELITRONSCANNER_POSTPROCESS.out.raw_bed        )
+                                                    | multiMap { meta, genome, ltr_fa, ltr_gff, tir_fa, tir_bed, helitron_fa, helitron_bed ->
+                                                        genome      : [ meta, genome ]
+                                                        ltr_fa      : ltr_fa
+                                                        ltr_gff     : ltr_gff
+                                                        tir_fa      : tir_fa
+                                                        tir_bed     : tir_bed
+                                                        helitron_fa : helitron_fa
+                                                        helitron_bed: helitron_bed
+                                                    }
+
+    COMBINE_INTACT_TES (
+        ch_combine_intact_tes_inputs.genome,
+        ch_combine_intact_tes_inputs.ltr_fa,
+        ch_combine_intact_tes_inputs.ltr_gff,
+        ch_combine_intact_tes_inputs.tir_fa,
+        ch_combine_intact_tes_inputs.tir_bed,
+        ch_combine_intact_tes_inputs.helitron_fa,
+        ch_combine_intact_tes_inputs.helitron_bed,
+    )
+
+    ch_versions                                     = ch_versions.mix(COMBINE_INTACT_TES.out.versions.first())
+
     // MODULE: PROCESS_K
     ch_process_k_inputs                             = ch_sanitized_fasta
                                                     | join ( LTR_RETRIEVER_POSTPROCESS.out.raw_fa                           )
@@ -293,6 +325,26 @@ workflow EDTA {
             ". Multiple processing steps are being skipped."
         }
     }
+
+    // MODULE: FINAL_FILTER
+    ch_final_filter_inputs                          = ch_sanitized_fasta
+                                                    | join(PROCESS_K.out.stg1_fa)
+                                                    | join(PROCESS_K.out.intact_fa)
+                                                    | join(COMBINE_INTACT_TES.out.intact_raw_gff)
+                                                    | multiMap { meta, fasta, stg1_fa, intact_fa, intact_gff ->
+                                                        genome      : [ meta, fasta ]
+                                                        stg1_fa     : stg1_fa
+                                                        intact_fa   : intact_fa
+                                                        intact_gff  : intact_gff
+                                                    }
+    FINAL_FILTER (
+        ch_final_filter_inputs.genome,
+        ch_final_filter_inputs.stg1_fa,
+        ch_final_filter_inputs.intact_fa,
+        ch_final_filter_inputs.intact_gff,
+    )
+
+    ch_versions                                     = ch_versions.mix(FINAL_FILTER.out.versions.first())
 
     // Function: Save versions
     ch_versions                                     = ch_versions

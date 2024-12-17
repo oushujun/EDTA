@@ -17,16 +17,16 @@ process PROCESS_K {
     path(helitron       , name: "genome.EDTA.raw/genome.Helitron.intact.raw.fa")
 
     output:
-    tuple val(meta), path('*.fasta')        , emit: stg1_fa
+    tuple val(meta), path("${prefix}.fasta"), emit: stg1_fa
+    tuple val(meta), path('*.intact.fasta') , emit: intact_fa
     path "versions.yml"                     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix          = task.ext.prefix   ?: "${meta.id}"
+    prefix              = task.ext.prefix   ?: "${meta.id}"
     def args            = task.ext.args     ?: ''
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
 
     def touch_ltr       = ltr               ? ''    : "touch genome.EDTA.raw/genome.LTR.raw.fa"
     def touch_ltrint    = ltrint            ? ''    : "touch genome.EDTA.raw/genome.LTR.intact.raw.fa"
@@ -64,6 +64,10 @@ process PROCESS_K {
     mv \\
         genome.EDTA.combine/genome.EDTA.fa.stg1 \\
         ${prefix}.fasta
+    
+    mv \\
+        genome.EDTA.combine/genome.EDTA.intact.fa.cln \\
+        ${prefix}.intact.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -73,10 +77,10 @@ process PROCESS_K {
     """
 
     stub:
-    def prefix  = task.ext.prefix ?: "${meta.id}"
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
+    prefix  = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}.fasta
+    touch ${prefix}.intact.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -18,5 +18,5 @@ EOF
 sed -n 567,579p "$script_path/EDTA_raw.pl" \
     >> input/RepeatModeler_postprocess.pl
 
-sed -n 585,586p "$script_path/EDTA_raw.pl" \
+sed -n 585,584p "$script_path/EDTA_raw.pl" \
     >> input/RepeatModeler_postprocess.pl

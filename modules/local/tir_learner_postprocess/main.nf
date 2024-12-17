@@ -13,9 +13,9 @@ process TIR_LEARNER_POSTPROCESS {
     path "input/TIR-Learner-Result/TIR-Learner_FinalAnn.gff3"
 
     output:
-    tuple val(meta), path('*.TIR.intact.raw.fa')    , emit: intact_raw_fa
-    tuple val(meta), path('*.TIR.intact.raw.gff3')  , emit: intact_raw_gff3
-    tuple val(meta), path('*.TIR.intact.raw.bed')   , emit: intact_raw_bed
+    tuple val(meta), path('*.TIR.intact.fa')    , emit: intact_raw_fa
+    tuple val(meta), path('*.TIR.intact.gff3')  , emit: intact_raw_gff3
+    tuple val(meta), path('*.TIR.intact.bed')   , emit: intact_raw_bed
     path "versions.yml" , emit: versions
 
     when:
@@ -24,7 +24,6 @@ process TIR_LEARNER_POSTPROCESS {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     setup_TIR-Learner_postprocess.sh \\
         $task.cpus
@@ -37,15 +36,15 @@ process TIR_LEARNER_POSTPROCESS {
 
     mv \\
         genome.TIR.intact.raw.fa \\
-        ${prefix}.TIR.intact.raw.fa
+        ${prefix}.TIR.intact.fa
     
     mv \\
         genome.TIR.intact.raw.gff3 \\
-        ${prefix}.TIR.intact.raw.gff3
+        ${prefix}.TIR.intact.gff3
 
     mv \\
         genome.TIR.intact.raw.bed \\
-        ${prefix}.TIR.intact.raw.bed
+        ${prefix}.TIR.intact.bed
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -59,11 +58,10 @@ process TIR_LEARNER_POSTPROCESS {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    touch ${prefix}.TIR.intact.raw.fa
-    touch ${prefix}.TIR.intact.raw.gff3
-    touch ${prefix}.TIR.intact.raw.bed
+    touch ${prefix}.TIR.intact.fa
+    touch ${prefix}.TIR.intact.gff3
+    touch ${prefix}.TIR.intact.bed
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

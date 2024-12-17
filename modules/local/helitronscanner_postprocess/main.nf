@@ -13,10 +13,10 @@ process HELITRONSCANNER_POSTPROCESS {
     path "input/genome.HelitronScanner.filtered.ext.fa"
 
     output:
-    tuple val(meta), path('*.Helitron.intact.raw.fa.anno.list') , emit: anno_list
-    tuple val(meta), path('*.Helitron.intact.raw.bed')          , emit: raw_bed
-    tuple val(meta), path('*.Helitron.intact.raw.gff3')         , emit: raw_gff
-    tuple val(meta), path('*.Helitron.intact.raw.fa')           , emit: raw_fa
+    tuple val(meta), path('*.Helitron.intact.anno.list')        , emit: anno_list
+    tuple val(meta), path('*.Helitron.intact.bed')              , emit: raw_bed
+    tuple val(meta), path('*.Helitron.intact.gff3')             , emit: raw_gff
+    tuple val(meta), path('*.Helitron.intact.fa')               , emit: raw_fa
     path "versions.yml"                                         , emit: versions
 
     when:
@@ -25,7 +25,6 @@ process HELITRONSCANNER_POSTPROCESS {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     setup_HelitronScanner_postprocess.sh \\
         $task.cpus
@@ -38,19 +37,19 @@ process HELITRONSCANNER_POSTPROCESS {
 
     mv \\
         genome.Helitron.intact.raw.fa.anno.list \\
-        ${prefix}.Helitron.intact.raw.fa.anno.list
+        ${prefix}.Helitron.intact.anno.list
 
     mv \\
         genome.Helitron.intact.raw.bed \\
-        ${prefix}.Helitron.intact.raw.bed
+        ${prefix}.Helitron.intact.bed
 
     mv \\
         genome.Helitron.intact.raw.gff3 \\
-        ${prefix}.Helitron.intact.raw.gff3
+        ${prefix}.Helitron.intact.gff3
 
     mv \\
         genome.Helitron.intact.raw.fa \\
-        ${prefix}.Helitron.intact.raw.fa
+        ${prefix}.Helitron.intact.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -64,12 +63,11 @@ process HELITRONSCANNER_POSTPROCESS {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    touch ${prefix}.Helitron.intact.raw.fa.anno.list
-    touch ${prefix}.Helitron.intact.raw.bed
-    touch ${prefix}.Helitron.intact.raw.gff3
-    touch ${prefix}.Helitron.intact.raw.fa
+    touch ${prefix}.Helitron.intact.anno.list
+    touch ${prefix}.Helitron.intact.bed
+    touch ${prefix}.Helitron.intact.gff3
+    touch ${prefix}.Helitron.intact.fa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
