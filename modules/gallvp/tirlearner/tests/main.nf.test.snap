@@ -2,14 +2,14 @@
     "sarscov2-genome": {
         "content": [
             [
-                "versions.yml:md5,9db74013377c09d8452530315592acdf"
+                "versions.yml:md5,054eb77998e320f8b70cae832f7bff59"
             ]
         ],
         "meta": {
-            "nf-test": "0.8.4",
+            "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-08-22T13:03:25.394783"
+        "timestamp": "2024-12-17T15:23:12.222704"
     },
     "actinidia_chinensis-genome_1_fasta_gz-success": {
         "content": [
@@ -46,14 +46,14 @@
                 ]
             ],
             [
-                "versions.yml:md5,9db74013377c09d8452530315592acdf"
+                "versions.yml:md5,054eb77998e320f8b70cae832f7bff59"
             ]
         ],
         "meta": {
-            "nf-test": "0.8.4",
+            "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-08-22T13:21:08.136874"
+        "timestamp": "2024-12-17T15:22:50.978766"
     },
     "stub": {
         "content": [
@@ -99,7 +99,7 @@
                     ]
                 ],
                 "5": [
-                    "versions.yml:md5,9db74013377c09d8452530315592acdf"
+                    "versions.yml:md5,054eb77998e320f8b70cae832f7bff59"
                 ],
                 "fasta": [
                     [
@@ -142,14 +142,14 @@
                     ]
                 ],
                 "versions": [
-                    "versions.yml:md5,9db74013377c09d8452530315592acdf"
+                    "versions.yml:md5,054eb77998e320f8b70cae832f7bff59"
                 ]
             }
         ],
         "meta": {
-            "nf-test": "0.8.4",
+            "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-08-22T12:56:16.022839"
+        "timestamp": "2024-12-17T15:23:25.302007"
     }
 }

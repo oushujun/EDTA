@@ -1,0 +1,227 @@
+{
+    "custom_fasta-comment_change": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.fasta:md5,c861b9d46a4d9bdba66953cff572fc5d"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,8762f2bffbdff75c2812bad72ba52bba"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ],
+                "short_ids_fasta": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.fasta:md5,c861b9d46a4d9bdba66953cff572fc5d"
+                    ]
+                ],
+                "short_ids_tsv": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,8762f2bffbdff75c2812bad72ba52bba"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2023-12-07T13:33:05.523745"
+    },
+    "stub": {
+        "content": [
+            {
+                "0": [
+                    
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,fcf920d9a7b57a1e3c29a9e88673330f"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ],
+                "short_ids_fasta": [
+                    
+                ],
+                "short_ids_tsv": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,fcf920d9a7b57a1e3c29a9e88673330f"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.2"
+        },
+        "timestamp": "2024-06-04T13:58:30.161542"
+    },
+    "homo_sapiens-genome_fasta-no_change": {
+        "content": [
+            {
+                "0": [
+                    
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,642382addc4beba37088b1ebe09d38cf"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ],
+                "short_ids_fasta": [
+                    
+                ],
+                "short_ids_tsv": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,642382addc4beba37088b1ebe09d38cf"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.1"
+        },
+        "timestamp": "2024-06-02T20:54:17.945233"
+    },
+    "homo_sapiens-genome2_fasta-length_change": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.fasta:md5,1382acd98d4cd233a8062ef01b2aaa6d"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,99c0f2a529cb595b2d8530024ed2880e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ],
+                "short_ids_fasta": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.fasta:md5,1382acd98d4cd233a8062ef01b2aaa6d"
+                    ]
+                ],
+                "short_ids_tsv": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,99c0f2a529cb595b2d8530024ed2880e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2023-12-07T13:33:01.924483"
+    },
+    "sarscov2-genome_fasta-pattern_change": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.fasta:md5,14d6f587b6d28889c5c0f985e78d602f"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,d7a2af88e8549586e5616bff6a88bd71"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ],
+                "short_ids_fasta": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.fasta:md5,14d6f587b6d28889c5c0f985e78d602f"
+                    ]
+                ],
+                "short_ids_tsv": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.short.ids.tsv:md5,d7a2af88e8549586e5616bff6a88bd71"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e5704a53ebea373dac3a93ae800d48ba"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2023-12-07T13:32:58.12885"
+    }
+}

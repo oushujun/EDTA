@@ -13,6 +13,10 @@
                     "COMBINE_INTACT_TES": {
                         "perl": "v5.32.1"
                     },
+                    "CUSTOM_SHORTENFASTAIDS": {
+                        "python": "3.8.13",
+                        "biopython": 1.75
+                    },
                     "FINAL_FILTER": {
                         "perl": "v5.32.1",
                         "repeatmasker": "4.1.7-p1"
@@ -81,7 +85,7 @@
                         "repeatmodeler": "2.0.5"
                     },
                     "TIRLEARNER": {
-                        "TIR-Learner": "v3.0.2 by Tianyu (Sky) Lu (tlu83@wisc.edu) published under GPLv3"
+                        "TIR-Learner": "v3.0.2"
                     },
                     "TIR_LEARNER_POSTPROCESS": {
                         "perl": "v5.32.1",
@@ -94,40 +98,15 @@
                     }
                 },
                 "stable paths": [
-                    "genome.Helitron.intact.bed:md5,a8b170a1ee8d36c7f8e3af5ba1e43cb6",
-                    "genome.LTR.intact.anno.list:md5,51261f020350b448acdf89d8fb625448",
-                    "genome.LTR.intact.fa:md5,ae2336f498897d1af4e8d3be28bb3f25",
-                    "genome.TIR.intact.bed:md5,12406184046b11edc2ddadbc82765966"
+                    "genome.short.ids.tsv:md5,642382addc4beba37088b1ebe09d38cf"
                 ],
                 "stable names": [
-                    "final",
-                    "final/genome.TElib.fa",
-                    "final/genome.intact.fa",
-                    "final/genome.intact.gff3",
-                    "pipeline_info",
-                    "raw",
-                    "raw/helitron",
-                    "raw/helitron/genome.Helitron.intact.anno.list",
-                    "raw/helitron/genome.Helitron.intact.bed",
-                    "raw/helitron/genome.Helitron.intact.fa",
-                    "raw/helitron/genome.Helitron.intact.gff3",
-                    "raw/intact",
-                    "raw/intact/genome.intact.fa",
-                    "raw/intact/genome.intact.gff3",
-                    "raw/line",
-                    "raw/line/genome.RM2.fa",
-                    "raw/ltr",
-                    "raw/ltr/genome.LTR.fa",
-                    "raw/ltr/genome.LTR.intact.anno.list",
-                    "raw/ltr/genome.LTR.intact.fa",
-                    "raw/ltr/genome.LTR.intact.gff3",
-                    "raw/tir",
-                    "raw/tir/genome.TIR.intact.bed",
-                    "raw/tir/genome.TIR.intact.fa",
-                    "raw/tir/genome.TIR.intact.gff3",
-                    "stg1",
-                    "stg1/genome.fasta",
-                    "stg1/genome.intact.fasta"
+                    "genome",
+                    "genome/genome.TElib.fa",
+                    "genome/genome.intact.fa",
+                    "genome/genome.intact.gff3",
+                    "genome/genome.short.ids.tsv",
+                    "pipeline_info"
                 ]
             }
         ],
@@ -135,6 +114,6 @@
             "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-12-17T14:02:22.882318"
+        "timestamp": "2024-12-17T22:28:58.604502"
     }
 }

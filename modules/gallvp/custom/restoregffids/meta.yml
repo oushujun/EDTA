@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "custom_restoregffids"
+description: |
+  Restores IDs in a gff3 file based on a TSV table
+  consisting of original (first column) and new IDs (second column).
+  This module is helpful when some tools like EDTA implicitly shorten
+  the IDs without producing the ID map, leading to downstream mismatch
+  in IDs across files.
+keywords:
+  - genome
+  - gff
+  - ID
+  - shorten
+  - restore
+tools:
+  - "python":
+      description: |
+        Python is a programming language that lets you work quickly
+        and integrate systems more effectively
+      homepage: "https://www.python.org"
+      documentation: "https://docs.python.org/3/"
+      tool_dev_url: "https://github.com/python/cpython"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'test' ]`
+    - gff3:
+        type: file
+        description: Input gff3 file
+        pattern: "*.{gff,gff3}"
+  - - ids_tsv:
+        type: file
+        description: |
+          A TSV file with original (first column) and new ids (second column)
+          if id change was required
+        pattern: "*.tsv"
+output:
+  - restored_ids_gff3:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'test' ]`
+      - "*.restored.ids.gff3":
+          type: file
+          description: GFF3 file with restored ids
+          pattern: "*.restored.ids.gff3"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"
