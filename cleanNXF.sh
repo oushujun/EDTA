@@ -13,3 +13,6 @@ echo "Cleaned work..."
 rm -f .nf-test.log
 rm -rf .nf-test
 echo "Cleaned nf-test..."
+
+rm -rf null
+echo "Cleaned null..."

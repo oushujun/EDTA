@@ -2,8 +2,27 @@
 
 nextflow.enable.dsl = 2
 
-include { EDTA          } from './workflows/edta.nf'
+include { PIPELINE_INITIALISATION   } from './subworkflows/local/utils_nfcore_edta_pipeline'
+include { EDTA                      } from './workflows/edta.nf'
+
+workflow OUSHUJUN_EDTA {
+
+    take:
+    ch_genome
+
+    main:
+    EDTA ( ch_genome )
+}
 
 workflow {
-    EDTA()
+
+    main:
+    PIPELINE_INITIALISATION (
+        params.version,
+        args,
+        params.outdir,
+        params.genome
+    )
+
+    OUSHUJUN_EDTA ( PIPELINE_INITIALISATION.out.genome )
 }
