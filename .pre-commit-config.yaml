@@ -9,3 +9,11 @@ repos:
         always_run: true
         fail_fast: true
         pass_filenames: false
+      - id: version_checks
+        name: Version checks
+        language: system
+        entry: >
+          .github/version_checks.sh
+        always_run: true
+        fail_fast: true
+        pass_filenames: false
