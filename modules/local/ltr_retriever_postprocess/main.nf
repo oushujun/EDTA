@@ -15,10 +15,10 @@ process LTR_RETRIEVER_POSTPROCESS {
     path "input/genome.LTRlib.fa"
 
     output:
-    tuple val(meta), path('*.LTR.raw.fa')                   , emit: raw_fa
-    tuple val(meta), path('*.LTR.intact.raw.fa')            , emit: intact_raw_fa
-    tuple val(meta), path('*.LTR.intact.raw.gff3')          , emit: intact_raw_gff3
-    tuple val(meta), path('*.LTR.intact.raw.fa.anno.list')  , emit: anno_list
+    tuple val(meta), path('*.LTR.fa')               , emit: raw_fa
+    tuple val(meta), path('*.LTR.intact.fa')        , emit: intact_raw_fa
+    tuple val(meta), path('*.LTR.intact.gff3')      , emit: intact_raw_gff3
+    tuple val(meta), path('*.LTR.intact.anno.list') , emit: anno_list
     path "versions.yml" , emit: versions
 
     when:
@@ -27,7 +27,6 @@ process LTR_RETRIEVER_POSTPROCESS {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     setup_LTR_retriever_postprocess.sh \\
         $task.cpus
@@ -40,19 +39,19 @@ process LTR_RETRIEVER_POSTPROCESS {
 
     mv \\
         genome.LTR.raw.fa \\
-        ${prefix}.LTR.raw.fa
+        ${prefix}.LTR.fa
     
     mv \\
         genome.LTR.intact.raw.fa \\
-        ${prefix}.genome.LTR.intact.raw.fa
+        ${prefix}.LTR.intact.fa
 
     mv \\
         genome.LTR.intact.raw.gff3 \\
-        ${prefix}.LTR.intact.raw.gff3
+        ${prefix}.LTR.intact.gff3
 
     mv \\
         genome.LTR.intact.raw.fa.anno.list \\
-        ${prefix}.LTR.intact.raw.fa.anno.list
+        ${prefix}.LTR.intact.anno.list
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -66,12 +65,11 @@ process LTR_RETRIEVER_POSTPROCESS {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    touch ${prefix}.LTR.raw.fa
-    touch ${prefix}.genome.LTR.intact.raw.fa
-    touch ${prefix}.LTR.intact.raw.gff3
-    touch ${prefix}.LTR.intact.raw.fa.anno.list
+    touch ${prefix}.LTR.fa
+    touch ${prefix}.LTR.intact.fa
+    touch ${prefix}.LTR.intact.gff3
+    touch ${prefix}.LTR.intact.anno.list
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

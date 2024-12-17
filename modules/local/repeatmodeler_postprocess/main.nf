@@ -13,7 +13,7 @@ process REPEATMODELER_POSTPROCESS {
 
     output:
     tuple val(meta), path('*.RM2.fa')       , emit: rm2_fa
-    tuple val(meta), path('*.LINE.raw.fa')  , emit: line_raw    , optional: true
+    tuple val(meta), path('*.LINE.fa')      , emit: line_raw    , optional: true
     path "versions.yml"                     , emit: versions
 
     when:
@@ -22,7 +22,6 @@ process REPEATMODELER_POSTPROCESS {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     setup_RepeatModeler_postprocess.sh \\
         $task.cpus
@@ -34,15 +33,13 @@ process REPEATMODELER_POSTPROCESS {
     cd -
 
     mv \\
-        genome.RM2.fa \\
+        input/genome.RM2.fa \\
         ${prefix}.RM2.fa
     
-    if [[ -s genome.LINE.raw.fa ]]; then
+    if [[ -s input/genome.LINE.raw.fa ]]; then
         mv \\
-            genome.LINE.raw.fa \\
-            ${prefix}.LINE.raw.fa
-    else
-        rm genome.LINE.raw.fa
+            input/genome.LINE.raw.fa \\
+            ${prefix}.LINE.fa
     fi
 
     cat <<-END_VERSIONS > versions.yml
@@ -57,7 +54,6 @@ process REPEATMODELER_POSTPROCESS {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def MDUST_VERSION = '2006.10.17' // WARN: Manually update when changing Bioconda assets
-    if ( "$prefix" == 'genome' ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     touch ${prefix}.RM2.fa
 
