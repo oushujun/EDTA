@@ -1,0 +1,61 @@
+{
+    "sarscov2-genome_gff3-success": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.restored.ids.gff3:md5,2c294938b9eb4e52d19e14725c1d92a9"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,32d31c4f1da9a3d1be013fd163e5867e"
+                ],
+                "restored_ids_gff3": [
+                    [
+                        {
+                            "id": "test",
+                            "single_end": false
+                        },
+                        "test.restored.ids.gff3:md5,2c294938b9eb4e52d19e14725c1d92a9"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,32d31c4f1da9a3d1be013fd163e5867e"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2023-12-07T13:49:30.047425"
+    },
+    "versions_stub": {
+        "content": [
+            [
+                "versions.yml:md5,32d31c4f1da9a3d1be013fd163e5867e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-05-10T15:26:11.66528"
+    },
+    "versions": {
+        "content": [
+            [
+                "versions.yml:md5,32d31c4f1da9a3d1be013fd163e5867e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2023-12-07T13:49:30.071175"
+    }
+}

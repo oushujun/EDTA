@@ -50,12 +50,11 @@ process TIRLEARNER {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        TIR-Learner: \$(TIR-Learner -v | head -n 1 | sed 's/TIR-Learner //')
+        TIR-Learner: \$(TIR-Learner -v | sed -n 's|TIR-Learner \\(.*\\) by .*|\\1|p')
     END_VERSIONS
     """
 
     stub:
-    def args    = task.ext.args ?: ''
     prefix      = task.ext.prefix ?: "${meta.id}"
     if ( "$fasta" == "${prefix}.fa" ) error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
@@ -69,7 +68,7 @@ process TIRLEARNER {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        TIR-Learner: \$(TIR-Learner -v | head -n 1 | sed 's/TIR-Learner //')
+        TIR-Learner: \$(TIR-Learner -v | sed -n 's|TIR-Learner \\(.*\\) by .*|\\1|p')
     END_VERSIONS
     """
 }

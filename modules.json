@@ -10,6 +10,16 @@
             "git_sha": "a8939d36280e7d9037c7cf164eeede19e46546a4",
             "installed_by": ["modules"]
           },
+          "custom/restoregffids": {
+            "branch": "main",
+            "git_sha": "072113038b5591f8244ce76b2c9dd8100c912b18",
+            "installed_by": ["modules"]
+          },
+          "custom/shortenfastaids": {
+            "branch": "main",
+            "git_sha": "072113038b5591f8244ce76b2c9dd8100c912b18",
+            "installed_by": ["modules"]
+          },
           "gunzip": {
             "branch": "main",
             "git_sha": "ae9714c21ede9199a3118e3c20b65484aa73e232",
@@ -27,7 +37,7 @@
           },
           "tirlearner": {
             "branch": "main",
-            "git_sha": "a8939d36280e7d9037c7cf164eeede19e46546a4",
+            "git_sha": "072113038b5591f8244ce76b2c9dd8100c912b18",
             "installed_by": ["modules"]
           }
         }

@@ -7,7 +7,7 @@ nextflow_pipeline {
 
         when {
             params {
-                genome  = "https://raw.githubusercontent.com/jguhlin/EDTA/a2cd9a0777e4ac6e39545bacc3e752f94eb2f389/test/genome.fa"
+                genome  = "https://raw.githubusercontent.com/oushujun/EDTA/4f0424b8a3ce2caccdd51b4021c61a536fa9ead9/test/genome.fa"
                 outdir  = "$outputDir"
             }
         }
@@ -19,18 +19,9 @@ nextflow_pipeline {
                 false,
                 [
                     'pipeline_info/*.{html,json,txt,yml}',
-                    'raw/ltr/*.LTR.intact.gff3',
-                    'raw/ltr/*.LTR.fa',
-                    'raw/tir/*.TIR.intact.fa',
-                    'raw/tir/*.TIR.intact.gff3',
-                    'raw/line/*.LINE.fa',
-                    'raw/line/*.RM2.fa',
-                    'raw/helitron/*.Helitron.intact.fa',
-                    'raw/helitron/*.Helitron.intact.anno.list',
-                    'raw/helitron/*.Helitron.intact.gff3',
-                    'raw/intact/*',
-                    'stg1/*.fasta',
-                    'final/*'
+                    'genome/*.intact.fa',
+                    'genome/*.intact.gff3',
+                    'genome/*.TElib.fa'
                 ],
                 null,
                 ['**']
@@ -46,6 +37,9 @@ nextflow_pipeline {
                 ['**']
             )
 
+            def te_lib_count = file("$outputDir/genome/genome.TElib.fa").readLines().findAll { it.startsWith('>') }.size()
+            def intact_lib_count = file("$outputDir/genome/genome.intact.fa").readLines().findAll { it.startsWith('>') }.size()
+
             assertAll(
                 { assert workflow.success},
                 { assert snapshot(
@@ -53,9 +47,11 @@ nextflow_pipeline {
                         'successful tasks': workflow.trace.succeeded().size(),
                         'versions': removeNextflowVersion("$outputDir/pipeline_info/software_versions.yml"),
                         'stable paths': stable_path,
-                        'stable names': getRelativePath(stable_name, outputDir),
+                        'stable names': getRelativePath(stable_name, outputDir)
                     ]
-                ).match() }
+                ).match() },
+                { assert Math.abs(te_lib_count - 45) <= 5.0 },
+                { assert Math.abs(intact_lib_count - 42) <= 5.0 }
             )
         }
 

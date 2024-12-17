@@ -10,6 +10,10 @@
                     "CAT_CAT": {
                         "pigz": "2.3.4"
                     },
+                    "CUSTOM_SHORTENFASTAIDS": {
+                        "python": "3.8.13",
+                        "biopython": 1.75
+                    },
                     "FORMAT_HELITRONSCANNER_OUT": {
                         "perl": "v5.32.1"
                     },
@@ -46,14 +50,19 @@
                         "LTR_retriever": "v2.9.9"
                     },
                     "TIRLEARNER": {
-                        "TIR-Learner": "v3.0.2 by Tianyu (Sky) Lu (tlu83@wisc.edu) published under GPLv3"
+                        "TIR-Learner": "v3.0.2"
                     },
                     "Workflow": {
                         "oushujun/EDTA": "v0.1.0dev"
                     }
                 },
                 "stable paths": [
-                    
+                    "genome.short.ids.tsv:md5,d7a2af88e8549586e5616bff6a88bd71"
+                ],
+                "stable names": [
+                    "genome",
+                    "genome/genome.short.ids.tsv",
+                    "pipeline_info"
                 ]
             }
         ],
@@ -61,6 +70,6 @@
             "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2024-12-13T09:54:27.064885"
+        "timestamp": "2024-12-17T17:06:09.728972"
     }
 }

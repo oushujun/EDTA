@@ -1,4 +1,6 @@
-include { SANITIZE_HEADERS                          } from '../modules/local/sanitize/main'
+include { GUNZIP                                    } from '../modules/gallvp/gunzip/main'
+include { CUSTOM_SHORTENFASTAIDS                    } from '../modules/gallvp/custom/shortenfastaids/main'
+include { CUSTOM_RESTOREGFFIDS                      } from '../modules/gallvp/custom/restoregffids/main'
 
 include { LTRHARVEST                                } from '../modules/nf-core/ltrharvest/main'
 include { LTRFINDER                                 } from '../modules/nf-core/ltrfinder/main'
@@ -36,18 +38,49 @@ workflow EDTA {
     ch_versions                                     = Channel.empty()
 
     
-    ch_genome                                       = Channel.fromPath(params.genome)
+    ch_genome_branch                                = Channel.fromPath(params.genome)
                                                     | map { genome -> 
                                                         def meta    = [:]
                                                         meta.id     = idFromFileName ( genome.baseName )
                                                         
                                                         [ meta, genome ]
                                                     }
+                                                    | branch { _meta, archive ->
+                                                        gz: "$archive".endsWith('.gz')
+                                                        rest: ! "$archive".endsWith('.gz')
+                                                    }
 
-    // MODULE: SANITIZE_HEADERS
-    SANITIZE_HEADERS ( ch_genome )
+    // MODULE: GUNZIP                   
+    GUNZIP ( ch_genome_branch.gz )
 
-    ch_sanitized_fasta                              = SANITIZE_HEADERS.out.fasta
+    ch_genome               = GUNZIP.out.gunzip.mix(ch_genome_branch.rest)
+    ch_versions             = ch_versions.mix(GUNZIP.out.versions.first())
+
+    // MODULE: CUSTOM_SHORTENFASTAIDS
+    CUSTOM_SHORTENFASTAIDS ( ch_genome )
+
+    ch_short_ids_tsv                                = CUSTOM_SHORTENFASTAIDS.out.short_ids_tsv
+    ch_versions                                     = ch_versions.mix(CUSTOM_SHORTENFASTAIDS.out.versions.first())
+
+    
+    ch_shortenfastaids_branch                       = ch_short_ids_tsv
+                                                    | branch { _meta, tsv ->
+                                                        change: ! tsv.text.contains('IDs have acceptable length and character')
+                                                        nochange: tsv.text.contains('IDs have acceptable length and character')
+                                                    }
+
+    ch_sanitized_fasta                              = ch_shortenfastaids_branch.nochange
+                                                    | join(
+                                                        ch_genome
+                                                    )
+                                                    | map { meta, _tsv, fasta -> [ meta + [ changed_ids: false ], fasta ] }
+                                                    | mix(
+                                                        ch_shortenfastaids_branch.change
+                                                        | join(
+                                                            CUSTOM_SHORTENFASTAIDS.out.short_ids_fasta
+                                                        )
+                                                        | map { meta, _tsv, fasta -> [ meta + [ changed_ids: true ], fasta ] }
+                                                    )
 
     // MODULE: LTRHARVEST
     LTRHARVEST ( ch_sanitized_fasta )
@@ -344,7 +377,22 @@ workflow EDTA {
         ch_final_filter_inputs.intact_gff,
     )
 
+    ch_intact_gff                                   = FINAL_FILTER.out.intact_gff
     ch_versions                                     = ch_versions.mix(FINAL_FILTER.out.versions.first())
+
+    // MODULE: CUSTOM_RESTOREGFFIDS
+    ch_gff_tsv_branch               = ch_intact_gff.join(ch_short_ids_tsv)
+                                    | branch { meta, _gff, _tsv ->
+                                        change: meta.changed_ids
+                                        nochange: ! meta.changed_ids
+                                    }
+
+    CUSTOM_RESTOREGFFIDS (
+        ch_gff_tsv_branch.change.map { meta, gff, _tsv -> [ meta, gff ] },
+        ch_gff_tsv_branch.change.map { _meta, _gff, tsv -> tsv }
+    )
+
+    ch_versions                     = ch_versions.mix(CUSTOM_RESTOREGFFIDS.out.versions.first())
 
     // Function: Save versions
     ch_versions                                     = ch_versions
