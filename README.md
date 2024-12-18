@@ -1,29 +1,34 @@
 [![install with bioconda](https://anaconda.org/bioconda/edta/badges/platforms.svg)](https://anaconda.org/bioconda/edta) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/license.svg)](https://github.com/oushujun/EDTA/blob/master/LICENSE) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/version.svg)](https://anaconda.org/bioconda/edta) [![Anaconda-Server Badge](https://anaconda.org/bioconda/edta/badges/downloads.svg)](https://anaconda.org/bioconda/edta)
 
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A524.10.3-23aa62.svg)](https://www.nextflow.io/)
+[![run with conda](http://img.shields.io/badge/run%20with-conda%20-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
+[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
+[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
+[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 
-# The Extensive *de novo* TE Annotator (EDTA)
+# The Extensive *de novo* TE Annotator (EDTA)<!-- omit in toc -->
 
-## Table of Contents
+## Table of Contents<!-- omit in toc -->
 
-   * [Introduction](#introduction)
-   * [Installation](#installation)
-      * [Quick installation using conda/mamba](#install-with-condamamba-linux64)
-      * [Quick installation using Singularity](#install-with-singularity-good-for-hpc-users)
-      * [Quick installation using Docker](#install-with-docker-good-for-rootmacosapple-m-chip-users)
-   * [Testing](#testing)
-   * [Inputs](#inputs)
-   * [Outputs](#outputs)
-   * [EDTA usage](#edta-usage)
-      * [From head to toe](#from-head-to-toe)
-      * [Divide and conquer](#divide-and-conquer)
-      * [Protips and self-diagnosis](#protips-and-self-diagnosis)
-   * [panEDTA usage](#panedta-usage)
-   * [Benchmark](#benchmark)
-   * [Citations](#citations)
-   * [Other resources](#other-resources)
-   * [Questions and Issues](#questions-and-issues)
-   * [Acknowledgements](#acknowledgements)
-
+- [Introduction](#introduction)
+- [Installation](#installation)
+  - [Install with conda/mamba (Linux64)](#install-with-condamamba-linux64)
+  - [Install with Singularity (good for HPC users)](#install-with-singularity-good-for-hpc-users)
+  - [Install with Docker (good for root/macOS/Apple M-chip users)](#install-with-docker-good-for-rootmacosapple-m-chip-users)
+- [Testing](#testing)
+- [Inputs](#inputs)
+- [Outputs](#outputs)
+- [EDTA Usage](#edta-usage)
+  - [From head to toe](#from-head-to-toe)
+  - [Divide and conquer](#divide-and-conquer)
+  - [Protips and self-diagnosis](#protips-and-self-diagnosis)
+  - [Run with Nextflow](#run-with-nextflow)
+- [panEDTA usage](#panedta-usage)
+- [Benchmark](#benchmark)
+- [Citations](#citations)
+- [Other resources](#other-resources)
+- [Questions and Issues](#questions-and-issues)
+- [Acknowledgements](#acknowledgements)
 
 ## Introduction
 This package is developed for automated whole-genome *de-novo* TE annotation and benchmarking the annotation performance of TE libraries.
@@ -40,7 +45,6 @@ The EDTA package was designed to filter out false discoveries in raw TE candidat
 To benchmark the annotation quality of a new library/method, I have provided the TE annotation with the curated rice TE library (v7.0.0) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
 
 For pan-genome annotations, you need to annotate each genome with EDTA, generate a pan-genome library, then reannotate each genome with the pan-genome library. Please refer to this [example](https://github.com/HuffordLab/NAM-genomes/tree/master/te-annotation) for details. A sequential version of panEDTA is also included in this package. 
-
 
 ## Installation
 
@@ -120,8 +124,8 @@ Visit [BioContainers](https://quay.io/repository/biocontainers/edta?tab=tags) re
 
 Note: Because only the current directory is mounted to the EDTA docker container, you have to copy all needed files to the current directory and provide them to EDTA without path specifications. Even providing the absolute path to the file located in this folder won't work. Softlinked files are considered "with path" and won't work. Similarily, specifying your own versions of dependency programs (i.e., repeatmasker, repeatmodeler) won't work because they have paths.
 
-
 ## Testing
+
 You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five mins. If your test finishs without any errors (warnings are OK), then EDTA should be correctly installed. If the test is OK but you encounter errors with your data, you should check your own data for any formating/naming mistakes.
 
 ```
@@ -131,8 +135,8 @@ perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/
 
 If your test fails, you may check out this [collection of issues](https://github.com/oushujun/EDTA/wiki/Installations,-builds,-and-tests-Q&A) for possible reasons and solutions. If none works, you may open a new issue.
 
-
 ## Inputs
+
 Required: The genome file [FASTA]. Please make sure sequence names are short (<=13 characters) and simple (i.e, letters, numbers, and underscore).
 
 Optional: 
@@ -140,8 +144,8 @@ Optional:
 2. Known gene positions of this version of the genome assembly [BED]. Coordinates specified in this file will be excluded from TE annotation to avoid over-masking.
 3. Curated TE library of the species [FASTA]. This file is trusted 100%. Please make sure it's curated. If you only have a couple of curated sequences, that's also good. It doesn't need to be complete. Providing curated TE sequences, especially for those under-annotated TE types (i.e., SINEs and LINEs), will greatly improve the annotation quality. For more information, please visit this wiki page: [How to prepare a curated library to maximize the efficacy of EDTA](https://github.com/oushujun/EDTA/wiki/How-to-prepare-a-curated-library-to-maximize-the-efficacy-of-EDTA)
 
-
 ## Outputs
+
 A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice7.0.0.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./bin/TE_Sequence_Ontology.txt).
 
 Optional 1:
@@ -155,10 +159,10 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
 6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum.   
 7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum.
 
-
 ## EDTA Usage
 
 ### From head to toe
+
 *You got a genome and you want to get a high-quality TE annotation:*
 
     perl EDTA.pl [options]
@@ -189,6 +193,7 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
       --help|-h	Display this help info
 
 ### Divide and conquer
+
 *Identify intact elements of a paticular TE type*:
 
 1.Get raw TEs from a genome (specify `-type ltr|tir|helitron` in different runs)
@@ -207,11 +212,35 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
     perl EDTA.pl --overwrite 0 [options]
 
 ### Protips and self-diagnosis
+
 1. It's never said enough. You should tidy up all your sequence names before ANY analysis. Keep them short, simple, and unique.
 2. Run it in a fast drive (i.e., SSD) because RepeatMasker/RepeatModeler is I/O intense.
 3. Check out the [Wiki page](https://github.com/oushujun/EDTA/wiki) for more information and frequently asked questions.
 
+### Run with [Nextflow](https://www.nextflow.io/)
+
+A limited beta version of the pipeline implemented in Nextflow is also available. The pipeline can be launched with Nextflow without the need to download it. Nextflow takes care of the pipeline download and dependency setup through the chosen execution engine such as Docker, Singularity, Conda, Mamba, Podman, etc.
+
+```bash
+nextflow run oushujun/EDTA \
+  -revision <version> \
+  -profile <docker/singularity/conda/...> \
+  --genome <genome.fasta/genomes.txt> \
+  --outdir <OUTDIR>
+```
+
+Where, `--genome` is either a path to a fasta file or a text file which lists fasta files, and `--outdir` is a path to a directory where the pipeline outputs should be stored.
+
+If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data. For example when using Conda for dependency management, make sure Conda is installed and then test the pipeline on the included test data with,
+
+```bash
+nextflow run oushujun/EDTA \
+  -profile conda,test
+  --outdir results
+```
+
 ## panEDTA usage
+
 This is the serial version of panEDTA. Each genome will be annotated sequentially and then combined with the panEDTA functionality. Existing EDTA annotation of genomes (EDTA run with --anno 1) will be recognized and reused. A way to acclerate the pan-genome annotation is to execute EDTA annotation of each genomes separately and in parallel, then execute panEDTA to finish the remaining of the runs. You may want to save the GFF files and the sum file of the EDTA results of each genome because they will be overwritten by panEDTA. To help filtering out gene-related sequences, at least one CDS file is required. Please read [wiki](https://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A) for the CDS requirement. You may want to check out the toy example in the ./test folder to get familiarized.
 
     sh panEDTA.sh -g genome_list.txt -c cds.fasta -t 10
@@ -231,6 +260,7 @@ This is the serial version of panEDTA. Each genome will be annotated sequentiall
 
 
 ## Benchmark
+
 If you developed a new TE method/got a TE library and want to compare it's annotation performance to the methods we have tested, you can:
 
 1.annotate the rice genome with your test library:
@@ -256,6 +286,7 @@ eg.
 Note: the -std and -tst files should be named differently even they are placed in different folders.
 
 ## Citations
+
 Please cite our paper if you find EDTA useful:
 
 Ou S., Su W., Liao Y., Chougule K., Agda J. R. A., Hellinga A. J., Lugo C. S. B., Elliott T. A., Ware D., Peterson T., Jiang N.✉, Hirsch C. N.✉ and Hufford M. B.✉ (2019). Benchmarking Transposable Element Annotation Methods for Creation of a Streamlined, Comprehensive Pipeline. [Genome Biol. 20(1): 275.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1905-y)
@@ -267,10 +298,13 @@ Ou S., Collins T., Qiu Y., Seetharam A., Menard C., Manchanda N., Gent J., Schat
 Please also cite the software packages that were used in EDTA, listed in the [EDTA/bin](./bin) directory.
 
 ## Other resources
+
 You may download the [rice genome here](http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/) (the "all.con" file).
 
 ## Questions and Issues
+
 You may want to check out this [Q&A page](https://github.com/oushujun/EDTA/wiki) for best practices and get answered. If you have other issues with installation and usage, please check if similar issues have been reported in [Issues](https://github.com/oushujun/EDTA/issues) or open a new issue. If you are (looking for) happy users, please read or write successful cases [here](https://github.com/oushujun/EDTA/issues/15).
 
 ## Acknowledgements
+
 I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Sanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), [Sergei Ryazansky](https://github.com/DrHogart), and many more others for testing, debugging, and improving the EDTA pipeline.

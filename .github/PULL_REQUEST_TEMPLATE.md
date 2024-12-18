@@ -9,12 +9,6 @@ These are the most common things requested on pull requests (PRs).
 
 ## PR checklist
 
-For Nextflow implementation,
-
-- [ ] `conda` and `container` directives are included for each process
-- [ ] Docker container + singularity container (optional) are included for each process
-- [ ] Flow `meta.id` with each data channel
-- [ ] Use nf-core resource labels such as `process_high`
-- [ ] Used nf-core module
-- [ ] Use `versions.yml` or versions topic
-- [ ] No process in the `main.nf`. We can have a process in a sub-workflow file
+- [ ] This comment contains a description of changes (with reason).
+- [ ] If you've fixed a bug or added code that should be tested, add tests!
+- [ ] Ensure the test suite passes (`nextflow run . -profile test,docker --outdir <OUTDIR>`).

@@ -5,3 +5,4 @@ work/
 .nextflow/*
 results/
 .nf-test*
+null/

@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         NXF_VER:
-          - "24.04.2"
+          - "24.10.3"
 
         nf_test_files: ["${{ fromJson(needs.nf-test-changes.outputs.nf_test_files) }}"]
         profile: [conda, docker, singularity]
@@ -72,7 +72,7 @@ jobs:
 
       - uses: nf-core/setup-nf-test@v1.1.2
         with:
-          version: 0.9.0
+          version: 0.9.2
       
       - name: Setup apptainer
         if: matrix.profile == 'singularity'

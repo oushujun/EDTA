@@ -27,10 +27,12 @@ include { COMBINE_INTACT_TES                        } from '../modules/local/com
 include { PROCESS_K                                 } from '../modules/local/process_k/main'
 include { FINAL_FILTER                              } from '../modules/local/final_filter/main'
 
-include { softwareVersionsToYAML                    } from '../modules/local/utils/main'
-include { idFromFileName                            } from '../modules/local/utils/main'
+include { softwareVersionsToYAML                    } from '../subworkflows/nf-core/utils_nfcore_pipeline/main'
 
 workflow EDTA {
+
+    take:
+    ch_genome_gz                                    // Channel: < val(meta), path(fasta|fasta.gz) >
 
     main:
 
@@ -38,13 +40,7 @@ workflow EDTA {
     ch_versions                                     = Channel.empty()
 
     
-    ch_genome_branch                                = Channel.fromPath(params.genome)
-                                                    | map { genome -> 
-                                                        def meta    = [:]
-                                                        meta.id     = idFromFileName ( genome.baseName )
-                                                        
-                                                        [ meta, genome ]
-                                                    }
+    ch_genome_branch                                = ch_genome_gz
                                                     | branch { _meta, archive ->
                                                         gz: "$archive".endsWith('.gz')
                                                         rest: ! "$archive".endsWith('.gz')

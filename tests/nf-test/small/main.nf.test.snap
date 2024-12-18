@@ -94,7 +94,7 @@
                         "mdust": "2006.10.17"
                     },
                     "Workflow": {
-                        "oushujun/EDTA": "v0.1.0dev"
+                        "oushujun/EDTA": "v2.2.2"
                     }
                 },
                 "stable paths": [
@@ -112,8 +112,8 @@
         ],
         "meta": {
             "nf-test": "0.9.2",
-            "nextflow": "24.04.4"
+            "nextflow": "24.10.3"
         },
-        "timestamp": "2024-12-17T22:28:58.604502"
+        "timestamp": "2024-12-18T11:26:59.305705"
     }
 }
