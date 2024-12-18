@@ -1,0 +1,159 @@
+nextflow_process {
+
+    name "Test Process HELITRONSCANNER_DRAW"
+    script "../main.nf"
+    config "./nextflow.config"
+    process "HELITRONSCANNER_DRAW"
+
+    tag "modules"
+    tag "modules_gallvp"
+    tag "helitronscanner"
+    tag "helitronscanner/draw"
+    tag "helitronscanner/scan"
+    tag "gunzip"
+
+    setup {
+        run('GUNZIP') {
+            script "../../../gunzip/main.nf"
+
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        run('HELITRONSCANNER_SCAN', alias: 'HELITRONSCANNER_SCANHEAD') {
+            script "../../scan/main.nf"
+
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = 'head'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+
+        run('HELITRONSCANNER_SCAN', alias: 'HELITRONSCANNER_SCANTAIL') {
+            script "../../scan/main.nf"
+
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = 'tail'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+    }
+
+    test("actinidia_chinensis-genome_1_fasta_gz-success") {
+
+        when {
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = HELITRONSCANNER_SCANHEAD.out.scan
+                input[2] = HELITRONSCANNER_SCANTAIL.out.scan
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() },
+            )
+        }
+
+    }
+
+    test("sarscov2 - genome - success") {
+
+        setup {
+        run('HELITRONSCANNER_SCAN', alias: 'HELITRONSCANNER_SCANHEAD_SARSCOV2') {
+            script "../../scan/main.nf"
+
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                input[1] = 'head'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+
+        run('HELITRONSCANNER_SCAN', alias: 'HELITRONSCANNER_SCANTAIL_SARSCOV2') {
+            script "../../scan/main.nf"
+
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                input[1] = 'tail'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+    }
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                input[1] = HELITRONSCANNER_SCANHEAD_SARSCOV2.out.scan
+                input[2] = HELITRONSCANNER_SCANTAIL_SARSCOV2.out.scan
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.draw[0][1] != null },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = HELITRONSCANNER_SCANHEAD.out.scan
+                input[2] = HELITRONSCANNER_SCANTAIL.out.scan
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

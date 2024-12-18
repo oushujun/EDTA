@@ -1,0 +1,149 @@
+{
+    "actinidia_chinensis-genome_21_fasta_gz-success": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,006193c9eaf3f552ccb0369f159e7660"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,96e5305163939e4381e1b94b660dc0a2"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,7b24225b810fa88cfb2a887de11be333"
+                ],
+                "gff": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,96e5305163939e4381e1b94b660dc0a2"
+                    ]
+                ],
+                "scn": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,006193c9eaf3f552ccb0369f159e7660"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,7b24225b810fa88cfb2a887de11be333"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-02-16T09:14:38.509965"
+    },
+    "sarscov2-genome_fasta-no_ltr": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,2ce449dff751e59dbc292b6888491954"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,bddeb04277af08b5850e64708e8af02a"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,7b24225b810fa88cfb2a887de11be333"
+                ],
+                "gff": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,bddeb04277af08b5850e64708e8af02a"
+                    ]
+                ],
+                "scn": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,2ce449dff751e59dbc292b6888491954"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,7b24225b810fa88cfb2a887de11be333"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.2"
+        },
+        "timestamp": "2024-07-16T13:03:03.505263"
+    },
+    "stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,7b24225b810fa88cfb2a887de11be333"
+                ],
+                "gff": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "scn": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,7b24225b810fa88cfb2a887de11be333"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-02-16T09:14:43.054758"
+    }
+}

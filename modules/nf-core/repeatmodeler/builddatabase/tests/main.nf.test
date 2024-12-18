@@ -1,0 +1,60 @@
+nextflow_process {
+
+    name "Test Process REPEATMODELER_BUILDDATABASE"
+    script "../main.nf"
+    process "REPEATMODELER_BUILDDATABASE"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "repeatmodeler"
+    tag "repeatmodeler/builddatabase"
+
+    test("sarscov2-genome_fasta") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match("versions") },
+                { assert snapshot(process.out.db[0][1].collect { file(it).name }.sort().toString()).match("db") },
+                { assert snapshot(process.out.db[0][1].findAll { ! ( "$it"[-3..-1] in [ 'nin', 'njs' ] ) }  ).match("stable_md5") }
+            )
+        }
+
+    }
+
+    test("sarscov2-genome_fasta-stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

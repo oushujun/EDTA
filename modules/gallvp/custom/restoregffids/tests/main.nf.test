@@ -1,0 +1,63 @@
+nextflow_process {
+
+    name "Test Process CUSTOM_RESTOREGFFIDS"
+    script "../main.nf"
+    process "CUSTOM_RESTOREGFFIDS"
+
+    tag "modules"
+    tag "modules_gallvp"
+    tag "custom"
+    tag "custom/restoregffids"
+
+    test("sarscov2-genome_gff3-success") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test', single_end:false ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.gff3', checkIfExists: true)
+                ]
+                input[1] = Channel.of('Chr1\tMT192765.1').collectFile(name: 'id_map.tsv', newLine: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() },
+                { assert path(process.out.restored_ids_gff3.get(0).get(1)).getText().contains("Chr1") },
+                { assert !path(process.out.restored_ids_gff3.get(0).get(1)).getText().contains("MT192765.1") },
+                { assert snapshot(process.out.versions).match("versions") }
+            )
+        }
+
+    }
+
+    test("stub") {
+
+        options '-stub'
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test', single_end:false ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.gff3', checkIfExists: true)
+                ]
+                input[1] = Channel.of('Chr1\tMT192765.1').collectFile(name: 'id_map.tsv', newLine: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.restored_ids_gff3 != null },
+                { assert snapshot(process.out.versions).match("versions_stub") }
+            )
+        }
+
+    }
+
+}

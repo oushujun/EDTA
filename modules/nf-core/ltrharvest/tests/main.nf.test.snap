@@ -1,0 +1,91 @@
+{
+    "sarscov2 - genome_fasta - no_ltr": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.gff3:md5,bddeb04277af08b5850e64708e8af02a"
+                ]
+            ],
+            [
+                "versions.yml:md5,51e82185b713482d1d48b6f15abe7fcc"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.3"
+        },
+        "timestamp": "2024-07-17T10:40:36.380052"
+    },
+    "homo_sapiens - genome_fasta - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,51e82185b713482d1d48b6f15abe7fcc"
+                ],
+                "gff3": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.gff3:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "scn": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.scn:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,51e82185b713482d1d48b6f15abe7fcc"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.3"
+        },
+        "timestamp": "2024-07-17T10:40:40.967557"
+    },
+    "homo_sapiens - genome_21_fasta": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.gff3:md5,da13c4ba22e44ef944ddec38aa72c468"
+                ]
+            ],
+            [
+                "versions.yml:md5,51e82185b713482d1d48b6f15abe7fcc"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.04.3"
+        },
+        "timestamp": "2024-07-17T10:40:30.946"
+    }
+}

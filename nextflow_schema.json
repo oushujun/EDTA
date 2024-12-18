@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/EDTA/master/nextflow_schema.json",
+  "title": "EDTA pipeline parameters",
+  "description": "Extensive de-novo TE Annotator",
+  "type": "object",
+  "$defs": {
+    "input_output_options": {
+      "title": "Input/output options",
+      "type": "object",
+      "fa_icon": "fas fa-terminal",
+      "description": "Define where the pipeline should find input data and save output data.",
+      "required": ["genome", "outdir"],
+      "properties": {
+        "genome": {
+          "type": "string",
+          "fa_icon": "fas fa-dna",
+          "description": "Path to a genome Fasta file or to a text file containing paths to Fasta files",
+          "pattern": "^\\S+\\.f(a|asta|as|sa|na)(\\.gz)?$|^\\S+\\.txt$",
+          "format": "file-path"
+        },
+        "species": {
+          "type": "string",
+          "default": "others",
+          "fa_icon": "fas fa-otter",
+          "description": "Specify the species for identification of TIR candidates",
+          "enum": ["Rice", "Maize", "others"]
+        },
+        "outdir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+          "fa_icon": "fas fa-folder-open"
+        }
+      }
+    },
+    "cli_arguments_for_tools": {
+      "title": "CLI arguments for tools",
+      "type": "object",
+      "description": "Arguments to pass to tools",
+      "default": "",
+      "properties": {
+        "annosine_ext_args": {
+          "type": "string",
+          "fa_icon": "fas fa-terminal",
+          "description": "Arguments for AnnoSINE"
+        }
+      },
+      "fa_icon": "fas fa-wrench"
+    },
+    "generic_options": {
+      "title": "Generic options",
+      "type": "object",
+      "fa_icon": "fas fa-file-import",
+      "description": "Less common options for the pipeline, typically set in a config file.",
+      "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+      "properties": {
+        "version": {
+          "type": "boolean",
+          "description": "Display version and exit.",
+          "fa_icon": "fas fa-question-circle",
+          "hidden": true
+        },
+        "publish_dir_mode": {
+          "type": "string",
+          "default": "copy",
+          "description": "Method used to save pipeline results to output directory.",
+          "fa_icon": "fas fa-copy",
+          "enum": [
+            "symlink",
+            "rellink",
+            "link",
+            "copy",
+            "copyNoFollow",
+            "move"
+          ],
+          "hidden": true
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/$defs/input_output_options"
+    },
+    {
+      "$ref": "#/$defs/cli_arguments_for_tools"
+    },
+    {
+      "$ref": "#/$defs/generic_options"
+    }
+  ]
+}

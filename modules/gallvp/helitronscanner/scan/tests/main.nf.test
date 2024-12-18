@@ -1,0 +1,148 @@
+nextflow_process {
+
+    name "Test Process HELITRONSCANNER_SCAN"
+    script "../main.nf"
+    process "HELITRONSCANNER_SCAN"
+
+    tag "modules"
+    tag "modules_gallvp"
+    tag "helitronscanner"
+    tag "helitronscanner/scan"
+    tag "gunzip"
+
+    setup {
+        run('GUNZIP') {
+            script "../../../gunzip/main.nf"
+
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz', checkIfExists: true)
+                ]
+                """
+            }
+        }
+    }
+
+    test("actinidia_chinensis - genome_1_fasta_gz - head - success") {
+
+        when {
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = 'head'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.scan[0][1]).text.contains('2729827:1 2729980:1 2730005:1') },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+
+    }
+
+     test("actinidia_chinensis - genome_1_fasta_gz - tail - success") {
+
+        when {
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = 'tail'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.scan[0][1]).text.contains('7265:1 7951:1 9264:2 9398:1') },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+
+    }
+
+    test("sarscov2 - genome - head - success") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                input[1] = 'head'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.scan[0][1]).text.contains('113:2 236:1 1158:1 1754:2 1771:1') },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = 'head'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("stub - tail") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                input[1] = 'tail'
+                input[2] = []
+                input[3] = 0
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

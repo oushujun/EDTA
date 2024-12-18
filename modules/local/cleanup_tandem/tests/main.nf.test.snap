@@ -1,0 +1,68 @@
+{
+    "sarscov2 - genome - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "sarscov2.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,2cce04ed211ff9c6f7f322d2b217af83"
+                ],
+                "cleaned_fasta": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "sarscov2.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,2cce04ed211ff9c6f7f322d2b217af83"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.10.1"
+        },
+        "timestamp": "2024-11-28T16:12:53.161124"
+    },
+    "sarscov2 - genome": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "sarscov2.fasta:md5,e73599798195a519ba2565c3f0275b93"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,2cce04ed211ff9c6f7f322d2b217af83"
+                ],
+                "cleaned_fasta": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "sarscov2.fasta:md5,e73599798195a519ba2565c3f0275b93"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,2cce04ed211ff9c6f7f322d2b217af83"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.10.1"
+        },
+        "timestamp": "2024-11-28T16:12:48.160979"
+    }
+}

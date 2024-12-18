@@ -1,0 +1,92 @@
+{
+    "sarscov2-genome_fasta-stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test.nhr:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.njs:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nnd:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nni:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nog:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nsq:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.translation:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,7944637266bc3e2726899eaad5e46c87"
+                ],
+                "db": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test.nhr:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.njs:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nnd:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nni:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nog:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.nsq:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test.translation:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,7944637266bc3e2726899eaad5e46c87"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-02T12:06:44.261566"
+    },
+    "versions": {
+        "content": [
+            [
+                "versions.yml:md5,7944637266bc3e2726899eaad5e46c87"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-01-09T15:14:48.807063"
+    },
+    "stable_md5": {
+        "content": [
+            [
+                "test.nhr:md5,1a41cb6d0b00c28f62ad60e75ae2f6fc",
+                "test.nnd:md5,2002e13acf59079a1a5782c918894579",
+                "test.nni:md5,26a954ba0fd80983b550d8f6b8b35ff8",
+                "test.nog:md5,30896f123998e926ea2237b89091e7fe",
+                "test.nsq:md5,982cbc7d9e38743b9b1037588862b9da",
+                "test.translation:md5,ccbb119522c09daa976a9015ba999329"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-23T10:03:41.669433"
+    },
+    "db": {
+        "content": [
+            "[test.nhr, test.nin, test.njs, test.nnd, test.nni, test.nog, test.nsq, test.translation]"
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-02T12:08:36.94713"
+    }
+}

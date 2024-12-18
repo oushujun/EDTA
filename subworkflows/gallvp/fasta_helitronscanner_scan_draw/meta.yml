@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fasta_helitronscanner_scan_draw"
+description: Find helitrons suing Helitronscanner scan, pairends and draw subcommands
+keywords:
+  - helitron
+  - scan
+  - draw
+  - pairends
+  - repeat
+  - genomics
+  - fasta
+components:
+  - helitronscanner/scan
+  - helitronscanner/draw
+input:
+  - ch_fasta:
+      type: file
+      description: |
+        Genome fasta
+        Structure: [ val(meta), fasta ]
+      pattern: "*.fasta"
+output:
+  - helitronscanner_draw:
+      type: file
+      description: |
+        Helitronscanner draw file
+        Structure: [ val(meta), draw ]
+      pattern: "*.draw"
+  - helitronscanner_draw_rc:
+      type: file
+      description: |
+        Helitronscanner reverse complement draw file
+        Structure: [ val(meta), rc.draw ]
+      pattern: "*.rc.draw"
+  - versions:
+      type: file
+      description: |
+        File containing software versions
+        Structure: [ path(versions.yml) ]
+      pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"
+  - "@jguhlin"

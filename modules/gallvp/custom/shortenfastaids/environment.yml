@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - biopython==1.75
+  - python==3.8.13

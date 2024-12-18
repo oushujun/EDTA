@@ -1,0 +1,34 @@
+nextflow_pipeline {
+
+    name "Test with a tiny genome"
+    script "main.nf"
+
+    test("tiny genome") {
+
+        when {
+            params {
+                genome   = "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.fasta"
+                outdir  = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_path = getAllFilesFromDir ( params.outdir, false, ['pipeline_info/*.{html,json,txt,yml}'], null, ['**'] )
+            def stable_name = getAllFilesFromDir ( params.outdir, true, [ 'pipeline_info/*.{html,json,txt,yml}' ], null, ['**'] )
+
+            assertAll(
+                { assert workflow.success},
+                { assert snapshot(
+                    [
+                        'successful tasks': workflow.trace.succeeded().size(),
+                        'versions': removeNextflowVersion("$outputDir/pipeline_info/software_versions.yml"),
+                        'stable paths': stable_path,
+                        'stable names': getRelativePath(stable_name, outputDir)
+                    ]
+                ).match() }
+            )
+        }
+
+    }
+
+}

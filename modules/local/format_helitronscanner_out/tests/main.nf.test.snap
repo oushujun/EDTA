@@ -1,0 +1,63 @@
+{
+    "sarscov2 - genome_fasta - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "genome.fasta.HelitronScanner.filtered.tabout:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "genome.fasta.format_helitronscanner_out.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    "versions.yml:md5,250d1a5d5f60868f6cf0f17bd52edd91"
+                ],
+                "filtered_ext_fa": [
+                    
+                ],
+                "filtered_fa": [
+                    
+                ],
+                "filtered_tabout": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "genome.fasta.HelitronScanner.filtered.tabout:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "sarscov2"
+                        },
+                        "genome.fasta.format_helitronscanner_out.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,250d1a5d5f60868f6cf0f17bd52edd91"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-12-03T14:26:36.313536"
+    }
+}

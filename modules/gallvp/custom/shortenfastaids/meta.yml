@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "custom_shortenfastaids"
+description: |
+  Shortens fasta IDs and produces a new fasta along with a TSV table
+  consisting of original (first column) and new IDs (second column).
+  This module is helpful when some tools like EDTA implicitly shorten
+  the IDs without producing the ID map, leading to downstream mismatch
+  in IDs across files.
+keywords:
+  - genome
+  - fasta
+  - ID
+  - shorten
+tools:
+  - "biopython":
+      description: |
+        Biopython is a set of freely available tools for biological computation written in Python by
+        an international team of developers.
+      homepage: "https://biopython.org"
+      documentation: "https://biopython.org/wiki/Documentation"
+      tool_dev_url: "https://github.com/biopython/biopython"
+      doi: "10.1093/bioinformatics/btp163"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'test' ]`
+    - fasta:
+        type: file
+        description: Input fasta file
+        pattern: "*.{fsa,fa,fasta}"
+output:
+  - short_ids_fasta:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'test' ]`
+      - "*.short.ids.fasta":
+          type: file
+          description: Fasta file with shortened ids if id change is required
+          pattern: "*.{fsa,fa,fasta}"
+  - short_ids_tsv:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'test' ]`
+      - "*.short.ids.tsv":
+          type: file
+          description: |
+            A TSV file with original (first column) and new ids (second column)
+            if id change is required
+          pattern: "*.tsv"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+authors:
+  - "@GallVp"
+maintainers:
+  - "@GallVp"

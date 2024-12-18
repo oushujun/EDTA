@@ -1,0 +1,80 @@
+{
+    "actinidia_chinensis-genome_1_fasta_gz-success": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,434aaaa70c294464e6bae93b2895b13c"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,4b206968a702782fa04d2ba560c89728"
+                ],
+                "draw": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,434aaaa70c294464e6bae93b2895b13c"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,4b206968a702782fa04d2ba560c89728"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-10-17T11:51:49.477212"
+    },
+    "stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,4b206968a702782fa04d2ba560c89728"
+                ],
+                "draw": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.draw:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,4b206968a702782fa04d2ba560c89728"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-10-17T11:52:47.744899"
+    },
+    "sarscov2 - genome - success": {
+        "content": [
+            [
+                "versions.yml:md5,4b206968a702782fa04d2ba560c89728"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2024-10-17T11:58:21.800568"
+    }
+}

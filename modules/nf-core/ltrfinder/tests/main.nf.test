@@ -1,0 +1,92 @@
+nextflow_process {
+
+    name "Test Process LTRFINDER"
+    script "../main.nf"
+    process "LTRFINDER"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "ltrfinder"
+    tag "gunzip"
+
+    test("actinidia_chinensis-genome_21_fasta_gz-success") {
+
+        setup {
+            run('GUNZIP') {
+                script "../../gunzip/main.nf"
+
+                process {
+                    """
+                    input[0] = [
+                        [ id:'test' ], // meta map
+                        file(params.modules_testdata_base_path + 'genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz', checkIfExists: true)
+                    ]
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                input[0] = GUNZIP.out.gunzip
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("sarscov2-genome_fasta-no_ltr") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ], // meta map
+                    file(params.modules_testdata_base_path + 'genomics/eukaryotes/actinidia_chinensis/genome/chr1/genome.fasta.gz', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

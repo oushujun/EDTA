@@ -1,0 +1,56 @@
+nextflow_process {
+
+    name "Test Process CLEANUP_TANDEM"
+    script "../main.nf"
+    process "CLEANUP_TANDEM"
+    
+    tag "cleanup_tandem"
+    tag "modules_local"
+    tag "modules"
+
+    test("sarscov2 - genome") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'sarscov2' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("sarscov2 - genome - stub") {
+        options '-stub'
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'sarscov2' ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+            { assert process.success },
+            { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}

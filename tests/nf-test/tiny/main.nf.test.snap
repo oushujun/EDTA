@@ -1,0 +1,75 @@
+{
+    "tiny genome": {
+        "content": [
+            {
+                "successful tasks": 15,
+                "versions": {
+                    "ANNOSINE": {
+                        "annosine": "2.0.7"
+                    },
+                    "CAT_CAT": {
+                        "pigz": "2.3.4"
+                    },
+                    "CUSTOM_SHORTENFASTAIDS": {
+                        "python": "3.8.13",
+                        "biopython": 1.75
+                    },
+                    "FORMAT_HELITRONSCANNER_OUT": {
+                        "perl": "v5.32.1"
+                    },
+                    "FORMAT_HELITRONSCANNER_OUT_EXT": {
+                        "perl": "v5.32.1"
+                    },
+                    "HELITRONSCANNER_DRAW": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_DRAW_RC": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_HEAD": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_HEAD_RC": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_TAIL": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "HELITRONSCANNER_SCAN_TAIL_RC": {
+                        "helitronscanner": "V1.1"
+                    },
+                    "LTRFINDER": {
+                        "LTR_FINDER_parallel": "v1.1",
+                        "ltr_finder": "v1.07"
+                    },
+                    "LTRHARVEST": {
+                        "LTR_HARVEST_parallel": "v1.1",
+                        "genometools": "1.6.5"
+                    },
+                    "LTRRETRIEVER_LTRRETRIEVER": {
+                        "LTR_retriever": "v2.9.9"
+                    },
+                    "TIRLEARNER": {
+                        "TIR-Learner": "v3.0.2"
+                    },
+                    "Workflow": {
+                        "oushujun/EDTA": "v2.2.2"
+                    }
+                },
+                "stable paths": [
+                    "genome.short.ids.tsv:md5,d7a2af88e8549586e5616bff6a88bd71"
+                ],
+                "stable names": [
+                    "genome",
+                    "genome/genome.short.ids.tsv",
+                    "pipeline_info"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.3"
+        },
+        "timestamp": "2024-12-18T11:22:27.159514"
+    }
+}
