@@ -26,7 +26,7 @@ perl EDTA_raw.pl [options]
 	--genome	[File]	The genome FASTA
 	--species [rice|maize|others]	Specify the species for identification
 					of TIR candidates. Default: others
-	--type	[ltr|tir|helitron|line|sine|all]
+	--type	[ltr|sine|line|tir|helitron|all]
 					Specify which type of raw TE candidates
 					you want to get. Default: all
 	--rmlib	[FASTA]	The RepeatModeler library, classified output.
@@ -626,7 +626,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\tWill use this for further analyses.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		`$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools`;  #TianyuLu
+		`$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools --mode pystrict`;  #TianyuLu #Issue 523
 		}
 
 	# clean raw predictions with flanking alignment
