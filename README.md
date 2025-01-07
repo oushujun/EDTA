@@ -56,6 +56,12 @@ conda activate EDTA
 mamba install -c conda-forge -c bioconda edta
 ```
 
+If your `mamba` exit with dependency coflicts, you may check out your ~/.condarc file and make sure it use "flexible" solve:
+>channels:  
+>  \- conda-forge  
+>  \- bioconda  
+>channel_priority: flexible
+
 <details>
 <summary>Other ways to install with conda/mamba...</summary>
 
@@ -174,15 +180,22 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
       --curatedlib [file]	Provided a curated library to keep consistant naming and classification for known TEs.
 				All TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones here.
 				 This option is not mandatory. It's totally OK if no file is provided (default).
-      --sensitive [0|1]		Use RepeatModeler to identify remaining TEs (1) or not (0, default).
-				 This step is very slow and MAY help to recover some TEs.
+      --rmlib	[File]	Provide the RepeatModeler library containing classified TEs to enhance
+			the sensitivity especially for LINEs. If no file is provided (default),
+			EDTA will generate such file for you.
+      --sensitive [0|1]	Use RepeatModeler to identify remaining TEs (1) or not (0,
+			default). This step may help to recover some TEs.
       --anno [0|1]	Perform (1) or not perform (0, default) whole-genome TE annotation after TE library construction.
       --rmout [File]	Provide your own homology-based TE annotation instead of using the EDTA library for masking.
 			File is in RepeatMasker .out format. This file will be merged with the structural-based TE annotation. (--anno 1 required).
 			Default: use the EDTA library for annotation.
+      --maxdiv [0-100]	Maximum divergence (0-100%, default: 40) of repeat fragments comparing to 
+			library sequences.
       --evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
 			 This step is slow and does not affect the annotation result.
       --exclude	[File]	Exclude regions (bed format) from TE masking in the MAKER.masked output. Default: undef. (--anno 1 required).
+      --force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit
+			(default); 1, use rice TEs to continue.
       --u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
 			 Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list. Default: 1.3e-8 (per bp per year, from rice).
       --threads|-t	[int]	Number of theads to run this script (default: 4)
@@ -196,13 +209,16 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
     perl EDTA_raw.pl [options]
       --genome	[File]	The genome FASTA
       --species [Rice|Maize|others]	Specify the species for identification of TIR candidates. Default: others
-      --type	[ltr|tir|helitron|line|sine|all]
-				Specify which type of raw TE candidates you want to get. Default: all
+      --type	[ltr|sine|line|tir|helitron|all] Specify which type of raw TE candidates you want to get. Default: all
+      --rmlib	[FASTA] The RepeatModeler library, classified output.
+      --u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
+			Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list.
+                        Default: 1.3e-8 (per bp per year, from rice).
       --overwrite	[0|1]	If previous results are found, decide to overwrite (1, rerun) or not (0, default).
       --threads|-t	[int]	Number of theads to run this script
       --help|-h	Display this help info
 
-2.Finish the rest of the EDTA analysis (specify `-overwrite 0` and it will automatically pick up existing results in the work folder)
+2.Finish the rest of the EDTA analysis (specifying `--overwrite 0` and it will automatically pick up existing results in the work folder)
 
     perl EDTA.pl --overwrite 0 [options]
 
@@ -262,9 +278,7 @@ Ou S., Su W., Liao Y., Chougule K., Agda J. R. A., Hellinga A. J., Lugo C. S. B.
 
 Please cite the panEDTA paper if you are using the pan-genome functionality:
 
-Ou S., Collins T., Qiu Y., Seetharam A., Menard C., Manchanda N., Gent J., Schatz M., Anderson S., Hufford M.✉, Hirsch C.✉ (2022). Differences in activity and stability drive transposable element variation in tropical and temperate maize. [bioRxiv](https://doi.org/10.1101/2022.10.09.511471)
-
-Please also cite the software packages that were used in EDTA, listed in the [EDTA/bin](./bin) directory.
+Ou S., Scheben A., Collins T., Qiu Y., Seetharam A., Menard C., Manchanda N., Gent J., Schatz M., Anderson S., Hufford M.✉, Hirsch C.✉ (2024). Differences in activity and stability drive transposable element variation in tropical and temperate maize. [Genome Research](https://doi.org/10.1101/gr.278131.123)
 
 ## Other resources
 You may download the [rice genome here](http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/) (the "all.con" file).
@@ -274,3 +288,5 @@ You may want to check out this [Q&A page](https://github.com/oushujun/EDTA/wiki)
 
 ## Acknowledgements
 I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Sanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), [Sergei Ryazansky](https://github.com/DrHogart), and many more others for testing, debugging, and improving the EDTA pipeline.
+
+The ongoing development of EDTA's Nextflow pipeline is a collaborative effort between The Ou lab at Ohio State University, Deng's Bioinformatics Engineering Team at The New Zealand Institute for Plant and Food Research Limited, and Joseph Guhlin from Peter Dearden's lab at University of Otago and Genomics Aotearoa.
