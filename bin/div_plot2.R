@@ -42,11 +42,11 @@ data_file <- args[1]  # Data file name (e.g., 'testmaize.txt')
 species_accession <- args[2]  # Species accession label (e.g., 'Maize_B73')
 
 # Define the color mapping for TE categories
-TE_colors2 <- c("LTR/Copia"="#D1E5F0", "LTR/Gypsy"="#92C5DE", "LTR/unknown"="#4393C3", 
-                "LINE/L1"="#2166AC",  "LINE/RTE"="#2166AC", "LINE/unknown"="#2166AC",
-                "DNA/Helitron"="#FFFFBF", "TIR/Tc1_Mariner"="#A50026", "TIR/Mutator"="#D73027", 
-                "TIR/PIF_Harbinger"="#F46D43", "TIR/CACTA"="#FDAE61", "TIR/hAT"="#FEE090", 
-                "TIR/unknown"='red', "centromeric_repeat"="gray", "rDNA"="gray", "subtelomere"="gray", 
+TE_colors2 <- c("LTR/Copia"="#D1E5F0", "LTR/Gypsy"="#92C5DE", "LTR/Ty3"="#92C5DE", "LTR/unknown"="#4393C3",
+                "SINE/tRNA"="#2166AC", "SINE/unknown"="#2166AC", "LINE/L1"="#2166AC",  "LINE/RTE"="#2166AC", "LINE/unknown"="#2166AC",
+                "DNA/Helitron"="#FFFFBF", "nonTIR/helitron"="#FFFFBF", "TIR/Tc1_Mariner"="#A50026", "TIR/PIF_Harbinger"="#D73027",
+                "TIR/Mutator"="#F46D43", "TIR/hAT"="#FDAE61", "TIR/CACTA"="#FEE090",
+                "TIR/unknown"='red', "centromeric_repeat"="gray", "rDNA"="gray", "subtelomere"="gray",
                 "knob"="gray", "low_complexity"="gray", 'plastid'="gray", 'unknown'='gray')
 
 # Read data and format genome names
