@@ -44,7 +44,7 @@ perl EDTA_raw.pl [options]
 	--blastplus	[path]	Path to the BLAST+ program. (default: find from ENV)
 	--tesorter	[path]	Path to the TEsorter program. (default: find from ENV)
 	--GRF		[path]	Path to the GRF program. (default: find from ENV)
-	--trf_path		[path]	Path to the TRF program. (default: find from ENV)
+	--trf_path	[path]	Path to the TRF program. (default: find from ENV)
 	--mdust		[path]	Path to the mdust program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
 	--repeatmodeler	[path]	Path to the RepeatModeler2 program. (default: find from ENV)
@@ -626,7 +626,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\tWill use this for further analyses.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		`$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools --mode pystrict`;  #TianyuLu #Issue 523
+		`$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools --mode pystrict --working_dir $genome_file_real_path.EDTA.raw/TIR/`;  #TianyuLu #Issue 523
 		}
 
 	# clean raw predictions with flanking alignment
