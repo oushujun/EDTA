@@ -5,7 +5,8 @@ use warnings;
 # Shujun Ou (shujun.ou.1@gmail.com)
 # Facilitated by ChatGPT
 #
-# usage: perl gff2RMout.pl genome.gff3 genome.out
+my $usage = "Usage: perl gff2RMout.pl genome.gff3 genome.out";
+die "\n$usage\n\n" unless $ARGV[1];
 
 # Open the GFF3 file for reading
 open(my $gff3_file, "<", $ARGV[0]) or die "Cannot open input.gff3: $!";
