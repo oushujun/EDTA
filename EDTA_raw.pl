@@ -411,11 +411,12 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 	}
 
 # run LTR_retriever
+my $status = 0;
 if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
 	print STDERR "$date\tExisting LTR_retriever result $genome.LTRlib.fa found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
-	`${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker`;
+	$status = system("${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker");
 	}
 
 # get full-length LTR from pass.list
@@ -429,8 +430,15 @@ if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.LTR.intact.fa.ori.dusted > $genome.LTR.intact.fa.ori.dusted.cln`;
 
 # annotate and remove not LTR candidates
-`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
-`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
+if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
+	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
+	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
+} elsif ($status == 0){
+	print "\t\tLTR_retriever is finished without error, but no LTR is identified.\n\n";
+	`touch $genome.LTR.intact.fa.ori.dusted.cln.cln`;
+} else {
+	print "\t\tLTR_retriever exited with error, please test run EDTA with EDTA/test/ to make sure the installation is correct.\n\n";
+}
 `mv $genome.LTR.intact.fa.ori.dusted.cln.cln $genome.LTR.intact.raw.fa`;
 `mv $genome.LTR.intact.fa.ori.dusted.cln.cln.list $genome.LTR.intact.raw.fa.anno.list`;
 `cp $genome.LTR.intact.raw.fa.anno.list ../`;
@@ -623,10 +631,11 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	print STDERR "Species: $species\n";
 
 	# run TIR-Learner
+	my $status = 1;
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\tWill use this for further analyses.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		`$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools --working_dir $genome_file_real_path.EDTA.raw/TIR/`;  #TianyuLu
+		$status = system("$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools --working_dir $genome_file_real_path.EDTA.raw/TIR/");  #TianyuLu
 		}
 
 	# clean raw predictions with flanking alignment
@@ -642,8 +651,15 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.TIR.ext30.fa.pass.fa.dusted > $genome.TIR.ext30.fa.pass.fa.dusted.cln`;
 
 	# annotate and remove non-TIR candidates
-	`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
-	`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+	if (-s "$genome.TIR.ext30.fa.pass.fa.dusted.cln"){
+		`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
+		`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+	} elsif ($status == 0) {
+		print "\t\tTIR-Learner is finished without error, but no TIR is identified.\n\n";
+		`touch $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln`;
+	} else {
+		print "\t\tTIR-Learner exited with error, please test run EDTA with EDTA/test/ to make sure the installation is correct.\n\n";
+	}
 	`mv $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln $genome.TIR.intact.raw.fa`;
 	`cp $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln.list $genome.TIR.intact.raw.fa.anno.list`;
 	`cp $genome.TIR.intact.raw.fa.anno.list ../`;
@@ -693,11 +709,12 @@ if ($overwrite eq 0 and (-s "$genome.Helitron.intact.raw.fa" or -s "$genome.Heli
 	print STDERR "$date\tIdentify Helitron candidates from scratch.\n\n";
 
 # run HelitronScanner
+my $status = 1;
 if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genome.HelitronScanner.draw.rc.hel.fa")){
 #cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa
 	print STDERR "$date\tExisting HelitronScanner result files $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa found!\n\t\tWill keep these files without rerunning HelitronScanner\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	`$HelitronScanner_Runner $genome $threads \"$HelitronScanner\"`;
+	$status = system("$HelitronScanner_Runner $genome $threads \"$HelitronScanner\"");
 	}
 
 # filter candidates based on repeatness of flanking regions
@@ -711,8 +728,15 @@ if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genom
 `perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 100 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.HelitronScanner.filtered.fa.pass.fa.dusted | perl -nle 's/^(>.*)\\s+(.*)\$/\$1#DNA\\/Helitron\\t\$2/; print \$_' > $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln`;
 
 # annotate and remove non-Helitron candidates
-`${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
-`perl $cleanup_misclas $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+if (-s "$genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln"){
+	`${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
+	`perl $cleanup_misclas $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+} elsif ($status == 0) {
+	print "\t\tHelitronScanner is finished without error, but no Helitron is identified.\n\n";
+	`touch $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln`;
+} else {
+	print "\t\tHelitronScanner exited with error, please test run EDTA with EDTA/test/ to make sure the installation is correct.\n\n";
+}
 `mv $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln $genome.Helitron.intact.raw.fa`;
 `cp $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln.list $genome.Helitron.intact.raw.fa.anno.list`;
 `cp $genome.Helitron.intact.raw.fa.anno.list ../`;
