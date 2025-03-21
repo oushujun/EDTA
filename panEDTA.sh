@@ -145,16 +145,20 @@ while IFS= read -r i; do
 		ln -s $genome_file $genome 2>/dev/null
 	fi
 
-	# make softlink to cds
+	# check if cds file exist
 	cds_ind_file=`echo $i|awk '{print $2}'`
+	if [ ! -s "$cds_ind_file" ]; then
+		echo "ERROR: $cds_ind specified by -g not exist!"
+		exit 1
+	fi
+	
+	# make softlink to cds
+	cds_ind_file=`realpath $cds_ind_file`
 	cds_ind=`basename $cds_ind_file 2>/dev/null` 
 	if [ "$cds_ind" != '' ]; then
 		if [ ! -s $cds_ind ]; then
-			echo "ERROR: $cds_ind specified by -g not exist!"
-			exit 1
+			ln -s $cds_ind_file $cds_ind 2>/dev/null
 		fi
-		cds_ind_file=`realpath $cds_ind_file`
-		ln -s $cds_ind_file $cds_ind 2>/dev/null
 	fi
 
 	# use the global $cds to replace a missing cds
