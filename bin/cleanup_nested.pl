@@ -120,7 +120,7 @@ for (my $i=0; $i<$iter; $i++){
 	foreach my $thread (@threads){
 		$thread->join();
 	}
-	`rm $IN.iter$i.nhr $IN.iter$i.nin $IN.iter$i.nsq $IN.iter$i.ndb $IN.iter$i.not $IN.iter$i.ntf $IN.iter$i.nto 2>/dev/null`;
+	`rm $IN.iter$i.nhr $IN.iter$i.nin $IN.iter$i.nsq $IN.iter$i.ndb $IN.iter$i.not $IN.iter$i.ntf $IN.iter$i.nto $IN.iter$i.njs 2>/dev/null`;
 
 	# automatically increase iteration based on the stat result
 	my $curr_stat = `wc -l "$IN.stat"`;
