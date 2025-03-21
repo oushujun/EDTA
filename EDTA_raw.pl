@@ -567,7 +567,7 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 			${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome
 			" and exit unless $status == 0;
 		}
-	`rm $genome.nhr $genome.nin $genome.nnd $genome.nni $genome.nog $genome.nsq $genome.njs $genome.translation 2>/dev/null`;
+	`rm $genome*nal $genome*nhr $genome*nin $genome*nnd $genome*nni $genome*nog $genome*nsq $genome*njs $genome*translation 2>/dev/null`;
 	}
 
 # filter and reclassify RepeatModeler candidates with TEsorter and make LINE library
