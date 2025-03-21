@@ -112,7 +112,7 @@ Merlin_TIR_transposon	SO:0002281	Merlin_TIR_transposon,Merlin,DNA/DTE,MITE/DTE,T
 terminal_inverted_repeat	SO:0000481	terminal_inverted_repeat,TIR
 
 ## nonTIR DNA transposons
-Crypton_YR_transposon	SO:0002277	Crypton_YR_transposon,Crypton,DNA/DYC,DYC,DNA/Crypton,DNA/Crypton-A,DNA/Crypton-H,DNA/Crypton-V,DNA/Crypton_A,DNA/Crypton_H,DNA/Crypton_V,DNA/CryptonA,DNA/CryptonF,DNA/CryptonI,DNA/CryptonS,DNA/CryptonV
+Crypton_YR_transposon	SO:0002277	Crypton_YR_transposon,Crypton,DNA/DYC,DYC,DNA/Crypton,DNA/CryptonA,DNA/Crypton_A,DNA/Crypton-A,DNA/CryptonI,DNA/Crypton_I,DNA/Crypton-I,DNA/CryptonS,DNA/Crypton_S,DNA/Crypton-S,DNA/CryptonV,DNA/Crypton_V,DNA/Crypton-V,DNA/CryptonF,DNA/Crypton_F,DNA/Crypton-F,DNA/CryptonH,DNA/Crypton_H,DNA/Crypton-H
 helitron	SO:0000544	helitron,DNAauto/Helitron,DNAnona/Helitron,DNA/Helitron,Helitron,RC/Helitron,Unknown/Helitron-2,nonDNA/Helitron,Helitron/NA
 
 ## LTR retrotransposons
