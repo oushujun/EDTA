@@ -5,24 +5,26 @@
 
 ## Table of Contents
 
-   * [Introduction](#introduction)
-   * [Installation](#installation)
-      * [Quick installation using conda/mamba](#install-with-condamamba-linux64)
-      * [Quick installation using Singularity](#install-with-singularity-good-for-hpc-users)
-      * [Quick installation using Docker](#install-with-docker-good-for-rootmacosapple-m-chip-users)
-   * [Testing](#testing)
-   * [Inputs](#inputs)
-   * [Outputs](#outputs)
-   * [EDTA usage](#edta-usage)
-      * [From head to toe](#from-head-to-toe)
-      * [Divide and conquer](#divide-and-conquer)
-      * [Protips and self-diagnosis](#protips-and-self-diagnosis)
-   * [panEDTA usage](#panedta-usage)
-   * [Benchmark](#benchmark)
-   * [Citations](#citations)
-   * [Other resources](#other-resources)
-   * [Questions and Issues](#questions-and-issues)
-   * [Acknowledgements](#acknowledgements)
+- [The Extensive *de novo* TE Annotator (EDTA)](#the-extensive-de-novo-te-annotator-edta)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Installation](#installation)
+    - [Install with conda/mamba (Linux64)](#install-with-condamamba-linux64)
+    - [Install with Singularity (good for HPC users)](#install-with-singularity-good-for-hpc-users)
+    - [Install with Docker (good for root/macOS/Apple M-chip users)](#install-with-docker-good-for-rootmacosapple-m-chip-users)
+  - [Testing](#testing)
+  - [Inputs](#inputs)
+  - [Outputs](#outputs)
+  - [EDTA Usage](#edta-usage)
+    - [From head to toe](#from-head-to-toe)
+    - [Divide and conquer](#divide-and-conquer)
+    - [Protips and self-diagnosis](#protips-and-self-diagnosis)
+  - [panEDTA usage](#panedta-usage)
+  - [Benchmark](#benchmark)
+  - [Citations](#citations)
+  - [Other resources](#other-resources)
+  - [Questions and Issues](#questions-and-issues)
+  - [Acknowledgements](#acknowledgements)
 
 
 ## Introduction
@@ -30,12 +32,15 @@ This package is developed for automated whole-genome *de-novo* TE annotation and
 
 The EDTA package was designed to filter out false discoveries in raw TE candidates and generate a high-quality non-redundant TE library for whole-genome TE annotations. Selection of initial search programs were based on benckmarkings on the annotation performance using a manually curated TE library in the rice genome.
 
-[//]: # (<img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true">)
+<!-- <img width="600" alt="The EDTA workflow" src="https://github.com/oushujun/EDTA/blob/master/development/EDTA%20workflow.png?raw=true"> -->
 
+<div style="text-align:center; width: 100%">
 <picture>
-  <source media="(prefers-color-scheme: dark)" width="480" srcset="./development/EDTA workflow_black_for light mode.png">
-  <img width="480" alt="The EDTA workflow" src="./development/EDTA workflow_white_for dark mode.png">
+  <source media="(prefers-color-scheme: dark)" srcset="./development/EDTA_workflow_white.png">
+  <img style="width: 80%; max-width: 725px" alt="The EDTA workflow" src="./development/EDTA_workflow_black.png">
 </picture>
+<br><br>
+</div>
 
 To benchmark the annotation quality of a new library/method, I have provided the TE annotation with the curated rice TE library (v7.0.0) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
 
@@ -61,6 +66,8 @@ If your `mamba` exit with dependency coflicts, you may check out your ~/.condarc
 >  \- conda-forge  
 >  \- bioconda  
 >channel_priority: flexible
+
+If you encounter PyTorch CUDA related issues during EDTA execution, you may consider installing a CPU-only PyTorch build by adding `"pytorch=*=*cpu*"` in the installation commands, e.g. `mamba install -c conda-forge -c bioconda edta "pytorch=*=*cpu*"`. You can check [Enforce PyTorch Build (CUDA or CPU-only)](https://github.com/lutianyu2001/TIR-Learner?tab=readme-ov-file#enforce-pytorch-build-cuda-or-cpu-only) for more information.
 
 <details>
 <summary>Other ways to install with conda/mamba...</summary>
