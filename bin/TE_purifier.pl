@@ -106,12 +106,16 @@ if ($reprocess == 0){
 # Repeatmask TE1 with TE2; make blast db for $TE1 and $TE2
 my $div = 100 - $miniden;
 my $err = '';
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -nolow -div $div -lib $TE2 $TE1 >/dev/null`;
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -nolow -div $div -lib $TE2 $TE1 > ${TE2}-${TE1}.RM.status`;
 `${blastplus}makeblastdb -in $TE1 -out $TE1 -dbtype nucl 2> /dev/null`;
 `${blastplus}makeblastdb -in $TE2 -out $TE2 -dbtype nucl 2> /dev/null`;
 print STDERR "$err\n" if $err ne '';
 
 # get masked regions of TE1
+if (`grep "No repetitive sequences were detected" ${TE2}-${TE1}.RM.status`){
+	print STDERR "RepeatMasker ran correctly. No repetitive sequences were detected.\n\n";
+	`touch $TE1.out`
+	}
 open RM, "<$TE1.out" or die $!;
 my %RM;
 while (<RM>){
@@ -193,7 +197,7 @@ sub purifier(){
 			my $target = ">$id:$from..$to\\n$seq";
 
 			# count the size of $target in $TE1
-			my $exec = "timeout 188s ${blastplus}blastn -db $TE1 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+			my $exec = "timeout -s KILL 188s ${blastplus}blastn -db $TE1 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 			my @blast_te1 = ();
 			my $try = 0;
 			while ($try < 10){ #try 10 times to guarantee the blast is run correctly
@@ -210,7 +214,7 @@ sub purifier(){
 				}
 
 			# count the size of $target in $TE2
-			$exec = "timeout 188s ${blastplus}blastn -db $TE2 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+			$exec = "timeout -s KILL 188s ${blastplus}blastn -db $TE2 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 			my @blast_te2 = ();
 			$try = 0;
 			while ($try < 10){ #try 10 times to guarantee the blast is run correctly
