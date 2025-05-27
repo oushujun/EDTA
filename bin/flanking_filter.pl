@@ -133,7 +133,7 @@ sub filter(){
 	my $end5_repeat = "false";
 	my $end5 = ">end5\\n$flank5"."$seq5";
 	my $end5_len = length "$flank5"."$seq5";
-	my $exec = "timeout 163s ${blastplus}blastn -db $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+	my $exec = "timeout -s KILL 120s ${blastplus}blastn -db $genome -query <(echo -e \"$end5\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end5 = ();
 	my $try = 0;
 	while ($try < 3){ #try 3 times to guarantee the blast is run correctly
@@ -154,7 +154,7 @@ sub filter(){
 	my $end3_repeat = "false";
 	my $end3 = ">end3\\n$seq3"."$flank3";
 	my $end3_len = length "$seq3"."$flank3";
-	$exec = "timeout 163s ${blastplus}blastn -db $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+	$exec = "timeout -s KILL 120s ${blastplus}blastn -db $genome -query <(echo -e \"$end3\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 	my @blast_end3 = ();
 	$try = 0;
 	while ($try < 3){
@@ -176,7 +176,7 @@ sub filter(){
 	if ($end5_repeat eq "true" and $end3_repeat eq "true"){
 		my $flank = ">flank\\n$flank5"."$flank3";
 		my $flank_len = length "$flank5"."$flank3";
-		$exec = "timeout 163s ${blastplus}blastn -db $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
+		$exec = "timeout -s KILL 120s ${blastplus}blastn -db $genome -query <(echo -e \"$flank\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
 		my @blast_flank = ();
 		$try = 0;
 		while ($try < 3){

@@ -152,7 +152,7 @@ sub condenser(){
 		my $seq = ">$id\n$seq{$id}\n";
 		my $length = length $seq{$id}; #query length
 		next unless defined $length and $length > 0;
-		my $exec="timeout 188s ${blastplus}blastn -query <(echo -e \"$seq\") -db $db -word_size 7 -evalue 1e-5 -dust no -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send qlen slen\"";
+		my $exec="timeout -s KILL 120s ${blastplus}blastn -query <(echo -e \"$seq\") -db $db -word_size 7 -evalue 1e-5 -dust no -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send qlen slen\"";
 		my @Blast=();
 		my %seq_len; #store subject seq length info
 		my %merged_hsps;
