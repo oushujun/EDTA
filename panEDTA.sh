@@ -5,6 +5,7 @@
 #	2. Individual TE libraries will be combined by panEDTA
 #	3. Each genome will be reannotated by the panEDTA library
 # Shujun Ou (shujun.ou.1@gmail.com) 
+# 05/26/2025 v0.4
 # 02/19/2024 v0.3
 # 06/21/2023 v0.2
 # 10/10/2022 v0.1
@@ -35,7 +36,8 @@ helpFunction()
    echo "   -c		Optional. Coding sequence files in fasta format.
    			The CDS file provided via this parameter will fill in the missing CDS files in the genome list.
 			If no CDS files are provided in the genome list, then this CDS file will be used on all genomes."
-   echo "   -l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format."
+   echo "   -l	Optional. A manually curated, non-redundant library following the RepeatMasker naming format.
+   			If you use this in panEDTA, it is expected that you also supply the library to EDTA via --curatedlib"
    echo "   -f	Minimum number of full-length TE copies in individual genomes to be kept as candidate TEs for the pangenome.
    			Lower is more inclusive, and will ↑ library size, ↑ sensitivity, and ↑ inconsistency.
 			Higher is more stringent, and will ↓ library size, ↓ sensitivity, and ↓ inconsistency.
@@ -113,7 +115,7 @@ echo ""
 
 ## Step 1, initial EDTA annotation, consider to add --sensitive 1, consider to submit each EDTA job to different nodes.
 # make softlink to global cds
-if [ $cds != '' ]; then
+if [ "$cds" != '' ]; then
 	cds_file=$cds
 	cds=`basename $cds_file 2>/dev/null`
 	cds_file=`realpath $cds_file`
@@ -122,7 +124,6 @@ fi
 
 # process one line each time
 genomes="" # store a list of genomes
-#cat "$genome_list" | while IFS= read -r i; do
 while IFS= read -r i; do
 	genome_file=`echo $i|awk '{print $1}'`
 
@@ -145,11 +146,18 @@ while IFS= read -r i; do
 		ln -s $genome_file $genome 2>/dev/null
 	fi
 
-	# check if cds file exist
-	cds_ind_file=`echo $i|awk '{print $2}'`
+	# determine per-line CDS or fall back on global -c
+	line_cds=$(echo "$i" | awk '{print $2}')
+	if [ -z "$line_cds" ]; then
+	    # no per-line CDS given: fall back on -c
+	    cds_ind_file="$cds_file"
+	else
+	    cds_ind_file=$(realpath "$line_cds")
+	fi
+
 	if [ ! -s "$cds_ind_file" ]; then
-		echo "ERROR: $cds_ind specified by -g not exist!"
-		exit 1
+	    echo "ERROR: The CDS file $cds_ind_file specified for genome $genome does not exist or is empty"
+	    exit 1
 	fi
 	
 	# make softlink to cds
@@ -168,7 +176,6 @@ while IFS= read -r i; do
 
 
 	# check if current folder has EDTA results
-	#if [ -s "$genome_file.mod.EDTA.TEanno.sum" || -s "$genome.mod.EDTA.TEanno.sum"] && [ `realpath "$genome_file.mod.EDTA.TEanno.sum"` = `realpath "$genome.mod.EDTA.TEanno.sum"` ] && [ $overwrite = 0 ]; then
 	if { [ -s "$genome_file.mod.EDTA.TEanno.sum" ] || [ -s "$genome.mod.EDTA.TEanno.sum" ]; } && [ "$(realpath "$genome_file.mod.EDTA.TEanno.sum")" = "$(realpath "$genome.mod.EDTA.TEanno.sum")" ] && [ "$overwrite" = 0 ]; then
 		echo "ERROR: Existing EDTA result found for $genome and the Overwrite parameter (-o) is $overwrite!"
 		exit 1
@@ -193,7 +200,6 @@ while IFS= read -r i; do
 		ln -s "$genome_file.mod.EDTA.anno/$genome.mod.EDTA.RM.out" "$genome.mod.EDTA.anno/" 2>/dev/null
 	fi
 
-#if [ ! 0 ]; then #test
 	# de novo EDTA if no existing annotation is found
 	if [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then
 	# run a new EDTA if annotation of the genome is not existing
@@ -211,7 +217,6 @@ while IFS= read -r i; do
 		}
 		fi
 	fi
-#fi #test
 done < "$genome_list"
 
 ## Step 2, make pan-genome lib (quick step, use a sigle node is fine)
