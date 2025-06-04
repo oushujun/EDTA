@@ -67,6 +67,15 @@ If your `mamba` exit with dependency coflicts, you may check out your ~/.condarc
 >  \- bioconda  
 >channel_priority: flexible
 
+If you install on an Apple M-chip system (ARM64), you will need to use Rosetta 2 following these steps:   
+a. Use Rosetta to run your Terminal.   
+b. Install the x86_64 version of conda or arm64 version of miniforge.
+c. Install EDTA using osx-64:   
+```
+CONDA_SUBDIR=osx-64 conda create -n EDTA -c bioconda -c conda-forge edta
+```
+
+
 If you encounter PyTorch CUDA related issues during EDTA execution, you may consider installing a CPU-only PyTorch build by adding `"pytorch=*=*cpu*"` in the installation commands, e.g. `mamba install -c conda-forge -c bioconda edta "pytorch=*=*cpu*"`. You can check [Enforce PyTorch Build (CUDA or CPU-only)](https://github.com/lutianyu2001/TIR-Learner?tab=readme-ov-file#enforce-pytorch-build-cuda-or-cpu-only) for more information.
 
 <details>
