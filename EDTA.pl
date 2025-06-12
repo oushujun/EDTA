@@ -74,7 +74,7 @@ perl EDTA.pl [options]
 				(--anno 1 required). Default: 1.
 	--exclude [File]	Exclude regions (bed format) from TE masking in the MAKER.masked
 				output. Default: undef. (--anno 1 required).
-	--force	[0|1]	(default: 0) 0: When no confident TE candidates are found, interrupt and exit
+	--force	[0|1]	(default: 0) 0: When no confident TE candidates are found, interrupt and exit.
 			             1: Use rice TEs to continue.
 	--u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
 			Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list.
