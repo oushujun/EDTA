@@ -45,7 +45,7 @@ import re
 genome = sys.argv[1]
 out_dir = sys.argv[2]
 chunk_size = 10000000
-overlap = 500000
+overlap = 50000
 
 def parse_genome(file):
     genomes = {}
