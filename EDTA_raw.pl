@@ -364,6 +364,8 @@ if ($id_len > $id_len_max){
 $genome = "$genome.mod";
 }
 }
+# pre-set parameters
+my $genome_file_real_path=File::Spec->rel2abs($genome); # the genome file with real path
 
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
@@ -490,7 +492,7 @@ my $status; # record status of AnnoSINE execution
 if (-s "Seed_SINE.fa"){
 	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
 	} else { 
-	$status = system("python3 ${annosine}AnnoSINE_v2 -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
+	$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
 	}
 
 # filter and reclassify AnnoSINE candidates with TEsorter and make SINE library
@@ -614,9 +616,6 @@ if ($type eq "tir" or $type eq "all"){
 
 chomp ($date = `date`);
 print STDERR "$date\tStart to find TIR candidates.\n\n";
-
-# pre-set parameters
-my $genome_file_real_path=File::Spec->rel2abs($genome); # the genome file with real path
 
 # enter the working directory and create genome softlink
 chdir "$genome.EDTA.raw/TIR";
