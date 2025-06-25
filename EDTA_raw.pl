@@ -91,7 +91,7 @@ my $TIR_Learner = ""; #path to TIR-Learner3 program  #tianyulu
 my $LTR_FINDER = ""; #path to LTR_FINDER_parallel program  #tianyulu
 my $LTR_HARVEST = ""; #path to LTR_HARVEST_parallel program  #tianyulu
 my $HelitronScanner = ""; #path to HelitronScanner program  #tianyulu
-my $HelitronScanner_Runner = "$script_path/bin/run_helitron_scanner.sh";
+my $HelitronScanner_Runner = "$script_path/bin/run_helitron_scanner.py";
 
 my $help = undef;
 
@@ -713,10 +713,11 @@ if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genom
 #cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa
 	print STDERR "$date\tExisting HelitronScanner result files $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa found!\n\t\tWill keep these files without rerunning HelitronScanner\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	$status = system("$HelitronScanner_Runner $genome $threads \"$HelitronScanner\"");
+	$status = system("$HelitronScanner_Runner --genome $genome --cpu $threads --hsdir \"$HelitronScanner\"");
 	}
 
 # filter candidates based on repeatness of flanking regions
+`perl $format_helitronscanner -genome $genome -sitefilter 1 -minscore 12 -keepshorter 1 -extlen 30 -extout 0`;
 `perl $format_helitronscanner -genome $genome -sitefilter 1 -minscore 12 -keepshorter 1 -extlen 30 -extout 1`;
 `perl $flank_filter -genome $genome -query $genome.HelitronScanner.filtered.ext.fa -miniden 90 -mincov 0.9 -maxct 5 -blastplus $blastplus -t $threads`; #more relaxed
 #`perl $flank_filter -genome $genome -query $genome.HelitronScanner.filtered.ext.fa -miniden 80 -mincov 0.8 -maxct 5 -blastplus $blastplus -t $threads`; #more stringent
