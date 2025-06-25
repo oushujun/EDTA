@@ -183,7 +183,7 @@ while IFS= read -r i; do
 
 	# check if provided genome has EDTA annotation in the same folder
 	if [ -s "$genome_file.mod.EDTA.TEanno.sum" ] && [ ! -s "$genome.mod.EDTA.TEanno.sum" ]; then # link annotations to the work directory
-		echo "Existing EDTA annotation found in the directory of $genome, will use this as the panEDTA input"
+		echo "Existing EDTA annotation found in the directory of $genome, will use this as the panEDTA input.\n"
 		ln -s "$genome_file.mod" "$genome.mod" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.TEanno.sum" "$genome.mod.EDTA.TEanno.sum" 2>/dev/null
 		ln -s "$genome_file.mod.EDTA.TElib.fa" "$genome.mod.EDTA.TElib.fa" 2>/dev/null
