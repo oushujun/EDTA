@@ -150,7 +150,7 @@ def process_chunk(args):
     ])
     for c in cmds:
         try:
-            subprocess.run(c, check=True)            
+            quiet = subprocess.run(c, check=True)          
         except subprocess.CalledProcessError as e:
             return (chunk_path, False, str(e))
             
