@@ -401,7 +401,7 @@ if ($overwrite eq 0 and -s "$genome.harvest.combine.scn"){
 	print STDERR "$date\tExisting raw result $genome.harvest.scn found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	# `perl $LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300`;
-	`$LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300`;  #tianyulu
+	`$LTR_HARVEST -seq $genome -threads $threads -gt $genometools -size 1000000 -time 300 2>/dev/null`;  #tianyulu #575
 	}
 
 # run LTR_FINDER_parallel
@@ -409,7 +409,7 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 	print STDERR "$date\tExisting raw result $genome.finder.combine.scn found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	# `perl $LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;
-	`$LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300`;  #tianyulu
+	`$LTR_FINDER -seq $genome -threads $threads -harvest_out -size 1000000 -time 300 2>/dev/null`;  #tianyulu #575
 	}
 
 # run LTR_retriever
