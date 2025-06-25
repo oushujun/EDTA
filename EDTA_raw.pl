@@ -418,7 +418,7 @@ if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
 	print STDERR "$date\tExisting LTR_retriever result $genome.LTRlib.fa found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
-	$status = system("${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker");
+	$status = system("${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker -salvage 1");
 	}
 
 # get full-length LTR from pass.list
