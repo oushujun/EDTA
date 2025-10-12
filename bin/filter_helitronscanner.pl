@@ -58,7 +58,7 @@ while (<Hel>){
 	my ($chr, $str, $end) = ($1, $2, $3) if $loc =~ /^(.*)_#SUB_([0-9]+)-([0-9]+)$/;
 
 	$dir =~ s/[\[\]]+//g;
-	$alt5 =~ s/Multi_5'_ends://;
+	$alt5 =~ s/Multi_5'_ends://i;
 
 	# get shorter coordinates for candidates with alternative 5'end available.
 	if ($keep_shorter == 1 and $alt5 ne ''){
@@ -80,7 +80,7 @@ while (<Hel>){
 		$new_end = $end - $ext_len;
 		}
 	my $pos = "$chr:$new_str..$new_end";
-	$score =~ s/scores=//;
+	$score =~ s/scores=//i;
 	print List "$chr-$str-$end-$ext_len-$dir-$score\t$pos\n";
 	}
 close Hel;

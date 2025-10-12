@@ -47,8 +47,8 @@ while (<Hel>){
 	my ($chr, $str, $end) = ($1, $2, $3) if $loc =~ /^(.*)_#SUB_([0-9]+)-([0-9]+)$/;
 
 	$dir =~ s/[\[\]]+//g;
-	$alt5 =~ s/Multi_5'_ends://;
-	$score =~ s/scores=//;
+	$alt5 =~ s/Multi_5'_ends://i;
+	$score =~ s/scores=//i;
 
 	# store default 5' end
 	my %line;

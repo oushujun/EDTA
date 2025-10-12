@@ -492,7 +492,8 @@ my $status; # record status of AnnoSINE execution
 if (-s "Seed_SINE.fa"){
 	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
 	} else { 
-	$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
+	$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ ");
+	#$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
 	}
 
 # filter and reclassify AnnoSINE candidates with TEsorter and make SINE library
@@ -564,10 +565,14 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 	$status = system("${repeatmodeler}RepeatModeler -engine ncbi -threads $threads -database $genome  > repeatmodeler.log 2>&1");
 	if ($status != 0) {
 		# Execute the old version of RepeatModeler
+		warn "RepeatModeler failed with -threads, retrying with -pa...\n";
 		$status = system("${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome > repeatmodeler.log 2>&1");
-		print "ERROR: RepeatModeler did not run correctly. Please test run this command:
-			${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome
-			" and exit unless $status == 0;
+		if ($status != 0) {
+			print "ERROR: RepeatModeler did not run correctly. Please test run this command:
+				${repeatmodeler}RepeatModeler -engine ncbi -pa $threads -database $genome
+				ERROR\n";
+			exit;
+			}
 		}
 	`rm $genome*nal $genome*nhr $genome*nin $genome*nnd $genome*nni $genome*nog $genome*nsq $genome*njs $genome*translation 2>/dev/null`;
 	}
@@ -638,7 +643,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 		}
 
 	# clean raw predictions with flanking alignment
-	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//g; print \$_' > $genome.TIR`;
+	`perl $rename_tirlearner ./TIR-Learner-Result/TIR-Learner_FinalAnn.fa | perl -nle 's/TIR-Learner_//gi; print \$_' > $genome.TIR`;
 	`perl $get_ext_seq $genome $genome.TIR`;
 	`perl $flank_filter -genome $genome -query $genome.TIR.ext30.fa -miniden 90 -mincov 0.9 -maxct 20 -blastplus $blastplus -t $threads`;
 
@@ -713,7 +718,7 @@ if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genom
 #cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa
 	print STDERR "$date\tExisting HelitronScanner result files $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa found!\n\t\tWill keep these files without rerunning HelitronScanner\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	$status = system("$HelitronScanner_Runner --genome $genome --cpu $threads --hsdir \"$HelitronScanner\"");
+	$status = system("python $HelitronScanner_Runner --genome $genome --cpu $threads --hsdir \"$HelitronScanner\" 2>/dev/null");
 	}
 
 # filter candidates based on repeatness of flanking regions

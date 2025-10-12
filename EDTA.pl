@@ -652,7 +652,7 @@ my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.
 
 # update the family names in the intact.raw.gff3 file
 `perl $rename_by_list $genome.EDTA.intact.raw.gff3 $genome.EDTA.intact.fa.cln2.rename.list 1 > $genome.EDTA.intact.raw.gff3.rename`;
-`sed 's/.*Name=//; s/;Classifica.*//' $genome.EDTA.intact.raw.gff3.rename | sort -u > $genome.EDTA.intact.raw.gff3.rename.famlist`;
+`sed 's/.*Name=//i; s/;Classifica.*//i' $genome.EDTA.intact.raw.gff3.rename | sort -u > $genome.EDTA.intact.raw.gff3.rename.famlist`;
 
 # get a dirty list of intact.gff
 `grep \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.rename.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.rename.dirtlist`;

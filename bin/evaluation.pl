@@ -38,7 +38,7 @@ die $usage unless -s $RMout;
 
 #get blast path
 $blast=`command -v blastn 2>/dev/null` if $blast eq '';
-$blast=~s/blastn\n//;
+$blast=~s/blastn\n//i;
 $blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "blastn is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastn";
 

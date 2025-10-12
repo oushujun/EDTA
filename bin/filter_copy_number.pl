@@ -15,7 +15,7 @@ my $cdhitpath='';
 
 #check cd-hit
 $cdhitpath=`command -v cd-hit-est 2>/dev/null` if $cdhitpath eq '';
-$cdhitpath=~s/cd-hit-est\n//;
+$cdhitpath=~s/cd-hit-est\n//i;
 die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" unless -X "${cdhitpath}cd-hit-est";
 die "\nThe fasta file is not found!\n$usage" unless -s $seq;
 

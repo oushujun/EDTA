@@ -100,7 +100,7 @@ while (<Seq>){
 	next unless defined $anno{$id}; #skip the seqs that are not in %anno (duplicated, heavily nested, or lack of LTR structure)
 	if (defined $anno{$id}){
 		($anno, $gff) = @{$anno{$id}};
-		$gff =~ s/REPeaT/$k/g;
+		$gff =~ s/REPeaT/$k/gi;
 		}
 	print ">$id#LTR/$anno\n$seq\n";
 	print GFF "$gff";
