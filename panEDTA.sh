@@ -97,6 +97,26 @@ dir=$(pwd) #current work directory
 rm_threads=$(($threads/4))
 outfile=$(basename $genome_list 2>/dev/null)
 
+# resolve path to genome (not realpath because the genome could be a softlink where 
+# TE annotations are located
+resolve_path() {
+  # If it's already absolute, start from its dirname
+  path=$1
+  case "$path" in
+    /*) base_dir=$(dirname "$path") ;;
+    *) base_dir=$(dirname "$(pwd)/$path") ;;
+  esac
+
+  # Move to that directory (use subshell to avoid changing caller's cwd)
+  (
+    cd "$base_dir" 2>/dev/null || exit 1
+    # Normalize "." and ".." but keep symlinks (pwd without -P)
+    dir=$(pwd)
+    # Compose final absolute path
+    printf "%s/%s\n" "$dir" "$(basename "$path")"
+  )
+}
+
 ### Begin panEDTA and print all parameters
 printf "\n%s\n" "$(date)"
 echo "###############################################################"
@@ -139,7 +159,7 @@ while IFS= read -r i; do
 	fi
 
 	# make softlink to genome
-	genome_file=`realpath $genome_file`
+	genome_file=`resolve_path $genome_file`
 	genome=`basename $genome_file`
 	genomes="$genomes $genome"
 	if [ ! -s $genome ]; then
@@ -223,7 +243,7 @@ done < "$genome_list"
 # get fl-TE with ≥ $fl_copy copies in each genome
 printf "\n%s\n" "$(date)"
 for genome in $genomes; do
-	printf "\tIdenfity full-length TEs for genome %s\n"
+	printf "\tIdenfity full-length TEs for genome $genome %s\n"
 	perl $path/bin/find_flTE.pl $genome.mod.EDTA.anno/$genome.mod.EDTA.RM.out | \
 		awk '{print $10}'| \
 		sort| \
