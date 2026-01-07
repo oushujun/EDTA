@@ -5,10 +5,11 @@ use Getopt::Long qw(GetOptions);
 
 # Convert EDTA GFF3 file to TEtranscripts GTF file
 # GFF to GTF Mapping:
-#   ID   -> gene_id + transcript_id
-#   Name -> family_id
-#   3rd column (type) -> class_id
+#   ID   -> transcript_id
+#   Name -> gene_id
+#   3rd column (type) -> family_id
 #   feature -> exon (constant)
+#   classification -> class_id
 #
 # Filtering:
 #   Remove records whose 3rd column matches any in --remove list
@@ -19,7 +20,8 @@ use Getopt::Long qw(GetOptions);
 #   perl gff_to_gtf.pl --gff in.gff3 > out.gtf
 #   cat in.gff3 | perl gff_to_gtf.pl --gff - > out.gtf
 #   perl gff_to_gtf.pl --gff - --remove knob,repeat_region < in.gff3 > out.gtf
-# Shujun Ou (shujun.ou.1@gmail.com) and ChatGPT 5.2; 01/04/2025
+# Shujun Ou (shujun.ou.1@gmail.com) and ChatGPT 5.2
+# v1: 01/04/2025
 
 my $gff_in  = undef;   # file path or '-' for STDIN
 my $out_fn  = undef;   # file path or undef for STDOUT
@@ -96,8 +98,15 @@ while (my $line = <$IN>) {
         $a{$k} = $v;
     }
 
+    # force + strand for missing values
+    #    if (!defined $strand || $strand eq '' || $strand eq '.' || $strand eq '?') {
+    #	 $strand = '+';
+    #	 }
+
     my $id   = $a{ID};
     my $name = $a{Name};
+    my $class = $a{classification} || $a{Classification};
+    $class =~ s/\/.*//;
 
     if (!defined $id || $id eq '') {
         warn "Skipping (missing ID=): $line\n";
@@ -107,15 +116,20 @@ while (my $line = <$IN>) {
         warn "Skipping (missing Name=): $line\n";
         next;
     }
+    if (!defined $class || $class eq '') {
+        warn "Skipping (missing classification=): $line\n";
+        next;
+    }
 
     # GTF: feature is always exon; keep score from GFF
     my $feature = "exon";
 
     my $gtf_attr = join " ",
-        qq(gene_id "$id";),
+        qq(gene_id "$name";),
         qq(transcript_id "$id";),
-        qq(family_id "$name";),
-        qq(class_id "$type";);
+	qq(family_id "$name";), # $name = family
+	#qq(family_id "$type";), # $type = superfamily
+        qq(class_id "$class";);
 
     print $OUT join("\t",
         $seqname, $source, $feature, $start, $end, $score, $strand, $phase, $gtf_attr
