@@ -134,6 +134,7 @@ my $RMout2bed = "$script_path/bin/RMout2bed.pl";
 my $gff2RMout = "$script_path/bin/gff2RMout.pl";
 my $bed2gff = "$script_path/bin/bed2gff.pl";
 my $gff2bed = "$script_path/bin/gff2bed.pl";
+my $gff2gtf = "$script_path/bin/gff2gtf.pl";
 my $get_frag = "$script_path/bin/get_frag.pl";
 my $keep_nest = "$script_path/bin/keep_nest.pl";
 my $combine_overlap = "$script_path/bin/combine_overlap.pl";
@@ -261,6 +262,7 @@ die "The script gff2RMout.pl is not found in $gff2RMout!\n" unless -s $gff2RMout
 die "The script combine_RMrows.pl is not found in $combine_RMrows!\n" unless -s $combine_RMrows;
 die "The script bed2gff.pl is not found in $bed2gff!\n" unless -s $bed2gff;
 die "The script gff2bed.pl is not found in $gff2bed!\n" unless -s $gff2bed;
+die "The script gff2gtf.pl is not found in $gff2gtf!\n" unless -s $gff2gtf;
 die "The script get_frag.pl is not found in $get_frag!\n" unless -s $get_frag;
 die "The script keep_nest.pl is not found in $keep_nest!\n" unless -s $keep_nest;
 die "The script combine_overlap.pl is not found in $combine_overlap!\n" unless -s $combine_overlap;
@@ -762,6 +764,7 @@ if ($anno == 1){
 	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
 	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\\n$gff_head\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
 	`perl $format_gff3 $genome.EDTA.TEanno.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.gff3`;
+	`perl $gff2gtf --gff $genome.EDTA.TEanno.gff3 --remove repeat_region,long_terminal_repeat,target_site_duplication --out $genome.EDTA.TEanno.gtf`;
 	`rm $genome.EDTA.TEanno.gff3.raw 2>/dev/null`;
 
 	# make non-overlapping annotation
@@ -770,6 +773,7 @@ if ($anno == 1){
 	`echo "##gff-version 3\n##date $date\n##This file contains all repeats annotated by EDTA $version in the split format (non-overlapping). Repeats can be broken into pieces by nested insertions.\n$gff_head" > $genome.EDTA.TEanno.split.gff3`;
 	`perl $bed2gff $genome.EDTA.TEanno.split.bed | grep -v '^#' >> $genome.EDTA.TEanno.split.gff3`;
 	`perl $format_gff3 $genome.EDTA.TEanno.split.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.split.gff3`;
+	`perl $gff2gtf --gff $genome.EDTA.TEanno.split.gff3 --remove repeat_region,long_terminal_repeat,target_site_duplication --out $genome.EDTA.TEanno.split.gtf`;
 	`perl $gff2RMout $genome.EDTA.TEanno.split.gff3 $genome.EDTA.TEanno.split.out`;
 
 	# make plots
@@ -798,7 +802,7 @@ if ($anno == 1){
 	print "ERROR: The masked genome for MAKER annotation is not found in $genome.MAKER.masked!\n\n" unless -s "$genome.MAKER.masked";
 	chomp ($date = `date`);
 	print "$date\tTE annotation using the EDTA library has finished! Check out:\n";
-	print "\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff3\n";
+	print "\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff3 $genome.EDTA.TEanno.gtf\n";
 	print "\t\tWhole-genome TE annotation summary: $genome.EDTA.TEanno.sum\n";
 	print "\t\tWhole-genome TE divergence plot: ${genome}_divergence_plot.pdf\n";
 	print "\t\tWhole-genome TE density plot: $genome.EDTA.TEanno.density_plots.pdf\n";
@@ -807,6 +811,7 @@ if ($anno == 1){
 	# copy results out
 	`cp $genome.MAKER.masked ../`; # make no backup for this file
 	copy_file("$genome.EDTA.TEanno.gff3", "..");
+	copy_file("$genome.EDTA.TEanno.gtf", "..");
 	copy_file("$genome.EDTA.TEanno.sum", "..");
 	copy_file("${genome}_divergence_plot.pdf", "..");
 	copy_file("$genome.EDTA.TEanno.density_plots.pdf", "..");
