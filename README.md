@@ -21,6 +21,7 @@
     - [Protips and self-diagnosis](#protips-and-self-diagnosis)
   - [panEDTA usage](#panedta-usage)
   - [Benchmark](#benchmark)
+  - [Checking results](#checking-results)
   - [Citations](#citations)
   - [Other resources](#other-resources)
   - [Questions and Issues](#questions-and-issues)
@@ -286,6 +287,12 @@ eg.
     perl lib-test.pl -genome rice_genome.fasta -std ./EDTA/database/Rice_MSU7.fasta.std7.0.0.out -tst rice_genome.fasta.test.out -cat LTR
 
 Note: the -std and -tst files should be named differently even they are placed in different folders.
+
+
+## Checking Results
+If you execute EDTA on many genomes, checking the completeness of each genome's EDTA runs will be necessary.  
+[DiLiu-Lab](https://github.com/DiLiu-Lab) developed the [EDTA-Audit-Tool](https://github.com/DiLiu-Lab/EDTA-Audit-Tool) for analyzing EDTA runs in batch.  
+
 
 ## Citations
 Please cite our paper if you find EDTA useful:
