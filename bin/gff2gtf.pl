@@ -127,7 +127,8 @@ while (my $line = <$IN>) {
     my $gtf_attr = join " ",
         qq(gene_id "$name";),
         qq(transcript_id "$id";),
-	qq(family_id "$name";), # $name = family
+	qq(family_id "$class";), # $name = class to avoid superfamily ambiguity
+	#qq(family_id "$name";), # $name = family
 	#qq(family_id "$type";), # $type = superfamily
         qq(class_id "$class";);
 
