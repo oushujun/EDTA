@@ -70,6 +70,7 @@ my $rename_RM = "$script_path/bin/rename_RM_TE.pl";
 my $filter_gff = "$script_path/bin/filter_gff3.pl";
 my $rename_tirlearner = "$script_path/bin/rename_tirlearner.pl";
 my $call_seq = "$script_path/bin/call_seq_by_list.pl";
+my $seqid_codec = "$script_path/bin/seqid_codec.pl";
 my $output_by_list = "$script_path/bin/output_by_list.pl";
 my $cleanup_tandem = "$script_path/bin/cleanup_tandem.pl";
 my $get_ext_seq = "$script_path/bin/get_ext_seq.pl";
@@ -311,10 +312,6 @@ if ($RMlib ne 'null'){
 	}
 
 # check if duplicated sequences found
-my $id_mode = 0; #record the mode of id conversion.
-my $id_len = `grep \\> $genome|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
-$id_len =~ s/\s+$//;
-$id_len = (split /\s+/, $id_len)[-1];
 my $raw_id = `grep \\> $genome|wc -l`;
 my $old_id = `grep \\> $genome|sort -u|wc -l`;
 if ($raw_id > $old_id){
@@ -325,44 +322,31 @@ if ($raw_id > $old_id){
 if ($convert_name == 1){
 if (-s "$genome.mod"){
 	$genome = "$genome.mod";
+	chomp ($date = `date`);
+	print "$date\tExisting normalized genome $genome found, will use it.\n\n";
 	} else {
-
-# remove sequence annotations (content after the first space in sequence names) and replace special characters with _, convert non-ATGC bases into Ns
-`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; \$info=~s/[^ATGCN]/N/gi unless /^>/; print \$info' $genome > $genome.$rand.mod`;
-
-# try to shortern sequences
-my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
-if ($id_len > $id_len_max){
+	# Normalize genome: clean IDs, encode if needed
 	chomp ($date = `date`);
-	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
-	print "\tTrying to reformat seq IDs...\n\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.$rand.mod > $genome.$rand.temp`;
-	my $new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
-	chomp ($date = `date`);
-	if ($old_id == $new_id){
-		$id_mode = 1;
-		`mv $genome.$rand.temp $genome.mod`;
-		`rm $genome.$rand.mod 2>/dev/null`;
-		print "$date\tSeq ID conversion successful!\n\n";
-		} else {
-		print "\t\tAttempt 2...\n";
-		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.$rand.mod > $genome.$rand.temp`;
-		$new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
-		if ($old_id == $new_id){
-			$id_mode = 2;
-			`mv $genome.$rand.temp $genome.mod`;
-			`rm $genome.$rand.mod 2>/dev/null`;
-			print "$date\tSeq ID conversion successful!\n\n";
-			} else {
-			`rm $genome.$rand.temp $genome.$rand.mod 2>/dev/null`;
-			die "$date\tERROR: Fail to convert seq IDs to <= $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
-			}
+	print "$date\tCleaning and normalizing sequence IDs...\n";
+	`perl $seqid_codec encode_fasta $genome $genome.mod.seqid.map $genome.mod`;
+	if ($? != 0){
+		die "$date\tERROR: Genome normalization failed. Check error messages above.\n";
 		}
-	} else {
-	`mv $genome.$rand.mod $genome.mod`;
+	$genome = "$genome.mod";
+	if (-s "$genome.seqid.map"){
+		print "\tSequence IDs encoded. Mapping file: $genome.seqid.map\n\n";
+		} else {
+		print "\tSequence IDs are short enough, no encoding needed.\n\n";
+		}
+	# Verify unique ID count
+	my $new_id = `grep \\> $genome|sort -u|wc -l`;
+	chomp $new_id;
+	chomp $old_id;
+	if ($old_id != $new_id){
+		chomp ($date = `date`);
+		die "$date\tERROR: Seq ID normalization produced non-unique IDs. Please check your genome file.\n";
+		}
 	}
-$genome = "$genome.mod";
-}
 }
 # pre-set parameters
 my $genome_file_real_path=File::Spec->rel2abs($genome); # the genome file with real path

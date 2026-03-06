@@ -125,6 +125,7 @@ my $rice_LINE = "$script_path/database/rice7.0.0.liban.LINE";
 my $rice_TIR = "$script_path/database/rice7.0.0.liban.TIR";
 my $rice_helitron = "$script_path/database/rice7.0.0.liban.Helitron";
 my $rename_TE = "$script_path/bin/rename_TE.pl";
+my $seqid_codec = "$script_path/bin/seqid_codec.pl";
 #my $rename_RM = "$script_path/bin/rename_RM_TE.pl";
 my $call_seq = "$script_path/bin/call_seq_by_list.pl";
 my $buildSummary = "$script_path/bin/buildSummary.pl"; #modified from RepeatMasker. Robert M. Hubley (rhubley@systemsbiology.org)
@@ -352,10 +353,6 @@ my $genome_file = basename($genome);
 $genome = $genome_file;
 
 # check if duplicated sequences found
-my $id_mode = 0; #record the mode of id conversion.
-my $id_len = `grep \\> $genome|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`; #find out the longest sequence ID length in the genome
-$id_len =~ s/\s+$//;
-$id_len = (split /\s+/, $id_len)[-1];
 my $raw_id = `grep \\> $genome|wc -l`;
 my $old_id = `grep \\> $genome|sort -u|wc -l`;
 if ($raw_id > $old_id){
@@ -363,41 +360,56 @@ if ($raw_id > $old_id){
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
 	}
 
-# remove sequence annotations (content after the first space in sequence names) and replace special characters with _, convert non-ATGC bases into Ns
-`perl -nle 'my \$info=(split)[0]; \$info=~s/[\\~!@#\\\$%\\^&\\*\\(\\)\\+\\\-\\=\\?\\[\\]\\{\\}\\:;",\\<\\/\\\\\|]+/_/g; \$info=~s/_+/_/g; \$info=~s/[^ATGCN]/N/gi unless /^>/; print \$info' $genome > $genome.$rand.mod`;
-
-# try to shortern sequences
-my $id_len_max = 13; # allowed longest length of a sequence ID in the input file
-if ($id_len > $id_len_max){
-	chomp ($date = `date`);
-	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit ($id_len_max)\n";
-	print "\tTrying to reformat seq IDs...\n\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,$id_len_max}).*/>\$1/g;} print "\$_"' $genome.$rand.mod > $genome.$rand.temp`;
-	my $new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
-	chomp ($date = `date`);
-	if ($old_id == $new_id){
-		$id_mode = 1;
-		`mv $genome.$rand.temp $genome.mod`;
-		`rm $genome.$rand.mod 2>/dev/null`;
-		print "$date\tSeq ID conversion successful!\n\n";
-		} else {
-		print "\t\tAttempt 2...\n";
-		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome.$rand.mod > $genome.$rand.temp`;
-		$new_id = `grep \\> $genome.$rand.temp|sort -u|wc -l`;
-		if ($old_id == $new_id){
-			$id_mode = 2;
-			`mv $genome.$rand.temp $genome.mod`;
-			`rm $genome.$rand.mod 2>/dev/null`;
-			print "$date\tSeq ID conversion successful!\n\n";
-			} else {
-			`rm $genome.$rand.temp $genome.$rand.mod 2>/dev/null`;
-			die "$date\tERROR: Fail to convert seq IDs to <= $id_len_max characters! Please provide a genome with shorter seq IDs.\n\n";
+# Normalize genome: clean IDs, replace special chars, convert non-ATGC to N,
+# and encode sequence IDs with short base-62 codes if they are too long for
+# the rmblastn 50-char ID limit (accounting for LTR_retriever coordinate appending).
+my $seqid_mapfile = "";
+if (-s "$genome.mod" and $overwrite == 0){
+	# Resume: use existing normalized genome
+	$genome = "$genome.mod";
+	if (-s "$genome.seqid.map"){
+		# Verify integrity: seq count in .mod must match lines in mapfile
+		my $mod_count = `grep -c \\> $genome`;
+		chomp $mod_count;
+		my $map_count = `wc -l < $genome.seqid.map`;
+		chomp $map_count;
+		if ($mod_count != $map_count){
+			chomp ($date = `date`);
+			die "$date\tERROR: Integrity check failed for $genome.seqid.map " .
+				"($mod_count sequences vs $map_count map entries). " .
+				"Please rerun with --overwrite 1.\n";
 			}
+		$seqid_mapfile = abs_path("$genome.seqid.map");
+		chomp ($date = `date`);
+		print "$date\tExisting encoded genome $genome and mapping file found, integrity verified.\n\n";
+		} else {
+		chomp ($date = `date`);
+		print "$date\tExisting normalized genome $genome found (no encoding needed).\n\n";
 		}
 	} else {
-	`mv $genome.$rand.mod $genome.mod`;
+	# Fresh run: clean and encode genome
+	chomp ($date = `date`);
+	print "$date\tCleaning and normalizing sequence IDs...\n";
+	`perl $seqid_codec encode_fasta $genome $genome.mod.seqid.map $genome.mod`;
+	if ($? != 0){
+		die "$date\tERROR: Genome normalization failed. Check error messages above.\n";
+		}
+	$genome = "$genome.mod";
+	if (-s "$genome.seqid.map"){
+		$seqid_mapfile = abs_path("$genome.seqid.map");
+		print "\tSequence IDs encoded. Mapping file: $genome.seqid.map\n\n";
+		} else {
+		print "\tSequence IDs are short enough, no encoding needed.\n\n";
+		}
+	# Verify unique ID count
+	my $new_id = `grep \\> $genome|sort -u|wc -l`;
+	chomp $new_id;
+	chomp $old_id;
+	if ($old_id != $new_id){
+		chomp ($date = `date`);
+		die "$date\tERROR: Seq ID normalization produced non-unique IDs. Please check your genome file.\n";
+		}
 	}
-$genome = "$genome.mod";
 
 # check $HQlib
 if ($HQlib ne ''){
@@ -680,6 +692,14 @@ copy_file("$genome.EDTA.TElib.fa", "..");
 copy_file("$genome.EDTA.intact.fa", "..");
 copy_file("$genome.EDTA.intact.gff3", "..");
 
+# Decode sequence IDs in user-facing output files (parent directory copies)
+if ($seqid_mapfile ne '' and -s $seqid_mapfile){
+	`perl $seqid_codec decode_fasta ../$genome.EDTA.intact.fa $seqid_mapfile ../$genome.EDTA.intact.fa.decoded && mv ../$genome.EDTA.intact.fa.decoded ../$genome.EDTA.intact.fa`;
+	`perl $seqid_codec decode_text ../$genome.EDTA.intact.gff3 $seqid_mapfile ../$genome.EDTA.intact.gff3.decoded && mv ../$genome.EDTA.intact.gff3.decoded ../$genome.EDTA.intact.gff3`;
+	`perl $seqid_codec decode_fasta ../$genome.EDTA.TElib.fa $seqid_mapfile ../$genome.EDTA.TElib.fa.decoded && mv ../$genome.EDTA.TElib.fa.decoded ../$genome.EDTA.TElib.fa`;
+	`perl $seqid_codec decode_fasta ../$genome.EDTA.TElib.novel.fa $seqid_mapfile ../$genome.EDTA.TElib.novel.fa.decoded && mv ../$genome.EDTA.TElib.novel.fa.decoded ../$genome.EDTA.TElib.novel.fa` if -s "../$genome.EDTA.TElib.novel.fa";
+	}
+
 # remove intermediate files
 `rm $genome.EDTA.intact.fa.cln.* $genome.EDTA.raw.fa.* $genome.EDTA.TElib.fa.* $genome.LTR.TIR.Helitron.fa.stg1.* $genome.masked *.cat.gz 2>/dev/null` if $debug eq 0;
 
@@ -691,6 +711,21 @@ print "		Family names of intact TEs have been updated by $HQlib: $genome.EDTA.in
 print "		Comparing to the provided library, EDTA found these novel TEs: $genome.EDTA.TElib.novel.fa
 		The provided library has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
 chdir "..";
+
+# Decode sequence IDs in all working directories so users see original IDs
+if ($seqid_mapfile ne '' and -s $seqid_mapfile){
+	# Decode all non-binary files recursively in EDTA working directories.
+	# decode_text is safe on FASTA files because DNA sequence lines cannot match the _J code pattern.
+	for my $dir ("$genome.EDTA.raw", "$genome.EDTA.combine", "$genome.EDTA.final"){
+		next unless -d $dir;
+		my @files = split /\n/, `find $dir -type f -size +0c ! -name "*.2bit" ! -name "*.nsq" ! -name "*.nhr" ! -name "*.nin" ! -name "*.ndb" ! -name "*.not" ! -name "*.ntf" ! -name "*.nto" ! -name "*.njs" ! -name "*.gz" 2>/dev/null`;
+		for my $f (@files){
+			`perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
+			}
+		}
+	# Also decode RM2.raw.fa in the parent directory
+	`perl $seqid_codec decode_text $genome.RM2.raw.fa $seqid_mapfile $genome.RM2.raw.fa.decoded && mv $genome.RM2.raw.fa.decoded $genome.RM2.raw.fa` if -s "$genome.RM2.raw.fa";
+	}
 
 
 #####################################
@@ -708,8 +743,8 @@ if ($anno == 1){
 	chdir "$genome.EDTA.anno";
 	`rm ./* 2>/dev/null` if $overwrite == 1;
 	`rm $genome.EDTA.TElib.fa* 2>/dev/null`; # clean up libraries
-	`cp ../$genome.EDTA.final/$genome.EDTA.TElib.fa ./`;
-	`cp ../$genome.EDTA.final/$genome.EDTA.intact.gff3 ./`;
+	`cp ../$genome.EDTA.TElib.fa ./`;
+	`cp ../$genome.EDTA.intact.gff3 ./`;
 	`cp ../$exclude ./` if $exclude ne '';
 	`ln -s ../$genome $genome` unless -e $genome;
 
@@ -743,6 +778,13 @@ if ($anno == 1){
 		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div $maxdiv -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
 		}
 	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out" or -s "$genome.mod.out";
+
+	# Decode RepeatMasker output and genome so all downstream processing produces decoded IDs
+	if ($seqid_mapfile ne '' and -s $seqid_mapfile){
+		`perl $seqid_codec decode_text $genome.out $seqid_mapfile $genome.out.decoded && mv $genome.out.decoded $genome.out`;
+		# Replace genome symlink with decoded FASTA (downstream scripts read seq IDs from the genome)
+		`rm $genome; perl $seqid_codec decode_fasta ../$genome $seqid_mapfile ./$genome`;
+		}
 
 	# exclude regions from TE annotation and make whole-genome TE annotation
 	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv $maxdiv -minscore 300 -minlen 80 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
@@ -816,6 +858,20 @@ if ($anno == 1){
 	copy_file("${genome}_divergence_plot.pdf", "..");
 	copy_file("$genome.EDTA.TEanno.density_plots.pdf", "..");
 
+	# Decode all files in the EDTA.anno directory and parent directory copies
+	if ($seqid_mapfile ne '' and -s $seqid_mapfile){
+		# Recursively decode all non-binary files in the anno directory
+		my @anno_files = split /\n/, `find $genome.EDTA.anno -type f -size +0c ! -name "*.2bit" ! -name "*.nsq" ! -name "*.nhr" ! -name "*.nin" ! -name "*.ndb" ! -name "*.not" ! -name "*.ntf" ! -name "*.nto" ! -name "*.njs" ! -name "*.gz" 2>/dev/null`;
+		for my $f (@anno_files){
+			`perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
+			}
+		# Decode parent directory copies
+		`perl $seqid_codec decode_fasta ../$genome.MAKER.masked $seqid_mapfile ../$genome.MAKER.masked.decoded && mv ../$genome.MAKER.masked.decoded ../$genome.MAKER.masked` if -s "../$genome.MAKER.masked";
+		for my $decode_f ("$genome.EDTA.TEanno.gff3", "$genome.EDTA.TEanno.gtf", "$genome.EDTA.TEanno.sum"){
+			`perl $seqid_codec decode_text ../$decode_f $seqid_mapfile ../$decode_f.decoded && mv ../$decode_f.decoded ../$decode_f` if -s "../$decode_f";
+			}
+		}
+
 	# evaluate the annotation consistency
 	if ($evaluate == 1){
 		# report status
@@ -825,12 +881,19 @@ if ($anno == 1){
 		# extract whole-genome TE and perform all-v-all blast, then summarize the results
 		`awk '{if (\$5~/[0-9]+/ && \$1>300 && \$7-\$6>80) print \$11"\t"\$5":"\$6".."\$7}' $genome.EDTA.TEanno.out | perl $call_seq - -C $genome > $genome.EDTA.TE.fa`;
 		`perl $cleanup_nested -in $genome.EDTA.TE.fa -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blastplus -iter 1 -maxcount 100000 2>/dev/null`;
-		`for i in nested all redun; do perl $count_nested -in $genome.EDTA.TE.fa.stat -cat \$i > $genome.EDTA.TE.fa.stat.\$i.sum; done`;
+		for my $cat ("nested", "all", "redun") {
+			`perl $count_nested -in $genome.EDTA.TE.fa.stat -cat $cat > $genome.EDTA.TE.fa.stat.$cat.sum`;
+			for my $d (40, 30, 20, 10, 5) {
+				`printf "\\n\\n" >> $genome.EDTA.TE.fa.stat.$cat.sum`;
+				`perl $count_nested -in $genome.EDTA.TE.fa.stat -cat $cat -maxdiv $d >> $genome.EDTA.TE.fa.stat.$cat.sum`;
+			}
+		}
 
 		# check results and report status
 		die "ERROR: TE annotation stats results not found in $genome.EDTA.TE.fa.stat!\n\n" unless -s "$genome.EDTA.TE.fa.stat";
 		chomp ($date = `date`);
-		print "$date\tEvaluation of TE annotation finished! Check out these files:\n
+		print "$date\tEvaluation of TE annotation finished! Check out these files:
+		(each contains unfiltered + divergence-titrated reports at <=40%, <=30%, <=20%, <=10%, <=5%)\n
 		Overall: $genome.EDTA.TE.fa.stat.all.sum
 		Nested: $genome.EDTA.TE.fa.stat.nested.sum
 		Non-nested: $genome.EDTA.TE.fa.stat.redun.sum\n\n";

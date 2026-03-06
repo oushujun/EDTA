@@ -209,6 +209,7 @@ sub condenser(){
 			my $poss = ''; # positions of the non-overlapped rHSPs egions that will be removed from the subject
 			my ($qcov, $scov) = ($merged_hsps_size{$sbj}/$length, $merged_hsps_size{$sbj}/$sbj_len);
 			$qcov = sprintf("%.3f", $qcov);
+			$scov = sprintf("%.3f", $scov);
 
 			if ($qcov >= $coverage or $scov >= $coverage) {
 				# replace bases of HSPs regions to R (aka Remove); this masking is nessary since the subject sequence 
@@ -222,12 +223,12 @@ sub condenser(){
 				$seq_new =~ s/R//g;
 				my $sbj_len_new = length $seq_new;
 				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj} and $clean == 1){
-					print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; identity: $scaled_iden; merged $merged\n";
+					print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; scov: $scov; identity: $scaled_iden; merged $merged\n";
 					$seq{$sbj} = $seq_new; #overwrite the sbj sequence if the new one is shorter
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
 					$count_stat++;
 				} elsif ($sbj_len_new < $minlen) {
-					print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; identity: $scaled_iden; merged $merged\n";
+					print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; qcov: $qcov; scov: $scov; identity: $scaled_iden; merged $merged\n";
 					delete $seq{$sbj}; #delete this sequence if new seq is too short
 					$touched_seq{$sbj} = 1; # this subject sequence was modifed (removed), and we will not deal with it any more in the current iteration
 					$count_stat++;
