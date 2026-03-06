@@ -117,6 +117,7 @@ perl ./EDTA/EDTA.pl
 ```
 SINGULARITY_CACHEDIR=./
 export SINGULARITY_CACHEDIR
+unset -f which
 `singularity pull EDTA.sif docker://quay.io/biocontainers/edta:<tag>`
 ```
 
