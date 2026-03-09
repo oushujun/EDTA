@@ -9,13 +9,16 @@ my $usage = "
 seqid_codec.pl - Encode/decode sequence IDs for the EDTA pipeline
 
 Modes:
-  encode_fasta <input.fa> <mapfile> <output.fa>
+  encode_fasta <input.fa> <mapfile> <output.fa> [--prefix STR]
     Clean and optionally encode FASTA seq IDs. Dynamically calculates the
     max allowed ID length based on the longest scaffold size (to fit within
     the 50-char rmblastn limit when coordinates are appended). If any cleaned
     ID exceeds this limit, all IDs are encoded with short base-62 codes.
     If encoding is performed, the mapping file is written; otherwise no
     mapping file is created.
+    --prefix STR: Protect IDs starting with this prefix from leading-underscore
+                  stripping during cleaning (e.g., --prefix _J to preserve
+                  already-encoded IDs).
 
   encode_text <input.txt> <mapfile> <output.txt>
     Replace original seq IDs with encoded codes throughout a text file using
@@ -35,10 +38,14 @@ Shujun Ou (shujun.ou.1\@gmail.com)
 my $mode = shift @ARGV or die $usage;
 
 if ($mode eq 'encode_fasta') {
-	my ($infile, $mapfile, $outfile) = @ARGV;
-	die "Usage: seqid_codec.pl encode_fasta <input.fa> <mapfile> <output.fa>\n"
+	my ($infile, $mapfile, $outfile, @extra) = @ARGV;
+	die "Usage: seqid_codec.pl encode_fasta <input.fa> <mapfile> <output.fa> [--prefix STR]\n"
 		unless defined $infile && defined $mapfile && defined $outfile;
-	encode_fasta($infile, $mapfile, $outfile);
+	my $prefix = '';
+	for (my $i = 0; $i < @extra; $i++){
+		$prefix = $extra[$i+1] if $extra[$i] eq '--prefix' && defined $extra[$i+1];
+	}
+	encode_fasta($infile, $mapfile, $outfile, $prefix);
 } elsif ($mode eq 'encode_text') {
 	my ($infile, $mapfile, $outfile) = @ARGV;
 	die "Usage: seqid_codec.pl encode_text <input.txt> <mapfile> <output.txt>\n"
@@ -63,7 +70,8 @@ if ($mode eq 'encode_fasta') {
 # encode_fasta
 #################
 sub encode_fasta {
-	my ($infile, $mapfile, $outfile) = @_;
+	my ($infile, $mapfile, $outfile, $preserve_prefix) = @_;
+	$preserve_prefix //= '';
 
 	# Base-62 alphabet: 0-9, a-z, A-Z
 	my @b62 = (0..9, 'a'..'z', 'A'..'Z');
@@ -98,7 +106,7 @@ sub encode_fasta {
 		# Clean: replace special chars with _, collapse, trim
 		(my $clean_id = $orig_id) =~ s/[~!@#\$%\^&\*\(\)\+\-=\?\[\]\{\}:;",<\/\\|]+/_/g;
 		$clean_id =~ s/_+/_/g;
-		$clean_id =~ s/^_//;
+		$clean_id =~ s/^_// unless $preserve_prefix ne '' && $clean_id =~ /^\Q$preserve_prefix\E/;
 		$clean_id =~ s/_$//;
 
 		# Track duplicate cleaned IDs (encoding resolves this)
