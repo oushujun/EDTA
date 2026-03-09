@@ -2,14 +2,23 @@
 use warnings;
 use strict;
 
-my $usage = "";
+my $usage = "Usage: perl rename_TE.pl input.fa [start_num] [--map mapfile]\n";
 my $fasta = $ARGV[0];
+my $mapfile = '';
+
+# parse arguments
+my $k = 0;
+foreach (@ARGV){
+	$mapfile = $ARGV[$k+1] if /^--map$/i and defined $ARGV[$k+1];
+	$k++;
+}
 
 open FA, "<$fasta" or die "\nInput not found!\n$usage";
 $/ = "\n>";
 my $num = 0;
-$num = $ARGV[1] if defined $ARGV[1];
+$num = $ARGV[1] if defined $ARGV[1] and $ARGV[1] =~ /^[0-9]+$/;
 my %data;
+my @map; # store TE_name => original_name mappings
 while (<FA>){
 	s/>//g;
 	$num = sprintf("%08d", $num);
@@ -33,11 +42,13 @@ while (<FA>){
 			#print "add: $loc\t$record_num\t$part#$class\n"; #test
 			} else {
 			$data{$loc} = ">TE_${num}_$part#$class\n$seq\n";
+			push @map, "TE_${num}_$part#$class\t$name";
 			#print "new: $loc\t$num\t$part#$class\n"; #test
 			$num++;
 			}
 		} else {
 		$data{$num} = ">TE_${num}#$class\n$seq\n";
+		push @map, "TE_${num}#$class\t$name";
 		$num++;
 		}
 	}
@@ -47,3 +58,9 @@ foreach my $fam (sort{$data{$a} cmp $data{$b}} (keys %data)){
 	print $data{$fam};
 	}
 
+# write mapping file if requested
+if ($mapfile ne ''){
+	open MAP, ">$mapfile" or die "Cannot open $mapfile for writing: $!\n";
+	print MAP "$_\n" for @map;
+	close MAP;
+}
