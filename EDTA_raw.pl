@@ -48,6 +48,8 @@ perl EDTA_raw.pl [options]
 	--mdust		[path]	Path to the mdust program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
 	--repeatmodeler	[path]	Path to the RepeatModeler2 program. (default: find from ENV)
+	--wholeelement	[0|1]	Keep LTR-RTs as whole elements instead of
+				splitting into LTR/INT regions. Default: 0
 	--threads|-t	[int]	Number of theads to run this script. Default: 4
 	--help|-h	Display this help info
 \n";
@@ -59,6 +61,7 @@ my $type = 'all';
 my $RMlib = 'null';
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $convert_name = 1; #0, use original seq names; 1 shorten names.
+my $wholeelement = 0; #0, split LTR library into LTR/INT (default); 1, keep whole elements
 my $maxint = 5000; #maximum interval length (bp) between TIRs (for GRF in TIR-Learner)
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
@@ -117,6 +120,7 @@ foreach (@ARGV){
 	$trf = $ARGV[$k+1] if /^--trf_path$/i and $ARGV[$k+1] !~ /^-/;
 	$GRF = $ARGV[$k+1] if /^--GRF$/i and $ARGV[$k+1] !~ /^-/;
 	$threads = $ARGV[$k+1] if /^--threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
+	$wholeelement = $ARGV[$k+1] if /^--wholeelement$/i and $ARGV[$k+1] !~ /^-/;
 	$help = 1 if /^--help$|^-h$/i;
 	$k++;
 	}
@@ -398,18 +402,24 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 
 # run LTR_retriever
 my $status = 0;
-if ($overwrite eq 0 and -s "$genome.LTRlib.fa"){
-	print STDERR "$date\tExisting LTR_retriever result $genome.LTRlib.fa found!\n\t\tWill use this for further analyses.\n\n";
+if ($overwrite eq 0 and (-s "$genome.mod.LTRlib.fa" or -s "$genome.LTRlib.fa")){
+	print STDERR "$date\tExisting LTR_retriever result found!\n\t\tWill use this for further analyses.\n\n";
 	} else {
 	`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
-	$status = system("${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker -salvage 1");
+	my $we_flag = $wholeelement ? "-wholeelement" : "";
+	$status = system("${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno $we_flag -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker -salvage 1 -convert_seq_name 0");
 	}
 
-# get full-length LTR from pass.list
-`awk '{if (\$1 !~ /#/) print \$1"\\t"\$1}' $genome.pass.list | perl $call_seq - -C $genome > $genome.LTR.intact.fa.ori`;
-`perl -i -nle 's/\\|.*//; print \$_' $genome.LTR.intact.fa.ori`;
-`perl $rename_LTR $genome.LTR.intact.fa.ori $genome.defalse > $genome.LTR.intact.fa.anno`;
-`mv $genome.LTR.intact.fa.anno $genome.LTR.intact.fa.ori`;
+# get full-length LTR from pass.list (or use LTR_retriever's whole-element output)
+if ($wholeelement and -s "$genome.LTR.intact.fa"){
+	# whole-element mode: LTR_retriever already produced annotated intact elements
+	`cp $genome.LTR.intact.fa $genome.LTR.intact.fa.ori`;
+} else {
+	`awk '{if (\$1 !~ /#/) print \$1"\\t"\$1}' $genome.pass.list | perl $call_seq - -C $genome > $genome.LTR.intact.fa.ori`;
+	`perl -i -nle 's/\\|.*//; print \$_' $genome.LTR.intact.fa.ori`;
+	`perl $rename_LTR $genome.LTR.intact.fa.ori $genome.defalse > $genome.LTR.intact.fa.anno`;
+	`mv $genome.LTR.intact.fa.anno $genome.LTR.intact.fa.ori`;
+}
 
 # remove simple repeats and candidates with simple repeats at terminals
 `${mdust}mdust $genome.LTR.intact.fa.ori > $genome.LTR.intact.fa.ori.dusted`;
@@ -432,7 +442,7 @@ if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
 # generate annotated output and gff
 `perl $output_by_list 1 $genome.LTR.intact.fa.ori 1 $genome.LTR.intact.raw.fa -FA -ex|grep \\>|perl -nle 's/>//; print "Name\\t\$_"' > $genome.LTR.intact.fa.ori.rmlist`;
 `perl $filter_gff $genome.pass.list.gff3 $genome.LTR.intact.fa.ori.rmlist | perl -nle 's/LTR_retriever/EDTA/gi; print \$_' > $genome.LTR.intact.raw.gff3`;
-`rm $genome`;
+`rm $genome 2>/dev/null`;
 	}
 
 # copy result files out
@@ -442,6 +452,7 @@ if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
 `cp $genome.LTR.intact.raw.fa $genome.LTR.intact.raw.gff3 ../ 2>/dev/null`;
 `cp $genome.LTR.intact.fa ../$genome.LTR.intact.raw.fa` if -s "$genome.LTR.intact.fa";
 `cp $genome.LTR.intact.gff3 ../$genome.LTR.intact.raw.gff3` if -s "$genome.LTR.intact.gff3";
+`cp $genome.LTRlib.fa.LTRbound ../$genome.LTRlib.fa.LTRbound 2>/dev/null` if $wholeelement;
 chdir '../..';
 
 # check results
@@ -476,7 +487,7 @@ my $status; # record status of AnnoSINE execution
 if (-s "Seed_SINE.fa"){
 	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
 	} else { 
-	$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ ");
+	$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ 2>/dev/null");
 	#$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
 	}
 
