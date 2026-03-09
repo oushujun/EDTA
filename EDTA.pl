@@ -76,6 +76,8 @@ perl EDTA.pl [options]
 				output. Default: undef. (--anno 1 required).
 	--force	[0|1]	(default: 0) 0: When no confident TE candidates are found, interrupt and exit.
 			             1: Use rice TEs to continue.
+	--wholeelement [0|1]	Keep LTR retrotransposons as whole elements in the library instead
+				of splitting into LTR and INT regions (default: 0).
 	--u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
 			Intact LTR age is found in this file: *EDTA_raw/LTR/*.pass.list.
 			Default: 1.3e-8 (per bp per year, from rice).
@@ -125,6 +127,7 @@ my $rice_LINE = "$script_path/database/rice7.0.0.liban.LINE";
 my $rice_TIR = "$script_path/database/rice7.0.0.liban.TIR";
 my $rice_helitron = "$script_path/database/rice7.0.0.liban.Helitron";
 my $rename_TE = "$script_path/bin/rename_TE.pl";
+my $update_LTRbound = "$script_path/bin/update_LTRbound.pl";
 my $seqid_codec = "$script_path/bin/seqid_codec.pl";
 #my $rename_RM = "$script_path/bin/rename_RM_TE.pl";
 my $call_seq = "$script_path/bin/call_seq_by_list.pl";
@@ -161,6 +164,7 @@ my $trf = "";
 my $GRF = "";
 my $annosine = "";
 
+my $wholeelement = 0; #0, split LTR library into LTR/INT (default); 1, keep whole elements
 my $beta2 = 0; #0, beta2 is not ready. 1, developer mode.
 #my $reanno = 0; #0, use existing whole-genome RM results (beta); 1, de novo Repeatmasker using the EDTA library (default)
 my $debug = 0;
@@ -190,6 +194,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'annosine=s'		 => \$annosine,
 		  'ltrretriever=s'	 => \$LTR_retriever,
 		  'threads|t=i'          => \$threads,
+		  'wholeelement=i'       => \$wholeelement,
 		  'check_dependencies!'  => \$check_dependencies,
                   'debug=i'              => \$debug,
 		  'help|h!'              => \$help ) )
@@ -486,7 +491,7 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --convert_seq_name 0 --rmlib $RMlib`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
 
 chdir "$genome.EDTA.raw";
 
@@ -622,8 +627,17 @@ if (-s "$cds"){
 `perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blastplus 2>/dev/null`;
 
 # rename all TEs in the EDTA library
-`perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
+if ($wholeelement){
+	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln --map $genome.EDTA.TElib.fa.rename_map > $genome.EDTA.TElib.fa`;
+} else {
+	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
+}
 #`perl $rename_TE $genome.EDTA.raw.fa.cln.cln | perl $format_TElib - > $genome.EDTA.TElib.fa`;
+
+# update LTR boundary file with renamed TE IDs
+if ($wholeelement and -s "$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound" and -s "$genome.EDTA.TElib.fa.rename_map"){
+	`perl $update_LTRbound $genome.EDTA.TElib.fa.rename_map $genome.EDTA.raw/$genome.LTRlib.fa.LTRbound > $genome.EDTA.TElib.LTRbound`;
+}
 
 # identify novel TEs using the user provided $HQlib
 if ($HQlib ne ''){
@@ -689,6 +703,7 @@ my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.
 die "ERROR: Final TE library not found in $genome.EDTA.TElib.fa" unless -s "$genome.EDTA.TElib.fa";
 die "ERROR: Intact TE annotation not found in $genome.EDTA.intact.gff3" unless -s "$genome.EDTA.intact.gff3";
 copy_file("$genome.EDTA.TElib.fa", "..");
+copy_file("$genome.EDTA.TElib.LTRbound", "..") if $wholeelement and -s "$genome.EDTA.TElib.LTRbound";
 copy_file("$genome.EDTA.intact.fa", "..");
 copy_file("$genome.EDTA.intact.gff3", "..");
 
