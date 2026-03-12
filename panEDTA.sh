@@ -318,8 +318,9 @@ while IFS= read -r i; do
         fi
 
 	printf "\n%s\nReannotate genome %s with the panEDTA library - structural\n" "$(date)" $genome
-	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out
+	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out --overwrite 1
 done < $genome_list
 
-printf "%s\n\tpanEDTA annotation of %s is finished!\n\n" "$(date)" "$genome_list"
+printf "%s\n\tpanEDTA annotation of %s is finished!\n" "$(date)" "$genome_list"
+printf "\tIf you want to reprocess full-length LTR-RT filtering, you can use the RepeatMasker .out file (e.g., for find_flTE.pl): \$genome.mod.EDTA.anno/\$genome.mod.EDTA.RM.out\n\n"
 fi
