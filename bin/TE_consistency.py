@@ -1,170 +1,241 @@
 #!/usr/bin/env python3
 import sys
+import re
+import argparse
 from collections import defaultdict
-from statistics import mean
 
 # Calculate TE annotation consistency per family
 # Elena Zhu, Shujun Ou (shujun.ou.1@gmail.com), and ChatGPT
 # v0.1: 08/15/2025
 # v0.2: 01/04/2026
+# v0.3: 03/10/2026 Add mincov filter, category breakdown (all/nested/redun), flag-based CLI
 
-if len(sys.argv) != 3:
-    print("Usage: python TE_consistency.py <TEanno.out> <stat_file>")
-    sys.exit(1)
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Calculate TE annotation consistency per family")
+    parser.add_argument("-anno", required=True,
+                        help="TE annotation in RepeatMasker .out format")
+    parser.add_argument("-stat", required=True,
+                        help=".stat file from cleanup_nested.pl")
+    parser.add_argument("-out", required=True,
+                        help="Output file path")
+    parser.add_argument("-mincov", type=float, default=0.95,
+                        help="Minimum reciprocal coverage for redun category (default: 0.95)")
+    return parser.parse_args()
 
-te_file = sys.argv[1]
-stat_file = sys.argv[2]
+def parse_stat_file(stat_file, mincov):
+    """Parse .stat file and classify entries into nested/redun categories per reference coordinate."""
+    # Per-ref counters: {ref_coord: {category: {"cons": N, "incons": N}}}
+    stats = defaultdict(lambda: {
+        "nested": {"cons": 0, "incons": 0},
+        "redun":  {"cons": 0, "incons": 0},
+    })
+    ref_keys = set()
 
-# Step 1: Parse .stat file from cleanup_nested.pl
-cleaned_cons = defaultdict(int)
-discarded_cons = defaultdict(int)
-cleaned_incons = defaultdict(int)
-discarded_incons = defaultdict(int)
-total = defaultdict(int)
-ref_keys = set()
+    with open(stat_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
 
-with open(stat_file) as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        # Determine status
-        if "Cleaned." in line:
-            status = "cleaned"
-        elif "Discarded." in line:
-            status = "discarded"
-        else:
-            continue
-        # Extract copy type
-        parts = line.split()
-        if not parts:
-            continue
-        cp = parts[0].split("|")
-        if len(cp) < 2:
-            continue
-        copy_type = cp[1]
-        # Extract reference coordinate/type
-        ref_str = ""
-        if "by " in line:
-            ref_str = line.split("by ")[1].split(";")[0]
-        elif "of " in line:
-            ref_str = line.split("of ")[1].split(";")[0]
-        else:
-            continue
-        rf = ref_str.split("|")
-        if len(rf) < 2:
-            continue
-        full_ref, ref_type = rf[0], rf[1]
-        ref_keys.add(full_ref)
-        total[full_ref] += 1
-
-        if copy_type == ref_type:
-            if status == "cleaned":
-                cleaned_cons[full_ref] += 1
+            # Determine status
+            if "Cleaned." in line:
+                status = "nested"
+            elif "Discarded." in line:
+                status = "redun"
             else:
-                discarded_cons[full_ref] += 1
-        else:
-            if status == "cleaned":
-                cleaned_incons[full_ref] += 1
+                continue
+
+            # Skip corrupted rows (valid rows have at least 10 fields)
+            fields = line.split()
+            if len(fields) < 10:
+                continue
+
+            # Extract copy type from subject ID (first field: id|type)
+            cp = fields[0].split("|")
+            if len(cp) < 2:
+                continue
+            copy_type = cp[1]
+
+            # Extract reference ID and type
+            if status == "redun":
+                # Discarded: "by {ref_id}|{ref_type};"
+                m = re.search(r'by\s+(\S+)\|(\S+?);', line)
             else:
-                discarded_incons[full_ref] += 1
+                # Cleaned: "of {ref_id}|{ref_type};"
+                m = re.search(r'of\s+(\S+)\|(\S+?);', line)
+            if not m:
+                continue
+            full_ref, ref_type = m.group(1), m.group(2)
 
-# Step 2: Compute consistency values (at the 0–1 scale)
-def ratio(n, total):
-    return (n / total) if total > 0 else 0.0
+            # Extract qcov and scov
+            if status == "redun":
+                qcov_m = re.search(r'qcov:\s+([\d.]+)', line)
+                scov_m = re.search(r'scov:\s+([\d.]+)', line)
+            else:
+                # Cleaned: qcov from "covering X.XXX of"
+                qcov_m = re.search(r'covering\s+([\d.]+)\s+of', line)
+                scov_m = re.search(r'scov:\s+([\d.]+)', line)
 
-consistency_table = {}
-for ref in sorted(ref_keys):
-    tot = total[ref]
-    cc, dc = cleaned_cons[ref], discarded_cons[ref]
-    ci, di = cleaned_incons[ref], discarded_incons[ref]
-    total_consistency = ratio(cc, tot) + ratio(dc, tot)
-    consistency_table[ref] = {
-        "Total": tot,
-        "Cln_Cons": cc,
-        "Dis_Cons": dc,
-        "Cln_Incons": ci,
-        "Dis_Incons": di,
-        "Consistency": total_consistency
-    }
+            # Validate extracted values (guard against corrupted lines from multithreading)
+            try:
+                qcov = float(qcov_m.group(1)) if qcov_m else 0
+                scov = float(scov_m.group(1)) if scov_m else 0
+            except ValueError:
+                continue
+            if qcov > 1.0 or scov > 1.0:
+                continue
 
-# Step 3: Parse TEanno.out to count TE families
-family_counts = defaultdict(int)
-copies = defaultdict(list)
+            # For redun: apply reciprocal coverage filter
+            if status == "redun" and mincov > 0:
+                if qcov > 0 and scov > 0:
+                    if qcov < mincov or scov < mincov:
+                        continue
 
-with open(te_file) as f:
-    for line in f:
-        parts = line.strip().split()
-        if len(parts) < 11:
+            ref_keys.add(full_ref)
+            is_consistent = (copy_type == ref_type)
+            if is_consistent:
+                stats[full_ref][status]["cons"] += 1
+            else:
+                stats[full_ref][status]["incons"] += 1
+
+    return stats, ref_keys
+
+def compute_rate(cons, incons):
+    total = cons + incons
+    return cons / total if total > 0 else None
+
+def format_rate(rate):
+    return f"{rate:.3f}" if rate is not None else "NA"
+
+def parse_anno_file(te_file):
+    """Parse TEanno.out and return {family: [coordinates]}."""
+    copies = defaultdict(list)
+    with open(te_file) as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) < 11:
+                continue
+            fam = parts[9]
+            chr_ = parts[4]
+            try:
+                start = int(parts[5])
+                end = int(parts[6])
+            except ValueError:
+                continue
+            coord = f"{chr_}:{start}..{end}"
+            copies[fam].append(coord)
+    return copies
+
+def main():
+    args = parse_args()
+
+    # Step 1: Parse stat file
+    stats, ref_keys = parse_stat_file(args.stat, args.mincov)
+
+    # Step 2: Parse anno file and match to stat entries
+    fam_copies = parse_anno_file(args.anno)
+
+    # Step 3: Build per-family, per-coordinate data
+    categories = ["all", "nested", "redun"]
+    cat_cols = []
+    for cat in categories:
+        cat_cols += [f"{cat}_Total", f"{cat}_Cons", f"{cat}_Incons", f"{cat}_Rate"]
+
+    column_names = ["Fam/Ind", "Coordinate"] + cat_cols
+
+    # Collect rows
+    all_rows = []  # list of (fam, rows_for_fam)
+    for fam in sorted(fam_copies.keys()):
+        ind_rows = []
+        for coord in fam_copies[fam]:
+            if coord not in stats:
+                continue
+            s = stats[coord]
+            row = {"Coordinate": coord}
+            for cat in categories:
+                if cat == "all":
+                    cons = s["nested"]["cons"] + s["redun"]["cons"]
+                    incons = s["nested"]["incons"] + s["redun"]["incons"]
+                else:
+                    cons = s[cat]["cons"]
+                    incons = s[cat]["incons"]
+                total = cons + incons
+                rate = compute_rate(cons, incons)
+                row[f"{cat}_Total"] = total
+                row[f"{cat}_Cons"] = cons
+                row[f"{cat}_Incons"] = incons
+                row[f"{cat}_Rate"] = rate
+            ind_rows.append(row)
+
+        if not ind_rows:
             continue
-        key = f"{parts[9]}#{parts[10]}"
-        family_counts[key] += 1
 
-# Step 4: Match coordinates to consistency stats
-with open(te_file) as f:
-    for line in f:
-        parts = line.strip().split()
-        if len(parts) < 11:
-            continue
-        fam = parts[9]
-        chr_ = parts[4]
-        try:
-            start = int(parts[5])
-            end = int(parts[6])
-        except ValueError:
-            continue
-        coord = f"{chr_}:{start}..{end}"
-        if coord not in consistency_table:
-            continue
-        data = consistency_table[coord]
-        consistency = round(data["Consistency"], 3)
-        copies[fam].append({
-            "Coordinate": coord,
-            "Consistency": consistency,
-            "Total": data["Total"],
-            "Cln_Cons": data["Cln_Cons"],
-            "Dis_Cons": data["Dis_Cons"],
-            "Cln_Incons": data["Cln_Incons"],
-            "Dis_Incons": data["Dis_Incons"]
-        })
+        # Family summary
+        fam_summary = {"Coordinate": fam}
+        for cat in categories:
+            totals_sum = sum(r[f"{cat}_Total"] for r in ind_rows)
+            cons_sum = sum(r[f"{cat}_Cons"] for r in ind_rows)
+            incons_sum = sum(r[f"{cat}_Incons"] for r in ind_rows)
+            fam_rate = cons_sum / totals_sum if totals_sum > 0 else None
+            fam_summary[f"{cat}_Total"] = totals_sum
+            fam_summary[f"{cat}_Cons"] = cons_sum
+            fam_summary[f"{cat}_Incons"] = incons_sum
+            fam_summary[f"{cat}_Rate"] = fam_rate
 
-# Step 5: Format output (at 0-1 scale)
-column_names = ["Fam/Ind", "Coordinate", "Consistency", "Total",
-                "Cln_Cons", "Dis_Cons", "Cln_Incons", "Dis_Incons"]
-col_widths = {name: len(name) for name in column_names}
+        all_rows.append((fam, fam_summary, ind_rows))
 
-# Adjust widths dynamically
-for fam, entries in copies.items():
-    for e in entries:
-        vals = ["Ind", e["Coordinate"], f"{e['Consistency']:.3f}", str(e["Total"]),
-                str(e["Cln_Cons"]), str(e["Dis_Cons"]),
-                str(e["Cln_Incons"]), str(e["Dis_Incons"])]
-        for i, name in enumerate(column_names):
-            col_widths[name] = max(col_widths[name], len(vals[i]))
+    # Step 4: Compute column widths
+    col_widths = {name: len(name) for name in column_names}
 
-# Print header
-header = "  ".join(f"{n:<{col_widths[n]}}" for n in column_names)
-print(header)
-print("-" * sum(col_widths.values()))
+    for fam, fam_summary, ind_rows in all_rows:
+        for row_data in [fam_summary] + ind_rows:
+            label = "Fam" if row_data is fam_summary else "Ind"
+            vals = [label, row_data["Coordinate"]]
+            for cat in categories:
+                vals += [
+                    str(row_data[f"{cat}_Total"]),
+                    str(row_data[f"{cat}_Cons"]),
+                    str(row_data[f"{cat}_Incons"]),
+                    format_rate(row_data[f"{cat}_Rate"]),
+                ]
+            for i, name in enumerate(column_names):
+                col_widths[name] = max(col_widths[name], len(vals[i]))
 
-# Output rows per family
-for fam, entries in sorted(copies.items()):
-    percentages = [e["Consistency"] for e in entries if isinstance(e["Consistency"], (int, float))]
-    totals = {k: 0 for k in ["Total", "Cln_Cons", "Dis_Cons", "Cln_Incons", "Dis_Incons"]}
-    for e in entries:
-        for key in totals:
-            totals[key] += float(e[key])
+    # Step 5: Write output
+    with open(args.out, 'w') as out:
+        # Header
+        header = "  ".join(f"{n:<{col_widths[n]}}" for n in column_names)
+        out.write(header + "\n")
+        out.write("-" * len(header) + "\n")
 
-    avg_cons = f"{mean(percentages):.3f}" if percentages else "NA"
-    fam_row = ["Fam", fam, avg_cons,
-               f"{round(totals['Total'], 1)}", f"{round(totals['Cln_Cons'], 1)}",
-               f"{round(totals['Dis_Cons'], 1)}", f"{round(totals['Cln_Incons'], 1)}",
-               f"{round(totals['Dis_Incons'], 1)}"]
-    print("  ".join(f"{v:<{col_widths[column_names[i]]}}" for i, v in enumerate(fam_row)))
+        for fam, fam_summary, ind_rows in all_rows:
+            # Family row
+            vals = ["Fam", fam_summary["Coordinate"]]
+            for cat in categories:
+                vals += [
+                    str(fam_summary[f"{cat}_Total"]),
+                    str(fam_summary[f"{cat}_Cons"]),
+                    str(fam_summary[f"{cat}_Incons"]),
+                    format_rate(fam_summary[f"{cat}_Rate"]),
+                ]
+            out.write("  ".join(
+                f"{v:<{col_widths[column_names[i]]}}" for i, v in enumerate(vals)
+            ) + "\n")
 
-    for e in entries:
-        row = ["Ind", e["Coordinate"], f"{e['Consistency']:.3f}", str(e["Total"]),
-               str(e["Cln_Cons"]), str(e["Dis_Cons"]),
-               str(e["Cln_Incons"]), str(e["Dis_Incons"])]
-        print("  ".join(f"{v:<{col_widths[column_names[i]]}}" for i, v in enumerate(row)))
+            # Individual rows
+            for row_data in ind_rows:
+                vals = ["Ind", row_data["Coordinate"]]
+                for cat in categories:
+                    vals += [
+                        str(row_data[f"{cat}_Total"]),
+                        str(row_data[f"{cat}_Cons"]),
+                        str(row_data[f"{cat}_Incons"]),
+                        format_rate(row_data[f"{cat}_Rate"]),
+                    ]
+                out.write("  ".join(
+                    f"{v:<{col_widths[column_names[i]]}}" for i, v in enumerate(vals)
+                ) + "\n")
 
+if __name__ == "__main__":
+    main()
