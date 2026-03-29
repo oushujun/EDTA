@@ -83,7 +83,7 @@ if ($LTR==1 && $genome==0){
 	}
 
 if ($LTR==1 && $genome==1){
-	my @id=`grep \\> $ARGV[2]`;
+	my @id=`grep -a \\> $ARGV[2]`;
 	my $i=0;
 	foreach (@id){
 		chomp;

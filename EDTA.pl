@@ -359,8 +359,8 @@ my $genome_file = basename($genome);
 $genome = $genome_file;
 
 # check if duplicated sequences found
-my $raw_id = `grep \\> $genome|wc -l`;
-my $old_id = `grep \\> $genome|sort -u|wc -l`;
+my $raw_id = `grep -a \\> $genome|wc -l`;
+my $old_id = `grep -a \\> $genome|sort -u|wc -l`;
 if ($raw_id > $old_id){
 	chomp ($date = `date`);
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
@@ -375,7 +375,7 @@ if (-s "$genome.mod" and $overwrite == 0){
 	$genome = "$genome.mod";
 	if (-s "$genome.seqid.map"){
 		# Verify integrity: seq count in .mod must match lines in mapfile
-		my $mod_count = `grep -c \\> $genome`;
+		my $mod_count = `grep -ac \\> $genome`;
 		chomp $mod_count;
 		my $map_count = `wc -l < $genome.seqid.map`;
 		chomp $map_count;
@@ -408,7 +408,7 @@ if (-s "$genome.mod" and $overwrite == 0){
 		print "\tSequence IDs are short enough, no encoding needed.\n\n";
 		}
 	# Verify unique ID count
-	my $new_id = `grep \\> $genome|sort -u|wc -l`;
+	my $new_id = `grep -a \\> $genome|sort -u|wc -l`;
 	chomp $new_id;
 	chomp $old_id;
 	if ($old_id != $new_id){
@@ -684,7 +684,7 @@ my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.
 `sed 's/.*Name=//i; s/;Classifica.*//i' $genome.EDTA.intact.raw.gff3.rename | sort -u > $genome.EDTA.intact.raw.gff3.rename.famlist`;
 
 # get a dirty list of intact.gff
-`grep \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.rename.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
+`grep -a \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.rename.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
 
 # first attempt purging the gff3
 `perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > $genome.EDTA.intact.gff3`;

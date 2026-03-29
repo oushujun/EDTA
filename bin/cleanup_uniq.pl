@@ -25,7 +25,7 @@ if (1){
 `perl -i -nle 'my (\$start, \$end)=(split)[1,2]; my \$len=abs(\$start-\$end)+1; next if \$len<$min_rep_len; print \$_' $repeat.cmb`;
 
 # get candidate regions
-`grep \\> $candidate | perl -nle 's/>//; my \$id=(split)[0]; \$id=~s/:/\\t/; \$id=~s/\\.\\./\\t/; print \$id' > $candidate.list`;
+`grep -a \\> $candidate | perl -nle 's/>//; my \$id=(split)[0]; \$id=~s/:/\\t/; \$id=~s/\\.\\./\\t/; print \$id' > $candidate.list`;
 `perl $combine $candidate.list $candidate.list.cmb`;
 
 # get non-repeat regions with filter

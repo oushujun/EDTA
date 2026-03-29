@@ -176,7 +176,8 @@ sub encode_fasta {
 		for my $i (0 .. $#entries) {
 			my $code = $PREFIX . _int_to_base62($i, $digit_width, \@b62);
 			print $mfh "$code\t$entries[$i][1]\n";
-			print $ofh ">$code\n$entries[$i][2]\n";
+			print $ofh ">$code\n";
+			_print_seq_wrapped($ofh, $entries[$i][2]);
 		}
 
 		close $mfh;
@@ -196,7 +197,8 @@ sub encode_fasta {
 		# No encoding needed — write cleaned FASTA, no mapping file
 		open my $ofh, '>', $outfile or die "ERROR: Cannot write $outfile: $!\n";
 		for my $e (@entries) {
-			print $ofh ">$e->[0]\n$e->[2]\n";
+			print $ofh ">$e->[0]\n";
+			_print_seq_wrapped($ofh, $e->[2]);
 		}
 		close $ofh;
 
@@ -210,6 +212,16 @@ sub encode_fasta {
 
 
 # Convert an integer to a zero-padded base-62 string
+# Write sequence to filehandle wrapped at $width characters per line
+sub _print_seq_wrapped {
+	my ($fh, $seq, $width) = @_;
+	$width //= 80;
+	my $len = length($seq);
+	for (my $i = 0; $i < $len; $i += $width) {
+		print $fh substr($seq, $i, $width), "\n";
+	}
+}
+
 sub _int_to_base62 {
 	my ($num, $width, $alphabet) = @_;
 	my @digits;
