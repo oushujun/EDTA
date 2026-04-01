@@ -37,8 +37,8 @@ foreach (@ARGV){
         }
 
 #check files
-die $usage unless -s $genome;
-die $usage unless -s $RMout;
+die "$genome is not found in the current folder or is empty!\n" unless -s $genome;
+die "$RMout is not found in the current folder or is empty!\n" unless -s $RMout;
 
 #get blast path
 $blast=`command -v blastn 2>/dev/null` if $blast eq '';

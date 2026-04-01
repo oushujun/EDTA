@@ -114,12 +114,12 @@ my $HEL = "$genome.Helitron.intact.raw.fa";
 
 # enter the combine folder for EDTA processing
 chdir "$genome.EDTA.combine";
-`cp ../$LTRraw $LTR` unless -s "$LTR";
-`cp ../$LTRintact $LTRint` unless -s "$LTRint";
-`cp ../$SINEraw $SINE` unless -s "$SINE";
-`cp ../$LINEraw $LINE` unless -s "$LINE";
-`cp ../$TIRraw $TIR` unless -s "$TIR";
-`cp ../$HELraw $HEL` unless -s "$HEL";
+`cp ../$LTRraw $LTR`;
+`cp ../$LTRintact $LTRint`;
+`cp ../$SINEraw $SINE`;
+`cp ../$LINEraw $LINE`;
+`cp ../$TIRraw $TIR`;
+`cp ../$HELraw $HEL`;
 
 
 ##################################
