@@ -43,7 +43,7 @@ The EDTA package was designed to filter out false discoveries in raw TE candidat
 <br><br>
 </div>
 
-To benchmark the annotation quality of a new library/method, I have provided the TE annotation with the curated rice TE library (v7.0.0) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.pl` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
+To benchmark the annotation quality of a new library/method, I have provided the TE annotation with the curated rice TE library (v7.0.0) for the rice genome (TIGR7/MSU7 version). You may use the `lib-test.py` script to compare the annotation performance of your method/library to the methods we have tested (usage shown below).
 
 For pan-genome annotations, you need to annotate each genome with EDTA, generate a pan-genome library, then reannotate each genome with the pan-genome library. Please refer to this [example](https://github.com/HuffordLab/NAM-genomes/tree/master/te-annotation) for details. A sequential version of panEDTA is also included in this package. 
 
@@ -271,23 +271,28 @@ If you developed a new TE method/got a TE library and want to compare it's annot
 
     RepeatMasker -e ncbi -pa 36 -q -no_is -norna -nolow -div 40 -lib custom.TE.lib.fasta -cutoff 225 rice_genome.fasta
 
-2.Test the annotation performance of a particular TE category.
+2.Test the annotation performance against a reference annotation. All TE categories (LTR, nonLTR, LINE, SINE, TIR, MITE, Helitron, Total, Classified) are reported automatically.
 
-    perl lib-test.pl -genome genome.fasta -std genome.stdlib.RM.out -tst genome.testlib.RM.out -cat [options]
-        -genome	[file]	FASTA format genome sequence
-        -std	[file]	RepeatMasker .out file of the standard library
-        -tst	[file]	RepeatMasker .out file of the test library
-        -cat	[string]	Testing TE category. Use one of LTR|nonLTR|LINE|SINE|TIR|MITE|Helitron|Total|Classified
-        -N	[0|1]	Include Ns in total length of the genome. Defaule: 0 (not include Ns).
-        -unknown	[0|1]	Include unknown annotations to the testing category. This should be used when
-                        the test library has no classification and you assume they all belong to the
-                        target category specified by -cat. Default: 0 (not include unknowns)
+    python lib-test.py --genome genome.fasta --reference genome.stdlib.RM.out --test genome.testlib.RM.out [options]
+        --genome        [file]  FASTA format genome sequence
+        --reference     [file]  RepeatMasker .out file of the standard/reference library
+        --test          [file]  RepeatMasker .out file of the test library
+        --include_Ns            Include Ns in total length of the genome. Default: not included.
+        --include_unknown       Include unknown annotations to the testing category. This should be used when
+                                the test library has no classification and you assume they all belong to the
+                                target category. Default: not included.
+        --extended_report       Produce an extended report quantifying per-test sequence, per-TE category performance.
+        --min_entries   [int]   For the confusion matrix, exclude superfamilies with fewer than this many entries
+                                in the reference annotation. Default: 0 (no filtering)
 
 eg.
 
-    perl lib-test.pl -genome rice_genome.fasta -std ./EDTA/database/Rice_MSU7.fasta.std7.0.0.out -tst rice_genome.fasta.test.out -cat LTR
+    python lib-test.py --genome rice_genome.fasta --reference ./EDTA/database/Rice_MSU7.fasta.std7.0.0.out --test rice_genome.fasta.test.out
 
-Note: the -std and -tst files should be named differently even they are placed in different folders.
+Reports are written next to the `--test` file:
+- `<test>.repeatmasker.lib.report` — per-category sensitivity, specificity, accuracy, precision, FDR, and F1
+- `<test>.superfamily_confusion_matrix.tsv` — superfamily-level confusion matrix
+- `<test>.sequence_assessment.report` — per-sequence, per-category breakdown (only with `--extended_report`)
 
 
 ## Checking Results
