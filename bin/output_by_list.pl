@@ -64,7 +64,6 @@ while(<DB>){
 	s/^\s+//;
 	my $pos=(split)[$data_pos];
 	next unless defined $pos;
-	if ($pos=~/pos/i){ print $_ }
 	$pos=~s/\[.*\]//g;
 	if ($pos=~/^([0-9]+),.*$/){$pos=$1}
 	my ($p1, $p2)=('', '');
