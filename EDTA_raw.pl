@@ -91,7 +91,7 @@ my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
 my $GRF = ''; #path to GRF
 my $annosine = ""; #path to the AnnoSINE program
-my $TIR_Learner = ""; #path to TIR-Learner3 program  #tianyulu
+my $TIR_Learner = ""; #path to TIR-Learner program
 my $LTR_FINDER = ""; #path to LTR_FINDER_parallel program  #tianyulu
 my $LTR_HARVEST = ""; #path to LTR_HARVEST_parallel program  #tianyulu
 my $HelitronScanner = ""; #path to HelitronScanner program  #tianyulu
@@ -113,6 +113,7 @@ foreach (@ARGV){
 	$repeatmasker = $ARGV[$k+1] if /^--repeatmasker$/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmodeler = $ARGV[$k+1] if /^--repeatmodeler$/i and $ARGV[$k+1] !~ /^-/;
 	$annosine = $ARGV[$k+1] if /^--annosine$/i and $ARGV[$k+1] !~ /^-/;
+	$TIR_Learner = $ARGV[$k+1] if /^--tirlearner$/i and $ARGV[$k+1] !~ /^-/;
 	$LTR_retriever = $ARGV[$k+1] if /^--ltrretriever/i and $ARGV[$k+1] !~ /^-/;
 	$TEsorter = $ARGV[$k+1] if /^--tesorter$/i and $ARGV[$k+1] !~ /^-/;
 	$blastplus = $ARGV[$k+1] if /^--blastplus$/i and $ARGV[$k+1] !~ /^-/;
@@ -259,6 +260,13 @@ if ($TIR_Learner eq "") {
 `$TIR_Learner 2>/dev/null`;
 die "Error: TIR-Learner is not found in the path $TIR_Learner!\n" if $?==32256 || $?==2;
 
+# Detect TIR-Learner version to determine genome flag (-f for v3, -g for v4+)
+my $TIR_Learner_version = `$TIR_Learner -v 2>&1`;
+my $TIR_genome_flag = "-g";
+if ($TIR_Learner_version =~ /v(\d+)/ && $1 < 4) {
+	$TIR_genome_flag = "-f";
+}
+
 # LTR_FINDER_parallel  #tianyuLu
 $LTR_FINDER =~ s/\s+$//;
 if ($LTR_FINDER eq "") {
@@ -316,8 +324,8 @@ if ($RMlib ne 'null'){
 	}
 
 # check if duplicated sequences found
-my $raw_id = `grep \\> $genome|wc -l`;
-my $old_id = `grep \\> $genome|sort -u|wc -l`;
+my $raw_id = `grep -a \\> $genome|wc -l`;
+my $old_id = `grep -a \\> $genome|sort -u|wc -l`;
 if ($raw_id > $old_id){
 	chomp ($date = `date`);
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
@@ -343,7 +351,7 @@ if (-s "$genome.mod"){
 		print "\tSequence IDs are short enough, no encoding needed.\n\n";
 		}
 	# Verify unique ID count
-	my $new_id = `grep \\> $genome|sort -u|wc -l`;
+	my $new_id = `grep -a \\> $genome|sort -u|wc -l`;
 	chomp $new_id;
 	chomp $old_id;
 	if ($old_id != $new_id){
@@ -440,7 +448,7 @@ if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
 `cp $genome.LTR.intact.raw.fa.anno.list ../`;
 
 # generate annotated output and gff
-`perl $output_by_list 1 $genome.LTR.intact.fa.ori 1 $genome.LTR.intact.raw.fa -FA -ex|grep \\>|perl -nle 's/>//; print "Name\\t\$_"' > $genome.LTR.intact.fa.ori.rmlist`;
+`perl $output_by_list 1 $genome.LTR.intact.fa.ori 1 $genome.LTR.intact.raw.fa -FA -ex|grep -a \\>|perl -nle 's/>//; print "Name\\t\$_"' > $genome.LTR.intact.fa.ori.rmlist`;
 `perl $filter_gff $genome.pass.list.gff3 $genome.LTR.intact.fa.ori.rmlist | perl -nle 's/LTR_retriever/EDTA/gi; print \$_' > $genome.LTR.intact.raw.gff3`;
 `rm $genome 2>/dev/null`;
 	}
@@ -634,7 +642,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\tWill use this for further analyses.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		$status = system("$TIR_Learner -f $genome_file_real_path -s $species -t $threads -l $maxint -c -o $genome_file_real_path.EDTA.raw/TIR --grf_path $grfp --gt_path $genometools --working_dir $genome_file_real_path.EDTA.raw/TIR/");  #TianyuLu
+		$status = system("$TIR_Learner $TIR_genome_flag $genome_file_real_path -s $species -p $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR");
 		}
 
 	# clean raw predictions with flanking alignment

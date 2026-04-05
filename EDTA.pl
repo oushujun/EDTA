@@ -85,6 +85,7 @@ perl EDTA.pl [options]
 	--repeatmodeler [path]	The directory containing RepeatModeler (default: read from ENV)
 	--repeatmasker	[path]	The directory containing RepeatMasker (default: read from ENV)
 	--annosine	[path]	The directory containing AnnoSINE_v2 (default: read from ENV)
+	--tirlearner	[path]	The directory containing TIR-Learner (default: read from ENV)
 	--ltrretriever	[path]	The directory containing LTR_retriever (default: read from ENV)
 	--check_dependencies Check if dependencies are fullfiled and quit
 	--threads|-t [int]	Number of theads to run this script (default: 4)
@@ -164,6 +165,7 @@ my $mdust = "";
 my $trf = "";
 my $GRF = "";
 my $annosine = "";
+my $TIR_Learner = "";
 
 my $wholeelement = 0; #0, split LTR library into LTR/INT (default); 1, keep whole elements
 my $beta2 = 0; #0, beta2 is not ready. 1, developer mode.
@@ -193,6 +195,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'tesorter=s'           => \$TEsorter,
 		  'blast=s'              => \$blastplus,
 		  'annosine=s'		 => \$annosine,
+		  'tirlearner=s'	 => \$TIR_Learner,
 		  'ltrretriever=s'	 => \$LTR_retriever,
 		  'threads|t=i'          => \$threads,
 		  'wholeelement=i'       => \$wholeelement,
@@ -492,7 +495,7 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
 
 chdir "$genome.EDTA.raw";
 
