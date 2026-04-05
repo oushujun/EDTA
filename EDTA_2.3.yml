@@ -98,7 +98,7 @@ dependencies:
   - joblib=1.5.3=pyhd8ed1ab_0
   - k8=1.2=he8db53b_6
   - keras=3.11.2=pyh753f3f9_0
-  - kernel-headers_linux-64=5.14.0=he073ed8_3
+  - kernel-headers_linux-64
   - keyutils=1.6.3=hb9d3cd8_0
   - kiwisolver=1.5.0=py312h0a2e395_0
   - krb5=1.22.2=ha1258a1_0
@@ -374,7 +374,7 @@ dependencies:
   - sortedcontainers=2.4.0=pyhd8ed1ab_1
   - swifter=1.4.0=pyhd8ed1ab_1
   - sympy=1.14.0=pyh2585a3b_106
-  - sysroot_linux-64=2.34=h087de78_3
+  - sysroot_linux-64
   - tblib=3.2.2=pyhcf101f3_0
   - tesorter=1.5.1=pyhdfd78af_0
   - threadpoolctl=3.6.0=pyhecae5ae_0
