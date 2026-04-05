@@ -260,12 +260,6 @@ if ($TIR_Learner eq "") {
 `$TIR_Learner 2>/dev/null`;
 die "Error: TIR-Learner is not found in the path $TIR_Learner!\n" if $?==32256 || $?==2;
 
-# Detect TIR-Learner version to determine genome flag (-f for v3, -g for v4+)
-my $TIR_Learner_version = `$TIR_Learner -v 2>&1`;
-my $TIR_genome_flag = "-g";
-if ($TIR_Learner_version =~ /v(\d+)/ && $1 < 4) {
-	$TIR_genome_flag = "-f";
-}
 
 # LTR_FINDER_parallel  #tianyuLu
 $LTR_FINDER =~ s/\s+$//;
@@ -642,7 +636,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 	if ($overwrite eq 0 and -s "./TIR-Learner-Result/TIR-Learner_FinalAnn.fa"){
 		print STDERR "$date\tExisting raw result TIR-Learner_FinalAnn.fa found!\n\t\tWill use this for further analyses.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 		} else {
-		$status = system("$TIR_Learner $TIR_genome_flag $genome_file_real_path -s $species -p $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR");
+		$status = system("$TIR_Learner -f $genome_file_real_path -s $species -p $threads -l $maxint -o $genome_file_real_path.EDTA.raw/TIR");
 		}
 
 	# clean raw predictions with flanking alignment
