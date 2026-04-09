@@ -715,7 +715,7 @@ if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genom
 #cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa
 	print STDERR "$date\tExisting HelitronScanner result files $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa found!\n\t\tWill keep these files without rerunning HelitronScanner\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	$status = system("python $HelitronScanner_Runner --genome $genome --cpu $threads --hsdir \"$HelitronScanner\" 2>/dev/null");
+	$status = system("python3 $HelitronScanner_Runner --genome $genome --cpu $threads --hsdir \"$HelitronScanner\" 2>/dev/null");
 	}
 
 # filter candidates based on repeatness of flanking regions
