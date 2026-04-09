@@ -21,7 +21,7 @@ use File::Basename;
 #	$genome.EDTA.fa.stg1
 
 my $usage = "\nPerform EDTA basic and advance filtering for raw TE candidates and generate the stage 1 library
-	perl EDTA_processF.pl [options]
+	perl EDTA_processK.pl [options]
 		-genome	[File]	The genome FASTA
 		-ltr	[File]	The raw LTR library FASTA
 		-ltrint	[File]	The intact LTR library FASTA
@@ -31,7 +31,7 @@ my $usage = "\nPerform EDTA basic and advance filtering for raw TE candidates an
 		-helitron	[File]	The raw Helitron library FASTA
 		-mindiff_ltr	[float]	The minimum fold difference in richness between LTRs and contaminants (default: 1)
 		-mindiff_tir	[float]	The minimum fold difference in richness between TIRs and contaminants (default: 1)
-		-mindiff_hel	[float]	The minimum fold difference in richness between Helitrons and contaminants (default: 2)
+		-mindiff_hel	[float]	The minimum fold difference in richness between Helitrons and contaminants (default: 1.5)
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		-blast [path]	The directory containing Blastn (default: read from ENV)
 		-threads|-t	[int]	Number of theads to run this script

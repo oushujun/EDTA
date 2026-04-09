@@ -14,7 +14,7 @@ my $usage = "\nFilter HelitronScanner fasta candidates
 		-miniden	[int]	Minimum identity for flanking sequence alignment. Default: 80 (%)
 		-mincov	[float]	Minimum coverage for flanking sequence alignment that counts as full match. Default: 0.8
 		-maxct	[int]	Maximum allowed copy number for flanking sequence for a true element. Default: 1.
-		-blastplus	[path]	Path to the blastn program. Defalut: read from \$ENV
+		-blastplus	[path]	Path to the blastn program. Default: read from \$ENV
 		-t|-threads	[int]	Number of threads to run this program. Default: 4
 		-h|-help	Display this help messege and exit.
 \n";
@@ -47,6 +47,13 @@ foreach (@ARGV){
 
 die "The genome file $genome is not found!\n$usage" unless -e $genome;
 die "The query file $query is not found!\n$usage" unless -e $query;
+
+# resolve blastplus path from ENV if not provided
+if ($blastplus eq ''){
+	chomp ($blastplus=`command -v blastn 2>/dev/null`);
+	$blastplus =~ s/blastn$//;
+	}
+$blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 
 ## make blast db for $genome
 `${blastplus}makeblastdb -in $genome -out $genome -dbtype nucl 2> /dev/null`;

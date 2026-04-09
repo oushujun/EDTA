@@ -182,7 +182,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
                   'rmlib=s'       	=> \$RMlib,
                   'cds=s'                => \$cds,
                   'protlib=s'            => \$protlib,
-                  'sensitive=s'          => \$sensitive,
+                  'sensitive=i'          => \$sensitive,
 		  'anno=i'               => \$anno,
 		  'rmout=s'              => \$rmout,
 		  'maxdiv=i'		 => \$maxdiv,
@@ -248,7 +248,7 @@ print "$date\tDependency checking:\n";
 
 # check files and dependencies
 die "The script EDTA_raw.pl is not found in $EDTA_raw!\n" unless -s $EDTA_raw;
-die "The script EDTA_processK13.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
+die "The script EDTA_processK.pl is not found in $EDTA_process!\n" unless -s $EDTA_process;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
 die "The script cleanup_TE.pl is not found in $cleanup_TE!\n" unless -s $cleanup_TE;
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
@@ -623,8 +623,8 @@ if (-s "$cds"){
 	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa.cln2`;
 	} else {
 	print "\tSkipping the CDS cleaning step (--cds [File]) since no CDS file is provided or it's empty.\n\n";
-	copy_file("$genome.EDTA.raw.fa", "./$genome.EDTA.raw.fa.cln");
-	copy_file("$genome.EDTA.intact.fa.cln", "./$genome.EDTA.intact.fa.cln2");
+	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.cln`;
+	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln2`;
 	}
 
 # Final rounds of redundancy removal and make final EDTA library
@@ -840,7 +840,7 @@ if ($anno == 1){
 	# make plots
 	`perl $div_table $genome.EDTA.TEanno.bed $genome $genome`;
 	`Rscript $div_plot $genome.div_long $genome 2>/dev/null`;
-	`python $density_table -genome $genome -gff $genome.EDTA.TEanno.split.gff3 > $genome.EDTA.TEanno.split.density`;
+	`python3 $density_table -genome $genome -gff $genome.EDTA.TEanno.split.gff3 > $genome.EDTA.TEanno.split.density`;
 	`Rscript $density_plot $genome.EDTA.TEanno.split.density 2>/dev/null`;
 	`mv chromosome_density_plots.pdf $genome.EDTA.TEanno.density_plots.pdf`;
 
@@ -880,7 +880,7 @@ if ($anno == 1){
 	# Decode all files in the EDTA.anno directory and parent directory copies
 	if ($seqid_mapfile ne '' and -s $seqid_mapfile){
 		# Recursively decode all non-binary files in the anno directory
-		my @anno_files = split /\n/, `find $genome.EDTA.anno -type f -size +0c ! -name "*.2bit" ! -name "*.nsq" ! -name "*.nhr" ! -name "*.nin" ! -name "*.ndb" ! -name "*.not" ! -name "*.ntf" ! -name "*.nto" ! -name "*.njs" ! -name "*.gz" 2>/dev/null`;
+		my @anno_files = split /\n/, `find . -type f -size +0c ! -name "*.2bit" ! -name "*.nsq" ! -name "*.nhr" ! -name "*.nin" ! -name "*.ndb" ! -name "*.not" ! -name "*.ntf" ! -name "*.nto" ! -name "*.njs" ! -name "*.gz" 2>/dev/null`;
 		for my $f (@anno_files){
 			`perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
 			}

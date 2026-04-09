@@ -94,7 +94,7 @@ fi
 # Set paths
 path=$(dirname "$0") #program path
 dir=$(pwd) #current work directory
-rm_threads=$(($threads/4))
+rm_threads=$(( $threads/4 < 1 ? 1 : $threads/4 ))
 outfile=$(basename $genome_list 2>/dev/null)
 
 # resolve path to genome (not realpath because the genome could be a softlink where 
@@ -149,7 +149,7 @@ while IFS= read -r i; do
 
 	# skip empty lines
 	if [ "$genome_file" = "" ]; then
-		break
+		continue
 	fi
 
 	# check if genome file exist
@@ -175,13 +175,15 @@ while IFS= read -r i; do
 	    cds_ind_file=$(realpath "$line_cds")
 	fi
 
-	if [ ! -s "$cds_ind_file" ]; then
+	if [ -n "$cds_ind_file" ] && [ ! -s "$cds_ind_file" ]; then
 	    echo "ERROR: The CDS file $cds_ind_file specified for genome $genome does not exist or is empty"
 	    exit 1
 	fi
-	
+
 	# make softlink to cds
-	cds_ind_file=`realpath $cds_ind_file`
+	if [ -n "$cds_ind_file" ]; then
+		cds_ind_file=`realpath $cds_ind_file`
+	fi
 	cds_ind=`basename $cds_ind_file 2>/dev/null` 
 	if [ "$cds_ind" != '' ]; then
 		if [ ! -s $cds_ind ]; then
@@ -298,7 +300,7 @@ if [ "$anno" = '1' ]; then
 		#echo "Reannotate genome $genome with the panEDTA library - homology"
 		if [ ! -s "$genome.mod.panEDTA.out" ]; then
 			ln -s $genome.mod $genome.mod.panEDTA
-			RepeatMasker -e ncbi -pa $rm_threads -q -div 40 -lib $genome_list.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod.panEDTA >/dev/null
+			RepeatMasker -e ncbi -pa $rm_threads -q -div 40 -lib $outfile.panEDTA.TElib.fa -cutoff 225 -gff $genome.mod.panEDTA >/dev/null
 		fi
 		perl -i -nle 's/\s+DNA\s+/\tDNA\/unknown\t/; print $_' $genome.mod.panEDTA.out
 	done
@@ -308,8 +310,8 @@ while IFS= read -r i; do
 	cds_ind=`basename $(echo $i|awk '{print $2}') 2>/dev/null`
 
 	# skip empty lines
-        if [ $genome = '' ]; then
-                break
+        if [ "$genome" = '' ]; then
+                continue
         fi
 
         # use the global $cds to replace a missing cds
@@ -318,7 +320,7 @@ while IFS= read -r i; do
         fi
 
 	printf "\n%s\nReannotate genome %s with the panEDTA library - structural\n" "$(date)" $genome
-	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $genome_list.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out --overwrite 1
+	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $outfile.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out --overwrite 1
 done < $genome_list
 
 printf "%s\n\tpanEDTA annotation of %s is finished!\n" "$(date)" "$genome_list"

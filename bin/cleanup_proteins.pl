@@ -58,6 +58,13 @@ foreach (@ARGV){
 
 die "Warning: Nothing will be cleaned based on your parameters.\n" if $rmDNATE eq 0 and $rmLINE eq 0 and $rmProt eq 0;
 die "Sequence file not found!\n$usage" unless -s $target;
+
+# resolve blastplus path from ENV if not provided
+if ($blastplus eq ''){
+	chomp ($blastplus=`command -v blastx 2>/dev/null`);
+	$blastplus =~ s/blastx$//;
+	}
+$blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 $name = $target;
 
 #prepare blastx databases
