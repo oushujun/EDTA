@@ -160,14 +160,17 @@ sub encode_fasta {
 		my $cap = 62;
 		while ($cap < $n) { $min_digits++; $cap *= 62; }
 
-		# Use maximum digit width, capped at 9 total chars for LTR_retriever compatibility
-		my $max_code_len = 9;
-		my $digit_width = (($id_len_max < $max_code_len) ? $id_len_max : $max_code_len) - $prefix_len;
+		# Use the minimum digit width that can enumerate all sequences,
+		# subject to the LTR_retriever composite-ID ceiling encoded in $id_len_max.
+		my $digit_width = $min_digits;
+		my $total_code_len = $prefix_len + $digit_width;
 
-		die "ERROR: Too many sequences ($n) for id_len_max=$id_len_max " .
-			"(need $min_digits base-62 digits + ${prefix_len}-char prefix, " .
-			"but only $digit_width digits available)\n"
-			if $digit_width < $min_digits;
+		die "ERROR: Cannot encode $n sequences for id_len_max=$id_len_max " .
+			"(longest scaffold: $max_seq_len bp; need ${total_code_len}-char codes " .
+			"= '${PREFIX}' prefix + $min_digits base-62 digits, " .
+			"but only $id_len_max chars available). " .
+			"Split or shorten the longest scaffold, or reduce the number of sequences.\n"
+			if $total_code_len > $id_len_max;
 
 		# Write mapping file and encoded FASTA
 		open my $mfh, '>', $mapfile or die "ERROR: Cannot write $mapfile: $!\n";
@@ -188,7 +191,6 @@ sub encode_fasta {
 			my $l = length($e->[0]);
 			$max_clean_len = $l if $l > $max_clean_len;
 		}
-		my $total_code_len = $prefix_len + $digit_width;
 		print STDERR "Encoded $n sequences with ${total_code_len}-char codes " .
 			"(prefix '${PREFIX}' + ${digit_width} base-62 digits, " .
 			"longest clean ID: $max_clean_len, id_len_max: $id_len_max, " .
