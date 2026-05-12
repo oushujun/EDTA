@@ -150,27 +150,37 @@ sub encode_fasta {
 	}
 
 	if ($need_encoding) {
-		# Prefix to prevent false-positive matches during decode
-		my $PREFIX = '_J';
-		my $prefix_len = length($PREFIX);
-
 		# Calculate minimum base-62 digits needed to encode all sequences
 		my $n = scalar @entries;
 		my $min_digits = 1;
 		my $cap = 62;
 		while ($cap < $n) { $min_digits++; $cap *= 62; }
 
-		# Use the minimum digit width that can enumerate all sequences,
-		# subject to the LTR_retriever composite-ID ceiling encoded in $id_len_max.
-		my $digit_width = $min_digits;
-		my $total_code_len = $prefix_len + $digit_width;
+		# Choose prefix adaptively: try '_J' (2 chars, safer against text-decode
+		# collisions) first; fall back to 'J' (1 char) only when the 2-char form
+		# leaves too few digits for $n sequences within $id_len_max. 'J' is safe
+		# in DNA contexts because it is not an IUPAC nucleotide code, and the
+		# word-boundary decode regex plus hash-lookup safety net keep risk low.
+		my ($PREFIX, $prefix_len, $digit_width);
+		for my $pfx ('_J', 'J') {
+			my $pl = length($pfx);
+			if ($pl + $min_digits <= $id_len_max) {
+				($PREFIX, $prefix_len, $digit_width) = ($pfx, $pl, $min_digits);
+				last;
+			}
+		}
 
 		die "ERROR: Cannot encode $n sequences for id_len_max=$id_len_max " .
-			"(longest scaffold: $max_seq_len bp; need ${total_code_len}-char codes " .
-			"= '${PREFIX}' prefix + $min_digits base-62 digits, " .
-			"but only $id_len_max chars available). " .
+			"(longest scaffold: $max_seq_len bp; need $min_digits base-62 digits " .
+			"plus a 1- or 2-char prefix, but only $id_len_max chars available). " .
 			"Split or shorten the longest scaffold, or reduce the number of sequences.\n"
-			if $total_code_len > $id_len_max;
+			unless defined $PREFIX;
+
+		my $total_code_len = $prefix_len + $digit_width;
+
+		if ($prefix_len == 1) {
+			print STDERR "Notice: Falling back to 1-char prefix '$PREFIX' to fit $n sequences within id_len_max=$id_len_max (longest scaffold: ${max_seq_len} bp). Text-decode false-positive risk is slightly higher than with the default '_J' prefix.\n";
+		}
 
 		# Write mapping file and encoded FASTA
 		open my $mfh, '>', $mapfile or die "ERROR: Cannot write $mapfile: $!\n";
@@ -335,13 +345,14 @@ sub _load_map {
 		next unless defined $code && defined $orig;
 		$map{$code} = $orig;
 		unless (defined $digit_width) {
-			if ($code =~ /^(_J)/) {
-				$prefix = $1;
-				$digit_width = length($code) - length($prefix);
+			if ($code =~ /^_J/) {
+				$prefix = '_J';
+			} elsif ($code =~ /^J/) {
+				$prefix = 'J';
 			} else {
 				$prefix = '';
-				$digit_width = length($code);
 			}
+			$digit_width = length($code) - length($prefix);
 		}
 	}
 	close $mfh;
