@@ -103,30 +103,45 @@ class lib_test:
 		curs.close()
 		conn.close()
 		
+	@staticmethod
+	def _parse_rm_row(segs, lineno, file):
+		# A RepeatMasker .out data row needs >=11 columns; col 11 (segs[10]) is the
+		# class/family used for per-category scoring. EDTA --curatedlib runs sometimes
+		# emit curated (e.g. RepBase) entries with only the name and no class column,
+		# producing 10-field rows. Fail loud with an actionable message instead of a
+		# cryptic IndexError so the class is recovered (not silently miscounted).
+		if len(segs) < 11:
+			raise ValueError(
+				f"\n{file} line {lineno}: only {len(segs)} columns, expected >=11 "
+				f"(missing the class/family column 11).\n"
+				f"  Offending row: {' '.join(segs)}\n"
+				f"  This is common with EDTA --curatedlib '.EDTA.TEanno.out' files, where curated\n"
+				f"  (e.g. RepBase) entries lose their class. The class is present in the raw\n"
+				f"  '.EDTA.RM.out' and in the '*.EDTA.TElib.fa' headers ('>NAME#CLASS').\n"
+				f"  Recover col 11 before scoring (do NOT fill 'Unknown' — that zeroes out SINE/LINE/etc.)."
+			)
+		return segs[4], segs[9], segs[10], int(segs[5]) - 1, int(segs[6])
+
 	def iterate_repeatmasker(self, file):
 		header = 'placeholder'
 		with open(file) as fh:
+			lineno = 0
 			#Read through the .out header until the first instance of a digit is encountered; that's the first real record
 			while not header[0].isdigit():
 				header = fh.readline().strip()
+				lineno += 1
 				if len(header) == 0:
 					header = 'placeholder'
-			
-			segs = header.split()
-			chrom = segs[4]
-			origin_sequence = segs[9]
-			label = segs[10]
-			start, end = int(segs[5])-1, int(segs[6])
-			
-			yield chrom, origin_sequence, label, start, end
-			
-			for line in fh:
-				segs = line.strip().split()
-				chrom = segs[4]
-				origin_sequence = segs[9]
-				label = segs[10]
-				start, end = int(segs[5])-1, int(segs[6])
 
+			chrom, origin_sequence, label, start, end = self._parse_rm_row(header.split(), lineno, file)
+			yield chrom, origin_sequence, label, start, end
+
+			for line in fh:
+				lineno += 1
+				segs = line.strip().split()
+				if not segs:
+					continue
+				chrom, origin_sequence, label, start, end = self._parse_rm_row(segs, lineno, file)
 				yield chrom, origin_sequence, label, start, end
 
 	def create_report_card(self, conf, te_type):
