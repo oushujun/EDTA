@@ -30,8 +30,8 @@ while (my $line = <$gff3_file>) {
     my $strand = $fields[6];
     my $phase = $fields[7];
     my $attributes = $fields[8];
-    my $family = $1 if $attributes =~ /Name=([^\s;]+);/;
-    my $classification = $1 if $attributes =~ /classification=([^\s;]+);?/;
+    my $family = $1 if $attributes =~ /Name=([^\s;]+);/i;
+    my $classification = $1 if $attributes =~ /classification=([^\s;]+);?/i;
 
     # Format the output for RepeatMasker .out (modify according to the expected format)
     printf $rm_out_file "10000 0.001 0.001 0.001\t$seqName\t$start\t$end\tNA\t$strand\t$family\t$classification\tNA NA NA NA\n";
