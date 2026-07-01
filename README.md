@@ -297,7 +297,7 @@ Reports are written next to the `--test` file:
 
 ## Checking Results
 If you execute EDTA on many genomes, checking the completeness of each genome's EDTA runs will be necessary.  
-[DiLiu-Lab](https://github.com/DiLiu-Lab) developed the [EDTA-Audit-Tool](https://github.com/DiLiu-Lab/EDTA-Audit-Tool) for analyzing EDTA runs in batch.  
+A user developed the [EDTA-Audit-Tool](https://github.com/GZY-AI-Lab/EDTA-Audit-Tool) for analyzing EDTA runs in batch.  
 
 
 ## Citations
