@@ -20,17 +20,16 @@ my $usage = "\nFilter TE fasta candidates by the repeatiness of their flanking/t
 		-t|-threads	[int]	Number of threads to run this program. Default: 4
 	  Performance/robustness options (results are identical to the per-query version):
 		-chunk_size	[int]	Max queries pooled into one blastn (one DB scan amortized over the chunk).
-					Default: adaptive ceil(njobs/threads), capped at 1000.
+					Default: adaptive (~4*threads chunks, capped at 64/chunk).
 		-route_maxmult	[int]	Queries whose most frequent k-mer (k=word_size) occurs > this many
 					times are blasted as singletons so a low-complexity 'detonator' that
 					exceeds the timeout isolates itself instead of stalling a whole chunk. Default: 3
 		-timeout	[int]	Per-chunk blastn KILL timeout in seconds. Default: 120
 	  Checkpoint / resume options:
-		-batch_size	[int]	Candidates decided and appended to the tabout per batch (the tabout
-					checkpoint granularity). Default: 1000
 		-overwrite	[0|1]	0 (default): resume - salvage finished candidates from an existing
 					tabout and finished blast counts from the .ckpt sidecar (both optional).
 					1: ignore/truncate any existing tabout+ckpt and start fresh.
+		-batch_size	[int]	Deprecated / ignored (processing is now one continuous pool).
 		-h|-help	Display this help messege and exit.
 \n";
 
@@ -48,7 +47,7 @@ my $chunk_size = 0;
 my $route_maxmult = 3;
 my $timeout = 120;
 my $word_size = 7;
-my $batch_size = 1000;
+my $batch_size = 0;         # deprecated/ignored
 my $overwrite = 0;          # 0 = resume from existing tabout+ckpt; 1 = start fresh
 
 my $k=0;
@@ -142,6 +141,7 @@ $OUT->autoflush(1);
 
 ## shared state
 my %COUNT :shared;          # job id => copy count (int) or 'NA' (blast did not complete)
+my %pending :shared;        # candidate index => number of its current-stage jobs not yet resolved
 my $tmpbase = (-d "/dev/shm" && -w "/dev/shm") ? "/dev/shm" : File::Spec->tmpdir;
 my $tmpdir = tempdir("flankf.XXXXXXXX", DIR => $tmpbase, CLEANUP => 1);
 
@@ -174,64 +174,78 @@ for (my $i=0; $i<=$#FA; $i++){
 		};
 	}
 
-## ---- process the work list in batches; each batch appends its rows to the tabout ----
 my $job_id = 0;
-for (my $b=0; $b<=$#cand; $b+=$batch_size){
-	my $e = $b + $batch_size - 1; $e = $#cand if $e > $#cand;
-	my @batch = @cand[$b..$e];
+my $rq = Thread::Queue->new();   # candidate indices ready to decide (produced by workers, consumed by main)
 
-	# stage 1: end5/end3 (reuse ckpt counts where present, else queue for blast)
-	my @end_jobs;
-	for my $c (@batch){
-		for my $side (['e5','end5'], ['e3','end3']){
-			my ($tag, $et) = @$side;
-			my $id = $job_id++;
-			$c->{$tag} = $id;
-			my $key = "$c->{loc}\t$et";
-			if (exists $CKPT{$key}){ lock(%COUNT); $COUNT{$id} = $CKPT{$key}; }
-			else { push @end_jobs, [$id, $c->{$et}, length($c->{$et}), &maxmult($c->{$et}), $key]; }
-			}
+## ==================== STAGE 1: end5/end3 (one continuous pool) ====================
+## Each candidate contributes up to two end jobs. A candidate becomes "ready" the moment its
+## last end job is counted (a worker enqueues it to $rq); the main thread then decides it and
+## writes its row immediately, or defers it to the flank stage. No batch barrier: a slow/detonator
+## chunk ties up only its own worker while the rest keep pulling from the queue.
+my @end_jobs;
+for my $ci (0..$#cand){
+	my $c = $cand[$ci];
+	my $p = 0;
+	for my $side (['e5','end5'], ['e3','end3']){
+		my ($tag, $et) = @$side;
+		my $id = $job_id++;
+		$c->{$tag} = $id;
+		my $key = "$c->{loc}\t$et";
+		if (exists $CKPT{$key}){ lock(%COUNT); $COUNT{$id} = $CKPT{$key}; }
+		else { push @end_jobs, [$id, $c->{$et}, length($c->{$et}), &maxmult($c->{$et}), $key, $ci]; $p++; }
 		}
-	&run_jobs(\@end_jobs);
+	{ lock(%pending); $pending{$ci} = $p; }
+	$rq->enqueue($ci) if $p == 0;      # both ends already checkpointed -> ready now
+	}
+my ($cq, $nch) = &make_chunk_queue(\@end_jobs);
+my @workers = ();
+if ($nch){
+	my $nw = $nch < $threads ? $nch : $threads;
+	@workers = map { threads->create(\&chunk_worker, $cq, $rq) } (1..$nw);
+	}
+my @flank_needers;
+for (1 .. scalar @cand){           # each candidate's ends become ready exactly once
+	my $ci = $rq->dequeue();
+	my $c = $cand[$ci];
+	my ($e5, $e3);
+	{ lock(%COUNT); $e5 = $COUNT{$c->{e5}}; $e3 = $COUNT{$c->{e3}}; }
+	if ($e5 ne 'NA' and $e5 > $max_ct and $e3 ne 'NA' and $e3 > $max_ct){
+		push @flank_needers, $ci;   # both ends repetitive -> needs the flank stage
+		} else {
+		&emit_decision($c);         # decidable now -> write row immediately
+		}
+	}
+$_->join() foreach @workers;
 
-	# stage 2: flank (only for double-repetitive candidates)
+## ==================== STAGE 2: flank (continuous pool, only double-repetitive candidates) ====================
+if (@flank_needers){
+	my $frq = Thread::Queue->new();
 	my @flank_jobs;
-	for my $c (@batch){
-		my $e5 = $COUNT{$c->{e5}}; my $e3 = $COUNT{$c->{e3}};
-		next unless $e5 ne 'NA' and $e5 > $max_ct and $e3 ne 'NA' and $e3 > $max_ct;
+	for my $ci (@flank_needers){
+		my $c = $cand[$ci];
 		my $id = $job_id++;
 		$c->{fid} = $id;
 		my $key = "$c->{loc}\tflank";
-		if (exists $CKPT{$key}){ lock(%COUNT); $COUNT{$id} = $CKPT{$key}; }
-		else { push @flank_jobs, [$id, $c->{flank}, length($c->{flank}), &maxmult($c->{flank}), $key]; }
-		}
-	&run_jobs(\@flank_jobs) if @flank_jobs;
-
-	# stage 3: decide (verbatim logic) + append this batch's rows to the tabout
-	for my $c (@batch){
-		my $end5_count = $COUNT{$c->{e5}};
-		my $end3_count = $COUNT{$c->{e3}};
-		my $decision = "true";
-		my $end5_repeat = "false";
-		($end5_repeat = "true", $decision = "false") if $end5_count ne 'NA' and $end5_count > $max_ct;
-		my $end3_repeat = "false";
-		($end3_repeat = "true", $decision = "false") if $end3_count ne 'NA' and $end3_count > $max_ct;
-
-		my $flank_count = "NA";
-		if ($end5_repeat eq "true" and $end3_repeat eq "true"){
-			$flank_count = defined $c->{fid} ? $COUNT{$c->{fid}} : 0;
-			$flank_count = 0 if $flank_count eq 'NA';
-			if ($flank_count >= 1){
-				if (($end5_count + $end3_count)/(2*$flank_count) < 10000 and $end5_count < $max_ct_flank and $end3_count < $max_ct_flank){
-					$decision = "true";
-					}
-				}
+		if (exists $CKPT{$key}){
+			{ lock(%COUNT); $COUNT{$id} = $CKPT{$key}; }
+			{ lock(%pending); $pending{$ci} = 0; }
+			$frq->enqueue($ci);
+			} else {
+			push @flank_jobs, [$id, $c->{flank}, length($c->{flank}), &maxmult($c->{flank}), $key, $ci];
+			{ lock(%pending); $pending{$ci} = 1; }
 			}
-		$decision = "false" if $end5_count eq 'NA' or $end3_count eq 'NA';
-
-		print $OUT "$decision\t$end5_count\t$end3_count\t$flank_count\t$c->{chr}\t$c->{str}\t$c->{end}\t$c->{loc}\t$c->{tgt}\t$c->{flank5}\t$c->{seq5}\t$c->{seq3}\t$c->{flank3}\n";
 		}
-	{ lock(%COUNT); %COUNT = (); }    # free this batch's counts
+	my ($fcq, $fnch) = &make_chunk_queue(\@flank_jobs);
+	my @fworkers = ();
+	if ($fnch){
+		my $fnw = $fnch < $threads ? $fnch : $threads;
+		@fworkers = map { threads->create(\&chunk_worker, $fcq, $frq) } (1..$fnw);
+		}
+	for (1 .. scalar @flank_needers){
+		my $ci = $frq->dequeue();
+		&emit_decision($cand[$ci]);
+		}
+	$_->join() foreach @fworkers;
 	}
 close $OUT;
 
@@ -264,63 +278,100 @@ unlink $ckpt;                                           # resume no longer neede
 
 
 ## ===================== engine =====================
-sub run_jobs {
+
+## Decide one candidate (verbatim thresholds/rescue) from its counts and append its tabout row.
+## Called only from the main (coordinator) thread, so tabout writes are unlocked and race-free.
+sub emit_decision {
+	my ($c) = @_;
+	my ($end5_count, $end3_count, $flank_raw);
+	{ lock(%COUNT);
+	  $end5_count = $COUNT{$c->{e5}};
+	  $end3_count = $COUNT{$c->{e3}};
+	  $flank_raw  = defined $c->{fid} ? $COUNT{$c->{fid}} : undef;
+	}
+	my $decision = "true";
+	my $end5_repeat = "false";
+	($end5_repeat = "true", $decision = "false") if $end5_count ne 'NA' and $end5_count > $max_ct;
+	my $end3_repeat = "false";
+	($end3_repeat = "true", $decision = "false") if $end3_count ne 'NA' and $end3_count > $max_ct;
+
+	my $flank_count = "NA";
+	if ($end5_repeat eq "true" and $end3_repeat eq "true"){
+		$flank_count = defined $flank_raw ? $flank_raw : 0;
+		$flank_count = 0 if $flank_count eq 'NA';
+		if ($flank_count >= 1){
+			if (($end5_count + $end3_count)/(2*$flank_count) < 10000 and $end5_count < $max_ct_flank and $end3_count < $max_ct_flank){
+				$decision = "true";
+				}
+			}
+		}
+	$decision = "false" if $end5_count eq 'NA' or $end3_count eq 'NA';
+
+	print $OUT "$decision\t$end5_count\t$end3_count\t$flank_count\t$c->{chr}\t$c->{str}\t$c->{end}\t$c->{loc}\t$c->{tgt}\t$c->{flank5}\t$c->{seq5}\t$c->{seq3}\t$c->{flank3}\n";
+	}
+
+## adaptive chunk size for a continuous pool: many small chunks so workers stay busy and a detonator
+## only occupies its own worker; still large enough to amortize the ~one DB scan per chunk.
+sub choose_chunk_size {
+	my ($njobs) = @_;
+	return $chunk_size if $chunk_size > 0;
+	my $cs = int(($njobs + 4*$threads - 1)/(4*$threads));   # aim for ~4*threads chunks
+	$cs = 1  if $cs < 1;
+	$cs = 64 if $cs > 64;
+	return $cs;
+	}
+
+## Build the chunk queue for a job list. Route high-multiplicity (detonator-prone) queries to
+## singletons and enqueue them FIRST so they bisect/time-out early, overlapping the bulk instead
+## of leaving a tail. Returns ($queue, n_chunks); ($undef,0) if there is nothing to run.
+sub make_chunk_queue {
 	my ($jobs) = @_;
-	return unless @$jobs;
+	return (undef, 0) unless @$jobs;
 	my (@big, @singleton);
 	for my $j (@$jobs){
 		if ($j->[3] > $route_maxmult){ push @singleton, $j; } else { push @big, $j; }
 		}
-	my $cs = $chunk_size;
-	if ($cs <= 0){
-		$cs = int((scalar(@$jobs) + $threads - 1)/$threads);
-		$cs = 1 if $cs < 1;
-		$cs = 1000 if $cs > 1000;
-		}
+	my $cs = &choose_chunk_size(scalar @$jobs);
 	my @chunks;
+	push @chunks, [$_] for @singleton;      # detonators first
 	for (my $i=0; $i<=$#big; $i+=$cs){
-		my $j = $i+$cs-1; $j = $#big if $j > $#big;
-		push @chunks, [ @big[$i..$j] ];
+		my $e = $i+$cs-1; $e = $#big if $e > $#big;
+		push @chunks, [ @big[$i..$e] ];
 		}
-	push @chunks, [$_] for @singleton;
-	return unless @chunks;
-
 	my $cq = Thread::Queue->new();
 	foreach my $ch (@chunks){
-		# chunk data carries [id, seq, qlen, ckptkey] per job
-		my @data = map { shared_clone([$_->[0], $_->[1], $_->[2], $_->[4]]) } @$ch;
+		# chunk data carries [id, seq, qlen, ckptkey, cand_idx] per job
+		my @data = map { shared_clone([$_->[0], $_->[1], $_->[2], $_->[4], $_->[5]]) } @$ch;
 		$cq->enqueue(shared_clone(\@data));
 		}
 	$cq->end();
-
-	my $nw = (scalar(@chunks) < $threads) ? scalar(@chunks) : $threads;
-	my @workers = map { threads->create(\&chunk_worker, $cq) } (1..$nw);
-	$_->join() foreach @workers;
+	return ($cq, scalar @chunks);
 	}
 
 sub chunk_worker {
-	my ($cq) = @_;
+	my ($cq, $rq) = @_;
 	my $tid = threads->tid();
 	# per-worker append handle to the ckpt; O_APPEND makes small line writes atomic across workers
 	open(my $ckfh, '>>', $ckpt) or die "ERROR: cannot append $ckpt: $!\n";
 	while (defined(my $chunk = $cq->dequeue())){
-		&process_chunk($chunk, $tid, $ckfh);
+		&process_chunk($chunk, $tid, $ckfh, $rq);
 		}
 	close $ckfh;
 	}
 
-## Run one chunk (a list of [id,seq,qlen,ckptkey]) as one single-threaded blastn, streaming the output
-## through a per-id counter. Each resolved job is recorded to %COUNT and durably checkpointed to .ckpt.
-## KILL (timeout/OOM) on a singleton -> NA; on a larger chunk -> bisect so the detonator isolates while
-## its neighbours still get counted. A transient (non-KILL) failure is retried up to 3 times.
+## Run one chunk as one single-threaded blastn, streaming the output through a per-id counter.
+## Each resolved job is recorded to %COUNT, durably checkpointed to .ckpt, and reported to its
+## candidate via job_done() (which enqueues the candidate to $rq once all its jobs are in).
+## KILL (timeout/OOM) on a singleton -> NA; on a larger chunk -> bisect so the detonator isolates
+## while its neighbours still get counted. A transient (non-KILL) failure is retried up to 3 times.
 sub process_chunk {
-	my ($jobs, $tid, $ckfh) = @_;
+	my ($jobs, $tid, $ckfh, $rq) = @_;
 	my $n = scalar @$jobs;
 	return unless $n;
 	my $qfile = "$tmpdir/c$tid.fa";
-	my (%qlen, %key);
+	my (%qlen, %key, %ci);
 	open(my $qfh, '>', $qfile) or die "ERROR: cannot write $qfile: $!\n";
-	for my $j (@$jobs){ print $qfh ">$j->[0]\n$j->[1]\n"; $qlen{$j->[0]} = $j->[2]; $key{$j->[0]} = $j->[3]; }
+	for my $j (@$jobs){ print $qfh ">$j->[0]\n$j->[1]\n"; $qlen{$j->[0]} = $j->[2]; $key{$j->[0]} = $j->[3]; $ci{$j->[0]} = $j->[4]; }
 	close $qfh;
 
 	my $cmd = "timeout -s KILL ${timeout}s ${blastplus}blastn -query $qfile -db $genome -outfmt 6 -word_size $word_size -evalue 1e-5 -dust no 2> /dev/null";
@@ -334,7 +385,7 @@ sub process_chunk {
 			my ($q, undef, $iden, $len) = split /\t/, $line;
 			next unless defined $len;
 			$seen{$q} = 1;
-			next unless $iden =~ /^[0-9]/ and $len =~ /^[0-9]/;   # skip a truncated/non-numeric line (e.g. the last line of a KILLed huge-output chunk); count-equivalent to before, without the warning
+			next unless $iden =~ /^[0-9]/ and $len =~ /^[0-9]/;   # skip a truncated/non-numeric line (last line of a KILLed huge-output chunk)
 			$pass{$q}++ if $iden >= $min_iden and $len >= $qlen{$q} * $min_cov;
 			}
 		close $bh;
@@ -349,16 +400,26 @@ sub process_chunk {
 		  for my $j (@$jobs){ my $id = $j->[0]; my $c = $seen{$id} ? ($pass{$id} // 0) : 'NA'; $COUNT{$id} = $c; $rec .= "$key{$id}\t$c\n"; }
 		}
 		syswrite($ckfh, $rec);        # durable per-chunk checkpoint (atomic append)
+		&job_done($ci{$_->[0]}, $rq) for @$jobs;
 		}
 	elsif ($n == 1){
 		{ lock(%COUNT); $COUNT{$jobs->[0][0]} = 'NA'; }
 		syswrite($ckfh, "$key{$jobs->[0][0]}\tNA\n");
+		&job_done($ci{$jobs->[0][0]}, $rq);
 		}
 	else {
 		my $mid = int($n/2);
-		&process_chunk([ @{$jobs}[0 .. $mid-1] ], $tid, $ckfh);
-		&process_chunk([ @{$jobs}[$mid .. $n-1] ], $tid, $ckfh);
+		&process_chunk([ @{$jobs}[0 .. $mid-1] ], $tid, $ckfh, $rq);
+		&process_chunk([ @{$jobs}[$mid .. $n-1] ], $tid, $ckfh, $rq);
 		}
+	}
+
+## a job for candidate $ci finished; when all its current-stage jobs are in, it is ready to decide
+sub job_done {
+	my ($ci, $rq) = @_;
+	my $ready;
+	{ lock(%pending); $ready = (--$pending{$ci} == 0); }
+	$rq->enqueue($ci) if $ready;
 	}
 
 ## max k-mer multiplicity (k = word size) within a query: routing metric only, never removes a query.
