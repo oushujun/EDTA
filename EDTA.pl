@@ -8,7 +8,7 @@ use Pod::Usage;
 use POSIX qw(strftime);
 use Cwd qw(abs_path);
 
-my $version = "v2.3.1";
+my $version = "v2.3.2";
 #v1.0 05/31/2019
 #v1.1 06/05/2019
 #v1.2 06/16/2019
@@ -120,6 +120,7 @@ my $cleanup_TE = "$script_path/bin/cleanup_TE.pl";
 my $cleanup_tandem = "$script_path/bin/cleanup_tandem.pl";
 my $cleanup_nested = "$script_path/bin/cleanup_nested.pl";
 my $count_nested = "$script_path/bin/count_nested.pl";
+my $evaluation = "$script_path/bin/evaluation.pl";
 my $count_base = "$script_path/bin/count_base.pl";
 my $make_masked = "$script_path/bin/make_masked.pl";
 my $make_gff3 = "$script_path/bin/make_gff3_with_RMout.pl";
@@ -255,6 +256,7 @@ die "The script cleanup_TE.pl is not found in $cleanup_TE!\n" unless -s $cleanup
 die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s $cleanup_tandem;
 die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
 die "The script count_nested.pl is not found in $count_nested!\n" unless -s $count_nested;
+die "The script evaluation.pl is not found in $evaluation!\n" unless -s $evaluation;
 die "The script count_base.pl is not found in $count_base!\n" unless -s $count_base;
 die "The script make_masked.pl is not found in $make_masked!\n" unless -s $make_masked;
 die "The script make_gff3_with_RMout.pl is not found in $make_gff3!\n" unless -s $make_gff3;
@@ -898,16 +900,10 @@ if ($anno == 1){
 		chomp ($date = `date`);
 		print "$date\tEvaluate the level of inconsistency for whole-genome TE annotation:\n\n";
 
-		# extract whole-genome TE and perform all-v-all blast, then summarize the results
-		`awk '{if (\$5~/[0-9]+/ && \$1>300 && \$7-\$6>80) print \$11"\t"\$5":"\$6".."\$7}' $genome.EDTA.TEanno.out | perl $call_seq - -C $genome > $genome.EDTA.TE.fa`;
-		`perl $cleanup_nested -in $genome.EDTA.TE.fa -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blastplus -iter 1 -maxcount 100000 2>/dev/null`;
-		for my $cat ("nested", "all", "redun") {
-			`perl $count_nested -in $genome.EDTA.TE.fa.stat -cat $cat > $genome.EDTA.TE.fa.stat.$cat.sum`;
-			for my $d (40, 30, 20, 10, 5) {
-				`printf "\\n\\n" >> $genome.EDTA.TE.fa.stat.$cat.sum`;
-				`perl $count_nested -in $genome.EDTA.TE.fa.stat -cat $cat -maxdiv $d >> $genome.EDTA.TE.fa.stat.$cat.sum`;
-			}
-		}
+		# extract whole-genome TE, all-v-all blast, and summarize consistency.
+		# Single source of truth: bin/evaluation.pl (the all-v-all blast is checkpointed and resumes
+		# partial runs). -out preserves the $genome.EDTA.TE.fa* output naming reported below.
+		`perl $evaluation -genome $genome -anno $genome.EDTA.TEanno.out -out $genome.EDTA.TE.fa -maxcount 100000 -mincov 0.95 -blast $blastplus -threads $threads -overwrite $overwrite 2>/dev/null`;
 
 		# check results and report status
 		die "ERROR: TE annotation stats results not found in $genome.EDTA.TE.fa.stat!\n\n" unless -s "$genome.EDTA.TE.fa.stat";
