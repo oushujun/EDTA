@@ -13,6 +13,7 @@ my $usage = "\nEvaluate annotation consistency for given annotations.
 		-maxcount	The maximum number of stat lines to obtain. Default: 100000. 0 = no limit
 		-mincov	Minimum reciprocal coverage for the redun category. Default: 0.95
 		-overwrite	Ignore any partial all-vs-all results and restart cleanly (1), or auto-resume a killed run (0, default).
+		-out	Output base path for the TE fasta (default: <anno>.TE.fa). The .stat/.sum files derive from it.
 \n";
 
 my $script_path = $FindBin::Bin;
@@ -23,6 +24,7 @@ my $threads = 4;
 my $maxcount = 100000;
 my $mincov = 0.95;
 my $overwrite = 0; #passed to cleanup_nested: 0 = auto-resume a killed run, 1 = force a fresh restart
+my $out = ''; #output base for the TE fasta; defaults to $RMout.TE.fa (lets callers control the output naming)
 my $call_seq = "$script_path/call_seq_by_list.pl";
 my $cleanup_nested = "$script_path/cleanup_nested.pl";
 my $count_nested = "$script_path/count_nested.pl";
@@ -34,6 +36,7 @@ foreach (@ARGV){
 	$maxcount=$ARGV[$k+1] if /^-maxcount$/i and $ARGV[$k+1] !~ /^-/;
 	$mincov=$ARGV[$k+1] if /^-mincov$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite=$ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
+	$out=$ARGV[$k+1] if /^-out$/i and $ARGV[$k+1] !~ /^-/;
         $blast=$ARGV[$k+1] if /^-blast$/i and defined $ARGV[$k+1] and $ARGV[$k+1] !~ /^-/;
         $threads=$ARGV[$k+1] if /^-threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
         $k++;
@@ -42,6 +45,7 @@ foreach (@ARGV){
 #check files
 die "$genome is not found in the current folder or is empty!\n" unless -s $genome;
 die "$RMout is not found in the current folder or is empty!\n" unless -s $RMout;
+$out = "$RMout.TE.fa" if $out eq ''; #default output base preserves the standalone naming
 
 #get blast path
 $blast=`command -v blastn 2>/dev/null` if $blast eq '';
@@ -54,13 +58,13 @@ chomp ($date);
 print "$date\tEvaluation starts...\n";
 
 # extract whole-genome TE and perform all-v-all blast, then summarize the results
-`awk '{if (\$5~/[0-9]+/ && \$1>300 && \$7-\$6>80) print \$11"\t"\$5":"\$6".."\$7}' $RMout | perl $call_seq - -C $genome > $RMout.TE.fa`;
-`perl $cleanup_nested -in $RMout.TE.fa -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blast -iter 1 -maxcount $maxcount -overwrite $overwrite 2>/dev/null`;
+`awk '{if (\$5~/[0-9]+/ && \$1>300 && \$7-\$6>80) print \$11"\t"\$5":"\$6".."\$7}' $RMout | perl $call_seq - -C $genome > $out`;
+`perl $cleanup_nested -in $out -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blast -iter 1 -maxcount $maxcount -overwrite $overwrite 2>/dev/null`;
 for my $cat ("nested", "all", "redun") {
-	`perl $count_nested -in $RMout.TE.fa.stat -cat $cat -mincov $mincov > $RMout.TE.fa.stat.$cat.sum`;
+	`perl $count_nested -in $out.stat -cat $cat -mincov $mincov > $out.stat.$cat.sum`;
 	for my $d (40, 30, 20, 10, 5) {
-		`printf "\\n\\n" >> $RMout.TE.fa.stat.$cat.sum`;
-		`perl $count_nested -in $RMout.TE.fa.stat -cat $cat -mincov $mincov -maxdiv $d >> $RMout.TE.fa.stat.$cat.sum`;
+		`printf "\\n\\n" >> $out.stat.$cat.sum`;
+		`perl $count_nested -in $out.stat -cat $cat -mincov $mincov -maxdiv $d >> $out.stat.$cat.sum`;
 	}
 }
 
