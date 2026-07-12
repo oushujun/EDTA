@@ -80,10 +80,6 @@ if ($blastplus eq ''){
 	}
 $blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 
-## make blast db for $genome (skip if it already exists - avoids rebuilding a large DB on
-## resume, and works when only the DB, not the source FASTA, is present)
-`${blastplus}makeblastdb -in $genome -out $genome -dbtype nucl 2> /dev/null` unless -s "$genome.nsq";
-
 my $tabout = "$query.cov${min_cov}iden$min_iden.tabout";
 my $ckpt   = "$tabout.ckpt";
 my $header = "#Decision\t5'count\t3'count\tflank_count\tChr\tStart\tEnd\tLOC\tflanking\t5'flank\t5'seq\t3'seq\t3'flank\n";
@@ -173,6 +169,11 @@ for (my $i=0; $i<=$#FA; $i++){
 		end5=>"$flank5$seq5", end3=>"$seq3$flank3", flank=>"$flank5$flank3",
 		};
 	}
+
+## build the blast DB now that the work list is known: skip when it already exists, and also when
+## there is nothing left to blast (e.g. resuming an already-complete tabout) - which avoids
+## rebuilding a large DB just to re-derive pass.fa. (make one only if genome candidates remain.)
+`${blastplus}makeblastdb -in $genome -out $genome -dbtype nucl 2> /dev/null` if @cand and !(-s "$genome.nsq");
 
 my $job_id = 0;
 my $rq = Thread::Queue->new();   # candidate indices ready to decide (produced by workers, consumed by main)
