@@ -210,7 +210,9 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
       --maxdiv [0-100]	Maximum divergence (0-100%, default: 40) of repeat fragments comparing to 
 			library sequences.
       --evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation. (--anno 1 required). Default: 0.
-			 This step is slow and does not affect the annotation result.
+			 This step is slow and does not affect the annotation result. Its all-vs-all blast is
+			 check-pointed: if interrupted, rerunning with --overwrite 0 resumes it from where it
+			 stopped rather than restarting from scratch.
       --exclude	[File]	Exclude regions (bed format) from TE masking in the MAKER.masked output. Default: undef. (--anno 1 required).
       --force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit
 			(default); 1, use rice TEs to continue.
