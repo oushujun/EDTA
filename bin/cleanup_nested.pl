@@ -47,6 +47,7 @@ my $IN = "";
 my $coverage = 0.95; #if a subject sequence covers >95% of a query sequence, the matching part in the subject sequence will be removed.
 my $minlen = 80; #minimal length >=80bp, otherwise discard the sequence
 my $min_iden = 80; #minimal identity >=80%, otherwise discard the sequence
+my $mb_wordsize = 20; #word size to salvage a query that detonates word_size 7 (times out): re-blast with megablast at this word size. Must stay >7 to avoid re-detonating on high-copy queries against a repetitive library.
 my $offset = 7; #if two blast hits are less than $offset [default=7bp) away from each other, join them as one hit
 my $clean = 1; #1, clean nested sequences; 0, will not clean nested, only discard highly overlapping (~100%) sequences
 my $iter = 1;
@@ -62,6 +63,7 @@ foreach (@ARGV){
 	$coverage=$ARGV[$k+1] if /^-cov$/i and $ARGV[$k+1] !~ /^-/;
 	$minlen=$ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1] !~ /^-/;
 	$min_iden=$ARGV[$k+1] if /^-miniden$/i and $ARGV[$k+1] !~ /^-/;
+	$mb_wordsize=$ARGV[$k+1] if /^-mb_wordsize$/i and $ARGV[$k+1] !~ /^-/;
 	$clean=$ARGV[$k+1] if /^-clean$/i and $ARGV[$k+1] !~ /^-/;
 	$count_limit=$ARGV[$k+1] if /^-maxcount$/i and $ARGV[$k+1] !~ /^-/;
 	$user_iter=$ARGV[$k+1] if /^-iter$/i and $ARGV[$k+1] !~ /^-/;
@@ -218,6 +220,10 @@ sub condenser(){
 		my $scaled_iden; # overall identity given all blast hits that pass the filter
 		my $total_len; # total length of all alignments to $id
 		@Blast=qx(bash -c '$exec' 2> /dev/null);
+		if (($? >> 8) == 137){ # word_size 7 detonated (timeout/OOM) on a high-copy query -> salvage with megablast (word_size $mb_wordsize)
+			(my $exec_mb = $exec) =~ s/-word_size 7 -evalue 1e-5 -dust no/-word_size $mb_wordsize -evalue 1e-5/;
+			@Blast=qx(bash -c '$exec_mb' 2> /dev/null);
+		}
 		# collect BLAST HSPs into the hash
 		foreach (@Blast){
 			my ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len) = (split)[0,1,2,3,8,9,11];
