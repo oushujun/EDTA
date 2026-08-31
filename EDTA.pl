@@ -642,8 +642,9 @@ if ($wholeelement){
 #`perl $rename_TE $genome.EDTA.raw.fa.cln.cln | perl $format_TElib - > $genome.EDTA.TElib.fa`;
 
 # update LTR boundary file with renamed TE IDs
-if ($wholeelement and -s "$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound" and -s "$genome.EDTA.TElib.fa.rename_map"){
-	`perl $update_LTRbound $genome.EDTA.TElib.fa.rename_map $genome.EDTA.raw/$genome.LTRlib.fa.LTRbound > $genome.EDTA.TElib.LTRbound`;
+# NOTE: cwd is $genome.EDTA.final here (chdir above), and $genome.EDTA.raw is its sibling.
+if ($wholeelement and -s "../$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound" and -s "$genome.EDTA.TElib.fa.rename_map"){
+	`perl $update_LTRbound $genome.EDTA.TElib.fa.rename_map ../$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound > $genome.EDTA.TElib.LTRbound`;
 }
 
 # identify novel TEs using the user provided $HQlib
