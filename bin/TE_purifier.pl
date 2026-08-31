@@ -35,6 +35,7 @@ my $TE2 = ""; #the file that has lots of $TE1 contaminants
 my $lower = 1; #use lower case (1, default) or Ns (0) to mask qualified contaminants
 my $minlen = 50; #shortest length of match to be considered. I choose half the size of the shortest element (100bp) here.
 my $miniden = 60; #minimum identity (%) to be considered a real match
+my $mb_wordsize = 20; #word size used to salvage a query that detonates word_size 7 (times out): re-blast with megablast at this word size. Smaller = more sensitive (closer to word_size 7) but slower; must stay >7 to avoid re-detonating on high-copy queries against a repetitive library.
 my $mindiff = "0.4"; #minimum richness difference between $TE1 and $TE2 for a sequence to be considered as real to $TE1
 my $reprocess = 0; #skip (1) RepeatMasking and use existing *stat file to regenerate the TE1-TE2.fa file. default 0.
 my $script_path = $FindBin::Bin;
@@ -52,6 +53,7 @@ foreach (@ARGV){
 	$lower = $ARGV[$k+1] if /^-lower$/i and $ARGV[$k+1] !~ /^-/;
 	$minlen = $ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1] !~ /^-/;
 	$miniden = $ARGV[$k+1] if /^-miniden/i and $ARGV[$k+1] !~ /^-/;
+	$mb_wordsize = $ARGV[$k+1] if /^-mb_wordsize/i and $ARGV[$k+1] !~ /^-/;
 	$mindiff = $ARGV[$k+1] if /^-mindiff/i and $ARGV[$k+1] !~ /^-/;
 	$reprocess = $ARGV[$k+1] if /^-reprocess/i and $ARGV[$k+1] !~ /^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker/i and $ARGV[$k+1] !~ /^-/;
@@ -196,38 +198,11 @@ sub purifier(){
 			next unless defined $seq;
 			my $target = ">$id:$from..$to\\n$seq";
 
-			# count the size of $target in $TE1
-			my $exec = "timeout -s KILL 188s ${blastplus}blastn -db $TE1 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
-			my @blast_te1 = ();
-			my $try = 0;
-			while ($try < 10){ #try 10 times to guarantee the blast is run correctly
-				@blast_te1 = qx(bash -c '$exec' 2> /dev/null) if defined $seq;
-				last if $? == 0;
-				$try++;
-				}
-			my $seq_te1_len = 0;
-			foreach (@blast_te1){
-				my ($id, $iden, $len) = (split)[1,2,3];
-				next unless (defined $id && defined $iden && defined $len);
-				next if $iden < $miniden or $len < $minlen;
-				$seq_te1_len += $len;
-				}
-
-			# count the size of $target in $TE2
-			$exec = "timeout -s KILL 188s ${blastplus}blastn -db $TE2 -query <(echo -e \"$seq\") -outfmt 6 -word_size 7 -evalue 1e-5 -dust no";
-			my @blast_te2 = ();
-			$try = 0;
-			while ($try < 10){ #try 10 times to guarantee the blast is run correctly
-				@blast_te2 = qx(bash -c '$exec' 2> /dev/null) if defined $seq;
-				last if $? == 0;
-				$try++;
-				}
-			my $seq_te2_len = 0;
-			foreach (@blast_te2){
-				my ($id, $iden, $len) = (split)[1,2,3];
-				next if $iden < $miniden or $len < $minlen;
-				$seq_te2_len += $len;
-				}
+			# richness in $TE1 and $TE2 (see richness()): the sensitive word_size 7 as before,
+			# falling back to megablast only if word_size 7 detonates (times out) on a high-copy
+			# query against a repetitive library.
+			my $seq_te1_len = richness($seq, $TE1);
+			my $seq_te2_len = richness($seq, $TE2);
 
 			#calculate the fold difference in richness. the smaller the more likely it belongs to $TE2 (contaminant of $TE1)
 			my ($seq_te1_percent, $seq_te2_percent) = ($seq_te1_len/$TE1_len, $seq_te2_len/$TE2_len);
@@ -238,3 +213,40 @@ sub purifier(){
 		}
 	}
 
+
+
+# richness($seq, $db): total length of qualified matches of $seq in $db (its "richness").
+# Default to the sensitive word_size 7, which reproduces the original count exactly. If word_size 7
+# detonates on a high-copy query and is KILLed (times out), salvage the count with megablast
+# (word_size $mb_wordsize), which completes fast. Non-detonating queries are therefore counted
+# identically to the original; only the few detonators -- which the original could not finish at
+# all -- differ.
+sub richness {
+	my ($seq, $db) = @_;
+	my ($out, $rc) = &run_blast($seq, $db, "-word_size 7 -evalue 1e-5 -dust no");
+	($out, $rc) = &run_blast($seq, $db, "-word_size $mb_wordsize -evalue 1e-5") if ($rc >> 8) == 137;
+	my $sum = 0;
+	foreach (@$out){
+		my ($iden, $len) = (split)[2,3];
+		next unless defined $len and $iden =~ /^[0-9]/ and $len =~ /^[0-9]/;
+		next if $iden < $miniden or $len < $minlen;
+		$sum += $len;
+	}
+	return $sum;
+}
+
+# run_blast($seq, $db, $opts): one blastn with a hard timeout, returning (\@rows, $rc). Retry only
+# transient failures, never a KILL (timeout/OOM) -- a detonating query then costs one timeout
+# instead of a 10x retry storm.
+sub run_blast {
+	my ($seq, $db, $opts) = @_;
+	my $exec = "timeout -s KILL 188s ${blastplus}blastn -db $db -query <(echo -e \"$seq\") -outfmt 6 $opts";
+	my (@out, $rc);
+	for (my $try = 0; $try < 3; $try++){
+		@out = qx(bash -c '$exec' 2> /dev/null);
+		$rc = $?;
+		last if $rc == 0;
+		last if ($rc >> 8) == 137;
+	}
+	return (\@out, $rc);
+}
