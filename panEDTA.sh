@@ -245,7 +245,7 @@ done < "$genome_list"
 # get fl-TE with ≥ $fl_copy copies in each genome
 printf "\n%s\n" "$(date)"
 for genome in $genomes; do
-	printf "\tIdenfity full-length TEs for genome $genome %s\n"
+	printf "\tIdentify full-length TEs for genome %s\n" "$genome"
 	perl $path/bin/find_flTE.pl $genome.mod.EDTA.anno/$genome.mod.EDTA.RM.out | \
 		awk '{print $10}'| \
 		sort| \
