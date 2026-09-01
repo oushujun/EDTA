@@ -134,6 +134,7 @@ my $rice_TIR = "$script_path/database/rice7.0.0.liban.TIR";
 my $rice_helitron = "$script_path/database/rice7.0.0.liban.Helitron";
 my $rename_TE = "$script_path/bin/rename_TE.pl";
 my $update_LTRbound = "$script_path/bin/update_LTRbound.pl";
+my $ltrbound_denovo = "$script_path/bin/ltrbound_denovo.py";
 my $seqid_codec = "$script_path/bin/seqid_codec.pl";
 #my $rename_RM = "$script_path/bin/rename_RM_TE.pl";
 my $call_seq = "$script_path/bin/call_seq_by_list.pl";
@@ -663,10 +664,21 @@ if (-s "$genome.EDTA.TElib.fa" and $overwrite == 0
 }
 #`perl $rename_TE $genome.EDTA.raw.fa.cln.cln | perl $format_TElib - > $genome.EDTA.TElib.fa`;
 
-# update LTR boundary file with renamed TE IDs
+# Build the LTR boundary file (id, total_len, lLTR_len, rLTR_len) for the final library.
+# Primary path measures boundaries directly from the shipped sequences by self-alignment
+# (bin/ltrbound_denovo.py): correct by construction, so it stays right after advance
+# filtering trims a library sequence. ~1/3 of LTR entries resolve a terminal-repeat pair;
+# the rest genuinely lost one and are correctly omitted. Fallback without python3 reuses
+# LTR_retriever's numbers, but only for entries filtering left unchanged.
 # NOTE: cwd is $genome.EDTA.final here (chdir above), and $genome.EDTA.raw is its sibling.
-if ($wholeelement and -s "../$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound" and -s "$genome.EDTA.TElib.fa.rename_map"){
-	`perl $update_LTRbound $genome.EDTA.TElib.fa.rename_map ../$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound > $genome.EDTA.TElib.LTRbound`;
+if ($wholeelement and -s "$genome.EDTA.TElib.fa"){
+	my $py = `command -v python3 2>/dev/null`;
+	if (-s $ltrbound_denovo and $py ne ''){
+		local $ENV{EDTA_BLASTN} = "${blastplus}blastn";
+		`python3 $ltrbound_denovo $genome.EDTA.TElib.fa $genome.EDTA.TElib.LTRbound $threads`;
+	} elsif (-s "../$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound" and -s "$genome.EDTA.TElib.fa.rename_map"){
+		`perl $update_LTRbound $genome.EDTA.TElib.fa.rename_map ../$genome.EDTA.raw/$genome.LTRlib.fa.LTRbound $genome.EDTA.TElib.fa > $genome.EDTA.TElib.LTRbound`;
+	}
 }
 
 # identify novel TEs using the user provided $HQlib

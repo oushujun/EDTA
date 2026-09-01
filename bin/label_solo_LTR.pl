@@ -28,15 +28,28 @@ die "Usage: perl label_solo_LTR.pl -bound <LTRbound> -rmout <RM.out> [-maxint $m
 
 # Read boundary file: TE_name => [total_len, lLTR_len, rLTR_len]
 my %bound;
+my $skipped_bound = 0;
 open BOUND, "<$bound_file" or die "Cannot open $bound_file: $!\n";
 while (<BOUND>){
 	chomp;
 	my ($name, $total_len, $lLTR_len, $rLTR_len) = split /\t/;
 	next unless defined $rLTR_len;
+	# Guard against boundary rows whose terminal repeats do not fit the element:
+	# lLTR_len + rLTR_len > total_len is arithmetically impossible and makes
+	# int_end (= total_len - rLTR_len) fall below int_start, silently mis-calling
+	# solo LTRs. Such rows appear when advance filtering trims a library sequence
+	# after LTR_retriever measured its boundaries; skip rather than trust them.
+	unless ($total_len =~ /^\d+$/ and $lLTR_len =~ /^\d+$/ and $rLTR_len =~ /^\d+$/
+	        and $total_len > 0 and $lLTR_len + $rLTR_len <= $total_len){
+		$skipped_bound++;
+		next;
+	}
 	# Strip #class for matching RM output (RM uses name#class format)
 	$bound{$name} = [$total_len, $lLTR_len, $rLTR_len];
 }
 close BOUND;
+print STDERR "label_solo_LTR.pl: skipped $skipped_bound boundary entries with inconsistent "
+	. "coordinates (lLTR_len + rLTR_len > total_len).\n" if $skipped_bound;
 
 # Parse RepeatMasker .out file and identify solo LTR candidates
 open RM, "<$rmout_file" or die "Cannot open $rmout_file: $!\n";
