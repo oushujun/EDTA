@@ -544,10 +544,19 @@ chomp ($date = `date`);
 print "$date\tPerform EDTA advance filtering for raw TE candidates and generate the stage 1 library: \n\n";
 
 # remove existing results
-`rm ./$genome.EDTA.combine/* 2>/dev/null` if $overwrite == 1;
+`rm ./$genome.EDTA.combine/* ./$genome.EDTA.combine/.step*.done 2>/dev/null` if $overwrite == 1;
 
-# Filter raw TE candidates and the make stage 1 library
+# Filter raw TE candidates and the make stage 1 library.
+# Guarded for restartability (added 2026-08-24): EDTA.pl used to call
+# EDTA_processK.pl unconditionally and only check for the stage 1 library
+# afterwards, so a chained resubmit re-ran the entire filtering stage even when
+# it had already completed. Individual steps inside that stage now resume via
+# the .step*.done stamps in $genome.EDTA.combine/.
+if (-s "$genome.EDTA.combine/$genome.EDTA.fa.stg1" and $overwrite == 0){
+	print "$date\tExisting stage 1 library $genome.EDTA.combine/$genome.EDTA.fa.stg1 found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
+	} else {
 `perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -ltrint $genome.EDTA.raw/$genome.LTR.intact.raw.fa -line $genome.EDTA.raw/$genome.LINE.raw.fa -sine $genome.EDTA.raw/$genome.SINE.raw.fa -tir $genome.EDTA.raw/$genome.TIR.intact.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.intact.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads`;
+	}
 
 # check results, remove intermediate files, and report status
 die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.EDTA.fa.stg1" unless -s "$genome.EDTA.combine/$genome.EDTA.fa.stg1";
