@@ -642,10 +642,21 @@ if (-s "$cds"){
 	}
 
 # Final rounds of redundancy removal and make final EDTA library
-`perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blastplus 2>/dev/null`;
+# resume guard added 2026-08-28: cleanup_nested took 41.0 h on the 11.1 Gb oat genome
+# (job 20121980) and was unguarded, so any wall-clock kill later in FINAL redid all of it.
+if (-s "$genome.EDTA.raw.fa.cln.cln" and $overwrite == 0){
+	print "\tExisting $genome.EDTA.raw.fa.cln.cln found, skipping cleanup_nested (--overwrite 0).\n\n";
+} else {
+	`perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blastplus 2>/dev/null`;
+}
 
 # rename all TEs in the EDTA library
-if ($wholeelement){
+# resume guard added 2026-08-28: keeps the TE library byte-identical across a resumed
+# FINAL, so a library already handed to an external RepeatMasker run stays valid.
+if (-s "$genome.EDTA.TElib.fa" and $overwrite == 0
+    and (!$wholeelement or -s "$genome.EDTA.TElib.fa.rename_map")){
+	print "\tExisting $genome.EDTA.TElib.fa found, skipping rename_TE (--overwrite 0).\n\n";
+} elsif ($wholeelement){
 	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln --map $genome.EDTA.TElib.fa.rename_map > $genome.EDTA.TElib.fa`;
 } else {
 	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
