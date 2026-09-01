@@ -4,6 +4,7 @@ use strict;
 #Shujun Ou (oushujun@iastate.edu) 
 #v0.1 08/10/2019
 #v0.2 03/05/2026 Add maxdiv and mincov
+#v0.3 07/27/2026 Accept - and ? in class names (hAT-Ac, CMC-Chapaev-3, SINE?)
 
 my $usage = "\nCount all-versus-all misclassifications using the cleanup_nested.pl .stat file
 	perl count_nested.pl -in sequence.fa.stat -cat [redun|nested|all] [options] > sequence.fa.stat.sum
@@ -57,7 +58,14 @@ while (<IN>){
 
 	s/MITE/DNA/gi;
 	s/TIR/DNA/gi;
-	my ($type1, $type2) = ($1, $2) if /[\||#]([0-9a-z\/_]+)\s+.*[\||#]([0-9a-z\/_]+)(;|\s+)/i;
+	# Class names may contain - and ?, e.g. DNA/hAT-Ac, DNA/CMC-Chapaev-3, SINE?. Excluding
+	# them did not merely truncate the name: $type1 must be followed immediately by \s+, so
+	# "|LINE/Rex-Babar\t" captured "LINE/Rex", failed on "-Babar", and the whole line was
+	# dropped from the matrix. That silently discarded up to 45% of the lines in a
+	# RepeatMasker-2.0.8 .stat (Dfam/RepBase names are heavily hyphenated) while leaving an
+	# LTR-only library, whose names have no hyphens, essentially untouched -- so the two were
+	# not being counted on comparable samples. The - is last in the class so it stays literal.
+	my ($type1, $type2) = ($1, $2) if /[\||#]([0-9a-z\/_?-]+)\s+.*[\||#]([0-9a-z\/_?-]+)(;|\s+)/i;
 	next unless defined $type1 and defined $type2;
 	# Skip truncated type names from corrupted lines (valid types have >=2 chars after /)
 	next if ($type1 =~ /\// and $type1 !~ /\/.{2,}/) or ($type2 =~ /\// and $type2 !~ /\/.{2,}/);
