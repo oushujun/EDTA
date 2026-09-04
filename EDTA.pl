@@ -76,8 +76,10 @@ perl EDTA.pl [options]
 				library sequences.
 	--evaluate [0|1]	Evaluate (1) classification consistency of the TE annotation.
 				(--anno 1 required). Default: 1.
+	--maker	[0|1]	Produce (1) or not (0, default) the low-threshold MAKER.masked
+				genome for MAKER gene annotation. (--anno 1 required).
 	--exclude [File]	Exclude regions (bed format) from TE masking in the MAKER.masked
-				output. Default: undef. (--anno 1 required).
+				output. Default: undef. (--anno 1 and --maker 1 required).
 	--force	[0|1]	(default: 0) 0: When no confident TE candidates are found, interrupt and exit.
 			             1: Use rice TEs to continue.
 	--wholeelement [0|1]	Keep LTR retrotransposons as whole elements in the library instead
@@ -110,6 +112,7 @@ my $anno = 0; #0, will not annotate whole-genome TE (default). 1, annotate with 
 my $rmout = ''; #a RM .out file for custom homology-based annotation.
 my $evaluate = 1; #1 will evaluate the consistancy of the TE annotation
 my $exclude = ''; #a bed file exclude from TE annotation
+my $maker = 0; #0, will not produce the low-threshold MAKER.masked genome (default). 1, produce it.
 my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
@@ -193,6 +196,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'maxdiv=i'		 => \$maxdiv,
 		  'evaluate=i'           => \$evaluate,
 		  'exclude=s'            => \$exclude,
+		  'maker=i'              => \$maker,
 		  'force=i'              => \$force,
 		  'u=s'                  => \$miu,
 		  'repeatmodeler=s'      => \$repeatmodeler,
@@ -239,6 +243,7 @@ if ($sensitive != 0 and $sensitive != 1){ die "The expected value for the sensit
 if ($anno != 0 and $anno != 1){ die "The expected value for the anno parameter is 0 or 1!\n"}
 if ($evaluate != 0 and $evaluate != 1){ die "The expected value for the evaluate parameter is 0 or 1!\n"}
 if ($force != 0 and $force != 1){ die "The expected value for the force parameter is 0 or 1!\n"}
+if ($maker != 0 and $maker != 1){ die "The expected value for the maker parameter is 0 or 1!\n"}
 if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float value without units!\n"}
 if ($debug != 0 and $debug != 1){ die "The expected value for the debug parameter is 0 or 1!\n"}
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"}
@@ -889,26 +894,29 @@ if ($anno == 1){
 	my $tot_TE = `grep Total $genome.EDTA.TEanno.sum|grep %|awk '{print \$4}'`;
 	chomp $tot_TE;
 
-	# make low-threshold masked genome for MAKER
-	`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude` unless (-s "$genome.MAKER.masked" and $overwrite == 0);
-	`mv $genome.new.masked $genome.MAKER.masked`;
-	my $maker_TE = `perl $count_base $genome.MAKER.masked`;
-	$maker_TE = (split /\s+/, $maker_TE)[3];
-	$maker_TE = sprintf("%.2f%%", $maker_TE*100);
-	
+	# make low-threshold masked genome for MAKER (optional; off by default, enable with --maker 1)
+	my $maker_TE = '';
+	if ($maker == 1){
+		`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude` unless (-s "$genome.MAKER.masked" and $overwrite == 0);
+		`mv $genome.new.masked $genome.MAKER.masked`;
+		$maker_TE = `perl $count_base $genome.MAKER.masked`;
+		$maker_TE = (split /\s+/, $maker_TE)[3];
+		$maker_TE = sprintf("%.2f%%", $maker_TE*100);
+	}
+
 	# check results and report status
 	die "ERROR: TE annotation results not found in $genome.EDTA.TEanno.gff3!\n\n" unless -s "$genome.EDTA.TEanno.gff3";
-	print "ERROR: The masked genome for MAKER annotation is not found in $genome.MAKER.masked!\n\n" unless -s "$genome.MAKER.masked";
+	print "ERROR: The masked genome for MAKER annotation is not found in $genome.MAKER.masked!\n\n" if ($maker == 1 and !-s "$genome.MAKER.masked");
 	chomp ($date = `date`);
 	print "$date\tTE annotation using the EDTA library has finished! Check out:\n";
 	print "\t\tWhole-genome TE annotation (total TE: $tot_TE): $genome.EDTA.TEanno.gff3 $genome.EDTA.TEanno.gtf\n";
 	print "\t\tWhole-genome TE annotation summary: $genome.EDTA.TEanno.sum\n";
 	print "\t\tWhole-genome TE divergence plot: ${genome}_divergence_plot.pdf\n";
 	print "\t\tWhole-genome TE density plot: $genome.EDTA.TEanno.density_plots.pdf\n";
-	print "\t\tLow-threshold TE masking for MAKER gene annotation (masked: $maker_TE): $genome.MAKER.masked\n\n";
+	print "\t\tLow-threshold TE masking for MAKER gene annotation (masked: $maker_TE): $genome.MAKER.masked\n\n" if $maker == 1;
 
 	# copy results out
-	`cp $genome.MAKER.masked ../`; # make no backup for this file
+	`cp $genome.MAKER.masked ../` if $maker == 1; # make no backup for this file
 	copy_file("$genome.EDTA.TEanno.gff3", "..");
 	copy_file("$genome.EDTA.TEanno.gtf", "..");
 	copy_file("$genome.EDTA.TEanno.sum", "..");

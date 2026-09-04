@@ -444,8 +444,12 @@ if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
 # generate annotated output and gff
 `perl $output_by_list 1 $genome.LTR.intact.fa.ori 1 $genome.LTR.intact.raw.fa -FA -ex|grep -a \\>|perl -nle 's/>//; print "Name\\t\$_"' > $genome.LTR.intact.fa.ori.rmlist`;
 `perl $filter_gff $genome.pass.list.gff3 $genome.LTR.intact.fa.ori.rmlist | perl -nle 's/LTR_retriever/EDTA/gi; print \$_' > $genome.LTR.intact.raw.gff3`;
-`rm $genome 2>/dev/null`;
 	}
+
+# remove the short-ID genome symlink created above (line ~380). Done outside the
+# else block so it also runs on resume (--overwrite 0), when that block is skipped
+# and the symlink would otherwise be left behind. Nothing downstream reads it.
+`rm -f $genome 2>/dev/null`;
 
 # copy result files out
 `touch $genome.LTRlib.fa` unless -e "$genome.LTRlib.fa";

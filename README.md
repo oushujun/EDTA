@@ -174,7 +174,7 @@ Optional 1:
 Optional 2, when you specify the `--anno 1` parameter, you will get:  
 2. Whole-genome TE annotation: $genome.mod.EDTA.TEanno.gff3. This file contains both structurally intact and fragmented TE annotations.  
 3. Summary of whole-genome TE annotation: $genome.mod.EDTA.TEanno.sum.   
-4. Low-threshold TE masking: $genome.mod.MAKER.masked. This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. In practice, this approach will reduce overmasking for genic regions, which can improve gene prediction quality. However, initial gene models should contain TEs and need further filtering.   
+4. Low-threshold TE masking: $genome.mod.MAKER.masked (only when `--maker 1` is also specified; off by default). This is a genome file with only long TEs (>=1 kb) being masked. You may use this for de novo gene annotations. In practice, this approach will reduce overmasking for genic regions, which can improve gene prediction quality. However, initial gene models should contain TEs and need further filtering.   
 5. Annotation inconsistency for simple TEs: $genome.mod.EDTA.TE.fa.stat.redun.sum.  
 6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum.   
 7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum.
@@ -213,7 +213,9 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
 			 This step is slow and does not affect the annotation result. Its all-vs-all blast is
 			 check-pointed: if interrupted, rerunning with --overwrite 0 resumes it from where it
 			 stopped rather than restarting from scratch.
-      --exclude	[File]	Exclude regions (bed format) from TE masking in the MAKER.masked output. Default: undef. (--anno 1 required).
+      --maker	[0|1]	Produce (1) or not produce (0, default) the low-threshold $genome.mod.MAKER.masked
+			genome (only long TEs >=1 kb masked) for de novo gene annotation. (--anno 1 required).
+      --exclude	[File]	Exclude regions (bed format) from TE masking in the MAKER.masked output. Default: undef. (--anno 1 and --maker 1 required).
       --force	[0|1]	When no confident TE candidates are found: 0, interrupt and exit
 			(default); 1, use rice TEs to continue.
       --u [float]	Neutral mutation rate to calculate the age of intact LTR elements.
