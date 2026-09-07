@@ -41,19 +41,19 @@ die "\nERROR: The -iter parameter receives non-integer input!\n$usage" unless $u
 open LOG, ">$rmout.log" or die $usage;
 
 # itreatively combine rows appear to derive from the same repeat
+# two alternating temp files carry the intermediate results across iterations
 my $num_log = 0; # count log lines at the end of each iteration
-my $next = 0;
+my ($tmp_in, $tmp_out) = ("$rmout.tmpA", "$rmout.tmpB");
 $iter = $user_iter if $user_iter != 0;
-`cp $rmout $rmout.iter0`;
+`cp $rmout $tmp_in`;
 for (my $i=0; $i<$iter; $i++){
 	my $date=`date`;
 	chomp ($date);
 	print "$date\tCombine fragmented repeats. Working on iteration $i\n";
 
 	# write temp results to file
-	open RMout, "<$rmout.iter$i" or die $usage;
-	$next = $i + 1;
-	open Out, ">$rmout.iter$next" or die $!;
+	open RMout, "<$tmp_in" or die $usage;
+	open Out, ">$tmp_out" or die $!;
 
 # print header
 print Out "SW_score\tperc_div.\tperc_del.\tperc_ins.\tquery_sequence\tquery_begin\tquery_end\tquery_remain\tstrand\tmatching_repeat\trepeat_class/family\trepeat_begin\trepeat_end\trepeat_remain\tID\n";
@@ -148,6 +148,7 @@ if (%prev_row){
 	# end of the iteration
 	close RMout;
 	close Out;
+	($tmp_in, $tmp_out) = ($tmp_out, $tmp_in); #the just-written file becomes the next input
 
 	# automatically increase iteration based on the log result
 	my $curr_log = `wc -l "$rmout.log"`;
@@ -162,6 +163,7 @@ if (%prev_row){
 }
 
 # copy the last iteration as the final file
-`cp $rmout.iter$next $rmout.cmb`;
+`cp $tmp_in $rmout.cmb`;
 die "\nERROR: Failed to generate the $rmout.cmb file!\n" if $? != 0;
+unlink "$rmout.tmpA", "$rmout.tmpB";
 close LOG;

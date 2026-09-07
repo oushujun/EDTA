@@ -185,6 +185,49 @@ sub cat_checked {
 	`touch $dst` unless @inputs;
 	}
 
+# run a batch of independent steps concurrently, one forked child per step. Children work in
+# private ".$name.$$.tmp" scratch dirs (with symlinked inputs) because TE_purifier builds blast
+# databases named after its input files and steps within a batch share inputs ($TIR in 1/3/5,
+# $HEL in 2/6). The child PID in the dir name keeps concurrent EDTA runs in the same directory
+# from deleting each other's scratch. Each child gets max(1, int($threads/3)) threads, runs only
+# its own step, moves the step products back, stamps, and exits; a failed child's scratch is
+# removed by the parent before it dies. Steps already stamped with done() are skipped.
+sub parallel {
+	my $child_threads = int($threads/3);
+	$child_threads = 1 if $child_threads < 1;
+	my %pid_step;
+	foreach my $step (@_){
+		my ($name, $in, $nonempty, $may_empty, $body) = @$step;
+		next if &done($name);
+		my $pid = fork();
+		die "Cannot fork a child for $name: $!\n" unless defined $pid;
+		if ($pid == 0){
+			$threads = $child_threads;
+			my $tmp = ".$name.$$.tmp";
+			`rm -rf $tmp`;
+			mkdir $tmp or die "Cannot create $tmp: $!\n";
+			chdir $tmp or die "Cannot enter $tmp: $!\n";
+			`ln -s ../$_ $_` foreach @$in;
+			&$body;
+			chdir '..' or die "Cannot leave $tmp: $!\n";
+			`mv $tmp/$_ $_` foreach (@$nonempty, @$may_empty);
+			`rm -rf $tmp`;
+			&mark($name, $nonempty, $may_empty);
+			exit 0;
+			}
+		$pid_step{$pid} = $name;
+		}
+	while ((my $pid = wait()) != -1){
+		next unless exists $pid_step{$pid};
+		if ($? != 0){
+			my $name = $pid_step{$pid};
+			my $status = $?;
+			`rm -rf .$name.*.tmp`;
+			die "Parallel step $name failed (status $status)\n";
+			}
+		}
+	}
+
 
 #################################
 ###### Advance filtering ######
@@ -192,39 +235,30 @@ sub cat_checked {
 
 ## Purge contaminants in redundant libraries
 # purify raw LTR (clean LTR library is better than dirty intact LTR for purging LTRs from other TEs)
-unless (&done("step1_LTR_vs_TIR")){
-	&Purifier("$LTR", "$TIR", $mindiff_LTR);
-	&mark("step1_LTR_vs_TIR", ["$LTR.HQ"]);
-	}
-unless (&done("step2_LTR_vs_HEL")){
-	&Purifier("$LTR.HQ", "$HEL", $mindiff_LTR);
-	`mv $LTR.HQ.HQ $LTR.HQ`;
-	&mark("step2_LTR_vs_HEL", ["$LTR.HQ"]);
-	}
+# steps 1/3/5 start the three independent chains (LTR, Helitron, TIR): run them concurrently
+&parallel(
+	["step1_LTR_vs_TIR", ["$LTR", "$TIR"], ["$LTR.HQ"], [], sub { &Purifier("$LTR", "$TIR", $mindiff_LTR); }],
+	["step3_HEL_vs_TIR", ["$HEL", "$TIR"], [], ["$HEL.HQ"], sub { &Purifier("$HEL", "$TIR", $mindiff_HEL); }],
+	["step5_TIR_vs_LTR", ["$TIR", "$LTR"], [], ["$TIR.HQ"], sub { &Purifier("$TIR", "$LTR", $mindiff_TIR); }],
+	);
 
-# purify Helitron
-unless (&done("step3_HEL_vs_TIR")){
-	&Purifier("$HEL", "$TIR", $mindiff_HEL);
-	&mark("step3_HEL_vs_TIR", [], ["$HEL.HQ"]);
-	}
-unless (&done("step4_HEL_vs_LTR")){
-	&Purifier("$HEL.HQ", "$LTR", $mindiff_LTR);
-	`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $HEL.HQ-$LTR.fa > $HEL.int.cln`; # more relaxed in filtering intact helitrons
-	`mv $HEL.HQ.HQ $HEL.cln`;
-	&mark("step4_HEL_vs_LTR", [], ["$HEL.int.cln", "$HEL.cln"]);
-	}
-
-# purify TIR
-unless (&done("step5_TIR_vs_LTR")){
-	&Purifier("$TIR", "$LTR", $mindiff_TIR);
-	&mark("step5_TIR_vs_LTR", [], ["$TIR.HQ"]);
-	}
-unless (&done("step6_TIR_vs_HEL")){
-	&Purifier("$TIR.HQ", "$HEL", $mindiff_TIR);
-	`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $TIR.HQ-$HEL.fa > $TIR.int.cln`; # more relaxed in filtering intact TIRs
-	`mv $TIR.HQ.HQ $TIR.cln`;
-	&mark("step6_TIR_vs_HEL", [], ["$TIR.int.cln", "$TIR.cln"]);
-	}
+# second links of the three chains: steps 2/4/6 run concurrently
+&parallel(
+	["step2_LTR_vs_HEL", ["$LTR.HQ", "$HEL"], ["$LTR.HQ"], [], sub {
+		&Purifier("$LTR.HQ", "$HEL", $mindiff_LTR);
+		`mv $LTR.HQ.HQ $LTR.HQ`;
+		}],
+	["step4_HEL_vs_LTR", ["$HEL.HQ", "$LTR"], [], ["$HEL.int.cln", "$HEL.cln"], sub {
+		&Purifier("$HEL.HQ", "$LTR", $mindiff_HEL);
+		`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $HEL.HQ-$LTR.fa > $HEL.int.cln`; # more relaxed in filtering intact helitrons
+		`mv $HEL.HQ.HQ $HEL.cln`;
+		}],
+	["step6_TIR_vs_HEL", ["$TIR.HQ", "$HEL"], [], ["$TIR.int.cln", "$TIR.cln"], sub {
+		&Purifier("$TIR.HQ", "$HEL", $mindiff_TIR);
+		`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $TIR.HQ-$HEL.fa > $TIR.int.cln`; # more relaxed in filtering intact TIRs
+		`mv $TIR.HQ.HQ $TIR.cln`;
+		}],
+	);
 
 # purify intact LTR from TIRs. Including Helitron is too damaging for now.
 unless (&done("step7_LTRint_vs_TIRcln")){

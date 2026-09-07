@@ -46,6 +46,14 @@ perl EDTA.pl [options]
 	--genome [File]		The genome FASTA file. Required.
 	--species [Rice|Maize|others]	Specify the species for identification of TIR
 					candidates. Default: others
+	--modules [all|plant|list]	Which raw TE discovery modules to run. Default:
+					all (ltr, sine, line, tir, helitron). plant is a
+					shortcut for ltr,tir,helitron — it skips SINE and
+					LINE, which annotate <2% of most plant genomes but
+					cost the most time (AnnoSINE + RepeatModeler). You
+					may also give an explicit comma list, e.g.
+					ltr,tir,helitron,line. Excluded modules leave empty
+					library files; downstream stages run unchanged.
 	--step [all|filter|final|anno]	Specify which steps you want to run EDTA.
 					all: run the entire pipeline (default)
 					filter: start from raw TEs to the end.
@@ -102,6 +110,7 @@ perl EDTA.pl [options]
 my $genome = '';
 my $check_dependencies = undef;
 my $species = "others";
+my $modules = "all"; #which raw TE modules to run: all, plant (= ltr,tir,helitron), or a comma list
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $HQlib = ''; #curated library
@@ -184,6 +193,7 @@ my $help = undef;
 # read parameters
 if ( !GetOptions( 'genome=s'            => \$genome,
                   'species=s'           => \$species,
+                  'modules=s'           => \$modules,
                   'step=s'              => \$step,
                   'overwrite=i'         => \$overwrite,
                   'curatedlib=s'        => \$HQlib,
@@ -374,9 +384,9 @@ my $genome_file = basename($genome);
 softlink_file($genome, $genome_file);
 $genome = $genome_file;
 
-# check if duplicated sequences found
-my $raw_id = `grep -a \\> $genome|wc -l`;
-my $old_id = `grep -a \\> $genome|sort -u|wc -l`;
+# check if duplicated sequences found (single pass for total and unique ID counts)
+my $id_counts = `grep -a \\> $genome|sort|uniq -c|awk '{t+=\$1} END{print t+0" "NR}'`;
+my ($raw_id, $old_id) = $id_counts =~ /(\d+)\s+(\d+)/;
 if ($raw_id > $old_id){
 	chomp ($date = `date`);
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
@@ -426,7 +436,6 @@ if (-s "$genome.mod" and $overwrite == 0){
 	# Verify unique ID count
 	my $new_id = `grep -a \\> $genome|sort -u|wc -l`;
 	chomp $new_id;
-	chomp $old_id;
 	if ($old_id != $new_id){
 		chomp ($date = `date`);
 		die "$date\tERROR: Seq ID normalization produced non-unique IDs. Please check your genome file.\n";
@@ -497,6 +506,20 @@ $step = uc $step;
 my %valid_steps = map {$_ => 1} qw(ALL FILTER FINAL ANNO);
 die "ERROR: Invalid --step value \"$step\". Valid choices are: all, filter, final, anno.\n" unless $valid_steps{$step};
 
+# --modules: which raw TE discovery modules to run. "plant" is a shortcut that
+# skips the SINE and LINE modules (in most plant genomes they annotate <2% of
+# the sequence, while their discovery — AnnoSINE and RepeatModeler — costs the
+# most wall time). Modules excluded here leave empty library files behind so
+# the filter/final/anno stages proceed unchanged.
+my %valid_modules = map {$_ => 1} qw/ltr sine line tir helitron/;
+$modules = "ltr,tir,helitron" if $modules =~ /^plant$/i;
+$modules = "all" if $modules =~ /^all$/i;
+if ($modules ne "all"){
+	my @mods = split /\s*,\s*/, $modules;
+	die "ERROR: Invalid --modules value \"$modules\". Valid choices are: all, plant, or a comma-separated list of ltr, sine, line, tir, helitron.\n"
+		unless @mods and not grep { not $valid_modules{$_} } @mods;
+	print "\tNote: running raw modules only for: @mods (--modules).\n\n";
+	}
 goto $step;
 
 
@@ -511,7 +534,7 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-system("perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement")==0 or die "EDTA_raw.pl failed with exit code ".($? >> 8)."\n";
+system("EDTA_DUP_CHECK_DONE=1 perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --type $modules --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement")==0 or die "EDTA_raw.pl failed with exit code ".($? >> 8)."\n";
 
 chdir "$genome.EDTA.raw" or die "Cannot enter $genome.EDTA.raw: $!\n";
 
@@ -937,8 +960,10 @@ if ($anno == 1){
 	`sort -T . -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed.homo $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.homo.bed`;
 	`perl $bed2gff $genome.EDTA.homo.bed TE_homo > $genome.EDTA.homo.gff3`;
 	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
-	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -T . -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\\n$gff_head\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
 	# write the header first and append the sorted body, instead of slurping the whole GFF into memory
+	chomp (my $anno_date = `date`);
+	$anno_date =~ s/\s+$//;
+	`printf "##gff-version 3\n##date $anno_date\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\n$gff_head\n" > $genome.EDTA.TEanno.gff3`;
 	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -T . -sV -k1,1 -k4,4 >> $genome.EDTA.TEanno.gff3`;
 	`perl $format_gff3 $genome.EDTA.TEanno.gff3 > gff3.temp.$$.gff3 && mv gff3.temp.$$.gff3 $genome.EDTA.TEanno.gff3`;
 	die "format_gff3 failed to produce $genome.EDTA.TEanno.gff3\n" if $? != 0;

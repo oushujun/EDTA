@@ -11,8 +11,10 @@ $min_len = 50 unless defined $min_len; #default 50 bp
 die usage() unless @ARGV >= 2;
 
 # iteratively split the input gff3 file
+# two alternating temp files carry the intermediate results across iterations
 my $iter = 1;
-my ($in, $out) = ($input, "$input.iter$iter");
+my ($tmpA, $tmpB) = ("$input.tmpA", "$input.tmpB");
+my ($in, $out) = ($input, $tmpA);
 for (my $i=0; $i<$iter; $i++){
 	open IN, "sort -suV $in |" or die "$!";
 	open OUT, ">$out" or die "$!";
@@ -84,10 +86,11 @@ while (my $line = <IN>){
 		} else {
 		$iter++;
 		$in = $out;
-		$out = "$input.iter$iter";
+		$out = $in eq $tmpA ? $tmpB : $tmpA;
 		}
 	}
 `mv $out $output`;
+unlink $tmpA, $tmpB;
 
 
 # determine which annotation to keep

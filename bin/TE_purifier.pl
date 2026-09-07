@@ -3,8 +3,6 @@ use warnings;
 use strict;
 use FindBin;
 use File::Basename;
-use threads;
-use Thread::Queue;
 use threads::shared;
 
 my $usage = "
@@ -42,9 +40,8 @@ my $script_path = $FindBin::Bin;
 my $call_seq = "$script_path/call_seq_by_list.pl";
 my $repeatmasker = "";
 my $blastplus = "";
-my $threads = 36;
-my $queue = Thread::Queue->new();
-my $stat_lock :shared; #serializes writes to STAT so lines never interleave
+my $threads = 8;
+my $batch_size = 1000; #masked regions per batched blastn invocation
 
 # read parameters
 my $k=0;
@@ -67,9 +64,6 @@ foreach (@ARGV){
 # some checks
 die "The TE1 file $TE1 is not found!\n$usage" unless -e $TE1;
 die "The TE2 file $TE2 is not found!\n$usage" unless -e $TE2;
-
-# define RepeatMasker -pa parameter
-my $rm_threads = int($threads/4);
 
 # read $TE1 into memory and count total length
 my ($TE1_len, $TE2_len) = (0, 0);
@@ -126,7 +120,7 @@ if ($reprocess == 0){
 my $div = 100 - $miniden;
 my $err = '';
 unlink "$TE1.out"; # drop a stale .out from a killed earlier run so it can't be mistaken for this run's result
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -nolow -div $div -lib $TE2 $TE1 > ${TE2}-${TE1}.RM.status` // 'no output captured';
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -qq -no_is -nolow -div $div -lib $TE2 $TE1 > ${TE2}-${TE1}.RM.status` // 'no output captured';
 die "ERROR: RepeatMasker failed ($?): $err\n" if $? != 0;
 my $mbdb1 = `${blastplus}makeblastdb -in $TE1 -out $TE1 -dbtype nucl 2>&1` // 'no output captured';
 die "ERROR: makeblastdb failed on $TE1 ($?): $mbdb1\n" if $? != 0;
@@ -156,23 +150,43 @@ close RM;
 
 ###############
 # Identify fold difference between TE1 and TE2
+my $stat_lock :shared; #serializes writes to STAT so lines never interleave
 open STAT, ">$TE1-$TE2.stat" or die $!;
 print STAT "TE1_id\tTE1_len\tTE2_len\tTE1_richness\tTE2_richness\tFold_diff\n";
 
-# multi-threading using queue, put candidate regions into queue for parallel computation
-$queue = Thread::Queue->new();
-foreach my $id (keys %RM){
-	last unless defined $RM{$id};
-	$queue -> enqueue([$id, $RM{$id}]);
+# collect every masked region as one query; the plain serial id "r<N>" cannot be altered by
+# BLAST id parsing (unlike ids containing "|" or ":"), %region maps it back to the region
+my (%region, @queries);
+foreach my $id (sort {$a cmp $b} keys %RM){
+	while ($RM{$id} =~ s/([0-9]+)-([0-9]+)//){
+		my ($from, $to, $seqlen) = ($1, $2, $2-$1+1);
+		next unless exists $TE1{$id};
+		my $seq = substr $TE1{$id}, $from-1, $seqlen;
+		next unless defined $seq;
+		my $qid = "r".scalar(@queries);
+		$region{$qid} = [$id, $from, $to];
+		push @queries, [$qid, $seq];
+		}
 	}
-$queue -> end();
 
-# initiate a number of worker threads and run
-foreach (1..$threads){
-	threads->create(\&purifier);
-	}
-foreach (threads -> list()){
-	$_->join();
+# blast the regions in batches of $batch_size: ONE blastn against TE1 and ONE against TE2 per
+# batch (each -num_threads $threads) replaces the two single-threaded blastn processes per
+# region of the original implementation
+while (@queries){
+	my @batch = splice @queries, 0, $batch_size;
+	my $rich_te1 = &batch_richness(\@batch, $TE1);
+	my $rich_te2 = &batch_richness(\@batch, $TE2);
+
+	#calculate the fold difference in richness. the smaller the more likely it belongs to $TE2 (contaminant of $TE1)
+	foreach my $query (@batch){
+		my ($qid) = @$query;
+		my ($id, $from, $to) = @{$region{$qid}};
+		my ($seq_te1_len, $seq_te2_len) = ($rich_te1->{$qid}, $rich_te2->{$qid});
+		my ($seq_te1_percent, $seq_te2_percent) = ($seq_te1_len/$TE1_len, $seq_te2_len/$TE2_len);
+		my $diff = 1000;
+		$diff = $seq_te1_percent/$seq_te2_percent if $seq_te2_percent > 0;
+		{ lock($stat_lock); print STAT "$id:$from..$to\t$seq_te1_len\t$seq_te2_len\t$seq_te1_percent\t$seq_te2_percent\t$diff\n"; }
+		}
 	}
 close STAT;
 ###############
@@ -210,36 +224,40 @@ foreach my $id (sort {$a cmp $b} keys %TE1){
 close STAT;
 close Seq;
 
-# fixing the formatting error created by simutaniously writing the same file
-`perl -i -nle 's/>/\\n>/g unless /^>/; print \$_' $TE1-$TE2.fa`;
 
-
-# subrotine for the purifier
-sub purifier(){
-	while (defined($_ = $queue->dequeue())){
-		my ($id, $coor) = (@{$_}[0], @{$_}[1]);
-		next unless exists $TE1{$id};
-		my $ori_seq = $TE1{$id};
-
-		while ($coor =~ s/([0-9]+)-([0-9]+)//){
-			my ($from, $to, $seqlen) = ($1, $2, $2-$1+1);
-			my $seq = substr $ori_seq, $from-1, $seqlen;
-			next unless defined $seq;
-			my $target = ">$id:$from..$to\\n$seq";
-
-			# richness in $TE1 and $TE2 (see richness()): the sensitive word_size 7 as before,
-			# falling back to megablast only if word_size 7 detonates (times out) on a high-copy
-			# query against a repetitive library.
-			my $seq_te1_len = richness($seq, $TE1);
-			my $seq_te2_len = richness($seq, $TE2);
-
-			#calculate the fold difference in richness. the smaller the more likely it belongs to $TE2 (contaminant of $TE1)
-			my ($seq_te1_percent, $seq_te2_percent) = ($seq_te1_len/$TE1_len, $seq_te2_len/$TE2_len);
-			my $diff = 1000;
-			$diff = $seq_te1_percent/$seq_te2_percent if $seq_te2_percent > 0;
-			{ lock($stat_lock); print STAT "$id:$from..$to\t$seq_te1_len\t$seq_te2_len\t$seq_te1_percent\t$seq_te2_percent\t$diff\n"; }
+# batch_richness(\@batch, $db): the richness (see richness()) of every query of the batch
+# against $db, computed with ONE multi-threaded blastn instead of one blastn process per query.
+# If some query of the batch detonates word_size 7 and the batch blastn is KILLed, the whole
+# batch falls back to the original per-query richness() (188s timeout + megablast salvage).
+sub batch_richness {
+	my ($batch, $db) = @_;
+	my %sum;
+	$sum{$_->[0]} = 0 foreach @$batch;
+	my $query_file = "$TE1-$TE2.query.tmp";
+	open Q, ">$query_file" or die $!;
+	foreach my $query (@$batch){
+		print Q ">$query->[0]\n$query->[1]\n";
+		}
+	close Q;
+	my $budget = 188 * int((scalar(@$batch) + $threads - 1)/$threads); #the old per-query timeout, scaled to the batch
+	my $exec = "timeout -s KILL ${budget}s ${blastplus}blastn -db $db -query $query_file -outfmt 6 -word_size 7 -evalue 1e-5 -dust no -num_threads $threads";
+	my $out = qx($exec 2> /dev/null);
+	if (($? >> 8) == 137){
+		foreach my $query (@$batch){
+			$sum{$query->[0]} = &richness($query->[1], $db);
+			}
+	} else {
+		warn "WARNING: batched blastn vs $db exited with status $?, results may be incomplete\n" if $? != 0;
+		foreach my $row (split /\n/, $out){
+			my ($qid, $iden, $len) = (split ' ', $row)[0,2,3];
+			next unless defined $len and $iden =~ /^[0-9]/ and $len =~ /^[0-9]/;
+			$qid =~ s/^lcl\|//; #some BLAST+ versions prefix local ids with lcl|
+			next if $iden < $miniden or $len < $minlen;
+			$sum{$qid} += $len;
 			}
 		}
+	unlink $query_file;
+	return \%sum;
 	}
 
 
