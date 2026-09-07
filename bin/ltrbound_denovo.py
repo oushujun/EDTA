@@ -54,9 +54,13 @@ def bounds(rec):
              '-outfmt', '6 qstart qend sstart send pident length'],
             capture_output=True, text=True, timeout=120)
     except subprocess.TimeoutExpired:
+        sys.stderr.write(f"ltrbound_denovo.py: WARNING: blastn timed out on {name}, skipping\n")
         return None
     finally:
         os.unlink(p)
+    if r.returncode != 0:
+        sys.stderr.write(f"ltrbound_denovo.py: WARNING: blastn exited {r.returncode} on {name}, skipping: {r.stderr.strip()}\n")
+        return None
 
     best = None
     for line in r.stdout.splitlines():

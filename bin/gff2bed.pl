@@ -102,6 +102,7 @@ while (<GFF>){
 	$TE_class = $1 if $extra =~ s/classification=(.*?);//i;
 	$iden = $1 if $extra =~ s/ltr_identity=([0-9.e\-]+);//i or $extra =~ s/identity=([0-9.e\-]+);//i;
 	$method = $1 if $extra =~ s/method=(homology|structural)//i;
+	$method = $ARGV[1] unless defined $method; #fall back to the method specified on the command line
 	$extra =~ s/ID=.*sequence_ontology=SO:[0-9]+;//; #rename annotation id based on input order
 	$extra =~ s/^;//;
 	$extra =~ s/;$//;

@@ -15,11 +15,21 @@ foreach (@ARGV){
 
 open FA, "<$fasta" or die "\nInput not found!\n$usage";
 $/ = "\n>";
+my @records = <FA>;
+close FA;
+# canonical input order: upstream pools (e.g. the RepeatModeler-derived novel
+# sequences) do not guarantee a stable record order, and TE numbering depends on
+# input order — sort by header so identical sequence sets always number identically.
+# strip ">" from the keys: only the first record keeps one after the "\n>" split
+@records = sort { my ($x) = split /\n/, $a; my ($y) = split /\n/, $b; $x =~ s/>//g; $y =~ s/>//g; $x cmp $y or $a cmp $b } @records;
 my $num = 0;
 $num = $ARGV[1] if defined $ARGV[1] and $ARGV[1] =~ /^[0-9]+$/;
 my %data;
-my @map; # store TE_name => original_name mappings
-while (<FA>){
+my %pair; #$loc => parts stored under the current element number, so reappearing parts get a new number
+my %curr_num; #$loc => the element number currently in use
+my %map_lines; #output group => map lines, filled in output order
+foreach my $record (@records){
+	$_ = $record;
 	s/>//g;
 	$num = sprintf("%08d", $num);
 	my ($id, $seq) = (split /\n/, $_, 2);
@@ -35,27 +45,27 @@ while (<FA>){
 		($loc, $part) = ($1, $2) if $fam =~ /^(.*)_(LTR|INT)$/i;
 		$loc = "$loc#$class";
 		#print "Ori: $name\t$loc\n"; #test
-		if (exists $data{$loc}){
-			my $record_num = (split /\s+/, $data{$loc})[0];
-			$record_num =~ s/>TE_([0-9]+)_(LTR|INT).*/$1/i;
-			$data{$loc} .= ">TE_${record_num}_$part#$class\n$seq\n";
-			#print "add: $loc\t$record_num\t$part#$class\n"; #test
-			} else {
-			$data{$loc} = ">TE_${num}_$part#$class\n$seq\n";
-			push @map, "TE_${num}_$part#$class\t$name";
-			#print "new: $loc\t$num\t$part#$class\n"; #test
+		if (not exists $curr_num{$loc} or exists $pair{$loc}{$part}){
+			#this family+part has reappeared: allocate a unique number for the new occurrence
+			$curr_num{$loc} = $num;
+			$pair{$loc} = {};
 			$num++;
 			}
+		$pair{$loc}{$part} = 1;
+		$data{$loc} .= ">TE_$curr_num{$loc}_$part#$class\n$seq\n";
+		push @{ $map_lines{$loc} }, "TE_$curr_num{$loc}_$part#$class\t$name";
+		#print "add: $loc\t$curr_num{$loc}\t$part#$class\n"; #test
 		} else {
 		$data{$num} = ">TE_${num}#$class\n$seq\n";
-		push @map, "TE_${num}#$class\t$name";
+		push @{ $map_lines{$num} }, "TE_${num}#$class\t$name";
 		$num++;
 		}
 	}
-close FA;
 
+my @map;
 foreach my $fam (sort{$data{$a} cmp $data{$b}} (keys %data)){
 	print $data{$fam};
+	push @map, @{ $map_lines{$fam} };
 	}
 
 # write mapping file if requested

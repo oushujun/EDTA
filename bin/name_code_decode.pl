@@ -23,8 +23,8 @@ while (<Seq>){
 $/ = "\n";
 
 if ($code == 1){
-	open List, ">$seq.code.list";
-	open Out, ">$seq.code";
+	open List, ">$seq.code.list" or die "ERROR: cannot write $seq.code.list: $!\n";
+	open Out, ">$seq.code" or die "ERROR: cannot write $seq.code: $!\n";
 	my $j = 0;
 	foreach (@seq){
 		print List "$j\t@{$_}[0]\n";
@@ -35,8 +35,8 @@ if ($code == 1){
 	close Out;
 	}
 elsif ($code == 0){
-	open Code, "<$seq.list";
-	open Out, ">$seq.decode";
+	open Code, "<$seq.list" or die "ERROR: cannot read $seq.list: $!\n";
+	open Out, ">$seq.decode" or die "ERROR: cannot write $seq.decode: $!\n";
 	my %code;
 	while (<Code>){
 		chomp;

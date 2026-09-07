@@ -44,6 +44,7 @@ my $repeatmasker = "";
 my $blastplus = "";
 my $threads = 36;
 my $queue = Thread::Queue->new();
+my $stat_lock :shared; #serializes writes to STAT so lines never interleave
 
 # read parameters
 my $k=0;
@@ -64,8 +65,8 @@ foreach (@ARGV){
         }
 
 # some checks
-die "The TE1 file $TE1 is not found or it's empty!\n$usage" unless -s $TE1;
-die "The TE2 file $TE2 is not found or it's empty!\n$usage" unless -s $TE2;
+die "The TE1 file $TE1 is not found!\n$usage" unless -e $TE1;
+die "The TE2 file $TE2 is not found!\n$usage" unless -e $TE2;
 
 # define RepeatMasker -pa parameter
 my $rm_threads = int($threads/4);
@@ -102,15 +103,35 @@ close TE1;
 close TE2;
 $/ = "\n";
 
+# empty libraries are not fatal: an empty TE1 (query) library produces empty outputs; an empty
+# TE2 (masking) library has nothing to mask with, so TE1 passes through unmodified
+if (!%TE1 or $TE2_len == 0){
+	warn "WARNING: The TE1 library $TE1 contains no sequence. The output will be empty.\n" unless %TE1;
+	warn "WARNING: The TE2 library $TE2 contains no sequence. Nothing to mask with: TE1 passes through unmodified.\n" if %TE1;
+	open my $out, ">", "$TE1-$TE2.fa" or die $!;
+	foreach my $id (sort {$a cmp $b} keys %TE1){
+		print $out ">$id\n$TE1{$id}\n";
+		}
+	close $out;
+	open my $stat, ">", "$TE1-$TE2.stat" or die $!;
+	print $stat "TE1_id\tTE1_len\tTE2_len\tTE1_richness\tTE2_richness\tFold_diff\n";
+	close $stat;
+	exit 0;
+	}
+
 
 if ($reprocess == 0){
 
 # Repeatmask TE1 with TE2; make blast db for $TE1 and $TE2
 my $div = 100 - $miniden;
 my $err = '';
-$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -nolow -div $div -lib $TE2 $TE1 > ${TE2}-${TE1}.RM.status`;
-`${blastplus}makeblastdb -in $TE1 -out $TE1 -dbtype nucl 2> /dev/null`;
-`${blastplus}makeblastdb -in $TE2 -out $TE2 -dbtype nucl 2> /dev/null`;
+unlink "$TE1.out"; # drop a stale .out from a killed earlier run so it can't be mistaken for this run's result
+$err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -qq -no_is -nolow -div $div -lib $TE2 $TE1 > ${TE2}-${TE1}.RM.status` // 'no output captured';
+die "ERROR: RepeatMasker failed ($?): $err\n" if $? != 0;
+my $mbdb1 = `${blastplus}makeblastdb -in $TE1 -out $TE1 -dbtype nucl 2>&1` // 'no output captured';
+die "ERROR: makeblastdb failed on $TE1 ($?): $mbdb1\n" if $? != 0;
+my $mbdb2 = `${blastplus}makeblastdb -in $TE2 -out $TE2 -dbtype nucl 2>&1` // 'no output captured';
+die "ERROR: makeblastdb failed on $TE2 ($?): $mbdb2\n" if $? != 0;
 print STDERR "$err\n" if $err ne '';
 
 # get masked regions of TE1
@@ -163,7 +184,15 @@ open STAT, "<$TE1-$TE2.stat" or die $!;
 while (<STAT>){
 	next if /^TE1_id\s+/;
 	my ($info, $diff) = (split)[0,5];
-	my ($id, $from, $to, $seqlen) = ($1, $2, $3, $3-$2+1) if $info =~ /(.*):([0-9]+)\.\.([0-9]+)/;
+	unless (defined $info and defined $diff and $info =~ /(.*):([0-9]+)\.\.([0-9]+)/){
+		warn "WARNING: skip malformed stat line $. in $TE1-$TE2.stat: $_";
+		next;
+		}
+	my ($id, $from, $to, $seqlen) = ($1, $2, $3, $3-$2+1);
+	unless (exists $TE1{$id}){
+		warn "WARNING: skip stat line for unknown TE1 id $id\n";
+		next;
+		}
 	my $ori_seq = $TE1{$id};
 	my $seq = substr $ori_seq, $from-1, $seqlen;
 
@@ -208,7 +237,7 @@ sub purifier(){
 			my ($seq_te1_percent, $seq_te2_percent) = ($seq_te1_len/$TE1_len, $seq_te2_len/$TE2_len);
 			my $diff = 1000;
 			$diff = $seq_te1_percent/$seq_te2_percent if $seq_te2_percent > 0;
-			print STAT "$id:$from..$to\t$seq_te1_len\t$seq_te2_len\t$seq_te1_percent\t$seq_te2_percent\t$diff\n";
+			{ lock($stat_lock); print STAT "$id:$from..$to\t$seq_te1_len\t$seq_te2_len\t$seq_te1_percent\t$seq_te2_percent\t$diff\n"; }
 			}
 		}
 	}
