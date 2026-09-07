@@ -20,6 +20,7 @@ while (<SO>){
 	next if /#/;
 	next if /^(\s+)?$/;
 	my ($so_name, $so_id, $so_alias) = (split /\s+/, $_, 3);
+	$so_alias = '' unless defined $so_alias; #rows without an alias column only register the SO name
 	$so_alias =~ s/\s+//;
 	$SO{$so_name} = $so_id;
 	$class{$so_name} = $so_name;

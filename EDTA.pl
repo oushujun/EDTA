@@ -7,6 +7,7 @@ use Getopt::Long;
 use Pod::Usage;
 use POSIX qw(strftime);
 use Cwd qw(abs_path);
+use Config;
 
 my $version = "v2.3.3";
 #v1.0 05/31/2019
@@ -46,6 +47,14 @@ perl EDTA.pl [options]
 	--genome [File]		The genome FASTA file. Required.
 	--species [Rice|Maize|others]	Specify the species for identification of TIR
 					candidates. Default: others
+	--modules [all|plant|list]	Which raw TE discovery modules to run. Default:
+					all (ltr, sine, line, tir, helitron). plant is a
+					shortcut for ltr,tir,helitron — it skips SINE and
+					LINE, which annotate <2% of most plant genomes but
+					cost the most time (AnnoSINE + RepeatModeler). You
+					may also give an explicit comma list, e.g.
+					ltr,tir,helitron,line. Excluded modules leave empty
+					library files; downstream stages run unchanged.
 	--step [all|filter|final|anno]	Specify which steps you want to run EDTA.
 					all: run the entire pipeline (default)
 					filter: start from raw TEs to the end.
@@ -94,6 +103,10 @@ perl EDTA.pl [options]
 	--ltrretriever	[path]	The directory containing LTR_retriever (default: read from ENV)
 	--check_dependencies Check if dependencies are fullfiled and quit
 	--threads|-t [int]	Number of theads to run this script (default: 4)
+	--tmpdir [Dir]		Directory for the temporary files of this run and all its
+				child tools (default: .EDTA.tmp.<pid> in the working
+				directory). Set EDTA_TMPDIR_KEEP=1 to keep the
+				inherited TMPDIR instead.
 	--debug	 [0|1]	Retain intermediate files (default: 0)
 	--help|-h 	Display this help info
 \n";
@@ -102,6 +115,7 @@ perl EDTA.pl [options]
 my $genome = '';
 my $check_dependencies = undef;
 my $species = "others";
+my $modules = "all"; #which raw TE modules to run: all, plant (= ltr,tir,helitron), or a comma list
 my $step = "ALL";
 my $overwrite = 0; #0, no rerun. 1, rerun even old results exist.
 my $HQlib = ''; #curated library
@@ -116,6 +130,7 @@ my $maker = 0; #0, will not produce the low-threshold MAKER.masked genome (defau
 my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
+my $tmpdir = ''; #private scratch dir for TMPDIR isolation; default: .EDTA.tmp.$$
 my $maxdiv = 40; # maximum divergence from lib sequences for fragmented repeats
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
@@ -184,6 +199,7 @@ my $help = undef;
 # read parameters
 if ( !GetOptions( 'genome=s'            => \$genome,
                   'species=s'           => \$species,
+                  'modules=s'           => \$modules,
                   'step=s'              => \$step,
                   'overwrite=i'         => \$overwrite,
                   'curatedlib=s'        => \$HQlib,
@@ -193,7 +209,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
                   'sensitive=i'          => \$sensitive,
 		  'anno=i'               => \$anno,
 		  'rmout=s'              => \$rmout,
-		  'maxdiv=i'		 => \$maxdiv,
+		  'maxdiv=f'		 => \$maxdiv,
 		  'evaluate=i'           => \$evaluate,
 		  'exclude=s'            => \$exclude,
 		  'maker=i'              => \$maker,
@@ -207,6 +223,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'tirlearner=s'	 => \$TIR_Learner,
 		  'ltrretriever=s'	 => \$LTR_retriever,
 		  'threads|t=i'          => \$threads,
+		  'tmpdir=s'             => \$tmpdir,
 		  'wholeelement=i'       => \$wholeelement,
 		  'check_dependencies!'  => \$check_dependencies,
                   'debug=i'              => \$debug,
@@ -238,15 +255,43 @@ $maxdiv =~ s/%//g;
 
 # check bolean
 if ($maxdiv < 0 or $maxdiv > 100){die "The expected value for the div parameter is 0 - 100!\n"}
+$maxdiv = int($maxdiv*10+0.5)/10;
 if ($overwrite != 0 and $overwrite != 1){ die "The expected value for the overwrite parameter is 0 or 1!\n"}
 if ($sensitive != 0 and $sensitive != 1){ die "The expected value for the sensitive parameter is 0 or 1!\n"}
 if ($anno != 0 and $anno != 1){ die "The expected value for the anno parameter is 0 or 1!\n"}
 if ($evaluate != 0 and $evaluate != 1){ die "The expected value for the evaluate parameter is 0 or 1!\n"}
 if ($force != 0 and $force != 1){ die "The expected value for the force parameter is 0 or 1!\n"}
 if ($maker != 0 and $maker != 1){ die "The expected value for the maker parameter is 0 or 1!\n"}
-if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float value without units!\n"}
+if ($miu !~ /^[0-9.eE+-]+$/ or $miu !~ /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/){ die "The expected value for the u parameter is float value without units!\n"}
 if ($debug != 0 and $debug != 1){ die "The expected value for the debug parameter is 0 or 1!\n"}
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"}
+if ($threads < 1){ die "The expected value for the threads parameter is an integer >= 1!\n"}
+
+# --- process supervision: die as a tree, not as a lone parent -----------------
+# Become a process-group leader so every descendant (modules, workers, blastn,
+# trf, ...) shares our pgid. On a catchable stop signal, TERM the whole group
+# (tools die on their own signal handling), then KILL leftovers, then exit.
+# Note: after setpgrp, terminal Ctrl-C no longer reaches us; kill -INT/-TERM <pid>
+# works and now reliably stops everything.
+setpgrp(0, 0);
+$SIG{TERM} = $SIG{INT} = $SIG{HUP} = \&_edta_kill_group;
+
+# --- TMPDIR isolation: keep descendants off the system /tmp ----------------
+# Unless explicitly kept, point TMPDIR at a private scratch dir in the
+# working directory so no tool (python tempfile, sort spill, blast temp)
+# can fill the machine's /tmp. --tmpdir selects a custom location
+# (e.g. a node-local SSD); EDTA_TMPDIR_KEEP=1 keeps the environment as-is.
+my $edta_own_tmp = 0;
+unless (defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1'){
+	if ($tmpdir ne '' and -d $tmpdir){
+		$ENV{TMPDIR} = $tmpdir; # user-selected dir, never removed by EDTA
+		} else {
+		$ENV{TMPDIR} = abs_path(".")."/.EDTA.tmp.$$"; # run-private default scratch
+		$edta_own_tmp = 1;
+		}
+	mkdir($ENV{TMPDIR}) unless -d $ENV{TMPDIR};
+	}
+$ENV{EDTA_SUPERVISED} = 1; # children: skip their own setpgrp/TMPDIR setup
 
 
 # define RepeatMasker -pa parameter
@@ -325,8 +370,8 @@ $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
-die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand* 2>/dev/null`;
+die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 # RepeatModeler
 chomp ($repeatmodeler=`command -v RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
 $repeatmodeler =~ s/\s+$//;
@@ -356,25 +401,25 @@ die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}m
 # trf
 chomp ($trf=`command -v trf 2>/dev/null`) if $trf eq '';
 $trf=~s/\n$//;
-`$trf 2>/dev/null`;
-die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32256;
-# GRF
+die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" unless $trf ne '' and -X $trf;
+# GRF (only needed by the TIR module; EDTA_raw skips TIR with a warning when absent)
 chomp ($GRF = `command -v grf-main 2>/dev/null`) if $GRF eq '';
 $GRF =~ s/\n$//;
-`$GRF 2>/dev/null`;
-die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF\n" if $?==32256;
+if ($GRF eq '' or !-X $GRF){
+	print STDERR "Warning: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF!\n\t\tThe TIR module will be skipped.\n\n";
+	}
 
 print "\tAll passed!\n\n";
 exit if $check_dependencies;
 
 # make a softlink to the user-provided files
 my $genome_file = basename($genome);
-`ln -s $genome $genome_file` unless -e $genome_file;
+softlink_file($genome, $genome_file);
 $genome = $genome_file;
 
-# check if duplicated sequences found
-my $raw_id = `grep -a \\> $genome|wc -l`;
-my $old_id = `grep -a \\> $genome|sort -u|wc -l`;
+# check if duplicated sequences found (single pass for total and unique ID counts)
+my $id_counts = `grep -a \\> $genome|sort|uniq -c|awk '{t+=\$1} END{print t+0" "NR}'`;
+my ($raw_id, $old_id) = $id_counts =~ /(\d+)\s+(\d+)/;
 if ($raw_id > $old_id){
 	chomp ($date = `date`);
 	die "$date\tERROR: Identical sequence IDs found in the provided genome! Please resolve this issue and try again.\n";
@@ -424,7 +469,6 @@ if (-s "$genome.mod" and $overwrite == 0){
 	# Verify unique ID count
 	my $new_id = `grep -a \\> $genome|sort -u|wc -l`;
 	chomp $new_id;
-	chomp $old_id;
 	if ($old_id != $new_id){
 		chomp ($date = `date`);
 		die "$date\tERROR: Seq ID normalization produced non-unique IDs. Please check your genome file.\n";
@@ -437,7 +481,7 @@ if ($HQlib ne ''){
 		print "\tA custom library $HQlib is provided via --curatedlib. Please make sure this is a manually curated library but not machine generated.\n\n";
 		chomp ($HQlib = `realpath $HQlib`);
 		my $HQlib_file = basename($HQlib);
-		`ln -s $HQlib $HQlib_file` unless -e $HQlib_file;
+		softlink_file($HQlib, $HQlib_file);
 		$HQlib = $HQlib_file;
 		} else {
 		die "\tERROR: The custom library $HQlib you specified is not found!\n\n";
@@ -449,7 +493,7 @@ if ($RMlib ne 'null'){
 	if (-s $RMlib){
 		print "\tA RepeatModeler library $RMlib is provided via --rmlib. Please make sure this is a RepeatModeler2 generated and classified library (some levels of unknown classification is OK).\n\n";
 		chomp ($RMlib = `realpath $RMlib`);
-		`ln -s $RMlib $genome.RM2.raw.fa` unless -e "$genome.RM2.raw.fa";
+		softlink_file($RMlib, "$genome.RM2.raw.fa");
 		#`cp $RMlib $genome.RM2.raw.fa` unless -s "$genome.RM2.raw.fa";
 		$RMlib = "$genome.RM2.raw.fa";
 		} else {
@@ -464,7 +508,7 @@ if ($cds ne ''){
 		print "\tA CDS file $cds is provided via --cds. Please make sure this is the DNA sequence of coding regions only.\n\n";
 		chomp ($cds = `realpath $cds`);
 		my $cds_file = basename($cds);
-		`ln -s $cds $cds_file` unless -e $cds_file;
+		softlink_file($cds, $cds_file);
 		$cds = $cds_file;
 		} else {
 		die "\tERROR: The CDS file $cds you specified is not found!\n\n";
@@ -484,7 +528,7 @@ if ($exclude ne ''){
 	if (-s $exclude){
 		print "\tA BED file is provided via --exclude. Regions specified by this file will be excluded from TE annotation and masking.\n\n";
 		my $exclude_file = basename($exclude);
-		`ln -s $exclude $exclude_file ` unless -e $exclude_file;
+		softlink_file($exclude, $exclude_file);
 		$exclude = $exclude_file;
 		} else {
 		die "\tERROR: The exclusion BED file $exclude you specified is not found!\n\n";
@@ -492,6 +536,23 @@ if ($exclude ne ''){
 	}
 
 $step = uc $step;
+my %valid_steps = map {$_ => 1} qw(ALL FILTER FINAL ANNO);
+die "ERROR: Invalid --step value \"$step\". Valid choices are: all, filter, final, anno.\n" unless $valid_steps{$step};
+
+# --modules: which raw TE discovery modules to run. "plant" is a shortcut that
+# skips the SINE and LINE modules (in most plant genomes they annotate <2% of
+# the sequence, while their discovery — AnnoSINE and RepeatModeler — costs the
+# most wall time). Modules excluded here leave empty library files behind so
+# the filter/final/anno stages proceed unchanged.
+my %valid_modules = map {$_ => 1} qw/ltr sine line tir helitron/;
+$modules = "ltr,tir,helitron" if $modules =~ /^plant$/i;
+$modules = "all" if $modules =~ /^all$/i;
+if ($modules ne "all"){
+	my @mods = split /\s*,\s*/, $modules;
+	die "ERROR: Invalid --modules value \"$modules\". Valid choices are: all, plant, or a comma-separated list of ltr, sine, line, tir, helitron.\n"
+		unless @mods and not grep { not $valid_modules{$_} } @mods;
+	print "\tNote: running raw modules only for: @mods (--modules).\n\n";
+	}
 goto $step;
 
 
@@ -506,9 +567,13 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
+# shell-free invocation (list form): no /bin/sh between EDTA.pl and EDTA_raw,
+# so EDTA_raw's direct parent is this process and the PDEATHSIG supervision
+# chain survives a SIGKILL of the supervisor
+local $ENV{EDTA_DUP_CHECK_DONE} = 1;
+system('perl', $EDTA_raw, '--genome', $genome, '--overwrite', $overwrite, '--species', $species, '--type', $modules, '--u', $miu, '--threads', $threads, '--genometools', $genometools, '--ltrretriever', $LTR_retriever, '--blastplus', $blastplus, '--tesorter', $TEsorter, '--GRF', $GRF, '--trf_path', $trf, '--repeatmasker', $repeatmasker, '--repeatmodeler', $repeatmodeler, '--annosine', $annosine, '--tirlearner', $TIR_Learner, '--convert_seq_name', 0, '--rmlib', $RMlib, '--wholeelement', $wholeelement)==0 or die "EDTA_raw.pl failed with exit code ".($? >> 8)."\n";
 
-chdir "$genome.EDTA.raw";
+chdir "$genome.EDTA.raw" or die "Cannot enter $genome.EDTA.raw: $!\n";
 
 # Force to use rice TEs when raw.fa is empty
 if ($force eq 1){
@@ -531,7 +596,7 @@ die "ERROR: Raw Helitron results not found in $genome.EDTA.raw/$genome.Helitron.
 `cat $genome.LTR.intact.raw.fa $genome.TIR.intact.raw.fa $genome.Helitron.intact.raw.fa > $genome.EDTA.intact.raw.fa`;
 `cat $genome.TIR.intact.raw.bed $genome.Helitron.intact.raw.bed | perl $bed2gff - TE_struc > $genome.EDTA.intact.gff3.temp`;
 `cat $genome.LTR.intact.raw.gff3 >> $genome.EDTA.intact.gff3.temp`;
-`sort -sV -k1,1 -k4,4 $genome.EDTA.intact.gff3.temp | grep -v '^#' > $genome.EDTA.intact.raw.gff3; rm $genome.EDTA.intact.gff3.temp`;
+`sort -T . -sV -k1,1 -k4,4 $genome.EDTA.intact.gff3.temp | grep -v '^#' > $genome.EDTA.intact.raw.gff3; rm $genome.EDTA.intact.gff3.temp`;
 
 chomp ($date = `date`);
 print "$date\tObtain raw TE libraries finished.
@@ -561,12 +626,13 @@ print "$date\tPerform EDTA advance filtering for raw TE candidates and generate 
 if (-s "$genome.EDTA.combine/$genome.EDTA.fa.stg1" and $overwrite == 0){
 	print "$date\tExisting stage 1 library $genome.EDTA.combine/$genome.EDTA.fa.stg1 found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-`perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -ltrint $genome.EDTA.raw/$genome.LTR.intact.raw.fa -line $genome.EDTA.raw/$genome.LINE.raw.fa -sine $genome.EDTA.raw/$genome.SINE.raw.fa -tir $genome.EDTA.raw/$genome.TIR.intact.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.intact.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads`;
+# shell-free invocation (list form): direct parentage for the PDEATHSIG chain
+system('perl', $EDTA_process, '-genome', $genome, '-ltr', "$genome.EDTA.raw/$genome.LTR.raw.fa", '-ltrint', "$genome.EDTA.raw/$genome.LTR.intact.raw.fa", '-line', "$genome.EDTA.raw/$genome.LINE.raw.fa", '-sine', "$genome.EDTA.raw/$genome.SINE.raw.fa", '-tir', "$genome.EDTA.raw/$genome.TIR.intact.raw.fa", '-helitron', "$genome.EDTA.raw/$genome.Helitron.intact.raw.fa", '-repeatmasker', $repeatmasker, '-blast', $blastplus, '-threads', $threads)==0 or die "EDTA_processK.pl failed with exit code ".($? >> 8)."\n";
 	}
 
 # check results, remove intermediate files, and report status
 die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.EDTA.fa.stg1" unless -s "$genome.EDTA.combine/$genome.EDTA.fa.stg1";
-chdir "$genome.EDTA.combine";
+chdir "$genome.EDTA.combine" or die "Cannot enter $genome.EDTA.combine: $!\n";
 `rm ./$genome.LTR.raw.fa*Q* ./$genome.LTR.intact.raw.fa*Q* ./$genome.TIR.intact.raw.fa*Q* ./$genome.Helitron.intact.raw.fa*Q* ./$genome.TIR.Helitron.fa*Q* $genome*tbl $genome*out $genome*cleanup $genome*RMoutput $genome*stg1.raw* $genome.LTR.raw.fa-* $genome.LTR.intact.raw.fa-* $genome.TIR.intact.raw.fa-* $genome.Helitron.intact.raw.fa-* $genome.LINE_LTR.raw.fa $genome.LTR.SINE.LINE.fa *.ndb *.not *.ntf *.nto *.cat.gz *.cat *.masked *.ori.out *.nhr *.nin *.nsq 2>/dev/null` unless $debug eq 1;
 
 chdir "..";
@@ -580,13 +646,23 @@ print "$date\tEDTA advance filtering finished.\n\n";
 
 FINAL:
 
+# whole-stage resume guard: the final stage must be rebuilt all-or-nothing. A partial
+# rebuild (e.g. re-running the combine steps while skipping cleanup_nested/rename_TE
+# via their own guards) would mix renamed and unrenamed states and change the library.
+if ($overwrite == 0 and -s "$genome.EDTA.TElib.fa" and -s "$genome.EDTA.intact.fa" and -s "$genome.EDTA.intact.gff3"){
+	chomp ($date = `date`);
+	print "$date\tExisting final TE library and intact TEs found, skipping the final stage (--overwrite 0).\n\n";
+	goto ANNO;
+	}
+
 # report status
 chomp ($date = `date`);
 print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive TE library.\n\n";
 
 # Make the final working directory
 `mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
-chdir "$genome.EDTA.final";
+die "Cannot create directory $genome.EDTA.final: $!\n" unless -d "$genome.EDTA.final";
+chdir "$genome.EDTA.final" or die "Cannot enter $genome.EDTA.final: $!\n";
 `rm ./* 2>/dev/null` if $overwrite == 1;
 `cp ../$genome.EDTA.raw/$genome.RM2.fa ./`;
 `cp ../$genome.EDTA.combine/$genome.EDTA.fa.stg1 ./`;
@@ -601,8 +677,11 @@ chdir "$genome.EDTA.final";
 if ($sensitive == 1 and -s "$genome.RM2.fa"){
 	print "\tFilter RepeatModeler results that are ignored in the raw step.\n\n";
 	chomp ($date = `date`);
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>&1`;
+	my $rm_exit = $? >> 8;
+	die "ERROR: RepeatMasker failed on $genome.RM2.fa (exit code $rm_exit):\n$rm_status\n\n" if $? != 0 and not -e "$genome.RM2.fa.masked";
 	`cp $genome.RM2.fa $genome.RM2.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	`cp $genome.RM2.fa $genome.RM2.fa.masked` unless -e "$genome.RM2.fa.masked";
 	# clean up tandem and coding sequences in the RM2 library
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.fa.masked > $genome.RM2.fa.stg1`;
 	`perl $cleanup_proteins -seq $genome.RM2.fa.stg1 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blastplus -threads $threads`;
@@ -612,6 +691,9 @@ if ($sensitive == 1 and -s "$genome.RM2.fa"){
 		print "\t\tNo extra repeat sequences found in the RepeatModeler output.\n\n";
 		`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
 		}
+	} elsif ($sensitive == 1){
+	print "\tSkipping the RepeatModeler results: $genome.RM2.fa not found.\n\t\tThis file is generated by the raw step when EDTA is run with --sensitive 1 (--step all).\n\n";
+	`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
 	} else {
 	print "\tSkipping the RepeatModeler results (--sensitive 0).\n\t\tRun EDTA.pl --step final --sensitive 1 if you want to add RepeatModeler results.\n\n";
 	`cp $genome.EDTA.fa.stg1 $genome.EDTA.raw.fa`;
@@ -624,21 +706,29 @@ if (-s "$cds"){
 
 	# cleanup TE-related sequences in the CDS file with TEsorter
 	print "$date\tClean up TE-related sequences in the CDS file with TEsorter.\n\n";
-	`perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa 2>/dev/null`;
+	my $cds_clean_err = `perl $cleanup_TE -cds $cds -minlen 300 -tesorter $TEsorter -repeatmasker $repeatmasker -t $threads -rawlib $genome.EDTA.raw.fa 2>&1`;
+	die "ERROR: cleanup_TE failed (exit code ".($? >> 8)."):\n$cds_clean_err\n" if $? != 0;
 	`rm ./$cds ./$cds.code.r* 2>/dev/null` unless $debug eq 1;
 	die "\tERROR: The $cds file is empty after TE clean up. Please check the file and $cds.code.noTE.\n\n" unless -s "$cds.code.noTE";
 	$cds = "$cds.code.noTE";
 
 	# remove cds-related sequences in the EDTA library
 	print "\tRemove CDS-related sequences in the EDTA library.\n\n";
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>&1`;
+	my $rm_exit = $? >> 8;
+	die "ERROR: RepeatMasker failed on $genome.EDTA.raw.fa (exit code $rm_exit):\n$rm_status\n\n" if $? != 0 and not -e "$genome.EDTA.raw.fa.masked";
 	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
-	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
+	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` unless -e "$genome.EDTA.raw.fa.masked";
+	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln.tmp.$$ && mv $genome.EDTA.raw.fa.cln.tmp.$$ $genome.EDTA.raw.fa.cln`;
+	die "cleanup_tandem failed for $genome.EDTA.raw.fa.cln\n" if $? != 0;
 
 	# remove cds-related sequences in intact TEs
 	print "\tRemove CDS-related sequences in intact TEs.\n\n";
-	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>/dev/null`;
+	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>&1`;
+	$rm_exit = $? >> 8;
+	die "ERROR: RepeatMasker failed on $genome.EDTA.intact.fa.cln (exit code $rm_exit):\n$rm_status\n\n" if $? != 0 and not -e "$genome.EDTA.intact.fa.cln.masked";
 	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln.masked` unless -e "$genome.EDTA.intact.fa.cln.masked";
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.cln.masked > $genome.EDTA.intact.fa.cln.rmCDS`;
 	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa.cln2`;
 	} else {
@@ -650,10 +740,14 @@ if (-s "$cds"){
 # Final rounds of redundancy removal and make final EDTA library
 # resume guard added 2026-08-28: cleanup_nested took 41.0 h on the 11.1 Gb oat genome
 # (job 20121980) and was unguarded, so any wall-clock kill later in FINAL redid all of it.
-if (-s "$genome.EDTA.raw.fa.cln.cln" and $overwrite == 0){
+# A killed cleanup_nested leaves $genome.EDTA.raw.fa.cln.iter* snapshots behind (they are
+# unlinked only after the final .cln.cln is fully written), so leftover iter files mark an
+# incomplete run: do not let the -s guard accept a truncated .cln.cln.
+if (-s "$genome.EDTA.raw.fa.cln.cln" and $overwrite == 0 and !glob "$genome.EDTA.raw.fa.cln.iter*"){
 	print "\tExisting $genome.EDTA.raw.fa.cln.cln found, skipping cleanup_nested (--overwrite 0).\n\n";
 } else {
-	`perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blastplus 2>/dev/null`;
+	my $nested_err = `perl $cleanup_nested -in $genome.EDTA.raw.fa.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blastplus 2>&1`;
+	die "ERROR: cleanup_nested failed (exit code ".($? >> 8)."):\n$nested_err\n" if $? != 0;
 }
 
 # rename all TEs in the EDTA library
@@ -663,9 +757,11 @@ if (-s "$genome.EDTA.TElib.fa" and $overwrite == 0
     and (!$wholeelement or -s "$genome.EDTA.TElib.fa.rename_map")){
 	print "\tExisting $genome.EDTA.TElib.fa found, skipping rename_TE (--overwrite 0).\n\n";
 } elsif ($wholeelement){
-	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln --map $genome.EDTA.TElib.fa.rename_map > $genome.EDTA.TElib.fa`;
+	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln --map $genome.EDTA.TElib.fa.rename_map > $genome.EDTA.TElib.fa.tmp.$$ && mv $genome.EDTA.TElib.fa.tmp.$$ $genome.EDTA.TElib.fa`;
+	die "rename_TE failed for $genome.EDTA.TElib.fa\n" if $? != 0;
 } else {
-	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
+	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa.tmp.$$ && mv $genome.EDTA.TElib.fa.tmp.$$ $genome.EDTA.TElib.fa`;
+	die "rename_TE failed for $genome.EDTA.TElib.fa\n" if $? != 0;
 }
 #`perl $rename_TE $genome.EDTA.raw.fa.cln.cln | perl $format_TElib - > $genome.EDTA.TElib.fa`;
 
@@ -693,8 +789,11 @@ if ($HQlib ne ''){
 	print "$date\tCombine the high-quality TE library $HQlib with the EDTA library:\n\n";
 
 	# remove known TEs in the EDTA library
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>&1`;
+	my $rm_exit = $? >> 8;
+	die "ERROR: RepeatMasker failed on $genome.EDTA.TElib.fa (exit code $rm_exit):\n$rm_status\n\n" if $? != 0 and not -e "$genome.EDTA.TElib.fa.masked";
 	`cp $genome.EDTA.TElib.fa $genome.EDTA.TElib.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	`cp $genome.EDTA.TElib.fa $genome.EDTA.TElib.fa.masked` unless -e "$genome.EDTA.TElib.fa.masked";
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	rename "$genome.EDTA.TElib.fa", "$genome.EDTA.TElib.ori.fa";
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
@@ -732,8 +831,8 @@ my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.
 # get a dirty list of intact.gff
 `grep -a \\> $genome.EDTA.intact.fa | sed 's/>//; s/#.*//' | perl $output_by_list 1 $genome.EDTA.intact.raw.gff3.rename.famlist 1 - -ex | awk '{print "Name\\t"\$1"\\nParent\\t"\$1"\\nID\\t"\$1}' > $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
 
-# first attempt purging the gff3
-`perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > $genome.EDTA.intact.gff3`;
+# first attempt purging the gff3 (only its .removed side-effect is used, stdout discarded)
+`perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist > /dev/null`;
 
 # remake the remove list and purge again
 `perl -nle 'my \$id = \$1 if /=(repeat_region[0-9]+);/; print "Parent\\t\$id\nName\\t\$id" if defined \$id' $genome.EDTA.intact.raw.gff3.rename.removed >> $genome.EDTA.intact.raw.gff3.rename.dirtlist`;
@@ -741,7 +840,8 @@ my $intact_gff_head = "##This file follows the ENSEMBL standard: https://useast.
 `perl $filter_gff $genome.EDTA.intact.raw.gff3.rename $genome.EDTA.intact.raw.gff3.rename.dirtlist >> $genome.EDTA.intact.gff3`;
 
 # format gff3
-`perl $format_gff3 $genome.EDTA.intact.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.intact.gff3`;
+`perl $format_gff3 $genome.EDTA.intact.gff3 > gff3.temp.$$.gff3 && mv gff3.temp.$$.gff3 $genome.EDTA.intact.gff3`;
+die "format_gff3 failed to produce $genome.EDTA.intact.gff3\n" if $? != 0;
 
 # add TE_IDs to the intact.fa sequence IDs
 `perl $add_id -fa $genome.EDTA.intact.fa -gff $genome.EDTA.intact.gff3 > $genome.EDTA.intact.fa.renamed; mv $genome.EDTA.intact.fa.renamed $genome.EDTA.intact.fa`;
@@ -756,14 +856,28 @@ copy_file("$genome.EDTA.intact.gff3", "..");
 
 # Decode sequence IDs in user-facing output files (parent directory copies)
 if ($seqid_mapfile ne '' and -s $seqid_mapfile){
-	`perl $seqid_codec decode_fasta ../$genome.EDTA.intact.fa $seqid_mapfile ../$genome.EDTA.intact.fa.decoded && mv ../$genome.EDTA.intact.fa.decoded ../$genome.EDTA.intact.fa`;
-	`perl $seqid_codec decode_text ../$genome.EDTA.intact.gff3 $seqid_mapfile ../$genome.EDTA.intact.gff3.decoded && mv ../$genome.EDTA.intact.gff3.decoded ../$genome.EDTA.intact.gff3`;
-	`perl $seqid_codec decode_fasta ../$genome.EDTA.TElib.fa $seqid_mapfile ../$genome.EDTA.TElib.fa.decoded && mv ../$genome.EDTA.TElib.fa.decoded ../$genome.EDTA.TElib.fa`;
-	`perl $seqid_codec decode_fasta ../$genome.EDTA.TElib.novel.fa $seqid_mapfile ../$genome.EDTA.TElib.novel.fa.decoded && mv ../$genome.EDTA.TElib.novel.fa.decoded ../$genome.EDTA.TElib.novel.fa` if -s "../$genome.EDTA.TElib.novel.fa";
+	unlink "../$genome.EDTA.intact.fa.decoded";
+	system("perl $seqid_codec decode_fasta ../$genome.EDTA.intact.fa $seqid_mapfile ../$genome.EDTA.intact.fa.decoded && mv ../$genome.EDTA.intact.fa.decoded ../$genome.EDTA.intact.fa")==0 or die "Failed to decode ../$genome.EDTA.intact.fa: $?\n";
+	unlink "../$genome.EDTA.intact.gff3.decoded";
+	system("perl $seqid_codec decode_text ../$genome.EDTA.intact.gff3 $seqid_mapfile ../$genome.EDTA.intact.gff3.decoded && mv ../$genome.EDTA.intact.gff3.decoded ../$genome.EDTA.intact.gff3")==0 or die "Failed to decode ../$genome.EDTA.intact.gff3: $?\n";
+	unlink "../$genome.EDTA.TElib.fa.decoded";
+	system("perl $seqid_codec decode_fasta ../$genome.EDTA.TElib.fa $seqid_mapfile ../$genome.EDTA.TElib.fa.decoded && mv ../$genome.EDTA.TElib.fa.decoded ../$genome.EDTA.TElib.fa")==0 or die "Failed to decode ../$genome.EDTA.TElib.fa: $?\n";
+	if (-s "../$genome.EDTA.TElib.novel.fa"){
+		unlink "../$genome.EDTA.TElib.novel.fa.decoded";
+		system("perl $seqid_codec decode_fasta ../$genome.EDTA.TElib.novel.fa $seqid_mapfile ../$genome.EDTA.TElib.novel.fa.decoded && mv ../$genome.EDTA.TElib.novel.fa.decoded ../$genome.EDTA.TElib.novel.fa")==0 or die "Failed to decode ../$genome.EDTA.TElib.novel.fa: $?\n";
+		}
 	}
 
-# remove intermediate files
-`rm $genome.EDTA.intact.fa.cln.* $genome.EDTA.raw.fa.* $genome.EDTA.TElib.fa.* $genome.LTR.TIR.Helitron.fa.stg1.* $genome.masked *.cat.gz 2>/dev/null` if $debug eq 0;
+# remove intermediate files, but keep the resume-guard files $genome.EDTA.raw.fa.cln.cln
+# and $genome.EDTA.TElib.fa.rename_map that the rm globs would otherwise delete; the
+# keep-prefixed temp names do not match any of the globs below
+if ($debug eq 0){
+	rename "$genome.EDTA.raw.fa.cln.cln", "keep.$genome.EDTA.raw.fa.cln.cln" if -e "$genome.EDTA.raw.fa.cln.cln";
+	rename "$genome.EDTA.TElib.fa.rename_map", "keep.$genome.EDTA.TElib.fa.rename_map" if -e "$genome.EDTA.TElib.fa.rename_map";
+	`rm $genome.EDTA.intact.fa.cln.* $genome.EDTA.raw.fa.* $genome.EDTA.TElib.fa.* $genome.LTR.TIR.Helitron.fa.stg1.* $genome.masked *.cat.gz 2>/dev/null`;
+	rename "keep.$genome.EDTA.raw.fa.cln.cln", "$genome.EDTA.raw.fa.cln.cln" if -e "keep.$genome.EDTA.raw.fa.cln.cln";
+	rename "keep.$genome.EDTA.TElib.fa.rename_map", "$genome.EDTA.TElib.fa.rename_map" if -e "keep.$genome.EDTA.TElib.fa.rename_map";
+	}
 
 # report status
 chomp ($date = `date`);
@@ -774,19 +888,20 @@ print "		Comparing to the provided library, EDTA found these novel TEs: $genome.
 		The provided library has been incorporated into the final library: $genome.EDTA.TElib.fa\n\n" if $HQlib ne '';
 chdir "..";
 
-# Decode sequence IDs in all working directories so users see original IDs
+# Decode sequence IDs in user-facing deliverables only; intermediate files in the
+# working directories stay encoded so partial-rerun resume state is never mixed.
+# decode_text is safe on FASTA files because DNA sequence lines cannot match the _J code pattern.
 if ($seqid_mapfile ne '' and -s $seqid_mapfile){
-	# Decode all non-binary files recursively in EDTA working directories.
-	# decode_text is safe on FASTA files because DNA sequence lines cannot match the _J code pattern.
-	for my $dir ("$genome.EDTA.raw", "$genome.EDTA.combine", "$genome.EDTA.final"){
-		next unless -d $dir;
-		my @files = split /\n/, `find $dir -type f -size +0c ! -name "*.2bit" ! -name "*.nsq" ! -name "*.nhr" ! -name "*.nin" ! -name "*.ndb" ! -name "*.not" ! -name "*.ntf" ! -name "*.nto" ! -name "*.njs" ! -name "*.gz" 2>/dev/null`;
-		for my $f (@files){
-			`perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
-			}
+	for my $f ("$genome.EDTA.final/$genome.EDTA.TElib.fa", "$genome.EDTA.final/$genome.EDTA.intact.fa", "$genome.EDTA.final/$genome.EDTA.intact.gff3", "$genome.EDTA.final/$genome.EDTA.TElib.novel.fa"){
+		next unless -s $f;
+		unlink "$f.decoded";
+		system("perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f")==0 or die "Failed to decode $f: $?\n";
 		}
 	# Also decode RM2.raw.fa in the parent directory
-	`perl $seqid_codec decode_text $genome.RM2.raw.fa $seqid_mapfile $genome.RM2.raw.fa.decoded && mv $genome.RM2.raw.fa.decoded $genome.RM2.raw.fa` if -s "$genome.RM2.raw.fa";
+	if (-s "$genome.RM2.raw.fa"){
+		unlink "$genome.RM2.raw.fa.decoded";
+		system("perl $seqid_codec decode_text $genome.RM2.raw.fa $seqid_mapfile $genome.RM2.raw.fa.decoded && mv $genome.RM2.raw.fa.decoded $genome.RM2.raw.fa")==0 or die "Failed to decode $genome.RM2.raw.fa: $?\n";
+		}
 	}
 
 
@@ -802,7 +917,8 @@ if ($anno == 1){
 
 	# Make the post-library annotation working directory
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
-	chdir "$genome.EDTA.anno";
+	die "Cannot create directory $genome.EDTA.anno: $!\n" unless -d "$genome.EDTA.anno";
+	chdir "$genome.EDTA.anno" or die "Cannot enter $genome.EDTA.anno: $!\n";
 	`rm ./* 2>/dev/null` if $overwrite == 1;
 	`rm $genome.EDTA.TElib.fa* 2>/dev/null`; # clean up libraries
 	`cp ../$genome.EDTA.TElib.fa ./`;
@@ -829,7 +945,7 @@ if ($anno == 1){
 	if ($rmout ne ''){
 		print STDERR "$date\tA RepeatMasker result file $rmout is provided! Will use this file without running RepeatMasker.\n\n";
 		if (-e "$genome.out"){
-			my $old_rmout = `ls -l $genome.out|perl -nle 'my (\$month, \$day, \$time) = (split)[6,7,8]; \$time =~ s/://; print "\${month}_\${day}_\$time"'`;
+			my $old_rmout = `ls -l $genome.out|perl -nle 'my (\$month, \$day, \$time) = (split)[5,6,7]; \$time =~ s/://; print "\${month}_\${day}_\$time"'`;
 			chomp $old_rmout;
 			print "\t$genome.out exists in the $genome.EDTA.anno folder, renamed file to ${genome}_$old_rmout.out\n\n";
 			`mv $genome.out ${genome}_$old_rmout.out`;
@@ -837,15 +953,30 @@ if ($anno == 1){
 		`ln -s $rmout $genome.out`;
 		} else {
 		print STDERR "$date\tHomology-based annotation of TEs using $genome.EDTA.TElib.fa from scratch.\n\n";
-		`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div $maxdiv -lib $genome.EDTA.TElib.fa $genome 2>/dev/null`;
+		my $rm_anno_err;
+		$rm_anno_err = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div $maxdiv -lib $genome.EDTA.TElib.fa $genome 2>&1` unless (-s "$genome.out" and $overwrite == 0);
+		die "ERROR: RepeatMasker failed on $genome (exit code ".($? >> 8)."):\n$rm_anno_err\n\n" if defined $rm_anno_err and $? != 0 and not -s "$genome.out";
 		}
-	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out" or -s "$genome.mod.out";
+	die "ERROR: RepeatMasker results not found in $genome.out!\n\n" unless -s "$genome.out";
 
 	# Decode RepeatMasker output and genome so all downstream processing produces decoded IDs
 	if ($seqid_mapfile ne '' and -s $seqid_mapfile){
-		`perl $seqid_codec decode_text $genome.out $seqid_mapfile $genome.out.decoded && mv $genome.out.decoded $genome.out`;
-		# Replace genome symlink with decoded FASTA (downstream scripts read seq IDs from the genome)
-		`rm $genome; perl $seqid_codec decode_fasta ../$genome $seqid_mapfile ./$genome`;
+		unlink "$genome.out.decoded";
+		system("perl $seqid_codec decode_text $genome.out $seqid_mapfile $genome.out.decoded && mv $genome.out.decoded $genome.out")==0 or die "Failed to decode $genome.out: $?\n";
+		# Replace genome symlink with decoded FASTA (downstream scripts read seq IDs from the genome);
+		# decode to a temp name first so a failed decode cannot leave the anno dir without a genome.
+		# The stamp skips the genome-scale rewrite on --overwrite 0 resumes; it is written only
+		# after the decoded genome has been moved into place.
+		unless (-e ".genome_decoded.stamp" and $overwrite == 0){
+			unlink $genome, "./$genome.decoded";
+			if (system("perl $seqid_codec decode_fasta ../$genome $seqid_mapfile ./$genome.decoded") == 0 and -s "./$genome.decoded"){
+				rename "./$genome.decoded", "./$genome" or die "ERROR: Failed to move the decoded genome ./$genome.decoded into place: $!\n";
+				open my $genome_stamp, ">", ".genome_decoded.stamp" or die "ERROR: Cannot create .genome_decoded.stamp: $!\n";
+				close $genome_stamp;
+				} else {
+				die "ERROR: Failed to decode sequence IDs in $genome (exit code ".($? >> 8)."). The encoded genome is still available at ../$genome\n";
+				}
+			}
 		}
 
 	# exclude regions from TE annotation and make whole-genome TE annotation
@@ -853,6 +984,7 @@ if ($anno == 1){
 	# combine RepeatMasker lines that appears to be the same element
 	`perl $combine_RMrows -rmout $genome.out.new -maxdiv 3.5 -maxgap 35`;
 	`mv $genome.out.new.cmb $genome.EDTA.RM.out`;
+	die "combine_RMrows failed to produce $genome.EDTA.RM.out\n" unless -s "$genome.EDTA.RM.out";
 	`perl $RMout2bed $genome.EDTA.RM.out > $genome.EDTA.RM.bed`; # a regular enriched bed
 	`perl $bed2gff $genome.EDTA.RM.bed TE_homo > $genome.EDTA.RM.gff3`;
 	`perl $gff2bed $genome.EDTA.RM.gff3 homology > $genome.EDTA.RM.bed`; # add the last column to this bed
@@ -863,11 +995,16 @@ if ($anno == 1){
 	`perl $get_frag $genome.EDTA.RM.bed $genome.EDTA.intact.bed.cmb $threads`;
 	`perl $keep_nest $genome.EDTA.intact.bed $genome.EDTA.RM.bed $threads`;
 	`grep homology $genome.EDTA.intact.bed-$genome.EDTA.RM.bed > $genome.EDTA.intact.bed-$genome.EDTA.RM.bed.homo`;
-	`sort -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed.homo $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.homo.bed`;
+	`sort -T . -suV $genome.EDTA.intact.bed-$genome.EDTA.RM.bed.homo $genome.EDTA.RM.bed-$genome.EDTA.intact.bed.cmb > $genome.EDTA.homo.bed`;
 	`perl $bed2gff $genome.EDTA.homo.bed TE_homo > $genome.EDTA.homo.gff3`;
 	`cat $genome.EDTA.intact.gff3 $genome.EDTA.homo.gff3 > $genome.EDTA.TEanno.gff3.raw`;
-	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\\n$gff_head\\n\$_"' - > $genome.EDTA.TEanno.gff3`;
-	`perl $format_gff3 $genome.EDTA.TEanno.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.gff3`;
+	# write the header first and append the sorted body, instead of slurping the whole GFF into memory
+	chomp (my $anno_date = `date`);
+	$anno_date =~ s/\s+$//;
+	`printf "##gff-version 3\n##date $anno_date\n##This file contains repeats annotated by EDTA $version with both structural and homology methods. Repeats can be overlapping due to nested insertions.\n$gff_head\n" > $genome.EDTA.TEanno.gff3`;
+	`grep -v '^#' $genome.EDTA.TEanno.gff3.raw | sort -T . -sV -k1,1 -k4,4 >> $genome.EDTA.TEanno.gff3`;
+	`perl $format_gff3 $genome.EDTA.TEanno.gff3 > gff3.temp.$$.gff3 && mv gff3.temp.$$.gff3 $genome.EDTA.TEanno.gff3`;
+	die "format_gff3 failed to produce $genome.EDTA.TEanno.gff3\n" if $? != 0;
 	`perl $gff2gtf --gff $genome.EDTA.TEanno.gff3 --remove repeat_region,long_terminal_repeat,target_site_duplication --out $genome.EDTA.TEanno.gtf`;
 	`rm $genome.EDTA.TEanno.gff3.raw 2>/dev/null`;
 
@@ -876,36 +1013,51 @@ if ($anno == 1){
 	`perl $split_overlap $genome.EDTA.TEanno.bed $genome.EDTA.TEanno.split.bed`;
 	`echo "##gff-version 3\n##date $date\n##This file contains all repeats annotated by EDTA $version in the split format (non-overlapping). Repeats can be broken into pieces by nested insertions.\n$gff_head" > $genome.EDTA.TEanno.split.gff3`;
 	`perl $bed2gff $genome.EDTA.TEanno.split.bed | grep -v '^#' >> $genome.EDTA.TEanno.split.gff3`;
-	`perl $format_gff3 $genome.EDTA.TEanno.split.gff3 > gff3.temp.gff3; mv gff3.temp.gff3 $genome.EDTA.TEanno.split.gff3`;
+	`perl $format_gff3 $genome.EDTA.TEanno.split.gff3 > gff3.temp.$$.gff3 && mv gff3.temp.$$.gff3 $genome.EDTA.TEanno.split.gff3`;
+	die "format_gff3 failed to produce $genome.EDTA.TEanno.split.gff3\n" if $? != 0;
 	`perl $gff2gtf --gff $genome.EDTA.TEanno.split.gff3 --remove repeat_region,long_terminal_repeat,target_site_duplication --out $genome.EDTA.TEanno.split.gtf`;
 	`perl $gff2RMout $genome.EDTA.TEanno.split.gff3 $genome.EDTA.TEanno.split.out`;
 
 	# make plots
 	`perl $div_table $genome.EDTA.TEanno.bed $genome $genome`;
-	`Rscript $div_plot $genome.div_long $genome 2>/dev/null`;
+	my $div_plot_err = `Rscript $div_plot $genome.div_long $genome 2>&1`;
+	print STDERR "Warning: divergence plot failed (Rscript exit code ".($? >> 8)."), continuing without plots:\n$div_plot_err\n" if $? != 0;
 	`python3 $density_table -genome $genome -gff $genome.EDTA.TEanno.split.gff3 > $genome.EDTA.TEanno.split.density`;
-	`Rscript $density_plot $genome.EDTA.TEanno.split.density 2>/dev/null`;
+	my $density_plot_err = `Rscript $density_plot $genome.EDTA.TEanno.split.density 2>&1`;
+	print STDERR "Warning: density plot failed (Rscript exit code ".($? >> 8)."), continuing without plots:\n$density_plot_err\n" if $? != 0;
 	`mv chromosome_density_plots.pdf $genome.EDTA.TEanno.density_plots.pdf`;
 
 	# make summary table for the non-overlapping annotation
 	`perl $count_base $genome > $genome.stats`;
 	`perl -nle 'my (\$chr, \$s, \$e, \$anno, \$dir, \$supfam)=(split)[0,1,2,3,8,12]; print "10000 0.001 0.001 0.001 \$chr \$s \$e NA \$dir \$anno \$supfam"' $genome.EDTA.TEanno.split.bed > $genome.EDTA.TEanno.out`;
-	`perl $buildSummary -maxDiv 40 -stats $genome.stats $genome.EDTA.TEanno.out > $genome.EDTA.TEanno.sum 2>/dev/null`;
+	my $summary_err = `perl $buildSummary -maxDiv $maxdiv -stats $genome.stats $genome.EDTA.TEanno.out 2>&1 > $genome.EDTA.TEanno.sum`;
+	die "ERROR: buildSummary failed (exit code ".($? >> 8)."):\n$summary_err\n\n" if $? != 0;
 	my $tot_TE = `grep Total $genome.EDTA.TEanno.sum|grep %|awk '{print \$4}'`;
 	chomp $tot_TE;
 
 	# make low-threshold masked genome for MAKER (optional; off by default, enable with --maker 1)
 	my $maker_TE = '';
 	if ($maker == 1){
-		`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude` unless (-s "$genome.MAKER.masked" and $overwrite == 0);
-		`mv $genome.new.masked $genome.MAKER.masked`;
+		# only promote $genome.new.masked when this make_masked call actually ran;
+		# the unguarded make_masked above also writes $genome.new.masked with different thresholds
+		unless (-s "$genome.MAKER.masked" and $overwrite == 0){
+			`perl $make_masked -genome $genome -rmout $genome.out -maxdiv 30 -minscore 1000 -minlen 1000 -hardmask 1 -misschar N -threads $threads -exclude $exclude`;
+			`mv $genome.new.masked $genome.MAKER.masked` if -s "$genome.new.masked";
+			}
 		$maker_TE = `perl $count_base $genome.MAKER.masked`;
-		$maker_TE = (split /\s+/, $maker_TE)[3];
-		$maker_TE = sprintf("%.2f%%", $maker_TE*100);
+		my ($maker_ratio) = (split /\s+/, $maker_TE)[3];
+		if (defined $maker_ratio and $maker_ratio =~ /^[0-9.eE+-]+$/){
+			$maker_TE = sprintf("%.2f%%", $maker_ratio*100);
+			} else {
+			warn "\tWARNING: could not parse the masking ratio from the $count_base output for $genome.MAKER.masked\n";
+			$maker_TE = 0;
+			}
 	}
 
 	# check results and report status
-	die "ERROR: TE annotation results not found in $genome.EDTA.TEanno.gff3!\n\n" unless -s "$genome.EDTA.TEanno.gff3";
+	chomp (my $anno_body = `grep -vc '^#' $genome.EDTA.TEanno.gff3`);
+	$anno_body = 0 unless $anno_body =~ /^\d+$/;
+	die "ERROR: TE annotation results not found in $genome.EDTA.TEanno.gff3!\n\n" if $anno_body == 0;
 	print "ERROR: The masked genome for MAKER annotation is not found in $genome.MAKER.masked!\n\n" if ($maker == 1 and !-s "$genome.MAKER.masked");
 	chomp ($date = `date`);
 	print "$date\tTE annotation using the EDTA library has finished! Check out:\n";
@@ -923,17 +1075,22 @@ if ($anno == 1){
 	copy_file("${genome}_divergence_plot.pdf", "..");
 	copy_file("$genome.EDTA.TEanno.density_plots.pdf", "..");
 
-	# Decode all files in the EDTA.anno directory and parent directory copies
+	# Decode user-facing deliverables in the EDTA.anno directory and parent directory copies
 	if ($seqid_mapfile ne '' and -s $seqid_mapfile){
-		# Recursively decode all non-binary files in the anno directory
-		my @anno_files = split /\n/, `find . -type f -size +0c ! -name "*.2bit" ! -name "*.nsq" ! -name "*.nhr" ! -name "*.nin" ! -name "*.ndb" ! -name "*.not" ! -name "*.ntf" ! -name "*.nto" ! -name "*.njs" ! -name "*.gz" 2>/dev/null`;
-		for my $f (@anno_files){
-			`perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
+		for my $f (glob "$genome.EDTA.TEanno.*"){
+			next unless -f $f and $f !~ /\.pdf$/;
+			unlink "$f.decoded";
+			system("perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f")==0 or die "Failed to decode $f: $?\n";
 			}
 		# Decode parent directory copies
-		`perl $seqid_codec decode_fasta ../$genome.MAKER.masked $seqid_mapfile ../$genome.MAKER.masked.decoded && mv ../$genome.MAKER.masked.decoded ../$genome.MAKER.masked` if -s "../$genome.MAKER.masked";
+		if (-s "../$genome.MAKER.masked"){
+			unlink "../$genome.MAKER.masked.decoded";
+			system("perl $seqid_codec decode_fasta ../$genome.MAKER.masked $seqid_mapfile ../$genome.MAKER.masked.decoded && mv ../$genome.MAKER.masked.decoded ../$genome.MAKER.masked")==0 or die "Failed to decode ../$genome.MAKER.masked: $?\n";
+			}
 		for my $decode_f ("$genome.EDTA.TEanno.gff3", "$genome.EDTA.TEanno.gtf", "$genome.EDTA.TEanno.sum"){
-			`perl $seqid_codec decode_text ../$decode_f $seqid_mapfile ../$decode_f.decoded && mv ../$decode_f.decoded ../$decode_f` if -s "../$decode_f";
+			next unless -s "../$decode_f";
+			unlink "../$decode_f.decoded";
+			system("perl $seqid_codec decode_text ../$decode_f $seqid_mapfile ../$decode_f.decoded && mv ../$decode_f.decoded ../$decode_f")==0 or die "Failed to decode ../$decode_f: $?\n";
 			}
 		}
 
@@ -946,7 +1103,8 @@ if ($anno == 1){
 		# extract whole-genome TE, all-v-all blast, and summarize consistency.
 		# Single source of truth: bin/evaluation.pl (the all-v-all blast is checkpointed and resumes
 		# partial runs). -out preserves the $genome.EDTA.TE.fa* output naming reported below.
-		`perl $evaluation -genome $genome -anno $genome.EDTA.TEanno.out -out $genome.EDTA.TE.fa -maxcount 100000 -mincov 0.95 -blast $blastplus -threads $threads -overwrite $overwrite 2>/dev/null`;
+		my $eval_err = `perl $evaluation -genome $genome -anno $genome.EDTA.TEanno.out -out $genome.EDTA.TE.fa -maxcount 100000 -mincov 0.95 -blast $blastplus -threads $threads -overwrite $overwrite 2>&1`;
+		die "ERROR: evaluation.pl failed (exit code ".($? >> 8)."):\n$eval_err\n\n" if $? != 0;
 
 		# check results and report status
 		die "ERROR: TE annotation stats results not found in $genome.EDTA.TE.fa.stat!\n\n" unless -s "$genome.EDTA.TE.fa.stat";
@@ -961,6 +1119,14 @@ if ($anno == 1){
 	print "\t\tIf you want to learn more about the formatting and information of these files, please visit:
 	\t\thttps://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A\n\n";
 
+	}
+
+# clean up the run-private scratch dir: its contents are temporary by
+# definition (tool caches, sort spill), so remove it wholesale on the
+# natural exit path
+if ($edta_own_tmp and -d $ENV{TMPDIR}){
+	use File::Path qw(rmtree);
+	rmtree($ENV{TMPDIR}, { error => \my $err } );
 	}
 
 
@@ -983,6 +1149,60 @@ sub copy_file {
         	rename "$path/$file", "$path/$new_name" or die "ERROR: Failed to rename file: $path/$file\n\n";
         	}
 
-        # copy file to the path if it's not the current path
-	`cp $file $path` if abs_path($path) ne abs_path('.');
+        # copy file to the path if it's not the current path; die if an existing file
+	# fails to land (e.g. full disk), but skip silently when the source is absent
+	# (e.g. optional plot PDFs when R is missing)
+	if (abs_path($path) ne abs_path('.') and -e $file){
+		`cp $file $path`;
+		die "ERROR: Failed to copy $file to $path\n" if $? != 0 or -z "$path/$file";
+		}
+	}
+
+sub softlink_file {
+	my ($src, $dst) = ($_[0], $_[1]);
+	# check "same file" BEFORE touching anything: a valid symlink (or the real file
+	# itself) named $dst in the working directory must be kept, not unlinked and
+	# re-linked to itself (ln -s name name => ELOOP). Only a dangling symlink or a
+	# link pointing elsewhere gets replaced; a different real file is fatal.
+	if (-e $dst or -l $dst){
+		my ($a, $b) = (eval { abs_path($dst) }, eval { abs_path($src) });
+		if (defined $a and defined $b and $a eq $b){
+			return; # dst already resolves to src: nothing to do
+			}
+		if (-l $dst){
+			unlink $dst; # dangling or pointing elsewhere: replace below
+			} else {
+			die "ERROR: $dst already exists in the working directory and is not $src.\n\tPlease remove it or run EDTA in a clean directory.\n\n";
+			}
+		}
+	my $src_abs = abs_path($src);
+	$src_abs = $src unless defined $src_abs;
+	`ln -s $src_abs $dst`;
+	die "ERROR: failed to create softlink $dst -> $src: $!\n" unless -e $dst;
+	}
+
+# --- process supervision helpers (setup is right after the parameter checks) ---
+# TERM the whole process group so every descendant dies with us, give the group
+# a grace period, then KILL leftovers and exit.
+sub _edta_kill_group {
+	my ($sig) = @_;
+	kill('TERM', -getpgrp());
+	local $SIG{ALRM} = sub { kill('KILL', -getpgrp()); exit 128 + $sig; };
+	alarm(10);
+	# wait for the group to drain; we ourselves received $sig, so exit at the end
+	sleep 1 while kill(0, -getpgrp());
+	kill('KILL', -getpgrp());
+	exit 128 + $sig;
+	}
+
+# If the parent process of a forked child dies without being able to run the
+# handler above (SIGKILL / OOM), the kernel kills the child directly.
+sub _edta_pdeathsig {
+	# PR_SET_PDEATHSIG = 1, SIGKILL = 9; syscall number: x86_64 157, aarch64 167
+	return unless $^O eq 'linux';
+	my $sysno = $Config::Config{archname} =~ /x86_64/ ? 157
+	          : $Config::Config{archname} =~ /aarch64|arm64/ ? 167 : 0;
+	eval { require 'syscall.ph'; $sysno = &SYS_prctl; } unless $sysno;
+	return unless $sysno;
+	eval { syscall($sysno, 1, 9, 0, 0, 0) };
 	}

@@ -56,24 +56,25 @@ foreach my $para (@ARGV){
 	}
 
 open TBL, "<$ARGV[1]" or die "ERROR: $!";
-open LTRlist, ">$ARGV[1].list" unless $extend==1;
-open Extend, ">$ARGV[1].extend" if $extend==1;
-open Full, ">$ARGV[1].full" if $full==1;
+open LTRlist, ">$ARGV[1].list" or die "ERROR: $!" unless $extend==1;
+open Extend, ">$ARGV[1].extend" or die "ERROR: $!" if $extend==1;
+open Full, ">$ARGV[1].full" or die "ERROR: $!" if $full==1;
 
 my %chr;
 if ($LTR==1 && $genome==0){
 	open FA, "<$ARGV[2]" or die "ERROR: $!";
 	while (<FA>){
 		s/>//;
-		$chr{"$2..$3"}=$1 if (/^(\S+).*\[([0-9]+),([0-9]+)\]/); #eg: >9311_chr01 (dbseq-nr 0) [101308,114181]
-		$chr{"$2..$3"}=$1 if (/^(\S+)_[0-9]+.*\[([0-9]+),([0-9]+)\]/); #eg: >gi.478805111.gb.AQOG01030080.1_1 (dbseq-nr 173) [4033,8637]
-		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|([0-9]+)\.\.([0-9]+)/); #eg: >Chr1:106522..118080|106502..118100
-		$chr{"$2..$3"}=$1 if (/^(\S+)\|([0-9]+)\.\.([0-9]+)/);#eg: >Chr1|106522..118080
-		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|(\S+)/);#eg: >Chr1:106522..118080|Chr1
-		$chr{"$2..$3"}=$1 if (/^(\S+):([0-9]+)..([0-9]+)\[[12]\]/); #eg: >gi.478805265.gb.AQOG01029926.1:10426..15413[1]
+		my $seq_nr = /dbseq-nr ([0-9]+)/ ? "$1:" : ''; #the LTRharvest sequence number; distinguishes identical ranges on different sequences
+		$chr{"$seq_nr$2..$3"}=$1 if (/^(\S+).*\[([0-9]+),([0-9]+)\]/); #eg: >9311_chr01 (dbseq-nr 0) [101308,114181]
+		$chr{"$seq_nr$2..$3"}=$1 if (/^(\S+)_[0-9]+.*\[([0-9]+),([0-9]+)\]/); #eg: >gi.478805111.gb.AQOG01030080.1_1 (dbseq-nr 173) [4033,8637]
+		$chr{"$seq_nr$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|([0-9]+)\.\.([0-9]+)/); #eg: >Chr1:106522..118080|106502..118100
+		$chr{"$seq_nr$2..$3"}=$1 if (/^(\S+)\|([0-9]+)\.\.([0-9]+)/);#eg: >Chr1|106522..118080
+		$chr{"$seq_nr$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|(\S+)/);#eg: >Chr1:106522..118080|Chr1
+		$chr{"$seq_nr$2..$3"}=$1 if (/^(\S+):([0-9]+)..([0-9]+)\[[12]\]/); #eg: >gi.478805265.gb.AQOG01029926.1:10426..15413[1]
 #print "$id\n";
-		$chr{"$2..$3"}=$1 if (/(\S+)\:([0-9]+)\.\.([0-9]+)/); #eg: gi.478789307.gb.AQOG01045884.1:56716..59758     pass    motif:AAAG      TSD:TGAAG
-		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|/);#eg: >Chr1:106522..118080|
+		$chr{"$seq_nr$2..$3"}=$1 if (/(\S+)\:([0-9]+)\.\.([0-9]+)/); #eg: gi.478789307.gb.AQOG01045884.1:56716..59758     pass    motif:AAAG      TSD:TGAAG
+		$chr{"$seq_nr$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|/);#eg: >Chr1:106522..118080|
 #print "$1\n";
 		}
 	}
@@ -117,7 +118,7 @@ if ($LTR==1){
 #34 4594 4561 34 291 258 4335 4594 260 0.962     + CTCAC 29..33, 4595..4599 TG,TG,CA,CA
 #start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)
 
-	$chr=$chr{"$element_start..$element_end"} if $genome==0;
+	$chr = $chr{"$seq_ID:$element_start..$element_end"} // $chr{"$element_start..$element_end"} if $genome==0;
 #	if ($genome==1 and !$chr) {
 	if ($genome==1) {
 		if (exists $chr{$seq_ID}){
@@ -149,7 +150,7 @@ if ($LTR==1){
 	my $mark=1;
 	if ($IN==1){
 		my $in_len=$rLTR_start-$lLTR_end;
-		my $inLTR_ratio=$in_len/(($lLTR_length+$rLTR_length)/2);
+		my $inLTR_ratio = ($lLTR_length+$rLTR_length) ? $in_len/(($lLTR_length+$rLTR_length)/2) : 0;
 		if ($in_len<$min_inlen or $in_len>$max_inlen or $inLTR_ratio<$min_iLratio or $inLTR_ratio>$max_iLratio){
 			$mark=0;
 			}
@@ -183,7 +184,7 @@ if ($LTR==1){
 	}
 }
 
-close FA if $LTR==1;
+close FA if $LTR==1 and $genome==0;
 close Extend if $extend==1;
 close Full if $full==1;
 close LTRlist unless $extend==1;
