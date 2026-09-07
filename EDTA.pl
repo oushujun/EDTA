@@ -7,6 +7,7 @@ use Getopt::Long;
 use Pod::Usage;
 use POSIX qw(strftime);
 use Cwd qw(abs_path);
+use File::Path qw(rmtree);
 
 my $version = "v2.3.3";
 #v1.0 05/31/2019
@@ -102,6 +103,10 @@ perl EDTA.pl [options]
 	--ltrretriever	[path]	The directory containing LTR_retriever (default: read from ENV)
 	--check_dependencies Check if dependencies are fullfiled and quit
 	--threads|-t [int]	Number of theads to run this script (default: 4)
+	--tmpdir [Dir]		Directory for the temporary files of this run and all its
+				child tools (default: .EDTA.tmp.<pid> in the working
+				directory). Set EDTA_TMPDIR_KEEP=1 to keep the
+				inherited TMPDIR instead.
 	--debug	 [0|1]	Retain intermediate files (default: 0)
 	--help|-h 	Display this help info
 \n";
@@ -125,6 +130,7 @@ my $maker = 0; #0, will not produce the low-threshold MAKER.masked genome (defau
 my $force = 0; #if there is no confident TE found in EDTA_raw, 1 will use rice TEs as raw lib, 0 will error and interrupt.
 my $miu = 1.3e-8; #mutation rate, per bp per year, from rice
 my $threads = 4;
+my $tmpdir = ''; #private scratch dir for TMPDIR isolation; default: .EDTA.tmp.$$
 my $maxdiv = 40; # maximum divergence from lib sequences for fragmented repeats
 my $script_path = $FindBin::Bin;
 my $EDTA_raw = "$script_path/EDTA_raw.pl";
@@ -217,6 +223,7 @@ if ( !GetOptions( 'genome=s'            => \$genome,
 		  'tirlearner=s'	 => \$TIR_Learner,
 		  'ltrretriever=s'	 => \$LTR_retriever,
 		  'threads|t=i'          => \$threads,
+		  'tmpdir=s'             => \$tmpdir,
 		  'wholeelement=i'       => \$wholeelement,
 		  'check_dependencies!'  => \$check_dependencies,
                   'debug=i'              => \$debug,
@@ -259,6 +266,22 @@ if ($miu !~ /^[0-9.eE+-]+$/ or $miu !~ /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?
 if ($debug != 0 and $debug != 1){ die "The expected value for the debug parameter is 0 or 1!\n"}
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"}
 if ($threads < 1){ die "The expected value for the threads parameter is an integer >= 1!\n"}
+
+# --- TMPDIR isolation: keep descendants off the system /tmp ----------------
+# Unless explicitly kept, point TMPDIR at a private scratch dir in the
+# working directory so no tool (python tempfile, sort spill, blast temp)
+# can fill the machine's /tmp. --tmpdir selects a custom location
+# (e.g. a node-local SSD); EDTA_TMPDIR_KEEP=1 keeps the environment as-is.
+my $edta_own_tmp = 0;
+unless (defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1'){
+	if ($tmpdir ne '' and -d $tmpdir){
+		$ENV{TMPDIR} = $tmpdir; # user-selected dir, never removed by EDTA
+		} else {
+		$ENV{TMPDIR} = abs_path(".")."/.EDTA.tmp.$$"; # run-private default scratch
+		$edta_own_tmp = 1;
+		}
+	mkdir($ENV{TMPDIR}) unless -d $ENV{TMPDIR};
+	}
 
 
 # define RepeatMasker -pa parameter
@@ -1081,6 +1104,14 @@ if ($anno == 1){
 	print "\t\tIf you want to learn more about the formatting and information of these files, please visit:
 	\t\thttps://github.com/oushujun/EDTA/wiki/Making-sense-of-EDTA-usage-and-outputs---Q&A\n\n";
 
+	}
+
+
+# clean up the run-private scratch dir: its contents are temporary by
+# definition (tool caches, sort spill), so remove it wholesale on the
+# natural exit path
+if ($edta_own_tmp and -d $ENV{TMPDIR}){
+	rmtree($ENV{TMPDIR}, { error => \my $err } );
 	}
 
 

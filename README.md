@@ -246,6 +246,13 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
 
 ### Parallelism, module selection, and resume
 
+**Temporary files are isolated from the system `/tmp`.** By default EDTA points `TMPDIR`
+at a private scratch directory in the working directory (`.EDTA.tmp.<pid>`), so child
+tools' temporary files (Python `tempfile`, `sort` spills, BLAST temp files, caches) can
+never fill a shared machine's `/tmp`. The scratch is removed when the run finishes
+normally. Use `--tmpdir <dir>` to select the location yourself (e.g. a node-local SSD),
+or set `EDTA_TMPDIR_KEEP=1` to keep the inherited `TMPDIR`.
+
 **Run only some TE discovery modules** (`--modules`). In most plant genomes LINEs and
 SINEs annotate <2% of the sequence, while their de-novo discovery (RepeatModeler and
 AnnoSINE) is the slowest part of EDTA:

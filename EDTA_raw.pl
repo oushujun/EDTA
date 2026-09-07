@@ -5,6 +5,7 @@ use FindBin;
 use File::Basename;
 use File::Spec; # for obtaining the real path of a file
 use Cwd qw(abs_path); # for resolving the genome softlink
+use File::Path qw(rmtree); # for run-private scratch cleanup
 use Pod::Usage;
 
 ########################################################
@@ -187,6 +188,18 @@ if ($convert_name != 0 and $convert_name != 1){ die "The expected value for the 
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"};
 if ($parallel_modules != 0 and $parallel_modules != 1 and $parallel_modules != 2){ die "The expected value for the parallel_modules parameter is 0, 1, or 2!\n"};
 if ($miu !~ /^[0-9.eE+-]+$/){ die "The expected value for the u parameter is float value without units!\n"}
+
+# --- TMPDIR isolation: keep descendants off the system /tmp ----------------
+# Only set a private scratch when no TMPDIR is in effect at all: an inherited
+# TMPDIR (EDTA.pl's isolated scratch, or the user's environment) is kept
+# as-is; EDTA_TMPDIR_KEEP=1 keeps whatever the environment provided.
+my $raw_own_tmp = 0;
+unless ((defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1')
+	or (defined $ENV{TMPDIR} and length $ENV{TMPDIR})){
+	$ENV{TMPDIR} = abs_path(".")."/.EDTA.raw.tmp.$$";
+	$raw_own_tmp = 1;
+	mkdir($ENV{TMPDIR}) unless -d $ENV{TMPDIR};
+	}
 
 chomp (my $date = `date`);
 print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
@@ -1006,3 +1019,9 @@ if (-s "$genome.EDTA.raw/$genome.Helitron.intact.raw.fa"){
 
 chomp ($date = `date`);
 print STDERR "$date\tExecution of EDTA_raw.pl is finished!\n\n";
+
+# clean up the run-private scratch dir (only ever created for standalone runs;
+# under EDTA.pl the inherited TMPDIR belongs to the parent)
+if ($raw_own_tmp and -d $ENV{TMPDIR}){
+	rmtree($ENV{TMPDIR}, { error => \my $err } );
+	}

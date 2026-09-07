@@ -3,6 +3,7 @@ use warnings;
 use strict;
 use FindBin;
 use File::Basename;
+use File::Path qw(rmtree); # for run-private scratch cleanup
 
 #####################################################################
 ##### Perform EDTA basic and advance filtering on TE candidates #####
@@ -117,6 +118,21 @@ my $HEL = "$genome.Helitron.intact.raw.fa";
 # enter the combine folder for EDTA processing
 chdir "$genome.EDTA.combine" or die "Cannot enter $genome.EDTA.combine: $!\n";
 
+# --- TMPDIR isolation: keep descendants off the system /tmp ----------------
+# Only set a private scratch when no TMPDIR is in effect at all: an inherited
+# TMPDIR (EDTA.pl's isolated scratch, or the user's environment) is kept
+# as-is; EDTA_TMPDIR_KEEP=1 keeps whatever the environment provided.
+my $combine_own_tmp = 0;
+unless ((defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1')
+	or (defined $ENV{TMPDIR} and length $ENV{TMPDIR})){
+	# anchored with an absolute path: parallel() children chdir into scratch dirs
+	my $cwd = `pwd`; chomp $cwd;
+	$ENV{TMPDIR} = "$cwd/.combine.tmp.$$";
+	$combine_own_tmp = 1;
+	mkdir($ENV{TMPDIR}) unless -d $ENV{TMPDIR};
+	}
+
+
 # --- Resume support (added 2026-08-24) --------------------------------------
 # EDTA_processK.pl originally had no restart logic: every invocation redid the
 # whole filtering stage from scratch. On an 11 Gb genome that stage takes far
@@ -203,6 +219,7 @@ sub parallel {
 		die "Cannot fork a child for $name: $!\n" unless defined $pid;
 		if ($pid == 0){
 			$threads = $child_threads;
+			$combine_own_tmp = 0; # the scratch belongs to the parent; children must not remove it
 			my $tmp = ".$name.$$.tmp";
 			`rm -rf $tmp`;
 			mkdir $tmp or die "Cannot create $tmp: $!\n";
@@ -352,3 +369,12 @@ unless (&done("step11_cleanup_nested")){
 `rm *.ndb *.not *.ntf *.nto *.cat.gz *.cat *.masked *.ori.out *.nhr *.nin *.nsq *.njs 2>/dev/null`;
 
 chdir '..';
+
+# clean up the run-private scratch dir (only ever created for standalone runs;
+# under EDTA.pl the inherited TMPDIR belongs to the parent). END also fires on
+# die; forked children cleared $combine_own_tmp right after fork.
+END {
+	if ($combine_own_tmp and defined $ENV{TMPDIR} and -d $ENV{TMPDIR}){
+		rmtree($ENV{TMPDIR}, { error => \my $err } );
+		}
+	}
