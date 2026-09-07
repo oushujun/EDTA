@@ -7,6 +7,7 @@ eg1. perl call_seq_by_LOC.pl array_list itself >result	##call LOC sequence withi
 eg2. perl call_seq_by_LOC.pl array_list -C your_database up_2000 >result	##call sequence of upper 2000 bp region in the list, from the provided database
 
 Update history:
+	v2.6	read the list line by line and load the genome one chromosome at a time to cut memory use; output unchanged (2026/09/05)
 	v2.5	do not output sequence with all Ns (2023/01/30)
 	v2.4	output sequences without headers
 	v2.3	output a list of entirely excluded sequences
@@ -62,38 +63,72 @@ foreach my $para (@ARGV){
 
 open Exclude, ">$genome.exclude" or die "\n\t\tERROR: Can not create the file $genome.exclude to output excluded seq IDs!\n" if $exclude == 1;
 open Genome, "<$genome" or die "\n\t\tERROR: Genome sequence not found, or wrong parameters!\n$usage";
-my %genome;
+
+#index the genome FASTA by chromosome instead of loading it whole: %chr_offset stores the byte
+#offset of each chromosome's record (the last record of a name wins, as with %genome before),
+#@chr_order keeps the records in file order for the -ex whole-genome output
+my (%chr_offset, @chr_order);
+my $offset = 0;
 $/="\n>";
 while (<Genome>){
+	my $rec_offset = $offset;
+	$offset += length $_;
 	next if /^>\s?$/;
 	chomp;
-	s/>//g;
+	tr/>//d;
 	s/^\s+//;
-	my ($chr, $seq)=(split /\n/, $_, 2);
-	next unless defined $seq;
+	my $pos = index ($_, "\n");
+	next if $pos < 0; #no sequence under the header
+	my $chr = substr ($_, 0, $pos);
 	$chr=~s/\s+$//;
-	$seq=~s/\s+//g;
-	$genome{$chr}=$seq;
+	push @chr_order, [$chr, $rec_offset];
+	$chr_offset{$chr}=$rec_offset;
 	}
 $/="\n";
-close Genome;
+
+#load the sequence of one chromosome on demand; only the most recently loaded chromosome is
+#kept in memory (list entries within a chromosome are not coordinate-sorted, so random access
+#within the current chromosome is still required)
+my ($cur_chr, $cur_seq);
+sub genome_seq {
+	my ($chr) = @_;
+	return $cur_seq if defined $cur_chr and $cur_chr eq $chr;
+	return unless exists $chr_offset{$chr};
+	seek Genome, $chr_offset{$chr}, 0 or return;
+	my $rec;
+	{
+		local $/="\n>";
+		defined ($rec = <Genome>) or return;
+		chomp $rec;
+	}
+	$rec=~tr/>//d;
+	$rec=~s/^\s+//;
+	my $pos = index ($rec, "\n");
+	return unless $pos >= 0; #no sequence under the header
+	my $chr_rec = substr ($rec, 0, $pos);
+	substr ($rec, 0, $pos+1, ''); #drop the header line in place
+	$chr_rec=~s/\s+$//;
+	$rec=~s/\s+//g;
+	($cur_chr, $cur_seq) = ($chr_rec, $rec);
+	return $cur_seq;
+	}
 
 open List, "sort -k2,2 -suV $ARGV[0] |" or die "\n\tERROR: no LOC list!\n$usage";
-my @list=<List>; #an array to store loc list information
-close List;
+my $first = <List>; #read the first line for initialization, then stream the rest
 
-die "Warning: LOC list $ARGV[0] is empty.\n" if $#list<0;
-shift @list if $list[0]=~/^\s?$/; #remove the first empty line
+die "Warning: LOC list $ARGV[0] is empty.\n" unless defined $first;
+$first = <List> if $first =~ /^\s?$/; #remove the first empty line
 my $chr='';
 my %chr; #store chr names being worked
-$list[0]=~s/^\s+//;
-my $chr_pre=$1 if (split /\s+/, $list[0])[1]=~/(.*):[0-9]+\.\.[0-9]+$/;
+$first=~s/^\s+//;
+my $chr_pre=$1 if (split /\s+/, $first)[1]=~/(.*):[0-9]+\.\.[0-9]+$/;
 my $str=1; #the coordinate of the first bp of a sequence
-my $stp=length $genome{$chr_pre};
+my $stp; #length of the chr being worked; always assigned before first use
 my $seq='';
 my $base_num = 0; # count non-N bases in $seq
 
-foreach my $line (@list){
+my $line = $first;
+while (defined $line){
 	chomp $line;
 	next if $line=~/^\s?$/;
 	my ($loc, $pos, $strand, $start, $stop);
@@ -103,8 +138,7 @@ foreach my $line (@list){
 	if ($pos=~/^(.*)\:(-?[0-9]+)\.\.(-?[0-9]+)$/){
 		($chr, $start, $stop)=($1, $2, $3);
 		} else {
-	print "$pos\n";
-	die "ERROR: Can not recognize this MSU position in the list!\n";
+	die "ERROR: Can not recognize this MSU position in the list (line: \"$line\")!\n";
 		}
 	$chr{$chr}=$chr;
 	if ($start>$stop){
@@ -125,13 +159,13 @@ foreach my $line (@list){
 
 	$start=1 if $start<=0;
 
-	next unless exists $genome{$chr};
+	next unless exists $chr_offset{$chr};
 #	next if $genome{$chr}=~/^\s+$/;
-	next if length $genome{$chr} < 10;
-	$stop=length $genome{$chr} if $stop>=length $genome{$chr};
+	next if length (genome_seq($chr)) < 10;
+	$stop=length (genome_seq($chr)) if $stop>=length (genome_seq($chr));
 
 	if ($exclude==0){
-		$seq=substr ($genome{$chr}, $start-1, $stop-$start+1) if exists $genome{$chr};
+		$seq=substr (genome_seq($chr), $start-1, $stop-$start+1) if exists $chr_offset{$chr};
 		$seq=" " if $seq eq '';
 
 		if ($strand eq "-"){ #if the locus is in neigative strand (-), then get a complementary and reversed strand
@@ -148,16 +182,20 @@ foreach my $line (@list){
 	my $cov;
 	if ($exclude==1){
 		if ($chr_pre ne $chr and $chr ne ''){
-			$stp=length $genome{$chr_pre};
-			$seq.=substr ($genome{$chr_pre}, $str-1, $stp-$str+1) if (exists $genome{$chr_pre} and $str<=$stp and $str!=1);
-			if (($stp-length $seq)/$stp >= $coverage){
-				print Exclude "$chr_pre\n";
-				} elsif ($purge==1){
-				print ">$chr_pre\n" if $header==1;
-				print "$seq\n";
+			if (exists $chr_offset{$chr_pre}){
+				$stp=length (genome_seq($chr_pre));
+				$seq.=substr (genome_seq($chr_pre), $str-1, $stp-$str+1) if ($str<=$stp and $str!=1);
+				if (($stp-length $seq)/$stp >= $coverage){
+					print Exclude "$chr_pre\n";
+					} elsif ($purge==1){
+					print ">$chr_pre\n" if $header==1;
+					print "$seq\n";
+					} else {
+					print ">$chr_pre\n" if $header==1;
+					print genome_seq($chr_pre), "\n";
+					}
 				} else {
-				print ">$chr_pre\n" if $header==1;
-				print "$genome{$chr_pre}\n";
+				warn "WARNING: $chr_pre is not found in the genome, skipped!\n";
 				}
 
 #			if ($purge==1){
@@ -168,33 +206,42 @@ foreach my $line (@list){
 #				}
 			$chr_pre=$chr;
 			$str=1;
-			$stp=length $genome{$chr};
+			$stp=length (genome_seq($chr));
 			$seq='';
 			if ($start>1){
 				$stp=$start-1;
-				$seq.=substr ($genome{$chr}, $str-1, $stp-$str+1) if exists $genome{$chr};
+				$seq.=substr (genome_seq($chr), $str-1, $stp-$str+1) if exists $chr_offset{$chr};
 				}
 			$str=$stop+1;
 			next;
 			}
 			if ($start>1){
 				$stp=$start-1;
-				$seq.=substr ($genome{$chr}, $str-1, $stp-$str+1) if (exists $genome{$chr} and $str<=$stp); #and $str!=1);
+				$seq.=substr (genome_seq($chr), $str-1, $stp-$str+1) if (exists $chr_offset{$chr} and $str<=$stp); #and $str!=1);
 				}
 			$str=$stop+1;
 		}
 	}
+	continue {
+	$line = <List>;
+	}
+close List;
+
 	if ($exclude==1){
-		$stp=length $genome{$chr};
-		$seq.=substr ($genome{$chr}, $str-1, $stp-$str+1) if (exists $genome{$chr} and $str<=$stp and $str!=1);
-		if (($stp-length $seq)/$stp >= $coverage){
-			print Exclude "$chr_pre\n";
-			} elsif ($purge==1){
-			print ">$chr_pre\n" if $header==1;
-			print "$seq\n";
+		if (exists $chr_offset{$chr_pre}){
+			$stp=length (genome_seq($chr_pre));
+			$seq.=substr (genome_seq($chr_pre), $str-1, $stp-$str+1) if ($str<=$stp and $str!=1);
+			if (($stp-length $seq)/$stp >= $coverage){
+				print Exclude "$chr_pre\n";
+				} elsif ($purge==1){
+				print ">$chr_pre\n" if $header==1;
+				print "$seq\n";
+				} else {
+				print ">$chr_pre\n" if $header==1;
+				print genome_seq($chr_pre), "\n";
+				}
 			} else {
-			print ">$chr_pre\n" if $header==1;
-			print "$genome{$chr_pre}\n";
+			warn "WARNING: $chr_pre is not found in the genome, skipped!\n";
 			}
 #		if ($purge==1){
 #			print ">$chr\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
@@ -202,10 +249,14 @@ foreach my $line (@list){
 #			} else {
 #			print ">$chr\n$genome{$chr}\n" unless ($stp-length $seq)/$stp >= $coverage;
 #			}
-		foreach my $chr (keys %genome){
-			unless (exists $chr{$chr}) {
-				print ">$chr\n" if $header==1;
-				print "$genome{$chr}\n";
+		#output chromosomes not specified in the list; these were iterated in %genome hash
+		#order (random per process) before, now they follow the genome file order
+		foreach my $chr_rec (@chr_order){
+			my ($chr_g, $rec_offset) = @$chr_rec;
+			next if $chr_offset{$chr_g} != $rec_offset; #only the last record of a chr counts
+			unless (exists $chr{$chr_g}) {
+				print ">$chr_g\n" if $header==1;
+				print genome_seq($chr_g), "\n";
 				}
 			}
 		}

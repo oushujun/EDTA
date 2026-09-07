@@ -8,8 +8,8 @@ my $RM_out = $ARGV[0];
 my $mincov = 0.8;
 
 open RM, "<$RM_out" or die $usage;
-open Complete, ">$RM_out.complete.list";
-open Fragment, ">$RM_out.fragment.list";
+open Complete, ">$RM_out.complete.list" or die "ERROR: cannot write $RM_out.complete.list: $!\n";
+open Fragment, ">$RM_out.fragment.list" or die "ERROR: cannot write $RM_out.fragment.list: $!\n";
 
 while (<RM>){
 	s/^\s+//;

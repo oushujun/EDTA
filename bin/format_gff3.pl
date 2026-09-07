@@ -25,6 +25,7 @@ if ($input_file eq '-') {
 my %repeats;
 my @order;
 my @header;
+my @child_seq; #every child in input order, used to recover orphans whose Parent ID is absent
 my $has_printed = 0;
 
 # Read the input file line by line
@@ -47,6 +48,7 @@ while (my $line = <$fh>) {
     if (exists $attr_hash{'Parent'}) {
         # It's a child entry
         push @{$repeats{$attr_hash{'Parent'}}{'children'}}, \@fields;
+        push @child_seq, [$attr_hash{'Parent'}, \@fields];
     } elsif (exists $attr_hash{'ID'}) {
         # It's a repeat entry
         push @order, $attr_hash{'ID'} unless exists $repeats{$attr_hash{'ID'}};
@@ -82,6 +84,15 @@ foreach my $id (@order) {
             }
         }
     }
+}
+
+# Print orphan children whose Parent= references a non-existent ID, in input order
+my @orphans = map { $_->[1] } grep { !exists $repeats{$_->[0]}{'parent'} } @child_seq;
+if (@orphans) {
+    warn "Warning: ", scalar(@orphans), " child features reference a non-existent Parent ID and are printed ungrouped in input order\n";
+    print "###\n" if $has_printed;
+    $has_printed = 1;
+    print join("\t", @{$_}), "\n" foreach @orphans;
 }
 
 print "###\n" if $has_printed;  # Print the final separator only if entries were printed

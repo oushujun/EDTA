@@ -104,7 +104,7 @@ while (<RM>){
 
 	# combine LTR region and internal reigon into one family
 	# note: if $qso=copia and $sso=other LTRs (gypsy or unknown), or $qso=gyp and $sso=others, or $qso=unk and $sso=others, they are all counted in coverage and thus the final $qso may not equal to $sso. The final fix will be improving the library and have these discripencies blocked.
-	$subject =~ s/(_I_nonauto|_I_auto|-I_nonauto|-I_nona|-I_auto|_LTR_nonauto|_LTR_auto|\-LTR|\-I|\-int|_I|_INT|_LTR|I|LTR)$//i;
+	$subject =~ s/(_I_nonauto|_I_auto|-I_nonauto|-I_nona|-I_auto|_LTR_nonauto|_LTR_auto|\-LTR|\-I|\-int|_I|_INT|_LTR)$//i;
 
 	# if query is not Helitron but subject is Helitron, skip this line because helitron annotation is overall low-confidence. subject-Helitron could be false annotation
 	next if $query !~ /Helitron/i and $sso =~ /Helitron/i;
@@ -153,8 +153,8 @@ foreach my $id (@lib){
 			}
 
 		#my @subjects = sort{$lib{$id}{$b} <=> $lib{$id}{$a}} (keys %{$lib{$id}});
-		$top_coverage = sprintf("%.1f", $max_subject_length*100/$query_len); #coverage of the query by the longest subject hit (%)
-		$total_coverage = sprintf("%.1f", $total_subject_length*100/$query_len); #total coverage of the query by all subject hits (%)
+		$top_coverage = sprintf("%.1f", $query_len ? $max_subject_length*100/$query_len : 0); #coverage of the query by the longest subject hit (%)
+		$total_coverage = sprintf("%.1f", $query_len ? $total_subject_length*100/$query_len : 0); #total coverage of the query by all subject hits (%)
 		
 		# rename $id to the longest alignment if passing criteria
 		if ($q_class =~ /Helitron/i and keys %sso_subjects > 1){ #rename this disregard coverage if it's a helitron
