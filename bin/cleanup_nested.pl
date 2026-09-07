@@ -2,7 +2,6 @@
 use warnings;
 use strict;
 use threads;
-use Thread::Queue;
 use threads::shared;
 use IO::Handle;
 use Data::Dumper;
@@ -14,6 +13,8 @@ use Data::Dumper;
 #Update: 07/07/2026 query-level checkpoint/resume: auto-continues a killed run from its
 #	partial .stat + per-iteration snapshots, skipping already-processed queries. Use
 #	-overwrite 1 to force a clean restart.
+#Update: 09/05/2026 batched blasting: one multi-threaded blastn per batch of queries replaces
+#	one blastn process per query; the cleaning loop runs sequentially in the main thread.
 
 my $usage = "\n
 Iteratively clean up nested TE insertions and remove redundancy.
@@ -56,6 +57,7 @@ my $count_limit = 0; # the maximum number of stat lines you want to obtain. 0 = 
 my $overwrite = 0; # 1, ignore partial results and restart; 0, auto-resume from partial results if found.
 my $blastplus = ""; #the path to blastn
 my $threads = 4;
+my $batch_size = 1000; #queries per batched blastn invocation
 
 my $k=0;
 foreach (@ARGV){
@@ -87,7 +89,6 @@ my %seq :shared;
 my %touched_seq :shared; # here we will save all subject sequences that were modified after removing nested sequence
 my $count_stat :shared = 0; # count stat lines in realtime (drives -maxcount and the saturation check)
 my $stat_lock :shared;      # serializes writes to STAT so lines never interleave (also keeps .stat replayable)
-my $queue;
 my $num_stat = 0; # stat count at the end of the previous iteration; drives the saturation check
 
 # Decide whether to resume from a previous interrupted run.
@@ -149,25 +150,21 @@ for (my $i=$start_iter; $i<$iter; $i++){
 		rename "$IN.iter$i.tmp", "$IN.iter$i" or die $!; # atomic: snapshot appears only once complete
 	}
 	`${blastplus}makeblastdb -in $IN.iter$i -dbtype nucl`;
+	die "makeblastdb failed for iteration $i ($?)\n" if $? != 0;
 
-	# multi-threading using queue, put candidate regions into queue for parallel computation
-	$queue = Thread::Queue->new();
-	foreach my $id (keys %seq){
-		last unless defined $seq{$id};
+	# collect this iteration's pending queries (queries already processed before an
+	# interruption are skipped) and clean them batch by batch: ONE multi-threaded blastn per
+	# batch of queries replaces one blastn process per query
+	my @pending;
+	foreach my $id (sort {$a cmp $b} keys %seq){
+		unless (defined $seq{$id}){
+			warn "WARNING: undefined sequence for $id, skipped\n";
+			next;
+			}
 		next if $resume and $i == $start_iter and exists $done_q{$id}; # already processed before the interruption
-		$queue -> enqueue([$id, $i, "$IN.iter$i"]);
-	}
-	$queue -> end(); # signal that no more items will be added to the queue
-
-	# initiate a number of worker threads and run
-	my @threads;
-	foreach (1..$threads){
-		push @threads, threads->create(\&condenser);
-		#threads->create(\&condenser);
-	}
-	foreach my $thread (@threads){
-		$thread->join();
-	}
+		push @pending, $id;
+		}
+	&condenser(\@pending, $i);
 	`rm $IN.iter$i.nhr $IN.iter$i.nin $IN.iter$i.nsq $IN.iter$i.ndb $IN.iter$i.not $IN.iter$i.ntf $IN.iter$i.nto $IN.iter$i.njs 2>/dev/null`;
 
 	# stop cleanly once the -maxcount cap is reached (no need to spin through remaining iterations)
@@ -197,117 +194,164 @@ close STAT;
 unlink glob "$IN.iter*";
 
 
-# subrotine for the condenser
+# subrotine for the condenser: blast the pending queries of this iteration in batches (one
+# blastn per batch), then run the per-query cleaning loop sequentially in this thread -- the
+# batched blastn already parallelizes across queries with -num_threads. The single-threaded
+# loop also makes each subject's check-modify-write on %seq/%touched_seq atomic.
 sub condenser(){
-	my $done_fh; # per-thread log of processed queries (opened lazily; no cross-thread contention)
-	while (defined($_ = $queue->dequeue())){
-		my ($id, $i, $db) = (@{$_}[0], @{$_}[1], @{$_}[2]);
-		unless (defined $done_fh){
-			open($done_fh, ">>", "$IN.iter$i.done." . threads->tid()) or warn "cannot open done-log: $!\n";
-			$done_fh->autoflush(1) if defined $done_fh;
-		}
-		next unless exists $seq{$id};
-		next if $touched_seq{$id} == 1;
-		my $seq = ">$id\n$seq{$id}\n";
-		my $length = length $seq{$id}; #query length
-		next unless defined $length and $length > 0;
-		my $exec="timeout -s KILL 120s ${blastplus}blastn -query <(echo -e \"$seq\") -db $db -word_size 7 -evalue 1e-5 -dust no -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send qlen slen\"";
-		my @Blast=();
-		my %seq_len; #store subject seq length info
-		my %merged_hsps;
-		my %merged_hsps_size; # collection of summing size of non-overlapped HSPs for checking the coverage
-		my @aln_iden; # store alignment length and iden of this $id
-		my $scaled_iden; # overall identity given all blast hits that pass the filter
-		my $total_len; # total length of all alignments to $id
-		@Blast=qx(bash -c '$exec' 2> /dev/null);
-		if (($? >> 8) == 137){ # word_size 7 detonated (timeout/OOM) on a high-copy query -> salvage with megablast (word_size $mb_wordsize)
-			(my $exec_mb = $exec) =~ s/-word_size 7 -evalue 1e-5 -dust no/-word_size $mb_wordsize -evalue 1e-5/;
-			@Blast=qx(bash -c '$exec_mb' 2> /dev/null);
-		}
-		# collect BLAST HSPs into the hash
-		foreach (@Blast){
-			my ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len) = (split)[0,1,2,3,8,9,11];
-			my @vars = ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len);
-			my @undefined_vars = grep { !defined($_) } @vars;
-			next if @undefined_vars;
-			next unless exists $seq{$subject};
-			next if $query eq $subject;
-			next if $touched_seq{$subject} == 1; # skip the iteration if the subject sequence was already modified (including discarded)
-			next if $iden < $min_iden;
-			next if $len < $minlen; # the length of HSPs should be more than 80 bp
-			($sbj_start, $sbj_end) = ($sbj_end, $sbj_start) if $sbj_start > $sbj_end;
-			push @{$merged_hsps{$subject}}, [$sbj_start, $sbj_end];
-			$seq_len{$subject} = $sbj_len;
-			$total_len += $len;
-			push @aln_iden, [$len, $iden];
-			}
+	my ($pending, $i) = @_;
+	my $done_fh; # log of processed queries (checkpoint/resume)
+	open($done_fh, ">>", "$IN.iter$i.done." . threads->tid()) or warn "cannot open done-log: $!\n";
+	$done_fh->autoflush(1) if defined $done_fh;
 
-		# calculate weighted identity
-		foreach (@aln_iden) {
-			my ($len, $iden) = @{$_};
-			$scaled_iden += sprintf("%.3f", $iden * $len / $total_len);
-			}
+	my $stop = 0; # set when the -maxcount cap is reached
+	while (@$pending and !$stop){
+		my @batch = splice @$pending, 0, $batch_size;
+		my $blast = &blast_batch(\@batch, $i, "$IN.iter$i");
+		foreach my $id (@batch){
+			last if $stop;
+			next unless exists $seq{$id};
+			next if $touched_seq{$id} == 1;
+			my $length = length $seq{$id}; #query length
+			next unless defined $length and $length > 0;
+			my @Blast = exists $blast->{$id} ? @{$blast->{$id}} : ();
+			my %seq_len; #store subject seq length info
+			my %merged_hsps;
+			my %merged_hsps_size; # collection of summing size of non-overlapped HSPs for checking the coverage
+			my @aln_iden; # store alignment length and iden of this $id
+			my $scaled_iden; # overall identity given all blast hits that pass the filter
+			my $total_len; # total length of all alignments to $id
 
-		# merge all overlapped HSPs and calculating the total covering by HSPs of subjects on the query
-		my $merged = 0; # number of overlapping HSPs
-		map {
-			my $sbj = $_;
-			# merging
-			my ($ref1, $ref2) = &merger(@{$merged_hsps{$sbj}});
-			@{$merged_hsps{$sbj}} = @$ref1;
-			$merged = $$ref2;
-			# total coverage by HSPs
+			# collect BLAST HSPs into the hash
+			foreach (@Blast){
+				my ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len) = (split)[0,1,2,3,8,9,11];
+				my @vars = ($query, $subject, $iden, $len, $sbj_start, $sbj_end, $sbj_len);
+				my @undefined_vars = grep { !defined($_) } @vars;
+				next if @undefined_vars;
+				next unless exists $seq{$subject};
+				next if $query eq $subject;
+				next if $touched_seq{$subject} == 1; # skip the iteration if the subject sequence was already modified (including discarded)
+				next if $iden < $min_iden;
+				next if $len < $minlen; # the length of HSPs should be more than 80 bp
+				($sbj_start, $sbj_end) = ($sbj_end, $sbj_start) if $sbj_start > $sbj_end;
+				push @{$merged_hsps{$subject}}, [$sbj_start, $sbj_end];
+				$seq_len{$subject} = $sbj_len;
+				$total_len += $len;
+				push @aln_iden, [$len, $iden];
+				}
+
+			# calculate weighted identity
+			foreach (@aln_iden) {
+				my ($len, $iden) = @{$_};
+				$scaled_iden += sprintf("%.3f", $iden * $len / $total_len);
+				}
+
+			# merge all overlapped HSPs and calculating the total covering by HSPs of subjects on the query
+			my $merged = 0; # number of overlapping HSPs
 			map {
-				my ($start,$end) = ($_->[0],$_->[1]);
-				$merged_hsps_size{$sbj} += $end - $start + 1;
-			} @{$merged_hsps{$sbj}};
-		} keys %merged_hsps;
+				my $sbj = $_;
+				# merging
+				my ($ref1, $ref2) = &merger(@{$merged_hsps{$sbj}});
+				@{$merged_hsps{$sbj}} = @$ref1;
+				$merged = $$ref2;
+				# total coverage by HSPs
+				map {
+					my ($start,$end) = ($_->[0],$_->[1]);
+					$merged_hsps_size{$sbj} += $end - $start + 1;
+				} @{$merged_hsps{$sbj}};
+			} keys %merged_hsps;
 
-		# removing the regions from the subject that are inserted into the query
-		map {
-			my ($sbj, $sbj_len) = ($_, $seq_len{$_});
-			my $seq_new = $seq{$sbj};
-			next unless defined $seq_new;
-			next if length $seq_new ne $sbj_len; #if the subject length changes, it has been modified. Skip to avoid mismodification.
-			my $poss = ''; # positions of the non-overlapped rHSPs egions that will be removed from the subject
-			my ($qcov, $scov) = ($merged_hsps_size{$sbj}/$length, $merged_hsps_size{$sbj}/$sbj_len);
-			$qcov = sprintf("%.3f", $qcov);
-			$scov = sprintf("%.3f", $scov);
+			# removing the regions from the subject that are inserted into the query
+			map {
+				my ($sbj, $sbj_len) = ($_, $seq_len{$_});
+				my $seq_new = $seq{$sbj};
+				next unless defined $seq_new;
+				next if length $seq_new ne $sbj_len; #if the subject length changes, it has been modified. Skip to avoid mismodification.
+				my $poss = ''; # positions of the non-overlapped rHSPs egions that will be removed from the subject
+				my ($qcov, $scov) = ($merged_hsps_size{$sbj}/$length, $merged_hsps_size{$sbj}/$sbj_len);
+				$qcov = sprintf("%.3f", $qcov);
+				$scov = sprintf("%.3f", $scov);
 
-			if ($qcov >= $coverage or $scov >= $coverage) {
-				# replace bases of HSPs regions to R (aka Remove); this masking is nessary since the subject sequence
-				# may be cleaned several times, for each non-overlapping merged HSPs regions.
-				for my $hsp (@{$merged_hsps{$sbj}}) {
-					my ($start, $end) = ($hsp->[0], $hsp->[1]);
-					$poss = $poss . $start . ".." . $end . ",";
-					my $len = $end - $start + 1;
-					substr($seq_new, $start-1, $len) = "R" x $len if length $seq_new >= $start + $len - 1;
+				if ($qcov >= $coverage or $scov >= $coverage) {
+					# mark bases of HSPs regions with NUL (aka Remove); a NUL placeholder cannot
+					# collide with a real base (unlike the original "R", which also deleted
+					# legitimate IUPAC R purines). The marking is nessary since the subject
+					# sequence may be cleaned several times, for each non-overlapping merged HSPs
+					# regions.
+					for my $hsp (@{$merged_hsps{$sbj}}) {
+						my ($start, $end) = ($hsp->[0], $hsp->[1]);
+						$poss = $poss . $start . ".." . $end . ",";
+						my $len = $end - $start + 1;
+						substr($seq_new, $start-1, $len) = "\0" x $len if length $seq_new >= $start + $len - 1;
+					}
+					$seq_new =~ tr/\0//d;
+					my $sbj_len_new = length $seq_new;
+					if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj} and $clean == 1){
+						{ lock($stat_lock); print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; scov: $scov; identity: $scaled_iden; merged $merged\n"; $count_stat++; }
+						$seq{$sbj} = $seq_new; #overwrite the sbj sequence if the new one is shorter
+						$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
+					} elsif ($sbj_len_new < $minlen) {
+						{ lock($stat_lock); print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; qcov: $qcov; scov: $scov; identity: $scaled_iden; merged $merged\n"; $count_stat++; }
+						delete $seq{$sbj}; #delete this sequence if new seq is too short
+						$touched_seq{$sbj} = 1; # this subject sequence was modifed (removed), and we will not deal with it any more in the current iteration
+					}
+					# When $count_stat reaches the user defined stat count, we stop the entire iteration.
+					if ($count_stat >= $count_limit and $count_limit > 0){
+						{ lock($stat_lock); print STAT "Reached user defined $count_limit of processed sequences at iter$i, stopping...\n\n"; }
+						$stop = 1;
+						last;
+					}
 				}
-				$seq_new =~ s/R//g;
-				my $sbj_len_new = length $seq_new;
-				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj} and $clean == 1){
-					{ lock($stat_lock); print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; scov: $scov; identity: $scaled_iden; merged $merged\n"; $count_stat++; }
-					$seq{$sbj} = $seq_new; #overwrite the sbj sequence if the new one is shorter
-					$touched_seq{$sbj} = 1; # this subject sequence was modifed, and we will not deal with it any more in the current iteration
-				} elsif ($sbj_len_new < $minlen) {
-					{ lock($stat_lock); print STAT "$sbj\tIter$i\tDiscarded. Has only $sbj_len_new bp after cleaning by $id; qcov: $qcov; scov: $scov; identity: $scaled_iden; merged $merged\n"; $count_stat++; }
-					delete $seq{$sbj}; #delete this sequence if new seq is too short
-					$touched_seq{$sbj} = 1; # this subject sequence was modifed (removed), and we will not deal with it any more in the current iteration
-				}
-				# When $count_stat reaches the user defined stat count, we end the entire queue.
-				if ($count_stat >= $count_limit and $count_limit > 0){
-					{ lock($stat_lock); print STAT "Reached user defined $count_limit of processed sequences at iter$i, stopping...\n\n"; }
-					$queue->end();
-					last;
-				}
-			}
-		} keys %merged_hsps_size;
+			} keys %merged_hsps_size;
 
-		# this query is fully processed; record it so a resumed run will not re-BLAST it
-		print $done_fh "$id\n" if defined $done_fh;
+			# this query is fully processed; record it so a resumed run will not re-BLAST it
+			print $done_fh "$id\n" if defined $done_fh;
+		}
 	}
 	close $done_fh if defined $done_fh;
 }
+
+# blast_batch(\@queries, $i, $db): ONE blastn for all queries of a batch against the iteration
+# db, with exactly the same fields and parameters as the original per-query blastn. If the
+# batch run is KILLed by its timeout (some query detonates word_size 7), fall back to per-query
+# blasts with the original 120s kill-timeout and megablast salvage.
+sub blast_batch {
+	my ($queries, $i, $db) = @_;
+	my %blast; # query id -> [tabular blastn rows]
+	my $query_file = "$IN.iter$i.query.tmp";
+	open Q, ">$query_file" or die $!;
+	foreach my $id (@$queries){
+		print Q ">$id\n$seq{$id}\n";
+		}
+	close Q;
+	my $budget = 120 * int((scalar(@$queries) + $threads - 1)/$threads); #the old per-query timeout, scaled to the batch
+	my $exec = "timeout -s KILL ${budget}s ${blastplus}blastn -query $query_file -db $db -word_size 7 -evalue 1e-5 -dust no -num_threads $threads -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send qlen slen\"";
+	my $out = qx($exec 2> /dev/null);
+	if (($? >> 8) == 137){
+		# some query of this batch detonates word_size 7: blast the batch query by query, keeping
+		# the original 120s kill-timeout and the megablast (word_size $mb_wordsize) salvage
+		foreach my $id (@$queries){
+			my $seq = ">$id\n$seq{$id}\n";
+			my $exec_one = "timeout -s KILL 120s ${blastplus}blastn -query <(echo -e \"$seq\") -db $db -word_size 7 -evalue 1e-5 -dust no -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send qlen slen\"";
+			my @rows = qx(bash -c '$exec_one' 2> /dev/null);
+			if (($? >> 8) == 137){
+				(my $exec_mb = $exec_one) =~ s/-word_size 7 -evalue 1e-5 -dust no/-word_size $mb_wordsize -evalue 1e-5/;
+				@rows = qx(bash -c '$exec_mb' 2> /dev/null);
+				}
+			$blast{$id} = [@rows];
+			}
+	} else {
+		warn "WARNING: batched blastn on $query_file exited with status $?, results may be incomplete\n" if $? != 0;
+		foreach my $row (split /\n/, $out){
+			next unless $row =~ /\S/;
+			my ($qid) = (split ' ', $row)[0];
+			$qid =~ s/^lcl\|//; #some BLAST+ versions prefix local ids with lcl|
+			push @{$blast{$qid}}, $row;
+			}
+		}
+	unlink $query_file;
+	return \%blast;
+	}
 
 sub merger() {
 	my @hsps = @_;
@@ -372,9 +416,9 @@ sub apply_clean {
 		next unless $range =~ /^(\d+)\.\.(\d+)$/;
 		my ($start, $end) = ($1, $2);
 		my $len = $end - $start + 1;
-		substr($seq_new, $start-1, $len) = "R" x $len if length $seq_new >= $start + $len - 1;
+		substr($seq_new, $start-1, $len) = "\0" x $len if length $seq_new >= $start + $len - 1;
 	}
-	$seq_new =~ s/R//g;
+	$seq_new =~ tr/\0//d;
 	$seq{$sbj} = $seq_new;
 	$touched_seq{$sbj} = 1;
 }
