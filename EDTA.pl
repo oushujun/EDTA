@@ -7,7 +7,7 @@ use Getopt::Long;
 use Pod::Usage;
 use POSIX qw(strftime);
 use Cwd qw(abs_path);
-use File::Path qw(rmtree);
+use Config;
 
 my $version = "v2.3.3";
 #v1.0 05/31/2019
@@ -267,6 +267,15 @@ if ($debug != 0 and $debug != 1){ die "The expected value for the debug paramete
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"}
 if ($threads < 1){ die "The expected value for the threads parameter is an integer >= 1!\n"}
 
+# --- process supervision: die as a tree, not as a lone parent -----------------
+# Become a process-group leader so every descendant (modules, workers, blastn,
+# trf, ...) shares our pgid. On a catchable stop signal, TERM the whole group
+# (tools die on their own signal handling), then KILL leftovers, then exit.
+# Note: after setpgrp, terminal Ctrl-C no longer reaches us; kill -INT/-TERM <pid>
+# works and now reliably stops everything.
+setpgrp(0, 0);
+$SIG{TERM} = $SIG{INT} = $SIG{HUP} = \&_edta_kill_group;
+
 # --- TMPDIR isolation: keep descendants off the system /tmp ----------------
 # Unless explicitly kept, point TMPDIR at a private scratch dir in the
 # working directory so no tool (python tempfile, sort spill, blast temp)
@@ -282,6 +291,7 @@ unless (defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1'){
 		}
 	mkdir($ENV{TMPDIR}) unless -d $ENV{TMPDIR};
 	}
+$ENV{EDTA_SUPERVISED} = 1; # children: skip their own setpgrp/TMPDIR setup
 
 
 # define RepeatMasker -pa parameter
@@ -557,7 +567,11 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-system("EDTA_DUP_CHECK_DONE=1 perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --type $modules --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement")==0 or die "EDTA_raw.pl failed with exit code ".($? >> 8)."\n";
+# shell-free invocation (list form): no /bin/sh between EDTA.pl and EDTA_raw,
+# so EDTA_raw's direct parent is this process and the PDEATHSIG supervision
+# chain survives a SIGKILL of the supervisor
+local $ENV{EDTA_DUP_CHECK_DONE} = 1;
+system('perl', $EDTA_raw, '--genome', $genome, '--overwrite', $overwrite, '--species', $species, '--type', $modules, '--u', $miu, '--threads', $threads, '--genometools', $genometools, '--ltrretriever', $LTR_retriever, '--blastplus', $blastplus, '--tesorter', $TEsorter, '--GRF', $GRF, '--trf_path', $trf, '--repeatmasker', $repeatmasker, '--repeatmodeler', $repeatmodeler, '--annosine', $annosine, '--tirlearner', $TIR_Learner, '--convert_seq_name', 0, '--rmlib', $RMlib, '--wholeelement', $wholeelement)==0 or die "EDTA_raw.pl failed with exit code ".($? >> 8)."\n";
 
 chdir "$genome.EDTA.raw" or die "Cannot enter $genome.EDTA.raw: $!\n";
 
@@ -612,7 +626,8 @@ print "$date\tPerform EDTA advance filtering for raw TE candidates and generate 
 if (-s "$genome.EDTA.combine/$genome.EDTA.fa.stg1" and $overwrite == 0){
 	print "$date\tExisting stage 1 library $genome.EDTA.combine/$genome.EDTA.fa.stg1 found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-system("perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -ltrint $genome.EDTA.raw/$genome.LTR.intact.raw.fa -line $genome.EDTA.raw/$genome.LINE.raw.fa -sine $genome.EDTA.raw/$genome.SINE.raw.fa -tir $genome.EDTA.raw/$genome.TIR.intact.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.intact.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads")==0 or die "EDTA_processK.pl failed with exit code ".($? >> 8)."\n";
+# shell-free invocation (list form): direct parentage for the PDEATHSIG chain
+system('perl', $EDTA_process, '-genome', $genome, '-ltr', "$genome.EDTA.raw/$genome.LTR.raw.fa", '-ltrint', "$genome.EDTA.raw/$genome.LTR.intact.raw.fa", '-line', "$genome.EDTA.raw/$genome.LINE.raw.fa", '-sine', "$genome.EDTA.raw/$genome.SINE.raw.fa", '-tir', "$genome.EDTA.raw/$genome.TIR.intact.raw.fa", '-helitron', "$genome.EDTA.raw/$genome.Helitron.intact.raw.fa", '-repeatmasker', $repeatmasker, '-blast', $blastplus, '-threads', $threads)==0 or die "EDTA_processK.pl failed with exit code ".($? >> 8)."\n";
 	}
 
 # check results, remove intermediate files, and report status
@@ -1106,11 +1121,11 @@ if ($anno == 1){
 
 	}
 
-
 # clean up the run-private scratch dir: its contents are temporary by
 # definition (tool caches, sort spill), so remove it wholesale on the
 # natural exit path
 if ($edta_own_tmp and -d $ENV{TMPDIR}){
+	use File::Path qw(rmtree);
 	rmtree($ENV{TMPDIR}, { error => \my $err } );
 	}
 
@@ -1164,4 +1179,30 @@ sub softlink_file {
 	$src_abs = $src unless defined $src_abs;
 	`ln -s $src_abs $dst`;
 	die "ERROR: failed to create softlink $dst -> $src: $!\n" unless -e $dst;
+	}
+
+# --- process supervision helpers (setup is right after the parameter checks) ---
+# TERM the whole process group so every descendant dies with us, give the group
+# a grace period, then KILL leftovers and exit.
+sub _edta_kill_group {
+	my ($sig) = @_;
+	kill('TERM', -getpgrp());
+	local $SIG{ALRM} = sub { kill('KILL', -getpgrp()); exit 128 + $sig; };
+	alarm(10);
+	# wait for the group to drain; we ourselves received $sig, so exit at the end
+	sleep 1 while kill(0, -getpgrp());
+	kill('KILL', -getpgrp());
+	exit 128 + $sig;
+	}
+
+# If the parent process of a forked child dies without being able to run the
+# handler above (SIGKILL / OOM), the kernel kills the child directly.
+sub _edta_pdeathsig {
+	# PR_SET_PDEATHSIG = 1, SIGKILL = 9; syscall number: x86_64 157, aarch64 167
+	return unless $^O eq 'linux';
+	my $sysno = $Config::Config{archname} =~ /x86_64/ ? 157
+	          : $Config::Config{archname} =~ /aarch64|arm64/ ? 167 : 0;
+	eval { require 'syscall.ph'; $sysno = &SYS_prctl; } unless $sysno;
+	return unless $sysno;
+	eval { syscall($sysno, 1, 9, 0, 0, 0) };
 	}

@@ -253,6 +253,16 @@ never fill a shared machine's `/tmp`. The scratch is removed when the run finish
 normally. Use `--tmpdir <dir>` to select the location yourself (e.g. a node-local SSD),
 or set `EDTA_TMPDIR_KEEP=1` to keep the inherited `TMPDIR`.
 
+**Stopping a run stops the whole tree.** EDTA runs under a process group: `kill
+-TERM <pid>` (or a scheduler's stop signal) brings down the main process and every
+forked module and running tool with it, and even a SIGKILL of the main process
+cascades through parent-death supervision to the module workers. Because EDTA moves
+itself to a new process group, terminal Ctrl-C no longer reaches it; send signals to
+the main process instead (its PID is also the process group id, so `kill -- -<pid>`
+targets the whole tree). One caveat: after a SIGKILL, a tool call that was already
+running (e.g. an ongoing RepeatModeler round) may finish its current invocation
+before the tree is fully gone.
+
 **Run only some TE discovery modules** (`--modules`). In most plant genomes LINEs and
 SINEs annotate <2% of the sequence, while their de-novo discovery (RepeatModeler and
 AnnoSINE) is the slowest part of EDTA:

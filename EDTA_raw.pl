@@ -5,7 +5,7 @@ use FindBin;
 use File::Basename;
 use File::Spec; # for obtaining the real path of a file
 use Cwd qw(abs_path); # for resolving the genome softlink
-use File::Path qw(rmtree); # for run-private scratch cleanup
+use Config;
 use Pod::Usage;
 
 ########################################################
@@ -189,16 +189,58 @@ if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter i
 if ($parallel_modules != 0 and $parallel_modules != 1 and $parallel_modules != 2){ die "The expected value for the parallel_modules parameter is 0, 1, or 2!\n"};
 if ($miu !~ /^[0-9.eE+-]+$/){ die "The expected value for the u parameter is float value without units!\n"}
 
+# --- process supervision: die as a tree, not as a lone parent -----------------
+# Become a process-group leader so every descendant (modules, workers, blastn,
+# trf, ...) shares our pgid. On a catchable stop signal, TERM the whole group
+# (tools die on their own signal handling), then KILL leftovers, then exit.
+# Note: after setpgrp, terminal Ctrl-C no longer reaches us; kill -INT/-TERM <pid>
+# works and now reliably stops everything. When run under EDTA.pl
+# (EDTA_SUPERVISED=1) we are already inside its group: keep the handlers (they
+# help drain the group) but do not start a group of our own.
+sub _edta_kill_group {
+	my ($sig) = @_;
+	kill('TERM', -getpgrp());
+	local $SIG{ALRM} = sub { kill('KILL', -getpgrp()); exit 128 + $sig; };
+	alarm(10);
+	# wait for the group to drain; we ourselves received $sig, so exit at the end
+	sleep 1 while kill(0, -getpgrp());
+	kill('KILL', -getpgrp());
+	exit 128 + $sig;
+	}
+$SIG{TERM} = $SIG{INT} = $SIG{HUP} = \&_edta_kill_group;
+unless (defined $ENV{EDTA_SUPERVISED} and $ENV{EDTA_SUPERVISED} eq '1'){
+	setpgrp(0, 0);
+	}
+else {
+	# Supervised by EDTA.pl: if the supervisor is SIGKILLed (OOM, admin) it
+	# cannot run its group-kill handler, so follow it into death ourselves.
+	# Only the currently running leaf tool may outlive us briefly.
+	_edta_pdeathsig();
+	}
+
 # --- TMPDIR isolation: keep descendants off the system /tmp ----------------
-# Only set a private scratch when no TMPDIR is in effect at all: an inherited
-# TMPDIR (EDTA.pl's isolated scratch, or the user's environment) is kept
-# as-is; EDTA_TMPDIR_KEEP=1 keeps whatever the environment provided.
+# Standalone runs get a private scratch dir in the working directory so no tool
+# (python tempfile, sort spill, blast temp) can fill the machine's /tmp.
+# EDTA_TMPDIR_KEEP=1 keeps the environment as-is. When supervised by EDTA.pl,
+# its isolated TMPDIR is inherited untouched.
 my $raw_own_tmp = 0;
-unless ((defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1')
-	or (defined $ENV{TMPDIR} and length $ENV{TMPDIR})){
+unless ((defined $ENV{EDTA_SUPERVISED} and $ENV{EDTA_SUPERVISED} eq '1')
+	or (defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1')){
 	$ENV{TMPDIR} = abs_path(".")."/.EDTA.raw.tmp.$$";
 	$raw_own_tmp = 1;
 	mkdir($ENV{TMPDIR}) unless -d $ENV{TMPDIR};
+	}
+
+# If the parent process of a forked child dies without being able to run the
+# handler above (SIGKILL / OOM), the kernel kills the child directly.
+sub _edta_pdeathsig {
+	# PR_SET_PDEATHSIG = 1, SIGKILL = 9; syscall number: x86_64 157, aarch64 167
+	return unless $^O eq 'linux';
+	my $sysno = $Config::Config{archname} =~ /x86_64/ ? 157
+	          : $Config::Config{archname} =~ /aarch64|arm64/ ? 167 : 0;
+	eval { require 'syscall.ph'; $sysno = &SYS_prctl; } unless $sysno;
+	return unless $sysno;
+	eval { syscall($sysno, 1, 9, 0, 0, 0) };
 	}
 
 chomp (my $date = `date`);
@@ -534,6 +576,7 @@ sub run_module_batch {
 		my $pid = fork();
 		die "Error: cannot fork a child process for the $mod module: $!\n" unless defined $pid;
 		if ($pid == 0){
+			_edta_pdeathsig();
 			# child: run only this module then exit; only the parent continues below
 			$module_threads = $module_budget{$mod};
 			print STDERR "\tRunning the $mod module with $module_threads threads (PID $$).\n";
@@ -616,6 +659,7 @@ if ($overwrite eq 0 and -s "$genome.harvest.combine.scn"){
 	my $harvest_pid = fork();
 	die "Error: cannot fork a child process for LTR_HARVEST_parallel: $!\n" unless defined $harvest_pid;
 	if ($harvest_pid == 0){
+		_edta_pdeathsig();
 		# `perl $LTR_HARVEST -seq $genome -threads $half_threads -gt $genometools -size 1000000 -time 300`;
 		my $rc = system("$LTR_HARVEST -seq $genome -threads $half_threads -gt $genometools -size 1000000 -time 300 2>> $genome.harvest.log");  #tianyulu #575
 		exit($rc == 0 ? 0 : 1);
@@ -630,6 +674,7 @@ if ($overwrite eq 0 and -s "$genome.finder.combine.scn"){
 	my $finder_pid = fork();
 	die "Error: cannot fork a child process for LTR_FINDER_parallel: $!\n" unless defined $finder_pid;
 	if ($finder_pid == 0){
+		_edta_pdeathsig();
 		# `perl $LTR_FINDER -seq $genome -threads $half_threads -harvest_out -size 1000000 -time 300`;
 		my $rc = system("$LTR_FINDER -seq $genome -threads $half_threads -harvest_out -size 1000000 -time 300 2>> $genome.finder.log");  #tianyulu #575
 		exit($rc == 0 ? 0 : 1);
@@ -806,19 +851,31 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 	} else {
 	# run RepeatModeler2
 	print STDERR "$date\tIdentify LINE retrotransposon candidates from scratch.\n\n";
+	my $rmprog = "${repeatmodeler}RepeatModeler";
 	my $status; # record status of RepeatModeler execution
 	`${repeatmodeler}BuildDatabase -name $genome $genome`;
-	$status = system("${repeatmodeler}RepeatModeler -engine ncbi -threads $module_threads -database $genome  > repeatmodeler.log 2>&1");
+	# run RepeatModeler with stdout/stderr redirected at the fd level and no
+	# shell in between (list form): the module child must be RepeatModeler's
+	# direct parent so the PDEATHSIG supervision chain reaches it even if the
+	# supervisor is SIGKILLed
+	open(my $RMLOG, '>', 'repeatmodeler.log') or die "Cannot open repeatmodeler.log: $!\n";
+	open(my $SAVEOUT, '>&', \*STDOUT) or die "Cannot dup STDOUT: $!\n";
+	open(my $SAVEERR, '>&', \*STDERR) or die "Cannot dup STDERR: $!\n";
+	open(STDOUT, '>&', $RMLOG) or die "Cannot redirect STDOUT to repeatmodeler.log: $!\n";
+	open(STDERR, '>&', $RMLOG) or die "Cannot redirect STDERR to repeatmodeler.log: $!\n";
+	$status = system($rmprog, '-engine', 'ncbi', '-threads', $module_threads, '-database', $genome);
 	if ($status != 0) {
-		# Execute the old version of RepeatModeler
-		warn "RepeatModeler failed with -threads, retrying with -pa...\n";
-		$status = system("${repeatmodeler}RepeatModeler -engine ncbi -pa $module_threads -database $genome > repeatmodeler.log 2>&1");
-		if ($status != 0) {
-			print "ERROR: RepeatModeler did not run correctly. Please test run this command:
-				${repeatmodeler}RepeatModeler -engine ncbi -pa $module_threads -database $genome
-				ERROR\n";
-			exit;
-			}
+		# Execute the old version of RepeatModeler (diagnostics land in repeatmodeler.log)
+		$status = system($rmprog, '-engine', 'ncbi', '-pa', $module_threads, '-database', $genome);
+		}
+	open(STDOUT, '>&', $SAVEOUT) or warn "Cannot restore STDOUT: $!\n";
+	open(STDERR, '>&', $SAVEERR) or warn "Cannot restore STDERR: $!\n";
+	close $RMLOG; close $SAVEOUT; close $SAVEERR;
+	if ($status != 0) {
+		print "ERROR: RepeatModeler did not run correctly. Please test run this command:
+			$rmprog -engine ncbi -pa $module_threads -database $genome
+			ERROR\n";
+		exit;
 		}
 	`rm $genome*nal $genome*nhr $genome*nin $genome*nnd $genome*nni $genome*nog $genome*nsq $genome*njs $genome*translation 2>/dev/null`;
 	}
@@ -1020,8 +1077,10 @@ if (-s "$genome.EDTA.raw/$genome.Helitron.intact.raw.fa"){
 chomp ($date = `date`);
 print STDERR "$date\tExecution of EDTA_raw.pl is finished!\n\n";
 
-# clean up the run-private scratch dir (only ever created for standalone runs;
-# under EDTA.pl the inherited TMPDIR belongs to the parent)
+# clean up the run-private scratch dir: its contents are temporary by
+# definition (tool caches, sort spill), so remove it wholesale on the
+# natural exit path
 if ($raw_own_tmp and -d $ENV{TMPDIR}){
+	use File::Path qw(rmtree);
 	rmtree($ENV{TMPDIR}, { error => \my $err } );
 	}

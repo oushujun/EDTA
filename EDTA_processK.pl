@@ -3,7 +3,8 @@ use warnings;
 use strict;
 use FindBin;
 use File::Basename;
-use File::Path qw(rmtree); # for run-private scratch cleanup
+use Cwd qw(abs_path); # to anchor the isolated TMPDIR before parallel() chdirs
+use Config;
 
 #####################################################################
 ##### Perform EDTA basic and advance filtering on TE candidates #####
@@ -101,6 +102,45 @@ die "The script cleanup_tandem.pl is not found in $cleanup_tandem!\n" unless -s 
 die "The script cleanup_nested.pl is not found in $cleanup_nested!\n" unless -s $cleanup_nested;
 die "The script cleanup_proteins.pl is not found in $cleanup_proteins!\n" unless -s $cleanup_proteins;
 
+# --- process supervision: die as a tree, not as a lone parent -----------------
+# Become a process-group leader so every descendant (workers, blastn, trf, ...)
+# shares our pgid. On a catchable stop signal, TERM the whole group, then KILL
+# leftovers, then exit. When run under EDTA.pl (EDTA_SUPERVISED=1) we are already
+# inside its group: keep the handlers (they help drain the group) but do not
+# start a group of our own.
+sub _edta_kill_group {
+	my ($sig) = @_;
+	kill('TERM', -getpgrp());
+	local $SIG{ALRM} = sub { kill('KILL', -getpgrp()); exit 128 + $sig; };
+	alarm(10);
+	# wait for the group to drain; we ourselves received $sig, so exit at the end
+	sleep 1 while kill(0, -getpgrp());
+	kill('KILL', -getpgrp());
+	exit 128 + $sig;
+	}
+$SIG{TERM} = $SIG{INT} = $SIG{HUP} = \&_edta_kill_group;
+unless (defined $ENV{EDTA_SUPERVISED} and $ENV{EDTA_SUPERVISED} eq '1'){
+	setpgrp(0, 0);
+	}
+else {
+	# Supervised by EDTA.pl: if the supervisor is SIGKILLed (OOM, admin) it
+	# cannot run its group-kill handler, so follow it into death ourselves.
+	# Only the currently running leaf tool may outlive us briefly.
+	_edta_pdeathsig();
+	}
+
+# If the parent process of a forked child dies without being able to run the
+# handler above (SIGKILL / OOM), the kernel kills the child directly.
+sub _edta_pdeathsig {
+	# PR_SET_PDEATHSIG = 1, SIGKILL = 9; syscall number: x86_64 157, aarch64 167
+	return unless $^O eq 'linux';
+	my $sysno = $Config::Config{archname} =~ /x86_64/ ? 157
+	          : $Config::Config{archname} =~ /aarch64|arm64/ ? 167 : 0;
+	eval { require 'syscall.ph'; $sysno = &SYS_prctl; } unless $sysno;
+	return unless $sysno;
+	eval { syscall($sysno, 1, 9, 0, 0, 0) };
+	}
+
 # make a softlink to the genome
 my $genome_file = basename($genome);
 `ln -s $genome $genome_file` unless -e $genome_file;
@@ -119,19 +159,18 @@ my $HEL = "$genome.Helitron.intact.raw.fa";
 chdir "$genome.EDTA.combine" or die "Cannot enter $genome.EDTA.combine: $!\n";
 
 # --- TMPDIR isolation: keep descendants off the system /tmp ----------------
-# Only set a private scratch when no TMPDIR is in effect at all: an inherited
-# TMPDIR (EDTA.pl's isolated scratch, or the user's environment) is kept
-# as-is; EDTA_TMPDIR_KEEP=1 keeps whatever the environment provided.
+# Standalone runs get a private scratch dir here in the combine directory so
+# no tool (python tempfile, sort spill, blast temp) can fill the machine's
+# /tmp. It is anchored to this directory because parallel() children work in
+# nested scratch dirs. EDTA_TMPDIR_KEEP=1 keeps the environment as-is. When
+# supervised by EDTA.pl, its isolated TMPDIR is inherited untouched.
 my $combine_own_tmp = 0;
-unless ((defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1')
-	or (defined $ENV{TMPDIR} and length $ENV{TMPDIR})){
-	# anchored with an absolute path: parallel() children chdir into scratch dirs
-	my $cwd = `pwd`; chomp $cwd;
-	$ENV{TMPDIR} = "$cwd/.combine.tmp.$$";
+unless ((defined $ENV{EDTA_SUPERVISED} and $ENV{EDTA_SUPERVISED} eq '1')
+	or (defined $ENV{EDTA_TMPDIR_KEEP} and $ENV{EDTA_TMPDIR_KEEP} eq '1')){
+	$ENV{TMPDIR} = abs_path(".")."/.combine.tmp.$$";
 	$combine_own_tmp = 1;
 	mkdir($ENV{TMPDIR}) unless -d $ENV{TMPDIR};
 	}
-
 
 # --- Resume support (added 2026-08-24) --------------------------------------
 # EDTA_processK.pl originally had no restart logic: every invocation redid the
@@ -218,8 +257,9 @@ sub parallel {
 		my $pid = fork();
 		die "Cannot fork a child for $name: $!\n" unless defined $pid;
 		if ($pid == 0){
+			_edta_pdeathsig();
+			$combine_own_tmp = 0; # only the parent may clean up the shared TMPDIR
 			$threads = $child_threads;
-			$combine_own_tmp = 0; # the scratch belongs to the parent; children must not remove it
 			my $tmp = ".$name.$$.tmp";
 			`rm -rf $tmp`;
 			mkdir $tmp or die "Cannot create $tmp: $!\n";
@@ -370,11 +410,13 @@ unless (&done("step11_cleanup_nested")){
 
 chdir '..';
 
-# clean up the run-private scratch dir (only ever created for standalone runs;
-# under EDTA.pl the inherited TMPDIR belongs to the parent). END also fires on
-# die; forked children cleared $combine_own_tmp right after fork.
+# clean up the run-private scratch dir: its contents are temporary by
+# definition (tool caches, sort spill), so remove it wholesale. END also
+# fires on die, and must stay silent in forked children -- they clear
+# $combine_own_tmp right after fork.
 END {
 	if ($combine_own_tmp and defined $ENV{TMPDIR} and -d $ENV{TMPDIR}){
+		use File::Path qw(rmtree);
 		rmtree($ENV{TMPDIR}, { error => \my $err } );
 		}
 	}
