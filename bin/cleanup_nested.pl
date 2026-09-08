@@ -15,6 +15,12 @@ use Data::Dumper;
 #	-overwrite 1 to force a clean restart.
 #Update: 09/05/2026 batched blasting: one multi-threaded blastn per batch of queries replaces
 #	one blastn process per query; the cleaning loop runs sequentially in the main thread.
+#Update: 09/08/2026 stale-pending fix: queries discarded by an earlier batch of the same iteration
+#	are now skipped when the batch query file is written. They used to be written as empty-seq
+#	records (undef seq), which failed the whole batched blastn (exit 3, stderr discarded) and
+#	silently lost every HSP of the batch -- 11 such batches corrupted the hap2 TE library
+#	(26 nested remnants kept, 18 true members wrongly deleted). The cleaning loop already
+#	skipped deleted queries; the blast side now matches it.
 
 my $usage = "\n
 Iteratively clean up nested TE insertions and remove redundancy.
@@ -321,6 +327,7 @@ sub blast_batch {
 	my $query_file = "$IN.iter$i.query.tmp";
 	open Q, ">$query_file" or die $!;
 	foreach my $id (@$queries){
+		next unless exists $seq{$id} and length $seq{$id}; # discarded by an earlier batch of this iteration (or empty record)
 		print Q ">$id\n$seq{$id}\n";
 		}
 	close Q;
