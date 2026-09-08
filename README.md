@@ -244,6 +244,55 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
 
     perl EDTA.pl --overwrite 0 [options]
 
+### Parallelism, module selection, and resume
+
+**Temporary files are isolated from the system `/tmp`.** By default EDTA points `TMPDIR`
+at a private scratch directory in the working directory (`.EDTA.tmp.<pid>`), so child
+tools' temporary files (Python `tempfile`, `sort` spills, BLAST temp files, caches) can
+never fill a shared machine's `/tmp`. The scratch is removed when the run finishes
+normally. Use `--tmpdir <dir>` to select the location yourself (e.g. a node-local SSD),
+or set `EDTA_TMPDIR_KEEP=1` to keep the inherited `TMPDIR`.
+
+**Run only some TE discovery modules** (`--modules`). In most plant genomes LINEs and
+SINEs annotate <2% of the sequence, while their de-novo discovery (RepeatModeler and
+AnnoSINE) is the slowest part of EDTA:
+
+    perl EDTA.pl --genome genome.fa --modules plant --anno 1 --threads 32
+
+`plant` is a shortcut for `ltr,tir,helitron`. You may also give an explicit comma list
+(e.g. `--modules ltr,tir,helitron,line`). Excluded modules leave empty library files
+behind, so the filter/final/anno stages run unchanged. A practical workflow for a
+group of related genomes: run once with all modules to build a comprehensive TE
+library, then reuse it for the other samples with `--curatedlib`/`--rmlib` instead of
+re-running discovery.
+
+**Scheduling of the raw modules** (`EDTA_raw.pl --parallel_modules`):
+
+* `0`: sequential, each module gets the full thread budget (old behavior).
+* `1`: all active modules run concurrently; the thread budget is split between them
+  proportionally to their expected durations (weights below).
+* `2` *(default)*: staged — the light modules run first (weighted split of ALL
+  threads, so they finish quickly), then the single heaviest module (LINE by default)
+  runs alone with the FULL thread budget. RepeatModeler scales sublinearly with
+  threads, so giving it the maximum budget beats running it concurrently at a
+  reduced share.
+
+Weights can be tuned per species with `EDTA_raw.pl --module_weights
+"line=4,ltr=2.5,tir=1.5,sine=1.2,helitron=1"` (bigger weight = longer module);
+`EDTA.pl --modules` is passed through to `EDTA_raw.pl --type`.
+
+**Resume behavior**: every filtering step writes its completion marker only after its
+output files are verified, the final stage resumes all-or-nothing, and a
+`--overwrite 0` re-entry produces byte-identical libraries and annotations compared
+with an uninterrupted run (verified with md5; only `##date` headers differ). If a
+step failed, the run dies immediately with the tool name and its stderr instead of
+silently continuing with partial results.
+
+**Comparing runs**: with `--sensitive 1`, the RepeatModeler consensus pool is not
+deterministic between runs, so the TE library may differ by a few borderline novel
+families and `rnd-*` family names. Compare two libraries by sorted ID sets
+(`grep '>' lib.fa | sort` + diff) rather than by md5.
+
 ### Protips and self-diagnosis
 1. It's never said enough. You should tidy up all your sequence names before ANY analysis. Keep them short, simple, and unique.
 2. Run it in a fast drive (i.e., SSD) because RepeatMasker/RepeatModeler is I/O intense.
@@ -323,3 +372,4 @@ You may want to check out this [Q&A page](https://github.com/oushujun/EDTA/wiki)
 I want to thank [Jacques Dainat](https://github.com/Juke34) for contribution of the EDTA conda recipe as well as improving the codes. I also want to thank [Qiushi Li](https://github.com/QiushiLi), [Zhigui Bao](https://github.com/baozg), [Philipp Bayer](https://github.com/philippbayer), [Nick Carleson](https://github.com/Neato-Nick), [@aderzelle](https://github.com/aderzelle), [Sanzhen Liu](https://github.com/liu3zhenlab), [Zhougeng Xu](https://github.com/xuzhougeng), [Shun Wang](https://github.com/wangshun1121), [Nancy Manchanda](https://github.com/nm100), [Eric Burgueño](https://github.com/eburgueno), [Sergei Ryazansky](https://github.com/DrHogart), and many more others for testing, debugging, and improving the EDTA pipeline.
 
 The ongoing development of EDTA's Nextflow pipeline is a collaborative effort between The Ou lab at Ohio State University, Deng's Bioinformatics Engineering Team at The New Zealand Institute for Plant and Food Research Limited, and Joseph Guhlin from Peter Dearden's lab at University of Otago and Genomics Aotearoa.
+

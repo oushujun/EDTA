@@ -31,13 +31,12 @@ close List;
 
 while (<GFF>){
 	chomp;
-	print "$_\n" if /^#/;
-	(print RM "$_\n" and next) if /^#/;
+	print "$_\n" and next if /^#/;
 	my $info = (split)[8];
 	my ($parent, $name, $ID) = ('NA', 'NA', 'NA');
-	$parent = $1 if $info =~ /Parent=(.*?);/i;
-	$name = $1 if $info =~ /Name=(.*?);/i;
-	$ID = $1 if $info =~ /ID=(.*?);/i;
+	$parent = $1 if $info =~ /Parent=([^;\s]+)/i;
+	$name = $1 if $info =~ /Name=([^;\s]+)/i;
+	$ID = $1 if $info =~ /ID=([^;\s]+)/i;
 	if (defined $parent and exists $parent{$parent}){
 		print RM "$_\n";
 		next;
