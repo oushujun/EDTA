@@ -15,7 +15,7 @@ def options():
 	parser.add_argument('--reference', required=True, help='Path to the reference RepeatMasker.out file')
 
 	# Optional flags
-	parser.add_argument('--include_unknown', action='store_true', help='Include reference sequences which have labels outside of the normal TE categories.')
+	parser.add_argument('--include_unknown', action='store_true', help='Count TEST annotations whose labels fall outside the normal TE categories (e.g. Unknown/Unspecified) toward every category. The reference is never affected: its unclassified entries are not counted in any category.')
 	parser.add_argument('--include_Ns', action='store_true', help='Include non-ATCG characters as part of the genome. These are inherently non-maskable and you probably should not use this.')
 	parser.add_argument('--extended_report', action='store_true', help='Produce an extended report quantifying per-test sequence, per-TE category performance.')
 	parser.add_argument('--min_entries', type=int, default=0, help='For the confusion matrix, exclude superfamilies with fewer than this many entries in the reference annotation. Default: 0 (no filtering)')
@@ -557,14 +557,11 @@ F1 measure:\t{f1}
 				ref.setall(0)
 				if cat in self.reference_cov[c]:
 					for origin, start, end in self.reference_cov[c][cat]:
-						if cat != 'others' or self.include_unknown:
+						#The reference must be unambiguously classified, so its unclassified entries
+						#never count toward any category, whatever --include_unknown says.
+						if cat != 'others':
 							all_ref[start:end] = True
 						ref[start:end] = True
-
-				if self.include_unknown and cat != 'others':
-					if 'others' in self.reference_cov[c]:
-						for origin, start, end in self.reference_cov[c]['others']:
-							ref[start:end] = True
 
 				#Build category-specific test bitarray
 				tst_cat_arr.setall(0)
@@ -669,7 +666,7 @@ F1 measure:\t{f1}
 				ref.setall(0)
 				if cat in self.reference_cov[c]:
 					for origin, start, end in self.reference_cov[c][cat]:
-						if cat != 'others' or self.include_unknown:
+						if cat != 'others':
 							all_ref[start:end] = True
 						ref[start:end] = True
 
