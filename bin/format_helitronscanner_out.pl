@@ -33,7 +33,7 @@ foreach (@ARGV){
 	$k++;
 	}
 
-die "HelitronScanner result files for the $genome is not found!\n$usage" unless -e $genome and -e "$genome.HelitronScanner.draw.rc.hel.fa";
+die "HelitronScanner result files for the $genome is not found!\n$usage" unless -e $genome and -e "$genome.HelitronScanner.draw.hel.fa" and -e "$genome.HelitronScanner.draw.rc.hel.fa";
 
 
 open Hel, "cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa |" or die $usage;
@@ -90,13 +90,14 @@ close List;
 
 ## Get extended fasta seq
 `perl $call_seq $genome.HelitronScanner.raw.ext.list -C $genome > $genome.HelitronScanner.raw.ext.fa`;
+die "ERROR: call_seq_by_list.pl failed ($?) generating $genome.HelitronScanner.raw.ext.fa\n" if $? != 0;
 
 open Hel2, "<$genome.HelitronScanner.raw.ext.fa" or die $usage;
-open Out, ">$genome.HelitronScanner.filtered.tabout";
+open Out, ">$genome.HelitronScanner.filtered.tabout" or die $!;
 if ($ext_out eq 1){
-	open Seq, ">$genome.HelitronScanner.filtered.ext.fa";
+	open Seq, ">$genome.HelitronScanner.filtered.ext.fa" or die $!;
 	} else {
-	open Seq, ">$genome.HelitronScanner.filtered.fa";
+	open Seq, ">$genome.HelitronScanner.filtered.fa" or die $!;
 	}
 print Out "#Chr\tStart\tEnd\tDirection\tLOC\tScore_head\tScore_tail\tTarget_site\t5'flank\t5'seq\t3'seq\t3'flank\n";
 $/ = "\n>";

@@ -59,12 +59,23 @@ print "$date\tEvaluation starts...\n";
 
 # extract whole-genome TE and perform all-v-all blast, then summarize the results
 `awk '{if (\$5~/[0-9]+/ && \$1>300 && \$7-\$6>80) print \$11"\t"\$5":"\$6".."\$7}' $RMout | perl $call_seq - -C $genome > $out`;
-`perl $cleanup_nested -in $out -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blast -iter 1 -maxcount $maxcount -overwrite $overwrite 2>/dev/null`;
+die "ERROR: TE extraction (awk | call_seq_by_list.pl) from $RMout into $out failed ($?)\n" if $? != 0;
+my $cn_err = "$out.cleanup_nested.stderr";
+`perl $cleanup_nested -in $out -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blast -iter 1 -maxcount $maxcount -overwrite $overwrite 2>$cn_err`;
+if ($? != 0){
+	open ERR, "<$cn_err" or die "ERROR: cleanup_nested.pl failed (exit code $?) and its stderr could not be read from $cn_err!\n";
+	my $error = do { local $/; <ERR> };
+	close ERR;
+	die "ERROR: cleanup_nested.pl failed (exit code $?)! STDERR:\n$error\n";
+	}
+unlink $cn_err;
 for my $cat ("nested", "all", "redun") {
 	`perl $count_nested -in $out.stat -cat $cat -mincov $mincov > $out.stat.$cat.sum`;
+	die "ERROR: count_nested.pl failed for category $cat ($?)\n" if $? != 0;
 	for my $d (40, 30, 20, 10, 5) {
 		`printf "\\n\\n" >> $out.stat.$cat.sum`;
 		`perl $count_nested -in $out.stat -cat $cat -mincov $mincov -maxdiv $d >> $out.stat.$cat.sum`;
+		die "ERROR: count_nested.pl failed for category $cat (maxdiv $d) ($?)\n" if $? != 0;
 	}
 }
 
