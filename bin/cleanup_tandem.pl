@@ -51,7 +51,7 @@ my $file;
 my $k=0;
 foreach (@ARGV){
 	$target=$ARGV[$k+1] if /^-misschar$/i;
-	$func_nc=0 if /^-Nscreen$/i;
+	$func_nc=$ARGV[$k+1] if /^-Nscreen$/i;
 	$n_count=int($ARGV[$k+1]) if /^-nc$/i;
 	$n_rate=$ARGV[$k+1] if /^-nr$/i;
 	$minlen=int($ARGV[$k+1]) if /^-minlen$/i;
@@ -80,11 +80,12 @@ die "\n\tTlen must be > 0!\n\n$usage" unless $Tlen > 0;
 my %tandem;
 my $tandem='';
 $tandem=`$trf_path $file 2 7 7 80 10 $align_score $max_seed -ngs -h -l 6` if $trf==1;
+die "TRF failed ($?) on $file\n" if $trf==1 and $? != 0;
 while ($tandem=~s/\@(.*)\n?// and $tandem ne ''){
 	$tandem{$1}=$1;
 	}
 
-open Info, ">$file.cleanup";
+open Info, ">$file.cleanup" or die "ERROR: $!";
 open File, "<$file" or die "ERROR: $!";
 $/="\n>";
 while (<File>){
@@ -102,7 +103,7 @@ while (<File>){
 	if ($target =~ /^l$/i){ #softmask lowercase
 		$count++ while $seq=~/[atcgnN]/g;
 		}
-	my $count_rate=$count/$length;
+	my $count_rate = $length ? $count/$length : 0;
 
 #missing control
 	if ($count_rate>=$n_rate){

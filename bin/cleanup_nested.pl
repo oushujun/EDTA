@@ -149,6 +149,7 @@ for (my $i=$start_iter; $i<$iter; $i++){
 		rename "$IN.iter$i.tmp", "$IN.iter$i" or die $!; # atomic: snapshot appears only once complete
 	}
 	`${blastplus}makeblastdb -in $IN.iter$i -dbtype nucl`;
+	die "makeblastdb failed for iteration $i ($?)\n" if $? != 0;
 
 	# multi-threading using queue, put candidate regions into queue for parallel computation
 	$queue = Thread::Queue->new();
@@ -275,15 +276,18 @@ sub condenser(){
 			$scov = sprintf("%.3f", $scov);
 
 			if ($qcov >= $coverage or $scov >= $coverage) {
-				# replace bases of HSPs regions to R (aka Remove); this masking is nessary since the subject sequence
-				# may be cleaned several times, for each non-overlapping merged HSPs regions.
+				# mark bases of HSPs regions with NUL (aka Remove); a NUL placeholder cannot
+				# collide with a real base (unlike the original "R", which also deleted
+				# legitimate IUPAC R purines). The marking is nessary since the subject
+				# sequence may be cleaned several times, for each non-overlapping merged HSPs
+				# regions.
 				for my $hsp (@{$merged_hsps{$sbj}}) {
 					my ($start, $end) = ($hsp->[0], $hsp->[1]);
 					$poss = $poss . $start . ".." . $end . ",";
 					my $len = $end - $start + 1;
-					substr($seq_new, $start-1, $len) = "R" x $len if length $seq_new >= $start + $len - 1;
+					substr($seq_new, $start-1, $len) = "\0" x $len if length $seq_new >= $start + $len - 1;
 				}
-				$seq_new =~ s/R//g;
+				$seq_new =~ tr/\0//d;
 				my $sbj_len_new = length $seq_new;
 				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj} and $clean == 1){
 					{ lock($stat_lock); print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; scov: $scov; identity: $scaled_iden; merged $merged\n"; $count_stat++; }
@@ -372,9 +376,9 @@ sub apply_clean {
 		next unless $range =~ /^(\d+)\.\.(\d+)$/;
 		my ($start, $end) = ($1, $2);
 		my $len = $end - $start + 1;
-		substr($seq_new, $start-1, $len) = "R" x $len if length $seq_new >= $start + $len - 1;
+		substr($seq_new, $start-1, $len) = "\0" x $len if length $seq_new >= $start + $len - 1;
 	}
-	$seq_new =~ s/R//g;
+	$seq_new =~ tr/\0//d;
 	$seq{$sbj} = $seq_new;
 	$touched_seq{$sbj} = 1;
 }

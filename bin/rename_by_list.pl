@@ -34,13 +34,13 @@ while (<Target>){
 	if ($mode eq 0){
 		foreach my $old_id (keys %list){
 			my $new_id = $list{$old_id};
-			s/$old_id/$new_id/gi;
+			s/\Q$old_id\E/$new_id/gi;
 			}
 		}
 	elsif ($mode eq 1){
-		my $id = $2 if /(Name)=(.*?);/i;
+		my $id = $2 if /(Name)=([^;\s]+)/i;
 		my $new = $list{$id} if defined $id and defined $list{$id};
-		s/$id/$new/gi if defined $new;
+		s/(Name=)\Q$id\E/$1$new/i if defined $new;
 		}
 	print $_;
 	}

@@ -65,13 +65,16 @@ while (<RMout>) {
 	s/\s+/\t/g;
 	next if /^$/;
 	next unless /^[0-9]+/;
+	my $strand_col = (split)[8];
 	s/[\(\)]+//g;
 
 	my ($SW_score, $div, $del, $ins, $chr, $start, $end, $chr_remain, $strand, $element, $TE_class, $element_start, $element_end, $element_remain, $rm_ID) = split;
+	#C-strand rows carry the repeat position as (left), end, begin; recover the true begin/end order
+	($element_start, $element_end, $element_remain) = ($element_remain, $element_end, $element_start) if $strand_col eq 'C';
 	if (%prev_row && $prev_row{'chr'} eq $chr && $prev_row{'strand'} eq $strand && $prev_row{'element'} eq $element && $prev_row{'TE_class'} eq $TE_class
 		&& abs($start - $prev_row{'end'}) <= $max_gap && abs($prev_row{'div'} - $div) <= $max_div
 		&& (($prev_row{'strand'} eq '+' && ($prev_row{'element_end'} - $element_start) <= $max_gap) 
-			or ($prev_row{'strand'} eq 'C' && ($element_end - $prev_row{'element_remain'}) <= $max_gap))) {
+			or ($prev_row{'strand'} eq 'C' && ($element_end - $prev_row{'element_start'}) <= $max_gap))) {
 
         # Calculate weights based on the length
         my $prev_length = $prev_row{'end'} - $prev_row{'start'};
@@ -99,15 +102,15 @@ while (<RMout>) {
         	$combined_element_end = $element_end;
 	        $combined_element_remain = $element_remain;
 		} else {
-		$combined_element_start = $prev_row{'element_start'};
+		$combined_element_start = $element_start;
 		$combined_element_end = $prev_row{'element_end'};
-		$combined_element_remain = $element_remain;
+		$combined_element_remain = $prev_row{'element_remain'};
 		}
         
 	if ($prev_row{'strand'} ne 'C'){
 		print Out "$combined_SW_score\t$combined_div\t$combined_del\t$combined_ins\t$prev_row{'chr'}\t$combined_start\t$combined_end\t$combined_chr_remain\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t$combined_element_start\t$combined_element_end\t($combined_element_remain)\t$combined_rm_ID\n";
 		} else {
-		print Out "$combined_SW_score\t$combined_div\t$combined_del\t$combined_ins\t$prev_row{'chr'}\t$combined_start\t$combined_end\t$combined_chr_remain\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t($combined_element_start)\t$combined_element_end\t$combined_element_remain\t$combined_rm_ID\n";
+		print Out "$combined_SW_score\t$combined_div\t$combined_del\t$combined_ins\t$prev_row{'chr'}\t$combined_start\t$combined_end\t$combined_chr_remain\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t($combined_element_remain)\t$combined_element_end\t$combined_element_start\t$combined_rm_ID\n";
 		}
 
 	# print out merged lines
@@ -124,7 +127,7 @@ while (<RMout>) {
 		if ($prev_row{'strand'} ne 'C'){
 			print Out "$prev_row{'SW_score'}\t$prev_row{'div'}\t$prev_row{'del'}\t$prev_row{'ins'}\t$prev_row{'chr'}\t$prev_row{'start'}\t$prev_row{'end'}\t$prev_row{'chr_remain'}\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t$prev_row{'element_start'}\t$prev_row{'element_end'}\t($prev_row{'element_remain'})\t$prev_row{'rm_ID'}\n";
 			} else {
-			print Out "$prev_row{'SW_score'}\t$prev_row{'div'}\t$prev_row{'del'}\t$prev_row{'ins'}\t$prev_row{'chr'}\t$prev_row{'start'}\t$prev_row{'end'}\t$prev_row{'chr_remain'}\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t($prev_row{'element_start'})\t$prev_row{'element_end'}\t$prev_row{'element_remain'}\t$prev_row{'rm_ID'}\n";
+			print Out "$prev_row{'SW_score'}\t$prev_row{'div'}\t$prev_row{'del'}\t$prev_row{'ins'}\t$prev_row{'chr'}\t$prev_row{'start'}\t$prev_row{'end'}\t$prev_row{'chr_remain'}\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t($prev_row{'element_remain'})\t$prev_row{'element_end'}\t$prev_row{'element_start'}\t$prev_row{'rm_ID'}\n";
 			}
 		}
 
@@ -134,10 +137,12 @@ while (<RMout>) {
 }
 
 # Print the last row if it's not combined
-if (%prev_row and $prev_row{'strand'} ne 'C'){
-	print Out "$prev_row{'SW_score'}\t$prev_row{'div'}\t$prev_row{'del'}\t$prev_row{'ins'}\t$prev_row{'chr'}\t$prev_row{'start'}\t$prev_row{'end'}\t$prev_row{'chr_remain'}\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t$prev_row{'element_start'}\t$prev_row{'element_end'}\t($prev_row{'element_remain'})\t$prev_row{'rm_ID'}\n";
-	} else {
-	print Out "$prev_row{'SW_score'}\t$prev_row{'div'}\t$prev_row{'del'}\t$prev_row{'ins'}\t$prev_row{'chr'}\t$prev_row{'start'}\t$prev_row{'end'}\t$prev_row{'chr_remain'}\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t($prev_row{'element_start'})\t$prev_row{'element_end'}\t$prev_row{'element_remain'}\t$prev_row{'rm_ID'}\n";
+if (%prev_row){
+	if ($prev_row{'strand'} ne 'C'){
+		print Out "$prev_row{'SW_score'}\t$prev_row{'div'}\t$prev_row{'del'}\t$prev_row{'ins'}\t$prev_row{'chr'}\t$prev_row{'start'}\t$prev_row{'end'}\t$prev_row{'chr_remain'}\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t$prev_row{'element_start'}\t$prev_row{'element_end'}\t($prev_row{'element_remain'})\t$prev_row{'rm_ID'}\n";
+		} else {
+		print Out "$prev_row{'SW_score'}\t$prev_row{'div'}\t$prev_row{'del'}\t$prev_row{'ins'}\t$prev_row{'chr'}\t$prev_row{'start'}\t$prev_row{'end'}\t$prev_row{'chr_remain'}\t$prev_row{'strand'}\t$prev_row{'element'}\t$prev_row{'TE_class'}\t($prev_row{'element_remain'})\t$prev_row{'element_end'}\t$prev_row{'element_start'}\t$prev_row{'rm_ID'}\n";
+		}
 	}
 
 	# end of the iteration
@@ -158,4 +163,5 @@ if (%prev_row and $prev_row{'strand'} ne 'C'){
 
 # copy the last iteration as the final file
 `cp $rmout.iter$next $rmout.cmb`;
+die "\nERROR: Failed to generate the $rmout.cmb file!\n" if $? != 0;
 close LOG;

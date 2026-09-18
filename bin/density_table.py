@@ -40,7 +40,7 @@ def create_genome_fai(genome_file, output_directory):
     """
     Creates a genome index file using samtools.
     """
-    subprocess.run(["samtools", "faidx", genome_file], stderr=subprocess.DEVNULL)
+    subprocess.run(["samtools", "faidx", genome_file], check=True)
     # Move the .fai file to the output directory
     fai_file = os.path.abspath(genome_file) + ".fai"
     if os.path.exists(fai_file):
@@ -57,7 +57,7 @@ def make_windows(fai_file, output_file, output_directory):
             outfile.write(f"{parts[0]}\t{parts[1]}\n")
 
     with open(os.path.join(output_directory, output_file), 'w') as outfile:
-        subprocess.run(["bedtools", "makewindows", "-g", modified_fai, "-w", "1000000", "-s", "500000"], cwd=output_directory, stdout=outfile, stderr=subprocess.DEVNULL)
+        subprocess.run(["bedtools", "makewindows", "-g", modified_fai, "-w", "1000000", "-s", "500000"], cwd=output_directory, stdout=outfile, check=True)
 
 def calculate_density(window_file, output_directory):
     """
@@ -68,7 +68,7 @@ def calculate_density(window_file, output_directory):
             type_name = bed_file.replace('.bed', '')
             density_file = type_name + '.density.bed'
             with open(os.path.join(output_directory, density_file), 'w') as outfile:
-                subprocess.run(["bedtools", "coverage", "-a", window_file, "-b", bed_file], cwd=output_directory, stdout=outfile, stderr=subprocess.DEVNULL)
+                subprocess.run(["bedtools", "coverage", "-a", window_file, "-b", bed_file], cwd=output_directory, stdout=outfile, check=True)
 
 def merge_and_format(output_directory):
     """

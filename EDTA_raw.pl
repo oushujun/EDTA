@@ -4,6 +4,7 @@ use strict;
 use FindBin;
 use File::Basename;
 use File::Spec; # for obtaining the real path of a file
+use Cwd qw(abs_path); # for resolving the genome softlink
 use Pod::Usage;
 
 ########################################################
@@ -150,12 +151,13 @@ if ($species){
 	}
 
 die "The expected value for the type parameter is ltr or tir or helitron or all!\n" unless $type eq "ltr" or $type eq "line" or $type eq "tir" or $type eq "helitron" or $type eq "sine" or $type eq "all";
+my %skip_module; #modules skipped because a module-specific dependency is missing
 
 # check bolean
 if ($overwrite != 0 and $overwrite != 1){ die "The expected value for the overwrite parameter is 0 or 1!\n"};
 if ($convert_name != 0 and $convert_name != 1){ die "The expected value for the convert_seq_name parameter is 0 or 1!\n"};
 if ($threads !~ /^[0-9]+$/){ die "The expected value for the threads parameter is an integer!\n"};
-if ($miu !~ /[0-9\.e\-]+/){ die "The expected value for the u parameter is float value without units!\n"}
+if ($miu !~ /^[0-9.eE+-]+$/){ die "The expected value for the u parameter is float value without units!\n"}
 
 chomp (my $date = `date`);
 print STDERR "$date\tEDTA_raw: Check dependencies, prepare working directories.\n\n";
@@ -189,8 +191,8 @@ $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp \"$script_path/database/dummy060817.fa\" ./dummy060817.fa.$rand`;  #tianyulu
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
-die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
+die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 # RepeatModeler
 chomp ($repeatmodeler=`command -v RepeatModeler 2>/dev/null`) if $repeatmodeler eq '';
 $repeatmodeler =~ s/\s+$//;
@@ -202,7 +204,12 @@ chomp ($annosine=`command -v AnnoSINE_v2 2>/dev/null`) if $annosine eq '';
 $annosine =~ s/\s+$//;
 $annosine = dirname($annosine) unless -d $annosine;
 $annosine="$annosine/" if $annosine ne '' and $annosine !~ /\/$/;
-die "Error: AnnoSINE is not found in the AnnoSINE path $annosine!\n" unless (-X "${annosine}AnnoSINE_v2");
+if (!-X "${annosine}AnnoSINE_v2"){
+	if ($type eq "sine" or $type eq "all"){
+		print STDERR "Warning: AnnoSINE is not found in the AnnoSINE path $annosine!\n\t\tThe SINE module will be skipped.\n\n";
+		$skip_module{sine} = 1;
+		}
+	}
 # LTR_retriever
 chomp ($LTR_retriever=`command -v LTR_retriever 2>/dev/null`) if $LTR_retriever eq '';
 $LTR_retriever =~ s/\s+$//;
@@ -231,15 +238,19 @@ die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}m
 # trf
 chomp ($trf=`command -v trf 2>/dev/null`) if $trf eq '';
 $trf=~s/\n$//;
-`$trf 2>/dev/null`;
-die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32256;
+die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $trf eq '' or !-X $trf;
 # GRF
 chomp ($GRF = `command -v grf-main 2>/dev/null`) if $GRF eq '';
 $GRF =~ s/\n$//;
 my $grfp= dirname ($GRF);
 $grfp =~ s/\n$//;
-`${grfp}grf-main 2>/dev/null`;
-die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp\n" if $?==32256;
+$grfp="$grfp/" if $grfp ne '' and $grfp !~ /\/$/;
+if ($GRF eq '' or !-X "${grfp}grf-main"){
+	if ($type eq "tir" or $type eq "all"){
+		print STDERR "Warning: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp!\n\t\tThe TIR module will be skipped.\n\n";
+		$skip_module{tir} = 1;
+		}
+	}
 
 # TIR-Learner  #tianyuLu
 # Remove any trailing whitespace
@@ -247,7 +258,6 @@ $TIR_Learner =~ s/\s+$//;
 if ($TIR_Learner eq "") {
 	# Find TIR-Learner path and remove any trailing newline
 	chomp ($TIR_Learner=`command -v TIR-Learner 2>/dev/null`);
-	die "Error: TIR-Learner not installed!\n" if $TIR_Learner eq "";
 } else {
 	# # Extract directory name from path if path is not a directory
 	# If path is directory
@@ -257,52 +267,69 @@ if ($TIR_Learner eq "") {
 		$TIR_Learner = "python3 $TIR_Learner/TIR-Learner.py";
 	}
 }
-`$TIR_Learner 2>/dev/null`;
-die "Error: TIR-Learner is not found in the path $TIR_Learner!\n" if $?==32256 || $?==2;
+my $TIR_Learner_exe = (split /\s+/, $TIR_Learner)[-1];
+chomp ($TIR_Learner_exe = `command -v $TIR_Learner_exe 2>/dev/null`) if defined $TIR_Learner_exe and $TIR_Learner_exe ne '' and $TIR_Learner_exe !~ /\//;
+if ($TIR_Learner eq "" or !-X $TIR_Learner_exe){
+	if ($type eq "tir" or $type eq "all"){
+		print STDERR "Warning: TIR-Learner is not found in the path $TIR_Learner!\n\t\tThe TIR module will be skipped.\n\n";
+		$skip_module{tir} = 1;
+		}
+	}
 
 
 # LTR_FINDER_parallel  #tianyuLu
 $LTR_FINDER =~ s/\s+$//;
 if ($LTR_FINDER eq "") {
-    chomp ($LTR_FINDER=`command -v LTR_FINDER_parallel 2>/dev/null`); 
-	die "Error: LTR_FINDER_parallel not installed!\n" if $LTR_FINDER eq "";
+    chomp ($LTR_FINDER=`command -v LTR_FINDER_parallel 2>/dev/null`);
 } else {
     if (-d $LTR_FINDER) {
         $LTR_FINDER .= "/" if $LTR_FINDER !~ /\/$/;
         $LTR_FINDER = "perl $LTR_FINDER/LTR_FINDER_parallel";
     }
 }
-`$LTR_FINDER 2>/dev/null`;
-die "Error: LTR_FINDER_parallel is not found in the path $LTR_FINDER!\n" if $?==32256 || $?==2;
+my $LTR_FINDER_exe = (split /\s+/, $LTR_FINDER)[-1];
+chomp ($LTR_FINDER_exe = `command -v $LTR_FINDER_exe 2>/dev/null`) if defined $LTR_FINDER_exe and $LTR_FINDER_exe ne '' and $LTR_FINDER_exe !~ /\//;
+die "Error: LTR_FINDER_parallel is not found in the path $LTR_FINDER!\n" if ($type eq "ltr" or $type eq "all") and ($LTR_FINDER eq "" or !-X $LTR_FINDER_exe);
 
 # LTR_HARVEST_parallel  #tianyuLu
 $LTR_HARVEST =~ s/\s+$//;
 if ($LTR_HARVEST eq "") {
     chomp ($LTR_HARVEST=`command -v LTR_HARVEST_parallel 2>/dev/null`);
-	die "Error: LTR_HARVEST_parallel not installed!\n" if $LTR_HARVEST eq "";
 } else {
     if (-d $LTR_HARVEST) {
         $LTR_HARVEST .= "/" if $LTR_HARVEST !~ /\/$/;
         $LTR_HARVEST = "perl $LTR_HARVEST/LTR_HARVEST_parallel";
     }
 }
-`$LTR_HARVEST 2>/dev/null`;
-die "Error: LTR_HARVEST_parallel is not found in the path $LTR_HARVEST!\n" if $?==32256 || $?==2;
+my $LTR_HARVEST_exe = (split /\s+/, $LTR_HARVEST)[-1];
+chomp ($LTR_HARVEST_exe = `command -v $LTR_HARVEST_exe 2>/dev/null`) if defined $LTR_HARVEST_exe and $LTR_HARVEST_exe ne '' and $LTR_HARVEST_exe !~ /\//;
+die "Error: LTR_HARVEST_parallel is not found in the path $LTR_HARVEST!\n" if ($type eq "ltr" or $type eq "all") and ($LTR_HARVEST eq "" or !-X $LTR_HARVEST_exe);
 
 # HelitronScanner  #tianyuLu
 $HelitronScanner =~ s/\s+$//;
 if ($HelitronScanner eq "") {
     chomp ($HelitronScanner=`command -v HelitronScanner 2>/dev/null`);
-    die "Error: HelitronScanner not installed!\n" if $HelitronScanner eq "";
 } else {
     if (-d $HelitronScanner) {
         $HelitronScanner .= "/" if $HelitronScanner !~ /\/$/;
     }
 }
+if ($HelitronScanner eq "" or !(-d $HelitronScanner or -X $HelitronScanner)){
+	if ($type eq "helitron" or $type eq "all"){
+		print STDERR "Warning: HelitronScanner is not found in the path $HelitronScanner!\n\t\tThe Helitron module will be skipped.\n\n";
+		$skip_module{helitron} = 1;
+		}
+	}
 
 # make a softlink to the genome
 my $genome_file = basename($genome);
-`ln -s $genome $genome_file` unless -e $genome_file;
+unlink $genome_file if -l $genome_file;
+if (-e $genome_file){
+	die "Error: $genome_file already exists in the working directory and is not the input genome! Please rename or remove it and try again.\n" unless abs_path($genome_file) eq abs_path($genome);
+	} else {
+	`ln -s $genome $genome_file`;
+	die "Error: failed to create the genome softlink $genome_file!\n" unless -l $genome_file;
+	}
 $genome = $genome_file;
 
 # check $RMlib
@@ -364,6 +391,24 @@ my $genome_file_real_path=File::Spec->rel2abs($genome); # the genome file with r
 `mkdir $genome.EDTA.raw/LINE` unless -e "$genome.EDTA.raw/LINE" && -d "$genome.EDTA.raw/LINE";
 `mkdir $genome.EDTA.raw/TIR` unless -e "$genome.EDTA.raw/TIR" && -d "$genome.EDTA.raw/TIR";
 `mkdir $genome.EDTA.raw/Helitron` unless -e "$genome.EDTA.raw/Helitron" && -d "$genome.EDTA.raw/Helitron";
+foreach my $dir ("$genome.EDTA.raw", "$genome.EDTA.raw/LTR", "$genome.EDTA.raw/SINE", "$genome.EDTA.raw/LINE", "$genome.EDTA.raw/TIR", "$genome.EDTA.raw/Helitron"){
+	die "Cannot create directory $dir: $!\n" unless -d $dir;
+	}
+
+# touch the expected (empty) result files of modules skipped due to missing dependencies
+if ($skip_module{sine}){
+	`touch $genome.EDTA.raw/$genome.SINE.raw.fa` unless -e "$genome.EDTA.raw/$genome.SINE.raw.fa";
+	}
+if ($skip_module{tir}){
+	foreach my $ext ("fa", "gff3", "bed"){
+		`touch $genome.EDTA.raw/$genome.TIR.intact.raw.$ext` unless -e "$genome.EDTA.raw/$genome.TIR.intact.raw.$ext";
+		}
+	}
+if ($skip_module{helitron}){
+	foreach my $ext ("fa", "gff3", "bed"){
+		`touch $genome.EDTA.raw/$genome.Helitron.intact.raw.$ext` unless -e "$genome.EDTA.raw/$genome.Helitron.intact.raw.$ext";
+		}
+	}
 
 
 ###########################
@@ -376,7 +421,7 @@ chomp ($date = `date`);
 print STDERR "$date\tStart to find LTR candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/LTR";
+chdir "$genome.EDTA.raw/LTR" or die "Cannot enter $genome.EDTA.raw/LTR: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
@@ -429,7 +474,8 @@ if ($wholeelement and -s "$genome.LTR.intact.fa"){
 
 # annotate and remove not LTR candidates
 if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
-	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
+	my $tesorter_err = `${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads 2>&1`;
+	die "TEsorter failed on $genome.LTR.intact.fa.ori.dusted.cln: $tesorter_err\n" unless -s "$genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv";
 	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
 } elsif ($status == 0){
 	print "\t\tLTR_retriever is finished without error, but no LTR is identified.\n\n";
@@ -455,11 +501,11 @@ if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
 `touch $genome.LTRlib.fa` unless -e "$genome.LTRlib.fa";
 `cp $genome.LTRlib.fa $genome.LTR.raw.fa`;
 `cp $genome.LTRlib.fa ../$genome.LTR.raw.fa`;
-`cp $genome.LTR.intact.raw.fa $genome.LTR.intact.raw.gff3 ../ 2>/dev/null`;
 `cp $genome.LTR.intact.fa ../$genome.LTR.intact.raw.fa` if -s "$genome.LTR.intact.fa";
 `cp $genome.LTR.intact.gff3 ../$genome.LTR.intact.raw.gff3` if -s "$genome.LTR.intact.gff3";
+`cp $genome.LTR.intact.raw.fa $genome.LTR.intact.raw.gff3 ../ 2>/dev/null`;
 `cp $genome.LTRlib.fa.LTRbound ../$genome.LTRlib.fa.LTRbound 2>/dev/null` if $wholeelement;
-chdir '../..';
+chdir '../..' or die "Cannot return to the working directory from the LTR module: $!\n";
 
 # check results
 chomp ($date = `date`);
@@ -476,13 +522,13 @@ if (-s "$genome.EDTA.raw/$genome.LTR.raw.fa"){
 #############################
 ######    AnnoSINE     ######
 #############################
-if ($type eq "sine" or $type eq "all"){
+if (($type eq "sine" or $type eq "all") and not $skip_module{sine}){
 
 chomp ($date = `date`);
 print STDERR "$date\tStart to find SINE candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/SINE";
+chdir "$genome.EDTA.raw/SINE" or die "Cannot enter $genome.EDTA.raw/SINE: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Remove existing results
@@ -501,12 +547,16 @@ if (-s "Seed_SINE.fa"){
 if (-s "Seed_SINE.fa"){
 	# annotate and remove non-SINE candidates
 	`awk '{gsub(/Unknown/, "unknown"); print \$1}' Seed_SINE.fa > $genome.AnnoSINE.raw.fa`;
-	`${TEsorter}TEsorter $genome.AnnoSINE.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
-	`touch $genome.AnnoSINE.raw.fa.rexdb.cls.tsv` unless -e "$genome.AnnoSINE.raw.fa.rexdb.cls.tsv";
-	`perl $cleanup_misclas $genome.AnnoSINE.raw.fa.rexdb.cls.tsv`;
-        
-	# clean up tandem repeat
-	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.AnnoSINE.raw.fa.cln > $genome.SINE.raw.fa`;
+	if (-s "$genome.AnnoSINE.raw.fa"){
+		`${TEsorter}TEsorter $genome.AnnoSINE.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
+		die "Error: TEsorter failed to generate a non-empty $genome.AnnoSINE.raw.fa.rexdb.cls.tsv for the SINE module!\n" unless -s "$genome.AnnoSINE.raw.fa.rexdb.cls.tsv";
+		`perl $cleanup_misclas $genome.AnnoSINE.raw.fa.rexdb.cls.tsv`;
+		# clean up tandem repeat
+		`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.AnnoSINE.raw.fa.cln > $genome.SINE.raw.fa`;
+		} else {
+		print "\t\tAnnoSINE is finished without error, but no SINE candidate is obtained.\n\n";
+		`touch $genome.SINE.raw.fa`;
+		}
 	}
 elsif ($status == 0) {
 	print "\t\tAnnoSINE is finished without error, but the Seed_SINE.fa file is not produced.\n\n";
@@ -518,7 +568,7 @@ else {
 
 # copy result files out
 `cp $genome.SINE.raw.fa ../`;
-chdir '../..';
+chdir '../..' or die "Cannot return to the working directory from the SINE module: $!\n";
 
 # check results
 chomp ($date = `date`);
@@ -542,7 +592,7 @@ chomp ($date = `date`);
 print STDERR "$date\tStart to find LINE candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/LINE";
+chdir "$genome.EDTA.raw/LINE" or die "Cannot enter $genome.EDTA.raw/LINE: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 `cp ../../$RMlib $RMlib` if $RMlib ne 'null';
 
@@ -582,11 +632,13 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 if (-s "$genome-families.fa"){
 	# annotate and remove misclassified candidates
 	`awk '{gsub(/Unknown/, "unknown"); print \$1}' $genome-families.fa > $genome.RM2.raw.fa` if -e "$genome-families.fa";
-	`${TEsorter}TEsorter $genome.RM2.raw.fa --disable-pass2 -p $threads 2>/dev/null`;
+		my $tesorter_err = `${TEsorter}TEsorter $genome.RM2.raw.fa --disable-pass2 -p $threads 2>&1`;
+		die "TEsorter failed on $genome.RM2.raw.fa: $tesorter_err\n" if -s "$genome.RM2.raw.fa" and not -s "$genome.RM2.raw.fa.rexdb.cls.tsv";
 	`perl $cleanup_misclas $genome.RM2.raw.fa.rexdb.cls.tsv`;
 	
 	# reclassify clean candidates
-	`${TEsorter}TEsorter $genome.RM2.raw.fa.cln --disable-pass2 -p $threads 2>/dev/null`;
+	$tesorter_err = `${TEsorter}TEsorter $genome.RM2.raw.fa.cln --disable-pass2 -p $threads 2>&1`;
+	die "TEsorter failed on $genome.RM2.raw.fa.cln: $tesorter_err\n" if -s "$genome.RM2.raw.fa.cln" and not -s "$genome.RM2.raw.fa.cln.rexdb.cls.tsv";
 	`perl -nle 's/>\\S+\\s+/>/; print \$_' $genome.RM2.raw.fa.cln.rexdb.cls.lib > $genome.RM2.raw.fa.cln`;
 
         # clean up tandem repeat
@@ -601,7 +653,7 @@ if (-s "$genome-families.fa"){
 # copy result files out
 `cp $genome.LINE.raw.fa $genome.RM2.fa ../`; #update the filtered RM2 result in the EDTA/raw folder
 `cp $genome.RM2.raw.fa ../../`; #update the raw RM2 result in the EDTA folder
-chdir '../..';
+chdir '../..' or die "Cannot return to the working directory from the LINE module: $!\n";
 
 # check results
 chomp ($date = `date`);
@@ -618,13 +670,13 @@ if (-s "$genome.EDTA.raw/$genome.LINE.raw.fa"){
 ######  TIR-Learner  ######
 ###########################
 
-if ($type eq "tir" or $type eq "all"){
+if (($type eq "tir" or $type eq "all") and not $skip_module{tir}){
 
 chomp ($date = `date`);
 print STDERR "$date\tStart to find TIR candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/TIR";
+chdir "$genome.EDTA.raw/TIR" or die "Cannot enter $genome.EDTA.raw/TIR: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
@@ -657,7 +709,8 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 
 	# annotate and remove non-TIR candidates
 	if (-s "$genome.TIR.ext30.fa.pass.fa.dusted.cln"){
-		`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
+		my $tesorter_err = `${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>&1`;
+		die "TEsorter failed on $genome.TIR.ext30.fa.pass.fa.dusted.cln: $tesorter_err\n" unless -s "$genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv";
 		`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 	} elsif ($status == 0) {
 		print "\t\tTIR-Learner is finished without error, but no TIR is identified.\n\n";
@@ -679,7 +732,7 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 `cp $genome.TIR.intact.gff3 ../$genome.TIR.intact.raw.gff3` if -s "$genome.TIR.intact.gff3";
 `cp $genome.TIR.intact.fa ../$genome.TIR.intact.raw.fa` if -s "$genome.TIR.intact.fa";
 `cp $genome.TIR.intact.raw.fa $genome.TIR.intact.raw.gff3 $genome.TIR.intact.raw.bed ../ 2>/dev/null`;
-chdir '../..';
+chdir '../..' or die "Cannot return to the working directory from the TIR module: $!\n";
 
 # check results
 chomp ($date = `date`);
@@ -697,13 +750,13 @@ if (-s "$genome.EDTA.raw/$genome.TIR.intact.raw.fa"){
 ###### HelitronScanner ######
 #############################
 
-if ($type eq "helitron" or $type eq "all"){
+if (($type eq "helitron" or $type eq "all") and not $skip_module{helitron}){
 
 chomp ($date = `date`);
 print STDERR "$date\tStart to find Helitron candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/Helitron";
+chdir "$genome.EDTA.raw/Helitron" or die "Cannot enter $genome.EDTA.raw/Helitron: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
@@ -735,7 +788,8 @@ if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genom
 
 # annotate and remove non-Helitron candidates
 if (-s "$genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln"){
-	`${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>/dev/null`;
+	my $tesorter_err = `${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads 2>&1`;
+	die "TEsorter failed on $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln: $tesorter_err\n" unless -s "$genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv";
 	`perl $cleanup_misclas $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
 } elsif ($status == 0) {
 	print "\t\tHelitronScanner is finished without error, but no Helitron is identified.\n\n";
@@ -757,7 +811,7 @@ if (-s "$genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln"){
 `cp $genome.Helitron.intact.gff3 ../$genome.Helitron.intact.raw.gff3` if -s "$genome.Helitron.intact.gff3";
 `cp $genome.Helitron.intact.fa ../$genome.Helitron.intact.raw.fa` if -s "$genome.Helitron.intact.fa";
 `cp $genome.Helitron.intact.raw.fa $genome.Helitron.intact.raw.gff3 $genome.Helitron.intact.raw.bed ../ 2>/dev/null`;
-chdir '../..';
+chdir '../..' or die "Cannot return to the working directory from the Helitron module: $!\n";
 
 # check results
 chomp ($date = `date`);
