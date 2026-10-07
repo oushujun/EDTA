@@ -67,48 +67,64 @@ if ($blastplus eq ''){
 $blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
 $name = $target;
 
+# check dependencies
+die "ERROR: The purge script $purger is not found!\n" unless -s $purger;
+die "ERROR: blastx is not found in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
+
 #prepare blastx databases
 my $rand=int(rand(1000000));
 
 # clean up DNA TE
 if ($rmDNATE eq 1){
+	die "ERROR: The DNA TE database $DNA is not found!\n" unless -s $DNA;
 	my ($DNA_base, $DNA_path)=fileparse($DNA);
-	`cp $DNA ./$DNA_base.$rand`;
+	&run_cmd("cp $DNA ./$DNA_base.$rand");
 	$DNA="$DNA_base.$rand";
-	`${blastplus}makeblastdb -in $DNA -dbtype prot`;
-	`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $DNA -out $target.dnate.out`;
-	`perl $purger -blast $target.dnate.out -seq $target -cov $procovTE -purge 0 -len $prolensig`;
-	`cp $target.clean $target.dnate_clean`;
+	&run_cmd("${blastplus}makeblastdb -in $DNA -dbtype prot");
+	&run_cmd("${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $DNA -out $target.dnate.out");
+	&run_cmd("perl $purger -blast $target.dnate.out -seq $target -cov $procovTE -purge 0 -len $prolensig");
+	&run_cmd("cp $target.clean $target.dnate_clean");
 	$target = "$target.dnate_clean";
-	`rm $DNA*`;
+	&run_cmd("rm $DNA*");
 	}
 
 # clean up LINE
 if ($rmLINE eq 1){
+	die "ERROR: The LINE database $LINE is not found!\n" unless -s $LINE;
 	my ($LINE_base, $LINE_path)=fileparse($LINE);
-	`cp $LINE ./$LINE_base.$rand`;
+	&run_cmd("cp $LINE ./$LINE_base.$rand");
 	$LINE="$LINE_base.$rand";
-	`${blastplus}makeblastdb -in $LINE -dbtype prot`;
-	`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $LINE -out $target.line.out`;
-	`perl $purger -blast $target.line.out -seq $target -cov $procovTE -purge 0 -len $prolensig`;
-	`cp $target.clean $target.line_clean`;
+	&run_cmd("${blastplus}makeblastdb -in $LINE -dbtype prot");
+	&run_cmd("${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $LINE -out $target.line.out");
+	&run_cmd("perl $purger -blast $target.line.out -seq $target -cov $procovTE -purge 0 -len $prolensig");
+	&run_cmd("cp $target.clean $target.line_clean");
 	$target = "$target.line_clean";
-	`rm $LINE*`;
+	&run_cmd("rm $LINE*");
 	}
 
 # clean up Proteins
 if ($rmProt eq 1){
+	die "ERROR: The protein database $Protlib is not found!\n" unless -s $Protlib;
 	my ($Prot_base, $Prot_path)=fileparse($Protlib);
-	`cp $Protlib ./$Prot_base.$rand`;
+	&run_cmd("cp $Protlib ./$Prot_base.$rand");
 	$Protlib="$Prot_base.$rand";
-	`${blastplus}makeblastdb -in $Protlib -dbtype prot`;
-	`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $Protlib -out $target.prot.out`;
-	`perl $purger -blast $target.prot.out -seq $target -cov $procovPL -purge 1 -len $prolensig`;
-	`cp $target.clean $target.prot_clean`;
+	&run_cmd("${blastplus}makeblastdb -in $Protlib -dbtype prot");
+	&run_cmd("${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $target -db $Protlib -out $target.prot.out");
+	&run_cmd("perl $purger -blast $target.prot.out -seq $target -cov $procovPL -purge 1 -len $prolensig");
+	&run_cmd("cp $target.clean $target.prot_clean");
 	$target = "$target.prot_clean";
-	`rm $Protlib*`;
+	&run_cmd("rm $Protlib*");
 	}
 
 # rename the final clean sequence
-`cp $target $name.clean`;
+&run_cmd("cp $target $name.clean");
+
+
+# run an external command; die with the captured output unless it exits 0
+sub run_cmd {
+	my ($cmd) = @_;
+	my $out = `$cmd 2>&1`;
+	die "ERROR: command failed (exit ", $? >> 8, "): $cmd\n$out\n" if $? != 0;
+	return $out;
+	}
 

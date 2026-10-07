@@ -34,42 +34,65 @@ foreach (@ARGV){
 die "The CDS file is empty or not exist!\n" unless -s $cds;
 die "The raw library file is empty or not exist!\n" unless -s $rawlib;
 
-# define RepeatMasker -pa parameter
-my $rm_threads = int($threads/4);
+# check dependencies
+foreach my $script ($output_by_list, $cleanup, $name_code_decode){
+	die "ERROR: The helper script $script is not found!\n" unless -s $script;
+	}
+$TEsorter=`command -v TEsorter 2>/dev/null` if $TEsorter eq '';
+$TEsorter=~s/TEsorter\n$//;
+die "ERROR: TEsorter is not found in the path $TEsorter!\n" unless -X "${TEsorter}TEsorter";
+$repeatmasker=`command -v RepeatMasker 2>/dev/null` if $repeatmasker eq '';
+$repeatmasker=~s/RepeatMasker\n$//;
+die "ERROR: RepeatMasker is not found in the path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 
 # preprocess cds
 my $cds_file = basename($cds);
-`ln -s $cds ./` unless -e $cds_file;
+&run_cmd("ln -s $cds ./") unless -e $cds_file;
 $cds = $cds_file;
-`perl $name_code_decode 1 $cds`;
+&run_cmd("perl $name_code_decode 1 $cds 2>&1");
 $cds = "$cds.code";
 
 # 1st attempt to find TEs in CDS with TEsorter
-`${TEsorter}TEsorter $cds -p $threads`;
+&run_cmd("${TEsorter}TEsorter $cds -p $threads 2>&1");
 
 # make an initial TE list
-`cat $cds.rexdb.cls.tsv > $cds.TE.list`;
-`grep -P "transposable|transposon|LINE" $cds >> $cds.TE.list`;
+&run_cmd("cat $cds.rexdb.cls.tsv 2>&1 > $cds.TE.list");
+&run_cmd("grep -P \"transposable|transposon|LINE\" $cds 2>&1 >> $cds.TE.list", 1); #exit 1 (no match) is not an error
 
 # get TE and non-TE seq from cds
-`perl $output_by_list 1 $cds 1 $cds.TE.list -FA -ex > $cds.rmTE`;
-`perl $output_by_list 1 $cds 1 $cds.TE.list -FA > $cds.TE`;
+&run_cmd("perl $output_by_list 1 $cds 1 $cds.TE.list -FA -ex 2>&1 > $cds.rmTE");
+&run_cmd("perl $output_by_list 1 $cds 1 $cds.TE.list -FA 2>&1 > $cds.TE");
 
 # 2nd attempt to identify TEs in CDS based on repeatedness
-`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds.rmTE $rawlib 2>/dev/null`;
-`awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA >> $cds.TE`; #CDS seqs appears >=10 times in masking the TE rawlib are considered TEs and removed from the CDS file
-`awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA -ex > $cds.rmTE2`;
+&run_cmd("${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds.rmTE $rawlib 2>&1");
+&run_cmd("awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA 2>&1 >> $cds.TE"); #CDS seqs appears >=10 times in masking the TE rawlib are considered TEs and removed from the CDS file
+&run_cmd("awk '{print \$10}' $rawlib.out |sort|uniq -c|awk '{if (\$1>=10) print \$2}' | perl $output_by_list 1 $cds.rmTE 1 - -FA -ex 2>&1 > $cds.rmTE2");
 
 # 3rd attempt, mask remaining TE seqs in cds with potential TE seqs identified in cds ($cds.TE)
 if (-s "$cds.TE"){
-	`${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $cds.TE -cutoff 225 $cds.rmTE2`;
+	&run_cmd("${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -lib $cds.TE -cutoff 225 $cds.rmTE2 2>&1");
 	if (-s "$cds.rmTE2.masked"){
-		`perl $cleanup -Nscreen 1 -nc 300 -nc 0.3 -minlen $minlen -maxlen 300000 -cleanN 1 -cleanT 0 -trf 0 -f $cds.rmTE2.masked > $cds.noTE`;
+		&run_cmd("perl $cleanup -Nscreen 1 -nc 300 -nc 0.3 -minlen $minlen -maxlen 300000 -cleanN 1 -cleanT 0 -trf 0 -f $cds.rmTE2.masked 2>&1 > $cds.noTE");
 		} else {
-		`cp $cds.rmTE2 $cds.noTE`;
+		&run_cmd("cp $cds.rmTE2 $cds.noTE 2>&1");
 		}
 	} else {
 	print STDERR "\t\t\t\tWarning: No TE-related CDS found ($cds.TE empty). Will not use the self-cleaning step.\n\n";
-	`cp $cds.rmTE $cds.noTE`;
+	&run_cmd("cp $cds.rmTE $cds.noTE 2>&1");
+	}
+
+
+# run an external command; die with the captured output unless it exits 0 (or with one of the
+# benign exit codes in $ok, e.g. 1 for grep's "no match"). Note "cmd 2>&1 > file": stderr is
+# captured while stdout still goes to the file.
+sub run_cmd {
+	my ($cmd, $ok) = @_;
+	$ok = '' unless defined $ok;
+	my $out = `$cmd`;
+	my $rc = $? >> 8;
+	if ($? != 0 and " $ok " !~ / $rc /){
+		die "ERROR: command failed (exit $rc): $cmd\n$out\n";
+		}
+	return $out;
 	}
 

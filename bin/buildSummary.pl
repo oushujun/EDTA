@@ -190,6 +190,7 @@ my $totalSeqLen = 0;
 my $totalSeqNum = 0;
 if ( defined $options{'stats'} ){
 	my $info = `grep '^All' $options{'stats'}`;
+	die "ERROR: no 'All' summary line found in stats file $options{'stats'} (grep status $?)\n" if $? != 0 or $info !~ /\S/;
 	($rawSeqLen, $gapLen, $totalSeqNum) = (split /\s+/, $info)[1,2,4];
 	$totalSeqLen = $rawSeqLen - $gapLen;
 } else {
