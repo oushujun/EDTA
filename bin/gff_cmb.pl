@@ -26,11 +26,7 @@ my $i = 0; #annotation ID
 while (<GFF>){
 	chomp;
 	next if /^#/;
-	my ($SW_score, $div, $iden, $chr, $chr_len, $element_start, $element_end, $element_length, $left_len, $strand, $TE_ID, $TE_class);
-	(
-	($SW_score, $div, $chr, $element_start, $element_end, $left_len, $strand, $TE_ID, $TE_class)=(split)[0,1,4,5,6,7,8,9,10];
-
-	my ($chr, $TE_class, $element_start, $element_end, $score, $dir, $info) = (split)[0,2,3,4,5,6,8];
+	my ($id, $type, $start, $end, $score, $dir, $info) = (split)[0,2,3,4,5,6,8];
 	my $class = "undef";
 	$class = "LTR" if $type =~ /LTR/i or $type =~ /long_terminal_repeat/i or $type =~ /target_site_duplication/i;
 	$class = "TIR" if $type =~ /DT/ or ($type =~ /DNA|MITE/ and $type !~ /Helitron|DHH/);

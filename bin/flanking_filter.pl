@@ -173,7 +173,10 @@ for (my $i=0; $i<=$#FA; $i++){
 ## build the blast DB now that the work list is known: skip when it already exists, and also when
 ## there is nothing left to blast (e.g. resuming an already-complete tabout) - which avoids
 ## rebuilding a large DB just to re-derive pass.fa. (make one only if genome candidates remain.)
-`${blastplus}makeblastdb -in $genome -out $genome -dbtype nucl 2> /dev/null` if @cand and !(-s "$genome.nsq");
+if (@cand and !(-s "$genome.nsq")){
+	my $output = `${blastplus}makeblastdb -in $genome -out $genome -dbtype nucl 2>&1` // 'no output captured';
+	die "makeblastdb failed on $genome ($?): $output\n" if $? != 0;
+	}
 
 my $job_id = 0;
 my $rq = Thread::Queue->new();   # candidate indices ready to decide (produced by workers, consumed by main)
@@ -270,12 +273,12 @@ for my $r (@FA){
 	next unless $pass_loc{$loc};
 	$TE_cln{"$chr:$str..$end"} = substr $seq, $ext_len, -$ext_len;
 	}
-open Seq, ">$query.pass.fa";
+open Seq, ">$query.pass.fa" or die "ERROR: cannot write $query.pass.fa: $!\n";
 foreach my $id (sort {$a cmp $b} keys %TE_cln){ print Seq ">$id\n$TE_cln{$id}\n"; }
 close Seq;
 
 unlink $ckpt;                                           # resume no longer needed
-`rm $genome.nhr $genome.nin $genome.nsq 2> /dev/null`;  # remove database
+`rm $genome.nhr $genome.nin $genome.nsq $genome.ndb $genome.not $genome.ntf $genome.nto $genome.njs 2> /dev/null`;  # remove database
 
 
 ## ===================== engine =====================
@@ -392,6 +395,7 @@ sub process_chunk {
 		close $bh;
 		$rc = $?;
 		last if $rc == 0;
+		warn "WARNING: blastn failed on chunk (jobs $jobs->[0][0]-$jobs->[-1][0], $n queries) with rc=$rc, retrying\n" if ($rc >> 8) != 137;
 		last if ($rc >> 8) == 137;    # KILLed -> do not retry
 		}
 

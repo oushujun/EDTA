@@ -61,15 +61,21 @@ while (<File>){
 	$info.="$query\t$qstart\t$qend\n" if ($eval<=$evalue and $len-$mismatch>=$length and $iden>=$identity);
 }
 $info="Good news! No sequence is needed to be purged.\n" if $info=~/^(\s+)?$/;
-open Out, ">$seq.exclude.temp";
+open Out, ">$seq.exclude.temp" or die "ERROR: cannot write $seq.exclude.temp: $!\n";
 print Out "$info";
 close Out;
 
 if ($info=~/Good news!/i){
 	`mv $seq.exclude.temp $seq.exclude.list`;
+	die "ERROR: mv $seq.exclude.temp $seq.exclude.list failed ($?)\n" if $? != 0;
 	`cp $seq $seq.clean`;
+	die "ERROR: cp $seq $seq.clean failed ($?)\n" if $? != 0;
 	} else {
 	`perl $script_path/combine_overlap.pl $seq.exclude.temp $seq.exclude.list`;
+	die "ERROR: combine_overlap.pl failed ($?) on $seq.exclude.temp\n" if $? != 0;
 	`rm $seq.exclude.temp`;
+	die "ERROR: rm $seq.exclude.temp failed ($?)\n" if $? != 0;
 	`awk '{print \$1\"\\t\"\$1\":\"\$2\"..\"\$3}' $seq.exclude.list | perl $script_path/call_seq_by_list.pl - -C $seq -ex -cov $coverage -purge $purge > $seq.clean`;
+	die "ERROR: call_seq_by_list.pl failed ($?) on $seq.exclude.list\n" if $? != 0;
 	}
+die "purger produced empty $seq.clean\n" unless -s "$seq.clean";

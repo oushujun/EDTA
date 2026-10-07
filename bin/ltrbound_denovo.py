@@ -44,19 +44,25 @@ def read_fa(path, ltr_only=True):
 def bounds(rec):
     name, seq = rec
     n = len(seq)
-    with tempfile.NamedTemporaryFile('w', suffix='.fa', delete=False) as tf:
-        tf.write(f">q\n{seq}\n")
-        p = tf.name
+    p = None
     try:
+        with tempfile.NamedTemporaryFile('w', suffix='.fa', delete=False) as tf:
+            p = tf.name
+            tf.write(f">q\n{seq}\n")
         r = subprocess.run(
             [BLASTN, '-query', p, '-subject', p, '-evalue', '1e-5',
              '-word_size', '11', '-dust', 'no', '-strand', 'plus',
              '-outfmt', '6 qstart qend sstart send pident length'],
             capture_output=True, text=True, timeout=120)
     except subprocess.TimeoutExpired:
+        sys.stderr.write(f"ltrbound_denovo.py: WARNING: blastn timed out on {name}, skipping\n")
         return None
     finally:
-        os.unlink(p)
+        if p:
+            os.unlink(p)
+    if r.returncode != 0:
+        sys.stderr.write(f"ltrbound_denovo.py: WARNING: blastn exited {r.returncode} on {name}, skipping: {r.stderr.strip()}\n")
+        return None
 
     best = None
     for line in r.stdout.splitlines():
