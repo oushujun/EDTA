@@ -11,8 +11,10 @@ $min_len = 50 unless defined $min_len; #default 50 bp
 die usage() unless @ARGV >= 2;
 
 # iteratively split the input gff3 file
+# two alternating temp files carry the intermediate results across iterations
 my $iter = 1;
-my ($in, $out) = ($input, "$input.iter$iter");
+my ($tmpA, $tmpB) = ("$input.tmpA", "$input.tmpB");
+my ($in, $out) = ($input, $tmpA);
 for (my $i=0; $i<$iter; $i++){
 	open IN, "sort -suV $in |" or die "$!";
 	open OUT, ">$out" or die "$!";
@@ -38,7 +40,7 @@ while (my $line = <IN>){
 			$method2 = 'NA' unless defined $method2;
 			($stt2, $end2) = ($end2, $stt2) if $stt2 > $end2;
 			my $len2 = $end2 - $stt2 + 1;
-			next if ($len2 < $min_len and $method1 eq 'homology') or $len2 <= 2;
+			next if ($len2 < $min_len and $method2 eq 'homology') or $len2 <= 2;
 			if (($chr1 eq $chr2) && $stt2 <= $end1 && $end2 > $end1){
 				my $keep = &compare($len1, $method1, $len2, $method2);
 				if ($keep eq 'keep1'){
@@ -84,10 +86,11 @@ while (my $line = <IN>){
 		} else {
 		$iter++;
 		$in = $out;
-		$out = "$input.iter$iter";
+		$out = $in eq $tmpA ? $tmpB : $tmpA;
 		}
 	}
 `mv $out $output`;
+unlink $tmpA, $tmpB;
 
 
 # determine which annotation to keep

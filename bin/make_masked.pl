@@ -49,12 +49,14 @@ foreach (@ARGV){
 	$k++;
 	}
 
+# check inputs before creating any output file, so a failure cannot leave empty results behind
+die "The RepeatMasker.out file $RMout is empty or not exist!\n" unless -s $RMout;
+
 # open file handles
 open Genome, "<$genome" or die $usage;
 open Masked, ">$genome.new.masked" or die $!;
 open RMout, "<$RMout" or die $usage;
 open RMnew, ">$RMout.new" or die $!;
-die "The RepeatMasker.out file $RMout is empty or not exist!\n" unless -s $RMout;
 
 # read genome files
 $/ = "\n>";
@@ -126,5 +128,9 @@ close Mask;
 foreach my $chr (sort {$a cmp $b} keys %genome){
 	print Masked ">$chr\n$genome{$chr}\n";
 	}
+
+# clean up temp files; $RMout.new is intentionally kept: it is the filtered RepeatMasker
+# result consumed by downstream steps (e.g. combine_RMrows.pl -rmout $RMout.new)
+unlink "$RMout.new.bed", "$RMout.new.bed.cbi", "$RMout.target.bed";
 
 

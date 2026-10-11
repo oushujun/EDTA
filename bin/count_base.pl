@@ -28,6 +28,6 @@ while (<File>){
 	print "$id\t$chr_len\t$N_count\t$chr_mis\n" if $seperate==1;
 	$N_length+=$N_count;
 	}
-my $missing=$N_length/$length;
+my $missing = $length ? $N_length/$length : 0;
 print "All\t$length\t$N_length\t$missing\t$seq_count\n";
 close File;

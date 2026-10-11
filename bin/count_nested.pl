@@ -76,8 +76,8 @@ while (<IN>){
 close IN;
 
 # remove single-event categories
-while (my ($key, $value) = each (%types)) {
-	delete $types{$key} if $value <= 1;
+for my $key (keys %types) {
+	delete $types{$key} if $types{$key} <= 1;
 	}
 
 my @types = sort {$a cmp $b} keys %types;

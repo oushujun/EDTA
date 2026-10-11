@@ -20,6 +20,7 @@ die "Usage: $0 -fa <fasta_file> -gff <gff_file>\n" unless $fasta_file && $gff_fi
 
 # Hash to store GFF3 coordinates and IDs
 my %gff_data;
+my %occ; #occurrence counter to keep every row sharing the same coordinates
 
 # Process the GFF3 file
 open(my $gff_fh, '<', $gff_file) or die "Could not open GFF3 file $gff_file: $!";
@@ -35,7 +36,9 @@ while (my $line = <$gff_fh>) {
     if ($attributes =~ /ID=([^;]+)/) {
         my $id = $1;
         # Store in hash with coordinates as key and ID as value
-        $gff_data{"$chr:$start..$end"} = $id;
+        my $key = "$chr:$start..$end";
+        $key .= "#" . ++$occ{$key} if exists $gff_data{$key};
+        $gff_data{$key} = $id;
     }
 }
 close $gff_fh;
