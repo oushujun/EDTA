@@ -38,7 +38,7 @@ while (my $line = <IN>){
 			$method2 = 'NA' unless defined $method2;
 			($stt2, $end2) = ($end2, $stt2) if $stt2 > $end2;
 			my $len2 = $end2 - $stt2 + 1;
-			next if ($len2 < $min_len and $method1 eq 'homology') or $len2 <= 2;
+			next if ($len2 < $min_len and $method2 eq 'homology') or $len2 <= 2;
 			if (($chr1 eq $chr2) && $stt2 <= $end1 && $end2 > $end1){
 				my $keep = &compare($len1, $method1, $len2, $method2);
 				if ($keep eq 'keep1'){
