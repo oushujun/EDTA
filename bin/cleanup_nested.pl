@@ -281,9 +281,9 @@ sub condenser(){
 					my ($start, $end) = ($hsp->[0], $hsp->[1]);
 					$poss = $poss . $start . ".." . $end . ",";
 					my $len = $end - $start + 1;
-					substr($seq_new, $start-1, $len) = "R" x $len if length $seq_new >= $start + $len - 1;
+					substr($seq_new, $start-1, $len) = "\0" x $len if length $seq_new >= $start + $len - 1;
 				}
-				$seq_new =~ s/R//g;
+				$seq_new =~ tr/\0//d;
 				my $sbj_len_new = length $seq_new;
 				if ($sbj_len_new >= $minlen and $sbj_len_new < length $seq{$sbj} and $clean == 1){
 					{ lock($stat_lock); print STAT "$sbj\tIter$i\tCleaned. $poss covering $qcov of $id; scov: $scov; identity: $scaled_iden; merged $merged\n"; $count_stat++; }
@@ -372,9 +372,9 @@ sub apply_clean {
 		next unless $range =~ /^(\d+)\.\.(\d+)$/;
 		my ($start, $end) = ($1, $2);
 		my $len = $end - $start + 1;
-		substr($seq_new, $start-1, $len) = "R" x $len if length $seq_new >= $start + $len - 1;
+		substr($seq_new, $start-1, $len) = "\0" x $len if length $seq_new >= $start + $len - 1;
 	}
-	$seq_new =~ s/R//g;
+	$seq_new =~ tr/\0//d;
 	$seq{$sbj} = $seq_new;
 	$touched_seq{$sbj} = 1;
 }
