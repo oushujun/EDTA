@@ -6,6 +6,7 @@ use File::Basename;
 use threads;
 use Thread::Queue;
 use threads::shared;
+use IO::Handle;
 
 my $usage = "
 	A script to purify a TE library based on another TE file containing the target contaminant.
@@ -42,7 +43,8 @@ my $script_path = $FindBin::Bin;
 my $call_seq = "$script_path/call_seq_by_list.pl";
 my $repeatmasker = "";
 my $blastplus = "";
-my $threads = 36;
+my $threads = 8;
+my $stat_lock :shared; #serializes threaded writes to STAT
 my $queue = Thread::Queue->new();
 
 # read parameters
@@ -136,6 +138,7 @@ close RM;
 ###############
 # Identify fold difference between TE1 and TE2
 open STAT, ">$TE1-$TE2.stat" or die $!;
+STAT->autoflush(1); #with $stat_lock: each thread writes whole lines immediately, so rows never interleave
 print STAT "TE1_id\tTE1_len\tTE2_len\tTE1_richness\tTE2_richness\tFold_diff\n";
 
 # multi-threading using queue, put candidate regions into queue for parallel computation
@@ -208,7 +211,7 @@ sub purifier(){
 			my ($seq_te1_percent, $seq_te2_percent) = ($seq_te1_len/$TE1_len, $seq_te2_len/$TE2_len);
 			my $diff = 1000;
 			$diff = $seq_te1_percent/$seq_te2_percent if $seq_te2_percent > 0;
-			print STAT "$id:$from..$to\t$seq_te1_len\t$seq_te2_len\t$seq_te1_percent\t$seq_te2_percent\t$diff\n";
+			{ lock($stat_lock); print STAT "$id:$from..$to\t$seq_te1_len\t$seq_te2_len\t$seq_te1_percent\t$seq_te2_percent\t$diff\n"; }
 			}
 		}
 	}
