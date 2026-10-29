@@ -508,7 +508,7 @@ print "$date\tObtain raw TE libraries using various structure-based programs: \n
 # Get raw TE candidates
 `perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
 
-chdir "$genome.EDTA.raw";
+chdir "$genome.EDTA.raw" or die "ERROR: cannot enter $genome.EDTA.raw: $!\n";
 
 # Force to use rice TEs when raw.fa is empty
 if ($force eq 1){
@@ -566,7 +566,7 @@ if (-s "$genome.EDTA.combine/$genome.EDTA.fa.stg1" and $overwrite == 0){
 
 # check results, remove intermediate files, and report status
 die "ERROR: Stage 1 library not found in $genome.EDTA.combine/$genome.EDTA.fa.stg1" unless -s "$genome.EDTA.combine/$genome.EDTA.fa.stg1";
-chdir "$genome.EDTA.combine";
+chdir "$genome.EDTA.combine" or die "ERROR: cannot enter $genome.EDTA.combine: $!\n";
 `rm ./$genome.LTR.raw.fa*Q* ./$genome.LTR.intact.raw.fa*Q* ./$genome.TIR.intact.raw.fa*Q* ./$genome.Helitron.intact.raw.fa*Q* ./$genome.TIR.Helitron.fa*Q* $genome*tbl $genome*out $genome*cleanup $genome*RMoutput $genome*stg1.raw* $genome.LTR.raw.fa-* $genome.LTR.intact.raw.fa-* $genome.TIR.intact.raw.fa-* $genome.Helitron.intact.raw.fa-* $genome.LINE_LTR.raw.fa $genome.LTR.SINE.LINE.fa *.ndb *.not *.ntf *.nto *.cat.gz *.cat *.masked *.ori.out *.nhr *.nin *.nsq 2>/dev/null` unless $debug eq 1;
 
 chdir "..";
@@ -586,7 +586,7 @@ print "$date\tPerform EDTA final steps to generate a non-redundant comprehensive
 
 # Make the final working directory
 `mkdir $genome.EDTA.final` unless -e "$genome.EDTA.final" && -d "$genome.EDTA.final";
-chdir "$genome.EDTA.final";
+chdir "$genome.EDTA.final" or die "ERROR: cannot enter $genome.EDTA.final: $!\n";
 `rm ./* 2>/dev/null` if $overwrite == 1;
 `cp ../$genome.EDTA.raw/$genome.RM2.fa ./`;
 `cp ../$genome.EDTA.combine/$genome.EDTA.fa.stg1 ./`;
@@ -802,7 +802,7 @@ if ($anno == 1){
 
 	# Make the post-library annotation working directory
 	`mkdir $genome.EDTA.anno` unless -e "$genome.EDTA.anno" && -d "$genome.EDTA.anno";
-	chdir "$genome.EDTA.anno";
+	chdir "$genome.EDTA.anno" or die "ERROR: cannot enter $genome.EDTA.anno: $!\n";
 	`rm ./* 2>/dev/null` if $overwrite == 1;
 	`rm $genome.EDTA.TElib.fa* 2>/dev/null`; # clean up libraries
 	`cp ../$genome.EDTA.TElib.fa ./`;

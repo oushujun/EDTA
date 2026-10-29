@@ -113,7 +113,7 @@ my $HEL = "$genome.Helitron.intact.raw.fa";
 `mkdir $genome.EDTA.combine` unless -e "$genome.EDTA.combine" && -d "$genome.EDTA.combine";
 
 # enter the combine folder for EDTA processing
-chdir "$genome.EDTA.combine";
+chdir "$genome.EDTA.combine" or die "ERROR: cannot enter $genome.EDTA.combine: $!\n";
 
 # --- Resume support (added 2026-08-24) --------------------------------------
 # EDTA_processK.pl originally had no restart logic: every invocation redid the

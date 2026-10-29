@@ -376,7 +376,7 @@ chomp ($date = `date`);
 print STDERR "$date\tStart to find LTR candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/LTR";
+chdir "$genome.EDTA.raw/LTR" or die "ERROR: cannot enter $genome.EDTA.raw/LTR: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
@@ -482,7 +482,7 @@ chomp ($date = `date`);
 print STDERR "$date\tStart to find SINE candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/SINE";
+chdir "$genome.EDTA.raw/SINE" or die "ERROR: cannot enter $genome.EDTA.raw/SINE: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Remove existing results
@@ -542,7 +542,7 @@ chomp ($date = `date`);
 print STDERR "$date\tStart to find LINE candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/LINE";
+chdir "$genome.EDTA.raw/LINE" or die "ERROR: cannot enter $genome.EDTA.raw/LINE: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 `cp ../../$RMlib $RMlib` if $RMlib ne 'null';
 
@@ -624,7 +624,7 @@ chomp ($date = `date`);
 print STDERR "$date\tStart to find TIR candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/TIR";
+chdir "$genome.EDTA.raw/TIR" or die "ERROR: cannot enter $genome.EDTA.raw/TIR: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
@@ -703,7 +703,7 @@ chomp ($date = `date`);
 print STDERR "$date\tStart to find Helitron candidates.\n\n";
 
 # enter the working directory and create genome softlink
-chdir "$genome.EDTA.raw/Helitron";
+chdir "$genome.EDTA.raw/Helitron" or die "ERROR: cannot enter $genome.EDTA.raw/Helitron: $!\n";
 `ln -s ../../$genome $genome` unless -s $genome;
 
 # Try to recover existing results
