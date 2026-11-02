@@ -22,6 +22,9 @@ import tempfile
 import shutil
 from multiprocessing import Pool
 
+# Java heap limit per HelitronScanner process; up to --cpu processes run at once
+JAVA_XMX = "-Xmx10g"
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Parallel HelitronScanner wrapper"
@@ -136,17 +139,17 @@ def process_chunk(args):
     cmds = []
     # direct orientation
     cmds.extend([
-        ["java", "-Xmx2g", "-jar", jar, "scanHead", "-lcv_filepath", head_lcvs, "-g", chunk_path, "-buffer_size", "0", "-output", f"{prefix}.head"],
-        ["java", "-Xmx2g", "-jar", jar, "scanTail", "-lcv_filepath", tail_lcvs, "-g", chunk_path, "-buffer_size", "0", "-output", f"{prefix}.tail"],
-        ["java", "-Xmx2g", "-jar", jar, "pairends", "-head_score", f"{prefix}.head", "-tail_score", f"{prefix}.tail", "-output", f"{prefix}.pairends"],
-        ["java", "-Xmx2g", "-jar", jar, "draw", "-pscore", f"{prefix}.pairends", "-g", chunk_path, "-output", f"{prefix}.draw", "-pure_helitron"]
+        ["java", JAVA_XMX, "-jar", jar, "scanHead", "-lcv_filepath", head_lcvs, "-g", chunk_path, "-buffer_size", "0", "-output", f"{prefix}.head"],
+        ["java", JAVA_XMX, "-jar", jar, "scanTail", "-lcv_filepath", tail_lcvs, "-g", chunk_path, "-buffer_size", "0", "-output", f"{prefix}.tail"],
+        ["java", JAVA_XMX, "-jar", jar, "pairends", "-head_score", f"{prefix}.head", "-tail_score", f"{prefix}.tail", "-output", f"{prefix}.pairends"],
+        ["java", JAVA_XMX, "-jar", jar, "draw", "-pscore", f"{prefix}.pairends", "-g", chunk_path, "-output", f"{prefix}.draw", "-pure_helitron"]
     ])
     # reverse complement
     cmds.extend([
-        ["java", "-Xmx2g", "-jar", jar, "scanHead", "-lcv_filepath", head_lcvs, "-g", chunk_path, "-buffer_size", "0", "--rc", "-output", f"{prefix}.rc.head"],
-        ["java", "-Xmx2g", "-jar", jar, "scanTail", "-lcv_filepath", tail_lcvs, "-g", chunk_path, "-buffer_size", "0", "--rc", "-output", f"{prefix}.rc.tail"],
-        ["java", "-Xmx2g", "-jar", jar, "pairends", "-head_score", f"{prefix}.rc.head", "-tail_score", f"{prefix}.rc.tail", "--rc", "-output", f"{prefix}.rc.pairends"],
-        ["java", "-Xmx2g", "-jar", jar, "draw", "-pscore", f"{prefix}.rc.pairends", "-g", chunk_path, "-output", f"{prefix}.draw.rc", "-pure_helitron"]
+        ["java", JAVA_XMX, "-jar", jar, "scanHead", "-lcv_filepath", head_lcvs, "-g", chunk_path, "-buffer_size", "0", "--rc", "-output", f"{prefix}.rc.head"],
+        ["java", JAVA_XMX, "-jar", jar, "scanTail", "-lcv_filepath", tail_lcvs, "-g", chunk_path, "-buffer_size", "0", "--rc", "-output", f"{prefix}.rc.tail"],
+        ["java", JAVA_XMX, "-jar", jar, "pairends", "-head_score", f"{prefix}.rc.head", "-tail_score", f"{prefix}.rc.tail", "--rc", "-output", f"{prefix}.rc.pairends"],
+        ["java", JAVA_XMX, "-jar", jar, "draw", "-pscore", f"{prefix}.rc.pairends", "-g", chunk_path, "-output", f"{prefix}.draw.rc", "-pure_helitron"]
     ])
     for c in cmds:
         try:
