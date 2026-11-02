@@ -60,9 +60,9 @@ filename <- args[1]
 
 # Check if the file has a header.
 has_header <- readLines(filename, n = 1)
-header <- if (grepl("chrom", has_header, fixed = TRUE)) TRUE else FALSE
+header <- if (grepl("^chrom\t", has_header)) TRUE else FALSE
 
-repeats <- read.table(filename, sep='\t', header = header, 
+repeats <- read.table(filename, sep='\t', header = header, comment.char = '',
                       col.names = if (!header) c('chrom', 'coord', 'density', 'type') else NULL)
                       
 # Calculate the 10% size cutoff and apply it if no_size_cutoff is not set.
