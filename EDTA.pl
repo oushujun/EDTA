@@ -563,6 +563,7 @@ print "$date\tPerform EDTA advance filtering for raw TE candidates and generate 
 if (-s "$genome.EDTA.combine/$genome.EDTA.fa.stg1" and $overwrite == 0){
 	print "$date\tExisting stage 1 library $genome.EDTA.combine/$genome.EDTA.fa.stg1 found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
+	encode_ids(map "$genome.EDTA.raw/$genome.$_.fa", qw(LTR.raw LTR.intact.raw LINE.raw SINE.raw TIR.intact.raw Helitron.intact.raw));
 `perl $EDTA_process -genome $genome -ltr $genome.EDTA.raw/$genome.LTR.raw.fa -ltrint $genome.EDTA.raw/$genome.LTR.intact.raw.fa -line $genome.EDTA.raw/$genome.LINE.raw.fa -sine $genome.EDTA.raw/$genome.SINE.raw.fa -tir $genome.EDTA.raw/$genome.TIR.intact.raw.fa -helitron $genome.EDTA.raw/$genome.Helitron.intact.raw.fa -repeatmasker $repeatmasker -blast $blastplus -threads $threads`;
 	}
 
@@ -598,6 +599,7 @@ chdir "$genome.EDTA.final" or die "ERROR: cannot enter $genome.EDTA.final: $!\n"
 #`cp ../$genome.EDTA.raw/$genome.EDTA.intact.raw.fa ./`;
 `cp ../$genome.EDTA.raw/$genome.EDTA.intact.raw.gff3 ./`;
 `cp ../$exclude ./` if $exclude ne '';
+encode_ids("$genome.EDTA.fa.stg1", "$genome.EDTA.intact.fa.cln", "$genome.EDTA.intact.raw.gff3", "$genome.EDTA.intact.fa.cln2.out");
 
 # identify remaining TEs in the filtered RM2 library
 if ($sensitive == 1 and -s "$genome.RM2.fa"){
@@ -980,6 +982,14 @@ sub copy_file {
 
         # copy file to the path if it's not the current path
 	`cp $file $path` if abs_path($path) ne abs_path('.');
+	}
+
+# A finished run decoded its working files. A rerun reads them again, and RepeatMasker needs the short IDs.
+sub encode_ids {
+	return if $seqid_mapfile eq '' or !-s $seqid_mapfile;
+	for my $f (@_){
+		`perl $seqid_codec encode_names $f $seqid_mapfile $f.encoded && mv $f.encoded $f` if -s $f;
+		}
 	}
 
 # Mask $query with the $lib library. A query without hits is copied as its own .masked.

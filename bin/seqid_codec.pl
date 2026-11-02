@@ -25,6 +25,12 @@ Modes:
     the mapping file. Useful for converting candidate files (e.g., .scn) to
     use encoded IDs that match an encoded genome.
 
+  encode_names <input> <mapfile> <output>
+    Undo decode_text on a working file that a later run reads again (FASTA,
+    GFF3 or RepeatMasker .out). Replaces IDs only in names of the form
+    ID:start..end and in the first column of GFF3, so a numeric ID such as
+    1 cannot hit a coordinate or an identity value.
+
   decode_fasta <input.fa> <mapfile> <output.fa>
     Restore original seq IDs in FASTA header lines using the mapping file.
 
@@ -51,6 +57,11 @@ if ($mode eq 'encode_fasta') {
 	die "Usage: seqid_codec.pl encode_text <input.txt> <mapfile> <output.txt>\n"
 		unless defined $infile && defined $mapfile && defined $outfile;
 	encode_text($infile, $mapfile, $outfile);
+} elsif ($mode eq 'encode_names') {
+	my ($infile, $mapfile, $outfile) = @ARGV;
+	die "Usage: seqid_codec.pl encode_names <input> <mapfile> <output>\n"
+		unless defined $infile && defined $mapfile && defined $outfile;
+	encode_names($infile, $mapfile, $outfile);
 } elsif ($mode eq 'decode_fasta') {
 	my ($infile, $mapfile, $outfile) = @ARGV;
 	die "Usage: seqid_codec.pl decode_fasta <input.fa> <mapfile> <output.fa>\n"
@@ -268,6 +279,30 @@ sub encode_text {
 			$part = $rmap{$part} if exists $rmap{$part};
 		}
 		print $ofh join('', @parts), "\n";
+	}
+
+	close $ifh;
+	close $ofh;
+}
+
+
+#################
+# encode_names
+#################
+sub encode_names {
+	my ($infile, $mapfile, $outfile) = @_;
+	my ($map_ref) = _load_map($mapfile);
+	my %rmap = reverse %$map_ref;
+	my $coord = qr/:[0-9]+\.\.[0-9]+/;
+
+	open my $ifh, '<', $infile or die "ERROR: Cannot open $infile: $!\n";
+	open my $ofh, '>', $outfile or die "ERROR: Cannot write $outfile: $!\n";
+
+	while (<$ifh>) {
+		s/^([^\t]+)(?=\t)/exists $rmap{$1} ? $rmap{$1} : $1/e;                   # GFF3 seqid
+		s/(?:^>|\bName=)\K(\S+)(?=$coord)/exists $rmap{$1} ? $rmap{$1} : $1/e;   # FASTA name, GFF3 Name
+		s/\s\K(\S+)(?=$coord)/exists $rmap{$1} ? $rmap{$1} : $1/e;               # RepeatMasker .out query
+		print $ofh $_;
 	}
 
 	close $ifh;
