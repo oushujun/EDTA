@@ -228,12 +228,12 @@ while IFS= read -r i; do
 	echo "De novo annotate genome $genome with EDTA"
 		perl $path/bin/count_base.pl $genome -s > $genome.stats
 		if [ "$curatedlib" != '' ]; then
-			perl $path/EDTA.pl --genome $genome -t $threads --anno 1 --cds $cds_ind --curatedlib $curatedlib || {
+			perl $path/EDTA.pl --genome $genome -t $threads --anno 1 --cds "$cds_ind" --curatedlib $curatedlib || {
 				echo >&2 ERROR: Initial EDTA failed for $genome
 			exit 1
 		}
 		else
-			perl $path/EDTA.pl --genome $genome -t $threads --anno 1 --cds $cds_ind || {
+			perl $path/EDTA.pl --genome $genome -t $threads --anno 1 --cds "$cds_ind" || {
 				echo >&2 ERROR: Initial EDTA failed for $genome
 			exit 1
 		}
@@ -320,7 +320,7 @@ while IFS= read -r i; do
         fi
 
 	printf "\n%s\nReannotate genome %s with the panEDTA library - structural\n" "$(date)" $genome
-	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $outfile.panEDTA.TElib.fa --cds $cds_ind --rmout $genome.mod.panEDTA.out --overwrite 1
+	perl $path/EDTA.pl --genome $genome -t $threads --step final --anno 1 --curatedlib $outfile.panEDTA.TElib.fa --cds "$cds_ind" --rmout $genome.mod.panEDTA.out --overwrite 1
 done < $genome_list
 
 printf "%s\n\tpanEDTA annotation of %s is finished!\n" "$(date)" "$genome_list"
