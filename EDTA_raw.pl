@@ -386,6 +386,9 @@ if ($overwrite eq 0 and -s "$genome.LTR.raw.fa"){
 	} else {
 	print STDERR "$date\tIdentify LTR retrotransposon candidates from scratch.\n\n";
 
+# LTR_HARVEST and LTR_FINDER reuse this genome copy, but EDTA.pl decodes its IDs at the end of a run
+`rm -f $genome.shortID` if $overwrite eq 1;
+
 # run LTRharvest
 if ($overwrite eq 0 and -s "$genome.harvest.combine.scn"){
 	print STDERR "$date\tExisting raw result $genome.harvest.scn found!\n\t\tWill use this for further analyses.\n\n";
@@ -408,7 +411,8 @@ if ($overwrite eq 0 and (-s "$genome.mod.LTRlib.fa" or -s "$genome.LTRlib.fa")){
 	} else {
 	`cat $genome.harvest.combine.scn $genome.finder.combine.scn > $genome.rawLTR.scn`;
 	my $we_flag = $wholeelement ? "-wholeelement" : "";
-	my $status = system("${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno $we_flag -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker -salvage 1 -convert_seq_name 0");
+	my $salvage = $overwrite ? 0 : 1; # reuse an earlier LTR_retriever run only when resuming
+	my $status = system("${LTR_retriever}LTR_retriever -genome $genome -inharvest $genome.rawLTR.scn -u $miu -threads $threads -noanno $we_flag -trf_path $trf -blastplus $blastplus -repeatmasker $repeatmasker -salvage $salvage -convert_seq_name 0");
 	# LTR_retriever also exits with error on a genome without LTR candidates, which is a valid empty result
 	die "ERROR: LTR_retriever exited with error, please test run EDTA with EDTA/test/ to make sure the installation is correct.\n\n" if $status != 0 and `grep -cE '^\\s*[0-9]' $genome.rawLTR.scn` > 0;
 	}
