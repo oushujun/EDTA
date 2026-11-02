@@ -507,6 +507,7 @@ print "$date\tObtain raw TE libraries using various structure-based programs: \n
 
 # Get raw TE candidates
 `perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
+die "ERROR: EDTA_raw.pl exited with error. See the messages above; fix the problem and rerun with --overwrite 0 to reuse finished modules.\n" if $?;
 
 chdir "$genome.EDTA.raw" or die "ERROR: cannot enter $genome.EDTA.raw: $!\n";
 
