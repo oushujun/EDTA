@@ -40,7 +40,7 @@ while (<>){
 			$full_len = $TEs + $TEe;
 			$len = $TEe - $TEleft + 1;
 			}
-		next unless $len/($full_len+1) >= $min_cov;
+		next unless $full_len >= 0 and $len/($full_len+1) >= $min_cov; # a negative RepeatMasker (left) can make $full_len < 0
 		print $_;
 		}
 	}
