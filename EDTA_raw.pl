@@ -491,9 +491,10 @@ chdir "$genome.EDTA.raw/SINE" or die "ERROR: cannot enter $genome.EDTA.raw/SINE:
 if (-s "Seed_SINE.fa"){
 	print STDERR "$date\tExisting result file Seed_SINE.fa found!\n\t\tWill keep this file without rerunning this module.\n\t\tPlease specify --overwrite 1 if you want to rerun AnnoSINE_v2.\n\n";
 	} else { 
-	my $status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ 2>/dev/null");
-	die "ERROR: AnnoSINE exited with error, please test run AnnoSINE to make sure it's working.\n\n" if $status != 0;
-	#$status = system("python3 ${annosine}AnnoSINE_v2 --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > /dev/null 2>&1");
+	# use its own #! line (conda points it to the env's python); the upstream script has none
+	my $run_annosine = `head -c 2 ${annosine}AnnoSINE_v2` eq '#!' ? "${annosine}AnnoSINE_v2" : "python3 ${annosine}AnnoSINE_v2";
+	my $status = system("$run_annosine --temp_dir $genome_file_real_path.EDTA.raw/SINE/ -t $threads -a 2 --num_alignments 50000 -rpm 0 --copy_number 3 --shift 100 -auto 1 3 $genome ./ > annosine.log 2>&1");
+	die "ERROR: AnnoSINE exited with error, please check $genome.EDTA.raw/SINE/annosine.log\n\n" if $status != 0;
 	}
 
 # filter and reclassify AnnoSINE candidates with TEsorter and make SINE library
@@ -708,8 +709,8 @@ if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genom
 #cat $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa
 	print STDERR "$date\tExisting HelitronScanner result files $genome.HelitronScanner.draw.hel.fa $genome.HelitronScanner.draw.rc.hel.fa found!\n\t\tWill keep these files without rerunning HelitronScanner\n\t\tPlease specify --overwrite 1 if you want to rerun this module.\n\n";
 	} else {
-	my $status = system("python3 $HelitronScanner_Runner --genome $genome --cpu $threads --hsdir \"$HelitronScanner\" 2>/dev/null");
-	die "ERROR: HelitronScanner exited with error, please test run EDTA with EDTA/test/ to make sure the installation is correct.\n\n" if $status != 0;
+	my $status = system("python3 $HelitronScanner_Runner --genome $genome --cpu $threads --hsdir \"$HelitronScanner\" > helitronscanner.log 2>&1");
+	die "ERROR: HelitronScanner exited with error, please check $genome.EDTA.raw/Helitron/helitronscanner.log\n\n" if $status != 0;
 	}
 
 # filter candidates based on repeatness of flanking regions
