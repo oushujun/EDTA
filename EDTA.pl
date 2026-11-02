@@ -655,12 +655,9 @@ if (-s "$genome.EDTA.raw.fa.cln.cln" and $overwrite == 0){
 }
 
 # rename all TEs in the EDTA library
-# resume guard added 2026-08-28: keeps the TE library byte-identical across a resumed
-# FINAL, so a library already handed to an external RepeatMasker run stays valid.
-if (-s "$genome.EDTA.TElib.fa" and $overwrite == 0
-    and (!$wholeelement or -s "$genome.EDTA.TElib.fa.rename_map")){
-	print "\tExisting $genome.EDTA.TElib.fa found, skipping rename_TE (--overwrite 0).\n\n";
-} elsif ($wholeelement){
+# always rerun: rename_TE gives the same library from the same input, and a TElib.fa left by
+# an earlier run may be out of date or already merged with --curatedlib
+if ($wholeelement){
 	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln --map $genome.EDTA.TElib.fa.rename_map > $genome.EDTA.TElib.fa`;
 } else {
 	`perl $rename_TE $genome.EDTA.raw.fa.cln.cln > $genome.EDTA.TElib.fa`;
