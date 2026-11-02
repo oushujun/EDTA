@@ -602,8 +602,7 @@ chdir "$genome.EDTA.final" or die "ERROR: cannot enter $genome.EDTA.final: $!\n"
 if ($sensitive == 1 and -s "$genome.RM2.fa"){
 	print "\tFilter RepeatModeler results that are ignored in the raw step.\n\n";
 	chomp ($date = `date`);
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $genome.EDTA.fa.stg1 $genome.RM2.fa 2>/dev/null`;
-	`cp $genome.RM2.fa $genome.RM2.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	RM_mask("$genome.EDTA.fa.stg1", "$genome.RM2.fa");
 	# clean up tandem and coding sequences in the RM2 library
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.fa.masked > $genome.RM2.fa.stg1`;
 	`perl $cleanup_proteins -seq $genome.RM2.fa.stg1 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blastplus -threads $threads`;
@@ -632,14 +631,12 @@ if (-s "$cds"){
 
 	# remove cds-related sequences in the EDTA library
 	print "\tRemove CDS-related sequences in the EDTA library.\n\n";
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.raw.fa 2>/dev/null`;
-	`cp $genome.EDTA.raw.fa $genome.EDTA.raw.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	RM_mask($cds, "$genome.EDTA.raw.fa", "-cutoff 225");
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 
 	# remove cds-related sequences in intact TEs
 	print "\tRemove CDS-related sequences in intact TEs.\n\n";
-	$rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -cutoff 225 -lib $cds $genome.EDTA.intact.fa.cln 2>/dev/null`;
-	`cp $genome.EDTA.intact.fa.cln $genome.EDTA.intact.fa.cln.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	RM_mask($cds, "$genome.EDTA.intact.fa.cln", "-cutoff 225");
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.cln.masked > $genome.EDTA.intact.fa.cln.rmCDS`;
 	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa.cln2`;
 	} else {
@@ -694,8 +691,7 @@ if ($HQlib ne ''){
 	print "$date\tCombine the high-quality TE library $HQlib with the EDTA library:\n\n";
 
 	# remove known TEs in the EDTA library
-	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 -lib $HQlib $genome.EDTA.TElib.fa 2>/dev/null`;
-	`cp $genome.EDTA.TElib.fa $genome.EDTA.TElib.fa.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	RM_mask($HQlib, "$genome.EDTA.TElib.fa");
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 0 -f $genome.EDTA.TElib.fa.masked > $genome.EDTA.TElib.novel.fa`;
 	rename "$genome.EDTA.TElib.fa", "$genome.EDTA.TElib.ori.fa";
 	`cat $HQlib $genome.EDTA.TElib.novel.fa > $genome.EDTA.TElib.fa`;
@@ -986,4 +982,14 @@ sub copy_file {
 
         # copy file to the path if it's not the current path
 	`cp $file $path` if abs_path($path) ne abs_path('.');
+	}
+
+# Mask $query with the $lib library. A query without hits is copied as its own .masked.
+sub RM_mask {
+	my ($lib, $query, $opts) = ($_[0], $_[1], $_[2] // '');
+	unlink "$query.masked"; # a leftover would hide a failed run
+	my $rm_status = `${repeatmasker}RepeatMasker -e ncbi -pa $rm_threads -q -no_is -nolow -div 40 $opts -lib $lib $query 2>&1`;
+	`cp $query $query.masked` if $rm_status =~ /No repetitive sequences were detected/i;
+	# cleanup_tandem reads .masked, so continuing here would silently drop all of $query
+	die "ERROR: RepeatMasker failed to mask $query with $lib:\n$rm_status\n" if -s $query and !-e "$query.masked";
 	}

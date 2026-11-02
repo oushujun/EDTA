@@ -204,11 +204,13 @@ unless (&done("step7_LTRint_vs_TIRcln")){
 if (&done("step8_LINE_in_LTR")){
 	# skip: $LTR.cln already produced
 	} elsif (-s "$LINE"){
+	unlink "$LTR.masked"; # a leftover would hide a failed run
 	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -lib $LINE $LTR 2>&1`;
 	if ($err !~ /done/) {
         	`ln -s $LTR $LTR.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/si;
 	        print STDERR "\n$err\n";
         	}
+	die "ERROR: RepeatMasker failed to mask $LTR with $LINE, see the message above.\n" if -s $LTR and !-e "$LTR.masked";
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $LTR.masked > $LTR.cln`;
 	&mark("step8_LINE_in_LTR");
 	} else {
@@ -221,11 +223,13 @@ if (&done("step9_LINE_LTR_in_SINE")){
 	# skip: $SINE.cln already produced
 	} elsif (-s "$SINE"){
 	`cat $LTR.cln $LINE > $genome.LINE_LTR.raw.fa`;
+	unlink "$SINE.masked"; # a leftover would hide a failed run
 	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -lib $genome.LINE_LTR.raw.fa $SINE 2>&1`;
 	if ($err !~ /done/) {
         	`ln -s $SINE $SINE.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/si;
 	        print STDERR "\n$err\n";
         	}
+	die "ERROR: RepeatMasker failed to mask $SINE with $genome.LINE_LTR.raw.fa, see the message above.\n" if -s $SINE and !-e "$SINE.masked";
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -f $SINE.masked > $SINE.cln`;
 	&mark("step9_LINE_LTR_in_SINE");
 	} else {
@@ -238,11 +242,13 @@ if (&done("step9_LINE_LTR_in_SINE")){
 unless (&done("step10_mask_TIR_HEL")){
 	`cat $TIR.cln $HEL.cln | perl -nle 's/>/\\n>/g unless /^>/; print \$_' > $genome.TIR.Helitron.fa.stg1.raw`;
 	`cat $LTR.HQ $SINE.cln $LINE > $genome.LTR.SINE.LINE.fa`;
+	unlink "$genome.TIR.Helitron.fa.stg1.raw.masked"; # a leftover would hide a failed run
 	$err = `${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -nolow -div 40 -lib $genome.LTR.SINE.LINE.fa $genome.TIR.Helitron.fa.stg1.raw 2>&1`;
 	if ($err !~ /done/) {
 		`ln -s $genome.TIR.Helitron.fa.stg1.raw $genome.TIR.Helitron.fa.stg1.raw.masked` if $err =~ s/^.*(No repetitive sequences were detected.*)\s+$/Warning: No sequences were masked/si;
 		print STDERR "\n$err\n";
 		}
+	die "ERROR: RepeatMasker failed to mask $genome.TIR.Helitron.fa.stg1.raw with $genome.LTR.SINE.LINE.fa, see the message above.\n" if -s "$genome.TIR.Helitron.fa.stg1.raw" and !-e "$genome.TIR.Helitron.fa.stg1.raw.masked";
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.Helitron.fa.stg1.raw.masked > $genome.TIR.Helitron.fa.stg1.raw.cln`;
 	&mark("step10_mask_TIR_HEL");
 	}
