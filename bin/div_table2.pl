@@ -63,6 +63,7 @@ while (my $line = <$fh>) {
     if ($EDTAbed == 1) {
         ($chr, $element_start, $element_end, $TE_ID, $TE_class, $method, $iden, $score, $strand, $phase, $extra, $type, $class) = split /\s+/, $line;
         next unless $iden =~ /^[0-9.]+$/;
+        next if $method eq 'structural' and $type eq 'TIR'; # this is the similarity between the two TIRs, not a divergence
         $div = 100 * (1 - $iden);
     } elsif ($EDTAbed == 0) {
         $line =~ s/^\s+//;
