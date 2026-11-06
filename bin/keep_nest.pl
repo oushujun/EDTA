@@ -25,13 +25,16 @@ open Minuend, "sort -suV $ARGV[0] |" or die $usage;
 open Subtrahend, "sort -suV $ARGV[1] |" or die $usage;
 open Diff, ">$ARGV[0]-$ARGV[1]" or die $!;
 
-my %substr;
+my %substr :shared; # one copy for all threads
+my %unsorted; # chromosomes whose entries are not in ascending start order: scanned from the first entry
 while (<Subtrahend>){
 	next if /^\s+$/;
 	chomp;
 #	my ($chr, $from, $to, $type, $info)=(split /\s+/, $_, 5);
 	my ($chr, $from, $to, $type)=(split)[0,1,2,11];
-	push @{$substr{$chr}}, [$from, $to, $type, $_];
+	$substr{$chr} = shared_clone([]) unless exists $substr{$chr};
+	$unsorted{$chr} = 1 if @{$substr{$chr}} and $from < $substr{$chr}[-1][0];
+	push @{$substr{$chr}}, shared_clone([$from, $to, $type, $_]);
 	}
 
 ## multi-threading using queue, put candidate regions into queue for parallel computation
@@ -68,8 +71,15 @@ close Diff;
 sub substract(){
 	while (defined ($_ = $queue->dequeue())){
 	my ($chr, $from, $to, $type) = (@{$_}[0], @{$_}[1], @{$_}[2], @{$_}[3]);
-	foreach my $substr (@{$substr{$chr}}){
-		my @range=@{$substr}; #[$from, $to, $type, $_]
+	my $list = $substr{$chr};
+	next unless defined $list;
+	# first entry that starts at or after $from: the ones before it all start left of $from and are skipped below
+	my ($lo, $hi) = (0, scalar @$list);
+	unless ($unsorted{$chr}){
+		while ($lo < $hi){ my $mid = ($lo + $hi) >> 1; if ($list->[$mid][0] < $from){ $lo = $mid + 1 } else { $hi = $mid } }
+		}
+	foreach my $k ($lo .. $#$list){
+		my @range=@{$list->[$k]}; #[$from, $to, $type, $_]
 		# skip this $substr range when its on the left side of $from, $to
 		next if $range[1]<$from;
 		# end the loop when $substr range is on the right side of $from, $to
