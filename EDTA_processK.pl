@@ -143,10 +143,18 @@ sub mark { `touch ".$_[0].done"`; }
 # This function better works for redundant libraries
 sub Purifier() {
 	my ($TE1, $TE2, $mindiff) = ($_[0], $_[1], $_[2]);
-	# mark contaminents with lowercase letters based on relative richness
-	`perl $TE_purifier -TE1 $TE1 -TE2 $TE2 -t $threads -mindiff $mindiff`;
+	# mark contaminents with lowercase letters based on relative richness. Nothing to purify in or with an empty file
+	# (TE_purifier.pl refuses one). A failed run must stop here: its step used to be stamped done anyway, and the
+	# TE1 class silently left the stage 1 library.
+	if (-s $TE1 and -s $TE2){
+		`perl $TE_purifier -TE1 $TE1 -TE2 $TE2 -t $threads -mindiff $mindiff`;
+		die "ERROR: TE_purifier.pl failed to purify $TE1 with $TE2, see the message above.\n" if $? != 0 or !-s "$TE1-$TE2.fa";
+		} else {
+		`cp $TE1 $TE1-$TE2.fa`;
+		}
 	# remove lowercase sequences
 	`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 1 -minrm 1 -trf 0 -f $TE1-$TE2.fa > $TE1.HQ`;
+	die "ERROR: cleanup_tandem.pl failed on $TE1-$TE2.fa, see the message above.\n" if $? != 0;
 	}
 
 
@@ -174,6 +182,7 @@ unless (&done("step3_HEL_vs_TIR")){
 unless (&done("step4_HEL_vs_LTR")){
 	&Purifier("$HEL.HQ", "$LTR", $mindiff_LTR);
 	`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $HEL.HQ-$LTR.fa > $HEL.int.cln`; # more relaxed in filtering intact helitrons
+	die "ERROR: cleanup_tandem.pl failed on $HEL.HQ-$LTR.fa, see the message above.\n" if $? != 0;
 	`mv $HEL.HQ.HQ $HEL.cln`;
 	&mark("step4_HEL_vs_LTR");
 	}
@@ -186,6 +195,7 @@ unless (&done("step5_TIR_vs_LTR")){
 unless (&done("step6_TIR_vs_HEL")){
 	&Purifier("$TIR.HQ", "$HEL", $mindiff_TIR);
 	`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $TIR.HQ-$HEL.fa > $TIR.int.cln`; # more relaxed in filtering intact TIRs
+	die "ERROR: cleanup_tandem.pl failed on $TIR.HQ-$HEL.fa, see the message above.\n" if $? != 0;
 	`mv $TIR.HQ.HQ $TIR.cln`;
 	&mark("step6_TIR_vs_HEL");
 	}
@@ -194,6 +204,7 @@ unless (&done("step6_TIR_vs_HEL")){
 unless (&done("step7_LTRint_vs_TIRcln")){
 	&Purifier("$LTRint", "$TIR.cln", 10); # 10 is permissive
 	`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $LTRint-$TIR.cln.fa > $LTRint.cln`;
+	die "ERROR: cleanup_tandem.pl failed on $LTRint-$TIR.cln.fa, see the message above.\n" if $? != 0;
 	&mark("step7_LTRint_vs_TIRcln");
 	}
 #&Purifier("$LTRint.HQ", "$HEL.cln", 10); # 10 is permissive
@@ -212,6 +223,7 @@ if (&done("step8_LINE_in_LTR")){
         	}
 	die "ERROR: RepeatMasker failed to mask $LTR with $LINE, see the message above.\n" if -s $LTR and !-e "$LTR.masked";
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $LTR.masked > $LTR.cln`;
+	die "ERROR: cleanup_tandem.pl failed on $LTR.masked, see the message above.\n" if $? != 0;
 	&mark("step8_LINE_in_LTR");
 	} else {
 		`cp $LTR $LTR.cln`;
@@ -231,6 +243,7 @@ if (&done("step9_LINE_LTR_in_SINE")){
         	}
 	die "ERROR: RepeatMasker failed to mask $SINE with $genome.LINE_LTR.raw.fa, see the message above.\n" if -s $SINE and !-e "$SINE.masked";
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -f $SINE.masked > $SINE.cln`;
+	die "ERROR: cleanup_tandem.pl failed on $SINE.masked, see the message above.\n" if $? != 0;
 	&mark("step9_LINE_LTR_in_SINE");
 	} else {
 		`cp $SINE $SINE.cln`;
@@ -250,6 +263,7 @@ unless (&done("step10_mask_TIR_HEL")){
 		}
 	die "ERROR: RepeatMasker failed to mask $genome.TIR.Helitron.fa.stg1.raw with $genome.LTR.SINE.LINE.fa, see the message above.\n" if -s "$genome.TIR.Helitron.fa.stg1.raw" and !-e "$genome.TIR.Helitron.fa.stg1.raw.masked";
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.9 -minlen 80 -minscore 3000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.TIR.Helitron.fa.stg1.raw.masked > $genome.TIR.Helitron.fa.stg1.raw.cln`;
+	die "ERROR: cleanup_tandem.pl failed on $genome.TIR.Helitron.fa.stg1.raw.masked, see the message above.\n" if $? != 0;
 	&mark("step10_mask_TIR_HEL");
 	}
 
@@ -257,6 +271,7 @@ unless (&done("step10_mask_TIR_HEL")){
 ## cluster TIRs and Helitrons and make stg1 raw library
 unless (&done("step11_cleanup_nested")){
 	`perl $cleanup_nested -in $genome.TIR.Helitron.fa.stg1.raw.cln -threads $threads -minlen 80 -cov 0.95 -blastplus $blast`;
+	die "ERROR: cleanup_nested.pl failed on $genome.TIR.Helitron.fa.stg1.raw.cln, see the message above.\n" if $? != 0 and -s "$genome.TIR.Helitron.fa.stg1.raw.cln"; # it refuses an empty file: no TIR or Helitron left
 	&mark("step11_cleanup_nested");
 	}
 `cat $LTR.cln $LINE $SINE.cln $genome.TIR.Helitron.fa.stg1.raw.cln.cln > $genome.EDTA.fa.stg1`;
