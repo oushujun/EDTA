@@ -86,7 +86,7 @@ my $header = "#Decision\t5'count\t3'count\tflank_count\tChr\tStart\tEnd\tLOC\tfl
 
 ## Store sequence information (all candidates, in input order)
 open Query, "<$query" or die $usage;
-my @FA;
+my @FA :shared; # one copy for all threads (the workers never read it); unshared, each worker would clone it
 $/ = "\n>";
 while (<Query>){
 	chomp;
@@ -94,7 +94,7 @@ while (<Query>){
 	my ($name, $seq) = (split /\n/, $_, 2);
 	$seq =~ s/\s+//g;
 	$seq = uc $seq;
-	push @FA, [$name, $seq];
+	push @FA, shared_clone([$name, $seq]);
 	}
 $/ = "\n";
 close Query;
@@ -142,7 +142,7 @@ my $tmpbase = (-d "/dev/shm" && -w "/dev/shm") ? "/dev/shm" : File::Spec->tmpdir
 my $tmpdir = tempdir("flankf.XXXXXXXX", DIR => $tmpbase, CLEANUP => 1);
 
 ## ---- build the work list: candidates not already finished in the tabout ----
-my @cand;
+my @cand :shared; # read by the main thread only, so shared like @FA
 for (my $i=0; $i<=$#FA; $i++){
 	my ($name, $seq) = @{$FA[$i]}[0,1];
 	next unless defined $name;
@@ -163,11 +163,11 @@ for (my $i=0; $i<=$#FA; $i++){
 	$ssr3 = &count_base($flank3) if length $flank3 > 0;
 	next if $ssr5 eq 'true' or $ssr3 eq 'true';
 
-	push @cand, {
+	push @cand, shared_clone({
 		idx=>$i, chr=>$chr, str=>$str, end=>$end, loc=>$loc,
 		flank5=>$flank5, seq5=>$seq5, seq3=>$seq3, flank3=>$flank3, tgt=>$tgt_ste,
 		end5=>"$flank5$seq5", end3=>"$seq3$flank3", flank=>"$flank5$flank3",
-		};
+		});
 	}
 
 ## build the blast DB now that the work list is known: skip when it already exists, and also when
@@ -199,6 +199,7 @@ for my $ci (0..$#cand){
 	$rq->enqueue($ci) if $p == 0;      # both ends already checkpointed -> ready now
 	}
 my ($cq, $nch) = &make_chunk_queue(\@end_jobs);
+undef @end_jobs; # now in the shared queue; a live copy would be cloned into every worker
 my @workers = ();
 if ($nch){
 	my $nw = $nch < $threads ? $nch : $threads;
@@ -237,6 +238,7 @@ if (@flank_needers){
 			}
 		}
 	my ($fcq, $fnch) = &make_chunk_queue(\@flank_jobs);
+	undef @flank_jobs;
 	my @fworkers = ();
 	if ($fnch){
 		my $fnw = $fnch < $threads ? $fnch : $threads;
