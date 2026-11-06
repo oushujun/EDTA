@@ -172,7 +172,6 @@ my $TEsorter = "";
 my $blastplus = "";
 my $mdust = "";
 my $trf = "";
-my $GRF = "";
 my $annosine = "";
 my $TIR_Learner = "";
 
@@ -354,16 +353,10 @@ $mdust =~ s/\s+$//;
 $mdust = dirname($mdust) unless -d $mdust;
 $mdust = "$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
-# trf
+# trf (LTR_retriever and cleanup_tandem.pl run it; an exit-status test here never caught a missing trf)
 chomp ($trf=`command -v trf 2>/dev/null`) if $trf eq '';
 $trf=~s/\n$//;
-`$trf 2>/dev/null`;
-die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32256;
-# GRF
-chomp ($GRF = `command -v grf-main 2>/dev/null`) if $GRF eq '';
-$GRF =~ s/\n$//;
-`$GRF 2>/dev/null`;
-die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $GRF\n" if $?==32256;
+die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" unless -f $trf and -X $trf;
 
 print "\tAll passed!\n\n";
 exit if $check_dependencies;
@@ -507,7 +500,7 @@ chomp ($date = `date`);
 print "$date\tObtain raw TE libraries using various structure-based programs: \n";
 
 # Get raw TE candidates
-`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --GRF $GRF --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
+`perl $EDTA_raw --genome $genome --overwrite $overwrite --species $species --u $miu --threads $threads --genometools $genometools --ltrretriever $LTR_retriever --blastplus $blastplus --tesorter $TEsorter --trf_path $trf --repeatmasker $repeatmasker --repeatmodeler $repeatmodeler --annosine $annosine --tirlearner $TIR_Learner --convert_seq_name 0 --rmlib $RMlib --wholeelement $wholeelement`;
 die "ERROR: EDTA_raw.pl exited with error. See the messages above; fix the problem and rerun with --overwrite 0 to reuse finished modules.\n" if $?;
 
 chdir "$genome.EDTA.raw" or die "ERROR: cannot enter $genome.EDTA.raw: $!\n";

@@ -43,7 +43,6 @@ perl EDTA_raw.pl [options]
 	--ltrretriever	[path]	Path to the LTR_retriever program. (default: find from ENV)
 	--blastplus	[path]	Path to the BLAST+ program. (default: find from ENV)
 	--tesorter	[path]	Path to the TEsorter program. (default: find from ENV)
-	--GRF		[path]	Path to the GRF program. (default: find from ENV)
 	--trf_path	[path]	Path to the TRF program. (default: find from ENV)
 	--mdust		[path]	Path to the mdust program. (default: find from ENV)
 	--repeatmasker	[path]	Path to the RepeatMasker program. (default: find from ENV)
@@ -89,7 +88,6 @@ my $TEsorter = ''; #path to the TEsorter program
 my $blastplus = ''; #path to the blastn program
 my $mdust = ''; #path to mdust
 my $trf = ''; #path to trf
-my $GRF = ''; #path to GRF
 my $annosine = ""; #path to the AnnoSINE program
 my $TIR_Learner = ""; #path to TIR-Learner program
 my $LTR_FINDER = ""; #path to LTR_FINDER_parallel program  #tianyulu
@@ -119,7 +117,6 @@ foreach (@ARGV){
 	$blastplus = $ARGV[$k+1] if /^--blastplus$/i and $ARGV[$k+1] !~ /^-/;
 	$mdust = $ARGV[$k+1] if /^--mdust$/i and $ARGV[$k+1] !~ /^-/;
 	$trf = $ARGV[$k+1] if /^--trf_path$/i and $ARGV[$k+1] !~ /^-/;
-	$GRF = $ARGV[$k+1] if /^--GRF$/i and $ARGV[$k+1] !~ /^-/;
 	$threads = $ARGV[$k+1] if /^--threads$|^-t$/i and $ARGV[$k+1] !~ /^-/;
 	$wholeelement = $ARGV[$k+1] if /^--wholeelement$/i and $ARGV[$k+1] !~ /^-/;
 	$help = 1 if /^--help$|^-h$/i;
@@ -228,18 +225,10 @@ $mdust =~ s/\s+$//;
 $mdust = dirname($mdust) unless -d $mdust;
 $mdust = "$mdust/" if $mdust ne '' and $mdust !~ /\/$/;
 die "Error: mdust is not found in the mdust path $mdust!\n" unless -X "${mdust}mdust";
-# trf
+# trf (LTR_retriever and cleanup_tandem.pl run it; an exit-status test here never caught a missing trf)
 chomp ($trf=`command -v trf 2>/dev/null`) if $trf eq '';
 $trf=~s/\n$//;
-`$trf 2>/dev/null`;
-die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32256;
-# GRF
-chomp ($GRF = `command -v grf-main 2>/dev/null`) if $GRF eq '';
-$GRF =~ s/\n$//;
-my $grfp= dirname ($GRF);
-$grfp =~ s/\n$//;
-`${grfp}grf-main 2>/dev/null`;
-die "Error: The Generic Repeat Finder (GRF) is not found in the GRF path: $grfp\n" if $?==32256;
+die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" unless -f $trf and -X $trf;
 
 # TIR-Learner  #tianyuLu
 # Remove any trailing whitespace
