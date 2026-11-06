@@ -76,7 +76,7 @@ my $rm_threads = int($threads/4);
 my ($TE1_len, $TE2_len) = (0, 0);
 open TE1, "<$TE1" or die $!;
 open TE2, "<$TE2" or die $!;
-my %TE1;
+my %TE1 :shared; # one copy for all threads; unshared, each thread holds its own and every blastn forks the whole process
 $/ = "\n>";
 while (<TE1>){
 	chomp;
