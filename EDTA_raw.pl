@@ -358,6 +358,20 @@ if (-s "$genome.mod"){
 my $genome_file_real_path=File::Spec->rel2abs($genome); # the genome file with real path
 my $tesorter_fw = $overwrite ? "-fw" : ""; # TEsorter reuses an existing hmmscan output unless forced
 
+# Classify $fa with TEsorter, then drop misclassified entries, in the current module directory; stop if either fails.
+# TEsorter exits 0 also when nothing has a domain hit (a header-only .cls.tsv), so a failure is real (hmmscan or its
+# database missing, a bad input); unchecked, the module went on with an unfiltered or empty set.
+sub run_tesorter {
+	my ($fa, $module) = @_;
+	my $status = system("${TEsorter}TEsorter $fa --disable-pass2 -p $threads $tesorter_fw > $fa.tesorter.log 2>&1");
+	die "ERROR: TEsorter exited with error, please check $genome.EDTA.raw/$module/$fa.tesorter.log\n\n" if $status != 0;
+	}
+sub run_cleanup_misclas {
+	my ($fa, $module) = @_;
+	`perl $cleanup_misclas $fa.rexdb.cls.tsv`;
+	die "ERROR: cleanup_misclas.pl failed on $genome.EDTA.raw/$module/$fa.rexdb.cls.tsv, see the message above.\n\n" if $? != 0;
+	}
+
 # Make working directories
 `mkdir $genome.EDTA.raw` unless -e "$genome.EDTA.raw" && -d "$genome.EDTA.raw";
 `mkdir $genome.EDTA.raw/LTR` unless -e "$genome.EDTA.raw/LTR" && -d "$genome.EDTA.raw/LTR";
@@ -435,8 +449,8 @@ if ($wholeelement and -s "$genome.LTR.intact.fa"){
 
 # annotate and remove not LTR candidates
 if (-s "$genome.LTR.intact.fa.ori.dusted.cln"){
-	`${TEsorter}TEsorter $genome.LTR.intact.fa.ori.dusted.cln --disable-pass2 -p $threads $tesorter_fw 2>/dev/null`;
-	`perl $cleanup_misclas $genome.LTR.intact.fa.ori.dusted.cln.rexdb.cls.tsv`;
+	&run_tesorter("$genome.LTR.intact.fa.ori.dusted.cln", "LTR");
+	&run_cleanup_misclas("$genome.LTR.intact.fa.ori.dusted.cln", "LTR");
 } else {
 	print STDERR "\t\tLTR_retriever is finished, but no LTR is identified.\n\n";
 	`touch $genome.LTR.intact.fa.ori.dusted.cln.cln`;
@@ -506,9 +520,9 @@ if (-s "Seed_SINE.fa"){
 if (-s "Seed_SINE.fa"){
 	# annotate and remove non-SINE candidates
 	`awk '{gsub(/Unknown/, "unknown"); print \$1}' Seed_SINE.fa > $genome.AnnoSINE.raw.fa`;
-	`${TEsorter}TEsorter $genome.AnnoSINE.raw.fa --disable-pass2 -p $threads $tesorter_fw 2>/dev/null`;
+	&run_tesorter("$genome.AnnoSINE.raw.fa", "SINE");
 	`touch $genome.AnnoSINE.raw.fa.rexdb.cls.tsv` unless -e "$genome.AnnoSINE.raw.fa.rexdb.cls.tsv";
-	`perl $cleanup_misclas $genome.AnnoSINE.raw.fa.rexdb.cls.tsv`;
+	&run_cleanup_misclas("$genome.AnnoSINE.raw.fa", "SINE");
         
 	# clean up tandem repeat
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.AnnoSINE.raw.fa.cln > $genome.SINE.raw.fa`;
@@ -580,12 +594,14 @@ if ($overwrite eq 0 and -s "$genome-families.fa"){
 if (-s "$genome-families.fa"){
 	# annotate and remove misclassified candidates
 	`awk '{gsub(/Unknown/, "unknown"); print \$1}' $genome-families.fa > $genome.RM2.raw.fa` if -e "$genome-families.fa";
-	`${TEsorter}TEsorter $genome.RM2.raw.fa --disable-pass2 -p $threads $tesorter_fw 2>/dev/null`;
-	`perl $cleanup_misclas $genome.RM2.raw.fa.rexdb.cls.tsv`;
+	&run_tesorter("$genome.RM2.raw.fa", "LINE");
+	&run_cleanup_misclas("$genome.RM2.raw.fa", "LINE");
 	
-	# reclassify clean candidates
-	`${TEsorter}TEsorter $genome.RM2.raw.fa.cln --disable-pass2 -p $threads $tesorter_fw 2>/dev/null`;
-	`perl -nle 's/>\\S+\\s+/>/; print \$_' $genome.RM2.raw.fa.cln.rexdb.cls.lib > $genome.RM2.raw.fa.cln`;
+	# reclassify clean candidates (TEsorter fails on an empty file)
+	if (-s "$genome.RM2.raw.fa.cln"){
+		&run_tesorter("$genome.RM2.raw.fa.cln", "LINE");
+		`perl -nle 's/>\\S+\\s+/>/; print \$_' $genome.RM2.raw.fa.cln.rexdb.cls.lib > $genome.RM2.raw.fa.cln`;
+		}
 
         # clean up tandem repeat
 	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.raw.fa.cln > $genome.RM2.raw.fa.cln2`;
@@ -655,8 +671,8 @@ if ($overwrite eq 0 and (-s "$genome.TIR.intact.raw.fa" or -s "$genome.TIR.intac
 
 	# annotate and remove non-TIR candidates
 	if (-s "$genome.TIR.ext30.fa.pass.fa.dusted.cln"){
-		`${TEsorter}TEsorter $genome.TIR.ext30.fa.pass.fa.dusted.cln --disable-pass2 -p $threads $tesorter_fw 2>/dev/null`;
-		`perl $cleanup_misclas $genome.TIR.ext30.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+		&run_tesorter("$genome.TIR.ext30.fa.pass.fa.dusted.cln", "TIR");
+		&run_cleanup_misclas("$genome.TIR.ext30.fa.pass.fa.dusted.cln", "TIR");
 	} else {
 		print STDERR "\t\tTIR-Learner is finished without error, but no TIR is identified.\n\n";
 		`touch $genome.TIR.ext30.fa.pass.fa.dusted.cln.cln`;
@@ -731,8 +747,8 @@ if ($overwrite eq 0 and (-s "$genome.HelitronScanner.draw.hel.fa" and -s "$genom
 
 # annotate and remove non-Helitron candidates
 if (-s "$genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln"){
-	`${TEsorter}TEsorter $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln --disable-pass2 -p $threads $tesorter_fw 2>/dev/null`;
-	`perl $cleanup_misclas $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.rexdb.cls.tsv`;
+	&run_tesorter("$genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln", "Helitron");
+	&run_cleanup_misclas("$genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln", "Helitron");
 } else {
 	print STDERR "\t\tHelitronScanner is finished without error, but no Helitron is identified.\n\n";
 	`touch $genome.HelitronScanner.filtered.fa.pass.fa.dusted.cln.cln`;
