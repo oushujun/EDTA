@@ -86,7 +86,7 @@ def parse_ontology(ontology_file):
 	for kw in ['LINE_element', 'L1_LINE', 'R2_LINE', 'Jockey_LINE', 'I_LINE',
 			   'RTE_LINE', 'CR1_LINE', 'CRE_LINE', 'Deceiver_LINE', 'Inkcap_LINE',
 			   'Tad1_LINE', 'L2_LINE', 'R1_LINE', 'R4_LINE', 'Crack_LINE',
-			   'Vingi_LINE', 'Tx1_LINE', 'Rex_LINE', 'Proto2_LINE',
+			   'Vingi_LINE', 'Tx1_LINE', 'Rex_LINE', 'Genie_LINE', 'Proto1_LINE', 'Proto2_LINE',
 			   'Penelope']:
 		so_to_subclass[kw] = 'LINE'
 
@@ -100,7 +100,7 @@ def parse_ontology(ontology_file):
 			   'Mutator', 'PIF_Harbinger', 'Tc1_Mariner', 'P_TIR', 'piggyBac',
 			   'polinton', 'Transib', 'Merlin', 'terminal_inverted_repeat',
 			   'PILE', 'POLE', 'Sola', 'Ginger', 'Kolobok', 'Dada', 'IS3EU',
-			   'Zator', 'KDZ', 'DNA_transposon', 'Crypton']:
+			   'Zator', 'KDZ', 'DNA_transposon', 'Crypton', 'Academ', 'Novosib']:
 		so_to_subclass[kw] = 'TIR'
 
 	# Helitron
