@@ -194,7 +194,7 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
 					 final: start from filtered TEs to finalizing the run.
 					 anno: perform whole-genome annotation/analysis after TE library construction.
       --overwrite [0|1]		If previous results are found, decide to overwrite (1, rerun) or not (0, default).
-      --cds [File]		Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative.
+      --cds [File]		Provide a FASTA file containing the coding sequence (no introns, UTRs, nor TEs) of this genome or its close relative. CDS-matching parts of DNA TEs and unclassified repeats are removed from the library; LTR, LINE and SINE entries are kept whole.
       --curatedlib [file]	Provided a curated library to keep consistant naming and classification for known TEs.
 				All TEs in this file will be trusted 100%, so please ONLY provide MANUALLY CURATED ones here.
 				 This option is not mandatory. It's totally OK if no file is provided (default).

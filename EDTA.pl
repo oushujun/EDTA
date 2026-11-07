@@ -56,7 +56,9 @@ perl EDTA.pl [options]
 	--overwrite [0|1]	If previous raw TE results are found, decide to overwrite
 				(1, rerun) or not (0, default).
 	--cds [File]	Provide a FASTA file containing the coding sequence (no introns,
-			UTRs, nor TEs) of this genome or its close relative.
+			UTRs, nor TEs) of this genome or its close relative. CDS-matching
+			parts of DNA TEs and unclassified repeats are removed from the
+			library; LTR, LINE and SINE entries are kept whole.
 	--curatedlib [File]	Provided a curated library to keep consistant naming and
 				classification for known TEs. TEs in this file will be
 				trusted 100%, so please ONLY provide MANUALLY CURATED ones.
@@ -625,14 +627,18 @@ if (-s "$cds"){
 	die "\tERROR: The $cds file is empty after TE clean up. Please check the file and $cds.code.noTE.\n\n" unless -s "$cds.code.noTE";
 	$cds = "$cds.code.noTE";
 
-	# remove cds-related sequences in the EDTA library
+	# remove cds-related sequences in the EDTA library: cut the CDS-matching parts out of DNA TEs and
+	# unclassified repeats, and drop those that are >= 30% CDS. A match at an end is cut like any other
+	# (no -cleanT): dropping the whole entry for it cost rice 7.8 Mb of true LTR annotation.
 	print "\tRemove CDS-related sequences in the EDTA library.\n\n";
 	RM_mask($cds, "$genome.EDTA.raw.fa", "-cutoff 225");
-	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -cleanT 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
+	unmask_retro("$genome.EDTA.raw.fa", "$genome.EDTA.raw.fa.masked");
+	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.3 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 1 -f $genome.EDTA.raw.fa.masked > $genome.EDTA.raw.fa.cln`;
 
 	# remove cds-related sequences in intact TEs
 	print "\tRemove CDS-related sequences in intact TEs.\n\n";
 	RM_mask($cds, "$genome.EDTA.intact.fa.cln", "-cutoff 225");
+	unmask_retro("$genome.EDTA.intact.fa.cln", "$genome.EDTA.intact.fa.cln.masked");
 	`perl $cleanup_tandem -misschar N -Nscreen 1 -nc 1000 -nr 0.8 -minlen 80 -maxlen 5000000 -trf 0 -cleanN 0 -f $genome.EDTA.intact.fa.cln.masked > $genome.EDTA.intact.fa.cln.rmCDS`;
 	`perl $output_by_list 1 $genome.EDTA.intact.fa.cln 1 $genome.EDTA.intact.fa.cln.masked.cleanup -ex -FA > $genome.EDTA.intact.fa.cln2`;
 	} else {
@@ -993,4 +999,38 @@ sub RM_mask {
 	`cp $query $query.masked` if $rm_status =~ /No repetitive sequences were detected/i;
 	# cleanup_tandem reads .masked, so continuing here would silently drop all of $query
 	die "ERROR: RepeatMasker failed to mask $query with $lib:\n$rm_status\n" if -s $query and !-e "$query.masked";
+	}
+
+# Put the unmasked sequence of LTR, LINE and SINE entries back into the CDS-masked $masked, in place and
+# in order, so the --cds purge keeps them whole. Retrotransposons rarely capture host genes, so a CDS that
+# matches one is itself TE-derived. On rice, purging them cost 13.7 Mb of true LTR and LINE annotation
+# to unmask 0.47 Mb of genes, and the unpurged annotation covered genes no more than the curated one.
+sub unmask_retro {
+	my ($orig, $masked) = @_;
+	my (%seq, $id);
+	open my $in, '<', $orig or die "ERROR: Cannot read $orig: $!\n";
+	while (<$in>){
+		if (/^>(\S+)/){
+			$id = $1;
+			next;
+			}
+		$seq{$id} .= $_ if $id =~ /#(LTR|LINE|SINE)\//;
+		}
+	close $in;
+	return unless %seq;
+	open $in, '<', $masked or die "ERROR: Cannot read $masked: $!\n";
+	open my $out, '>', "$masked.retro" or die "ERROR: Cannot write $masked.retro: $!\n";
+	my $restored = 0;
+	while (<$in>){
+		if (/^>(\S+)/){
+			$restored = exists $seq{$1};
+			print $out $_;
+			print $out $seq{$1} if $restored;
+			next;
+			}
+		print $out $_ unless $restored;
+		}
+	close $in;
+	close $out;
+	rename "$masked.retro", $masked or die "ERROR: Cannot replace $masked: $!\n";
 	}
