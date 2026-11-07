@@ -507,8 +507,25 @@ if (-s "Seed_SINE.fa"){
 
 # filter and reclassify AnnoSINE candidates with TEsorter and make SINE library
 if (-s "Seed_SINE.fa"){
+	# Name each candidate ID#SINE/type, the type from the header's last field. AnnoSINE_v2 now writes
+	# ">SINE_0 Chr1 C 317167:317386|...|tRNA" (older releases ">SINE_0#SINE/Unknown Chr1 ...|tRNA"), and
+	# without the class in the ID the SINEs reach the library unclassified and are annotated as unknown.
+	open my $seed, '<', "Seed_SINE.fa" or die "ERROR: Cannot read $genome.EDTA.raw/SINE/Seed_SINE.fa: $!\n";
+	open my $sine, '>', "$genome.AnnoSINE.raw.fa" or die "ERROR: Cannot write $genome.EDTA.raw/SINE/$genome.AnnoSINE.raw.fa: $!\n";
+	while (<$seed>){
+		if (/^>(\S+)/){
+			my $id = $1;
+			$id =~ s/#.*//;
+			my ($type) = /\|([^|\s]+)\s*$/;
+			$type = 'unknown' unless defined $type and $type =~ /^(tRNA|5S|7SL)$/;
+			$_ = ">$id#SINE/$type\n";
+			}
+		print $sine $_;
+		}
+	close $seed;
+	close $sine;
+
 	# annotate and remove non-SINE candidates
-	`awk '{gsub(/Unknown/, "unknown"); print \$1}' Seed_SINE.fa > $genome.AnnoSINE.raw.fa`;
 	&run_tesorter("$genome.AnnoSINE.raw.fa", "SINE");
 	`touch $genome.AnnoSINE.raw.fa.rexdb.cls.tsv` unless -e "$genome.AnnoSINE.raw.fa.rexdb.cls.tsv";
 	&run_cleanup_misclas("$genome.AnnoSINE.raw.fa", "SINE");
