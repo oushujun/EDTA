@@ -947,8 +947,8 @@ if ($anno == 1){
 		# check results and report status
 		die "ERROR: TE annotation stats results not found in $genome.EDTA.TE.fa.stat!\n\n" unless -s "$genome.EDTA.TE.fa.stat";
 		chomp ($date = `date`);
-		print "$date\tEvaluation of TE annotation finished! Check out these files:
-		(each contains unfiltered + divergence-titrated reports at <=40%, <=30%, <=20%, <=10%, <=5%)\n
+		print "$date\tEvaluation of TE annotation finished! Check out these files
+		(superfamily and subclass levels; bin/count_nested.pl -maxdiv filters the .stat file by divergence):\n
 		Overall: $genome.EDTA.TE.fa.stat.all.sum
 		Nested: $genome.EDTA.TE.fa.stat.nested.sum
 		Non-nested: $genome.EDTA.TE.fa.stat.redun.sum\n\n";

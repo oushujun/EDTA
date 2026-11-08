@@ -179,6 +179,8 @@ Optional 2, when you specify the `--anno 1` parameter, you will get:
 6. Annotation inconsistency for nested TEs: $genome.mod.EDTA.TE.fa.stat.nested.sum.   
 7. Oveall annotation inconsistency: $genome.mod.EDTA.TE.fa.stat.all.sum.
 
+Files 5-7 report the inconsistency at the superfamily and subclass (LTR, LINE, SINE, TIR, Helitron) levels. To count only the pairs within a divergence cutoff (below 20%: the search keeps hits of at least 80% identity), run `perl bin/count_nested.pl -in $genome.mod.EDTA.TE.fa.stat -cat [redun|nested|all] -maxdiv [int]`.
+
 
 ## EDTA Usage
 

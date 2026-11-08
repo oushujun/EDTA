@@ -6,14 +6,18 @@ use FindBin;
 #Shujun Ou (shujun.ou.1@gmail.com)
 #v0.1 02/14/2020
 #v0.2 03/05/2026 Add mincov and divergence titration
+#v0.3 11/08/2026 Divergence titration only on request (-maxdiv); the .sum files add the subclass level
 
 my $usage = "\nEvaluate annotation consistency for given annotations.
 	perl evaluation.pl -genome genome.fa -anno RepeatMasker.out -maxcount [int] -mincov [float] -threads [int]
 		-anno	The whole-genome TE annotation file in RepeatMasker .out format
 		-maxcount	The maximum number of stat lines to obtain. Default: 100000. 0 = no limit
 		-mincov	Minimum reciprocal coverage for the redun category. Default: 0.95
+		-maxdiv	Also report the pairs within each of these divergence cutoffs (%), comma-separated, e.g. 10,5.
+			Default: none. A cutoff of 20 or more keeps every pair (the search keeps hits of >= 80% identity).
 		-overwrite	Ignore any partial all-vs-all results and restart cleanly (1), or auto-resume a killed run (0, default).
 		-out	Output base path for the TE fasta (default: <anno>.TE.fa). The .stat/.sum files derive from it.
+	Each .sum file (nested, all, redun) reports the inconsistency at the superfamily and subclass levels.
 \n";
 
 my $script_path = $FindBin::Bin;
@@ -23,6 +27,7 @@ my $blast = '';
 my $threads = 4;
 my $maxcount = 100000;
 my $mincov = 0.95;
+my $maxdiv = ''; #comma-separated divergence cutoffs (%) to report besides all pairs, e.g. 40,30,20,10,5; '' = none
 my $overwrite = 0; #passed to cleanup_nested: 0 = auto-resume a killed run, 1 = force a fresh restart
 my $out = ''; #output base for the TE fasta; defaults to $RMout.TE.fa (lets callers control the output naming)
 my $call_seq = "$script_path/call_seq_by_list.pl";
@@ -35,6 +40,7 @@ foreach (@ARGV){
         $RMout=$ARGV[$k+1] if /^-anno$/i and $ARGV[$k+1] !~ /^-/;
 	$maxcount=$ARGV[$k+1] if /^-maxcount$/i and $ARGV[$k+1] !~ /^-/;
 	$mincov=$ARGV[$k+1] if /^-mincov$/i and $ARGV[$k+1] !~ /^-/;
+	$maxdiv=$ARGV[$k+1] if /^-maxdiv$/i and $ARGV[$k+1] !~ /^-/;
 	$overwrite=$ARGV[$k+1] if /^-overwrite$/i and $ARGV[$k+1] !~ /^-/;
 	$out=$ARGV[$k+1] if /^-out$/i and $ARGV[$k+1] !~ /^-/;
         $blast=$ARGV[$k+1] if /^-blast$/i and defined $ARGV[$k+1] and $ARGV[$k+1] !~ /^-/;
@@ -45,6 +51,8 @@ foreach (@ARGV){
 #check files
 die "$genome is not found in the current folder or is empty!\n" unless -s $genome;
 die "$RMout is not found in the current folder or is empty!\n" unless -s $RMout;
+die "The -maxdiv parameter expects comma-separated cutoffs from 0 to 100, e.g. 40,30,20,10,5!\n$usage"
+	unless $maxdiv =~ /^(\d+(\.\d+)?(,\d+(\.\d+)?)*)?$/ and !grep { $_ > 100 } split /,/, $maxdiv;
 $out = "$RMout.TE.fa" if $out eq ''; #default output base preserves the standalone naming
 
 #get blast path
@@ -62,7 +70,7 @@ print "$date\tEvaluation starts...\n";
 `perl $cleanup_nested -in $out -threads $threads -minlen 80 -miniden 80 -cov 0.95 -blastplus $blast -iter 1 -maxcount $maxcount -overwrite $overwrite 2>/dev/null`;
 for my $cat ("nested", "all", "redun") {
 	`perl $count_nested -in $out.stat -cat $cat -mincov $mincov > $out.stat.$cat.sum`;
-	for my $d (40, 30, 20, 10, 5) {
+	for my $d (split /,/, $maxdiv) {
 		`printf "\\n\\n" >> $out.stat.$cat.sum`;
 		`perl $count_nested -in $out.stat -cat $cat -mincov $mincov -maxdiv $d >> $out.stat.$cat.sum`;
 	}
