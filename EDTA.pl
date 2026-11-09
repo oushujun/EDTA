@@ -601,8 +601,10 @@ if ($sensitive == 1 and -s "$genome.RM2.fa"){
 	print "\tFilter RepeatModeler results that are ignored in the raw step.\n\n";
 	chomp ($date = `date`);
 	RM_mask("$genome.EDTA.fa.stg1", "$genome.RM2.fa");
-	# clean up tandem and coding sequences in the RM2 library
-	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -cleanT 1 -f $genome.RM2.fa.masked > $genome.RM2.fa.stg1`;
+	# clean up tandem and coding sequences in the RM2 library. The parts stage 1 masks are cut out, and an entry
+	# >= 80% masked is dropped. A masked end is cut like any other part (no -cleanT): autonomous TIRs share their
+	# ends with the non-autonomous TIRs and MITEs of stage 1, and dropping them for it cost rice 0.018 TIR F1.
+	`perl $cleanup_tandem -misschar N -nc 50000 -nr 0.8 -minlen 80 -minscore 3000 -trf 1 -trf_path $trf -cleanN 1 -f $genome.RM2.fa.masked > $genome.RM2.fa.stg1`;
 	`perl $cleanup_proteins -seq $genome.RM2.fa.stg1 -rmdnate 0 -rmline 0 -rmprot 1 -protlib $protlib -blast $blastplus -threads $threads`;
 	if (-s "$genome.RM2.fa.stg1.clean"){
 		`cat $genome.EDTA.fa.stg1 $genome.RM2.fa.stg1.clean > $genome.EDTA.raw.fa`;
