@@ -120,6 +120,7 @@ while ($i<=$#FA) {
 	$queue->enqueue([$name, $seq]);
 	$i++;
 	}
+undef @FA; # the queue holds the shared copy; each thread would otherwise get its own, and each blastn forks the whole process
 
 ## initiate a number of worker threads
 my @threads=();
