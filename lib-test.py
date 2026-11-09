@@ -62,11 +62,13 @@ class lib_test:
 		self.load_ontology(ontology_file)
 
 		self.category_labels = {
-								'ltr':re.compile('|'.join(['RLG', 'RLC', 'RLB', 'RLR', 'RLE', 'LTR', 'RLX', 'Gypsy', 'Copia']), re.IGNORECASE),
+								# (?<!non): EDTA's TEanno.out names Helitrons nonTIR/helitron and pararetroviruses nonLTR/...;
+								# a plain TIR/LTR also matched those and scored every Helitron base as a TIR call
+								'ltr':re.compile('|'.join(['RLG', 'RLC', 'RLB', 'RLR', 'RLE', '(?<!non)LTR', 'RLX', 'Gypsy', 'Copia']), re.IGNORECASE),
 								'nonltr':re.compile('|'.join(['SINE', 'LINE', 'Penelope', 'RIT', 'RIL', 'RST', 'RIX', 'RSX', 'nonLTR', 'YR']), re.IGNORECASE),
 								'line':re.compile('|'.join(['LINE', 'RIL', 'RIT', 'RIX', 'Penelope']), re.IGNORECASE),
 								'sine':re.compile('|'.join(['SINE', 'RST', 'RSX']), re.IGNORECASE),
-								'tir':re.compile('|'.join(['TIR', 'hAT', 'hAT-Ac', 'MULE', 'MLE', 'MuDR', 'Tourist', 'CACT', 'PILE', 'POLE', 'Stowaway', 'TcMar-Stowaway', 'PIF', 'Harbinger', 'Tc1', 'En-Spm', 'EnSpm', 'CMC-EnSpm', 'PiggyBac', 'Mirage', 'P-element', 'Transib', 'DTA', 'DTH', 'DTT', 'DTM', 'DTC', 'DTA', 'DTX', 'DTR', 'DTE', 'Merlin', 'DTP', 'DTB', 'polinton']), re.IGNORECASE),
+								'tir':re.compile('|'.join(['(?<!non)TIR', 'hAT', 'hAT-Ac', 'MULE', 'MLE', 'MuDR', 'Tourist', 'CACT', 'PILE', 'POLE', 'Stowaway', 'TcMar-Stowaway', 'PIF', 'Harbinger', 'Tc1', 'En-Spm', 'EnSpm', 'CMC-EnSpm', 'PiggyBac', 'Mirage', 'P-element', 'Transib', 'DTA', 'DTH', 'DTT', 'DTM', 'DTC', 'DTA', 'DTX', 'DTR', 'DTE', 'Merlin', 'DTP', 'DTB', 'polinton']), re.IGNORECASE),
 								'mite':re.compile('|'.join(['MITE']), re.IGNORECASE),
 								'helitron':re.compile('|'.join(['Helitron', 'DHH', 'DHX', 'helitron']), re.IGNORECASE),
 								'others':re.compile('|'.join(['unknown','unknow','repeat_region','Unspecified']), re.IGNORECASE)
