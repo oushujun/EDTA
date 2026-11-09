@@ -32,6 +32,7 @@ my $usage = "\nPerform EDTA basic and advance filtering for raw TE candidates an
 		-mindiff_ltr	[float]	The minimum fold difference in richness between LTRs and contaminants (default: 1)
 		-mindiff_tir	[float]	The minimum fold difference in richness between TIRs and contaminants (default: 1)
 		-mindiff_hel	[float]	The minimum fold difference in richness between Helitrons and contaminants (default: 1.5)
+					Helitrons lose all sequence they share with LTRs.
 		-repeatmasker [path]	The directory containing RepeatMasker (default: read from ENV)
 		-blast [path]	The directory containing Blastn (default: read from ENV)
 		-threads|-t	[int]	Number of theads to run this script
@@ -179,8 +180,11 @@ unless (&done("step3_HEL_vs_TIR")){
 	&Purifier("$HEL", "$TIR", $mindiff_HEL);
 	&mark("step3_HEL_vs_TIR");
 	}
+# LTRs always win: a Helitron entry loses every region the LTR library masks. By richness, LTR sequence that
+# HelitronScanner calls in many copies (maize: a median of 121 candidates vs 5 LTR entries per family) stayed
+# Helitron and annotated 280 Mb of maize LTRs as Helitron.
 unless (&done("step4_HEL_vs_LTR")){
-	&Purifier("$HEL.HQ", "$LTR", $mindiff_LTR);
+	&Purifier("$HEL.HQ", "$LTR", "inf");
 	`perl $cleanup_tandem -misschar l -Nscreen 1 -nc 50000 -nr 0.8 -minlen 80 -cleanN 1 -cleanT 0 -minrm 1 -trf 0 -f $HEL.HQ-$LTR.fa > $HEL.int.cln`; # more relaxed in filtering intact helitrons
 	die "ERROR: cleanup_tandem.pl failed on $HEL.HQ-$LTR.fa, see the message above.\n" if $? != 0;
 	`mv $HEL.HQ.HQ $HEL.cln`;

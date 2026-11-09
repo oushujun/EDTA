@@ -18,8 +18,9 @@ my $usage = "
 				-lower	[0|1]	Mask contaminants in TE1 with lowercase letters (1, default) or Ns (0).
 				-minlen	[int]	The shortest length (bp) of sequence matches to be considered. Default: 50
 				-miniden	[int]	The minimum identity (%) to be considered a real match. Default: 60
-				-mindiff	[float]	The minimum fold difference in richness between TE1 and TE2 for a 
-							sequence to be considered as real to TE1.
+				-mindiff	[float]	The minimum fold difference in richness between TE1 and TE2 for a
+							sequence to be considered as real to TE1. inf: TE2 always wins (every
+							region of TE1 that TE2 masks is a contaminant; no richness is measured).
 				-reprocess	[0|1]	Skip (1) RepeatMasking and use existing *stat file to regenerate the 
 							TE1-TE2.fa file. Useful to test different -mindiff settings. default 0.
 				-repeatmasker	[path]	The directory containing RepeatMasker (default: read from ENV)
@@ -68,6 +69,7 @@ foreach (@ARGV){
 # some checks
 die "The TE1 file $TE1 is not found or it's empty!\n$usage" unless -s $TE1;
 die "The TE2 file $TE2 is not found or it's empty!\n$usage" unless -s $TE2;
+$mindiff = 9**9**9 if $mindiff =~ /^inf(inity)?$/i; # -mindiff inf: TE2 always wins
 
 # define RepeatMasker -pa parameter
 my $rm_threads = int($threads/4);
@@ -141,20 +143,28 @@ open STAT, ">$TE1-$TE2.stat" or die $!;
 STAT->autoflush(1); #with $stat_lock: each thread writes whole lines immediately, so rows never interleave
 print STAT "TE1_id\tTE1_len\tTE2_len\tTE1_richness\tTE2_richness\tFold_diff\n";
 
-# multi-threading using queue, put candidate regions into queue for parallel computation
-$queue = Thread::Queue->new();
-foreach my $id (keys %RM){
-	last unless defined $RM{$id};
-	$queue -> enqueue([$id, $RM{$id}]);
-	}
-$queue -> end();
+if ($mindiff == 9**9**9){
+	# TE2 always wins: every region of TE1 that TE2 masks is a contaminant, so no richness is measured
+	foreach my $id (sort keys %RM){
+		my $coor = $RM{$id};
+		print STAT "$id:$1..$2\tNA\tNA\tNA\tNA\t0\n" while $coor =~ s/([0-9]+)-([0-9]+)//;
+		}
+	} else {
+	# multi-threading using queue, put candidate regions into queue for parallel computation
+	$queue = Thread::Queue->new();
+	foreach my $id (keys %RM){
+		last unless defined $RM{$id};
+		$queue -> enqueue([$id, $RM{$id}]);
+		}
+	$queue -> end();
 
-# initiate a number of worker threads and run
-foreach (1..$threads){
-	threads->create(\&purifier);
-	}
-foreach (threads -> list()){
-	$_->join();
+	# initiate a number of worker threads and run
+	foreach (1..$threads){
+		threads->create(\&purifier);
+		}
+	foreach (threads -> list()){
+		$_->join();
+		}
 	}
 close STAT;
 ###############
