@@ -134,11 +134,11 @@ my $count_base = "$script_path/bin/count_base.pl";
 my $make_masked = "$script_path/bin/make_masked.pl";
 my $make_gff3 = "$script_path/bin/make_gff3_with_RMout.pl";
 my $protlib = "$script_path/database/alluniRefprexp082813";
-my $rice_LTR = "$script_path/database/rice7.0.0.liban.LTR";
-my $rice_SINE = "$script_path/database/rice7.0.0.liban.SINE";
-my $rice_LINE = "$script_path/database/rice7.0.0.liban.LINE";
-my $rice_TIR = "$script_path/database/rice7.0.0.liban.TIR";
-my $rice_helitron = "$script_path/database/rice7.0.0.liban.Helitron";
+my $rice_LTR = "$script_path/database/rice7.0.1.liban.LTR";
+my $rice_SINE = "$script_path/database/rice7.0.1.liban.SINE";
+my $rice_LINE = "$script_path/database/rice7.0.1.liban.LINE";
+my $rice_TIR = "$script_path/database/rice7.0.1.liban.TIR";
+my $rice_helitron = "$script_path/database/rice7.0.1.liban.Helitron";
 my $rename_TE = "$script_path/bin/rename_TE.pl";
 my $update_LTRbound = "$script_path/bin/update_LTRbound.pl";
 my $ltrbound_denovo = "$script_path/bin/ltrbound_denovo.py";
@@ -508,14 +508,15 @@ die "ERROR: EDTA_raw.pl exited with error. See the messages above; fix the probl
 
 chdir "$genome.EDTA.raw" or die "ERROR: cannot enter $genome.EDTA.raw: $!\n";
 
-# Force to use rice TEs when raw.fa is empty
+# Force to use rice TEs when raw.fa is empty. The rice headers carry notes and a strand tag after the name;
+# the raw stage gets bare names.
 if ($force eq 1){
-	`cp $rice_LTR $genome.LTR.raw.fa` unless -s "$genome.LTR.raw.fa";
-	`cp $rice_LTR $genome.LTR.intact.raw.fa` unless -s "$genome.LTR.intact.raw.fa";
-	`cp $rice_LINE $genome.LINE.raw.fa` unless -s "$genome.LINE.raw.fa";
-	`cp $rice_SINE $genome.SINE.raw.fa` unless -s "$genome.SINE.raw.fa";
-	`cp $rice_TIR $genome.TIR.intact.raw.fa` unless -s "$genome.TIR.intact.raw.fa";
-	`cp $rice_helitron $genome.Helitron.intact.raw.fa` unless -s "$genome.Helitron.intact.raw.fa";
+	copy_names($rice_LTR, "$genome.LTR.raw.fa") unless -s "$genome.LTR.raw.fa";
+	copy_names($rice_LTR, "$genome.LTR.intact.raw.fa") unless -s "$genome.LTR.intact.raw.fa";
+	copy_names($rice_LINE, "$genome.LINE.raw.fa") unless -s "$genome.LINE.raw.fa";
+	copy_names($rice_SINE, "$genome.SINE.raw.fa") unless -s "$genome.SINE.raw.fa";
+	copy_names($rice_TIR, "$genome.TIR.intact.raw.fa") unless -s "$genome.TIR.intact.raw.fa";
+	copy_names($rice_helitron, "$genome.Helitron.intact.raw.fa") unless -s "$genome.Helitron.intact.raw.fa";
 	}
 
 # check results and report status
@@ -984,6 +985,19 @@ sub copy_file {
 
         # copy file to the path if it's not the current path
 	`cp $file $path` if abs_path($path) ne abs_path('.');
+	}
+
+# Copy a FASTA file with each header cut to its first word (the name).
+sub copy_names {
+	my ($src, $dst) = @_;
+	open my $in, '<', $src or die "ERROR: cannot read $src: $!\n";
+	open my $out, '>', $dst or die "ERROR: cannot write $dst: $!\n";
+	while (<$in>){
+		s/^(>\S+).*/$1/;
+		print $out $_;
+		}
+	close $in;
+	close $out or die "ERROR: cannot write $dst: $!\n";
 	}
 
 # A finished run decoded its working files. A rerun reads them again, and RepeatMasker needs the short IDs.

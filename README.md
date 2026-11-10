@@ -152,7 +152,7 @@ You should test the EDTA pipeline with a 1-Mb toy genome, which takes about five
 
 ```
 cd ./EDTA/test
-perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice7.0.0.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --threads 10
+perl ../EDTA.pl --genome genome.fa --cds genome.cds.fa --curatedlib ../database/rice7.0.1.liban --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --threads 10
 ```
 
 If your test fails, you may check out this [collection of issues](https://github.com/oushujun/EDTA/wiki/Installations,-builds,-and-tests-Q&A) for possible reasons and solutions. If none works, you may open a new issue.
@@ -168,7 +168,7 @@ Optional:
 
 
 ## Outputs
-A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice7.0.0.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./bin/TE_Sequence_Ontology.txt).
+A non-redundant TE library: $genome.mod.EDTA.TElib.fa. The curated library will be included in this file if provided. The [rice library](./database/rice7.0.1.liban) will be (partially) included if `--force 1` is specified. TEs are classified into the superfamily level and using the three-letter naming system reported in [Wicker et al. (2007)](https://www.nature.com/articles/nrg2165). Each sequence can be considered as a TE family. To convert between classification systems, please refer to the [TE sequence ontology file](./bin/TE_Sequence_Ontology.txt).
 
 Optional 1:
 1. Novel TE families: $genome.mod.EDTA.TElib.novel.fa. This file contains TE sequences that are not included in the curated library (`--curatedlib` required).
@@ -295,7 +295,7 @@ If you developed a new TE method/got a TE library and want to compare it's annot
 
 eg.
 
-    python lib-test.py --genome rice_genome.fasta --reference ./EDTA/database/Rice_MSU7.fasta.std7.0.0.out --test rice_genome.fasta.test.out
+    python lib-test.py --genome rice_genome.fasta --reference ./EDTA/database/Rice_MSU7.fasta.std7.0.1.out --test rice_genome.fasta.test.out
 
 Reports are written next to the `--test` file:
 - `<test>.repeatmasker.lib.report` — per-category sensitivity, specificity, accuracy, precision, FDR, and F1
