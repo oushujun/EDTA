@@ -90,13 +90,15 @@ Download the latest EDTA:
 
 Find the yml file in the EDTA folder and run:
 
-`mamba env create -f EDTA_2.2.x.yml`
+`mamba env create -f EDTA_2.3.yml`
 
-The default `conda env` name is `EDTA2` specified by the first line of the yml file. You may change that to different names.
+The default `conda env` name is `EDTA2.3` specified by the first line of the yml file. You may change that to different names.
 
 2. Install by specifying all dependencies:
 
-`mamba create -n EDTA2.2 -c conda-forge -c bioconda annosine2 biopython cd-hit coreutils genericrepeatfinder genometools-genometools glob2 tir-learner ltr_finder_parallel ltr_retriever mdust multiprocess muscle openjdk perl perl-text-soundex r-base r-dplyr regex repeatmodeler r-ggplot2 r-here r-tidyr tesorter samtools bedtools LTR_HARVEST_parallel HelitronScanner`
+`mamba create -n EDTA2.3 -c conda-forge -c bioconda annosine2 biopython bitarray cd-hit coreutils genometools-genometools "tir-learner>=4.07" ltr_finder_parallel ltr_retriever mdust muscle openjdk perl perl-text-soundex r-base r-dplyr repeatmodeler "repeatmasker=4.2.3" r-ggplot2 r-here r-tidyr tesorter samtools bedtools LTR_HARVEST_parallel HelitronScanner`
+
+RepeatMasker is pinned to 4.2.3 because the bioconda RepeatMasker 4.2.4 does not start without a separate download of the FamDB data ("FamDB data directory not found").
 
 </details>
 
