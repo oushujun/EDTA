@@ -1,5 +1,6 @@
 import sys
 import os
+import gzip
 import pyfastx
 import sqlite3
 import bitarray
@@ -11,11 +12,11 @@ def options():
 
 	# Required arguments
 	parser.add_argument('--genome', required=True, help='Path to the genome file')
-	parser.add_argument('--test', required=True, help='Path to the test RepeatMasker.out file')
-	parser.add_argument('--reference', required=True, help='Path to the reference RepeatMasker.out file')
+	parser.add_argument('--test', required=True, help='Path to the test RepeatMasker .out file (gzip-compressed .out.gz accepted)')
+	parser.add_argument('--reference', required=True, help='Path to the reference RepeatMasker .out file (gzip-compressed .out.gz accepted)')
 
 	# Optional flags
-	parser.add_argument('--include_unknown', action='store_true', help='Count TEST annotations whose labels fall outside the normal TE categories (e.g. Unknown/Unspecified) toward every category. The reference is never affected: its unclassified entries are not counted in any category.')
+	parser.add_argument('--include_unknown', action='store_true', help='Count TEST annotations whose labels fall outside the normal TE categories (e.g. Unknown/Unspecified) toward every category. The reference is never affected: its unclassified entries count in no TE category, only in "any".')
 	parser.add_argument('--include_Ns', action='store_true', help='Include non-ATCG characters as part of the genome. These are inherently non-maskable and you probably should not use this.')
 	parser.add_argument('--extended_report', action='store_true', help='Produce an extended report quantifying per-test sequence, per-TE category performance.')
 	parser.add_argument('--min_entries', type=int, default=0, help='For the confusion matrix, exclude superfamilies with fewer than this many entries in the reference annotation. Default: 0 (no filtering)')
@@ -29,7 +30,9 @@ class lib_test:
 		self.gf = genome_file
 		self.ref = ref
 		self.test = test
-		
+		#Output files and report labels are named after the test file without a trailing .gz
+		self.test_prefix = test[:-3] if test.endswith('.gz') else test
+
 		self.remove_Ns = remove_Ns
 		self.N_count = 0
 		
@@ -126,7 +129,8 @@ class lib_test:
 
 	def iterate_repeatmasker(self, file):
 		header = 'placeholder'
-		with open(file) as fh:
+		opener = gzip.open if file.endswith('.gz') else open
+		with opener(file, 'rt') as fh:
 			lineno = 0
 			#Read through the .out header until the first instance of a digit is encountered; that's the first real record
 			while not header[0].isdigit():
@@ -200,7 +204,7 @@ F1 measure:\t{f1}
 
 		report_format = report_format.format(genome_file=self.gf,
 											std = self.ref,
-											tst=self.test,
+											tst=self.test_prefix,
 											tpc = tpc,
 											fnc = fnc,
 											tnc= tnc,
@@ -501,7 +505,7 @@ F1 measure:\t{f1}
 
 		report = '\n'.join(lines)
 
-		with open(f'{self.test}.superfamily_confusion_matrix.tsv', 'w') as out:
+		with open(f'{self.test_prefix}.superfamily_confusion_matrix.tsv', 'w') as out:
 			print(report, file=out)
 
 		return report
@@ -685,10 +689,10 @@ F1 measure:\t{f1}
 		
 		if extended_report is not None:
 			rep = self.parent_teacher_meeting(extended_report)
-			with open(f'{self.test}.sequence_assessment.report', 'w') as out:
+			with open(f'{self.test_prefix}.sequence_assessment.report', 'w') as out:
 				print(rep, file = out)
 			
-		with open(f'{self.test}.repeatmasker.lib.report', 'w') as out:
+		with open(f'{self.test_prefix}.repeatmasker.lib.report', 'w') as out:
 			print(f'Genome:\t{self.gf}', file = out)
 			print(f'Standard annotation:\t{self.ref}', file = out)
 			print(f'Testing annotation:\t{self.test}', file = out)
