@@ -559,10 +559,10 @@ F1 measure:\t{f1}
 				ref.setall(0)
 				if cat in self.reference_cov[c]:
 					for origin, start, end in self.reference_cov[c][cat]:
-						#The reference must be unambiguously classified, so its unclassified entries
-						#never count toward any category, whatever --include_unknown says.
-						if cat != 'others':
-							all_ref[start:end] = True
+						#'any' is the union of every category on both sides, others (unclassified and non-TE rows)
+						#included. A per-category comparison never uses the reference's others, whatever
+						#--include_unknown says.
+						all_ref[start:end] = True
 						ref[start:end] = True
 
 				#Build category-specific test bitarray
@@ -668,8 +668,7 @@ F1 measure:\t{f1}
 				ref.setall(0)
 				if cat in self.reference_cov[c]:
 					for origin, start, end in self.reference_cov[c][cat]:
-						if cat != 'others':
-							all_ref[start:end] = True
+						all_ref[start:end] = True
 						ref[start:end] = True
 
 				fn = ref.count()
