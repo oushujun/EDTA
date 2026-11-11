@@ -283,8 +283,8 @@ If you developed a new TE method/got a TE library and want to compare it's annot
 
     python lib-test.py --genome genome.fasta --reference genome.stdlib.RM.out --test genome.testlib.RM.out [options]
         --genome        [file]  FASTA format genome sequence
-        --reference     [file]  RepeatMasker .out file of the standard/reference library
-        --test          [file]  RepeatMasker .out file of the test library
+        --reference     [file]  RepeatMasker .out file of the standard/reference library (.out.gz accepted)
+        --test          [file]  RepeatMasker .out file of the test library (.out.gz accepted)
         --include_Ns            Include Ns in total length of the genome. Default: not included.
         --include_unknown       Include unknown annotations to the testing category. This should be used when
                                 the test library has no classification and you assume they all belong to the
@@ -295,9 +295,9 @@ If you developed a new TE method/got a TE library and want to compare it's annot
 
 eg.
 
-    python lib-test.py --genome rice_genome.fasta --reference ./EDTA/database/Rice_MSU7.fasta.std7.0.1.out --test rice_genome.fasta.test.out
+    python lib-test.py --genome rice_genome.fasta --reference ./EDTA/database/Rice_MSU7.fasta.std7.0.1.out.gz --test rice_genome.fasta.test.out
 
-Reports are written next to the `--test` file:
+Reports are written next to the `--test` file (named without a trailing `.gz`):
 - `<test>.repeatmasker.lib.report` — per-category sensitivity, specificity, accuracy, precision, FDR, and F1
 - `<test>.superfamily_confusion_matrix.tsv` — superfamily-level confusion matrix
 - `<test>.sequence_assessment.report` — per-sequence, per-category breakdown (only with `--extended_report`)
