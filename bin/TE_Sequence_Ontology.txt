@@ -42,7 +42,7 @@ KDZ_TIR_transposon	SO:0000182	KDZ_TIR_transposon,DNA/Zisupton,DNA/Zisupton-hAT-h
 #Dileera_TIR_transposon	SO:0000182	Dileera_TIR_transposon,DNA/Dileera
 #Plavaka_TIR_transposon	SO:0000182	Kyakuja_TIR_transposon,DNA/Plavaka
 Academ_TIR_transposon	SO:0000182	Academ_TIR_transposon,DNA/Academ,DNA/Academ-1,DNA/Academ_1,DNA/Academ-2,DNA/Academ_2,DNA/Academ-H,DNA/Academ_H
-Novosib_TIR_transposon	SO:0000182	Novosib_TIR_transposon,DNA/Novosib
+Novosib_TIR_transposon	SO:0000182	Novosib_TIR_transposon,DNA/Novosib,TIR/Novosib
 Alu_SINE_retrotransposon	SO:0000206	Alu_SINE_retrotransposon,SINE/Alu
 B2_SINE_retrotransposon	SO:0000206	B2_SINE_retrotransposon,SINE/B2
 B4_SINE_retrotransposon	SO:0000206	B4_SINE_retrotransposon,SINE/B4
@@ -82,7 +82,7 @@ mitochondrial_DNA	SO:0001032	mitochondrial_DNA,mitochondrion/mitochondrion
 
 ## higher order
 repeat_region	SO:0000657	repeat_region
-repeat_fragment	SO:0001050	repeat_fragment,Unknown,unknown,unknown/unknown,NA/NA,Unknown/NA,Unknown/unknown,Unspecified,repeat/unknown,repeat/Unknown,Unknown/Unknown,unknown/NA,Unknown/TATE
+repeat_fragment	SO:0001050	repeat_fragment,Unknown,unknown,unknown/unknown,NA/NA,Unknown/NA,Unknown/unknown,Unspecified,repeat/unknown,repeat/Unknown,Unknown/Unknown,unknown/NA,Unknown/TATE,Unspecified/NA
 retrotransposon	SO:0000180	Class_I,RNA_transposon,retrotransposon,Retroposon,Retroposon/L1_dep
 DNA_transposon	SO:0000182	Class_II,DNA_transposon,DNA/unknown,DNA/Unknown,DNA,DNA/NA
 snRNA	SO:0000274	snRNA,snRNA/NA
@@ -102,13 +102,13 @@ cytosolic_28S_rRNA	SO:0000653	cytosolic_28S_rRNA,rDNA/28s_rRNA,rDNA/28S_rRNA,rDN
 
 ## TIR DNA transposons
 terminal_inverted_repeat_element	SO:0000208	terminal_inverted_repeat_element,TIR/unknown,DNA/DTX,DTX,DNAauto/unknown,DNAnona/unknown,TIR/Unknown,DNAauto/Unknown,DNAnona/Unknown
-MITE	SO:0000338	MITE,TIR/MITE,MITE/unknown,MITE/Unknown
-CACTA_TIR_transposon	SO:0002285	CACTA_TIR_transposon,DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA,DNA/EnSpm_CACTA,DNA/CMC-EnSpm,DNA/CMC_Chapaev_3,DNA/CMC_EnSpm,DNA/CMC-Chapaever,DNA/CMC-Chapaev-3,DNA/CMC-EnSpmo,DNA/CMC-Miragen,DNA/CMC-Chapaev,DNA/CMC_Chapaev,DNA/CMC,TIR/CMC,DNA/CMC-Mirage,DNA/CMC_Mirage
-hAT_TIR_transposon	SO:0002279	hAT_TIR_transposon,DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT,TIR/hAT,DNA/hAT-Ac,DNA/hAT-Tag1,DNA/hAT-Blackjack,DNA/hAT-Charlie,DNA/hAT-hAT5,DNA/hAT-hAT6,DNA/hAT-hobo,DNA/hAT-Tip100,DNA/hAT_Ac,DNA/hAT_Blackjack,DNA/hAT_Charlie,DNA/hAT_hAT5,DNA/hAT_hAT6,DNA/hAT_hobo,DNA/hAT_Pegasus,DNA/hAT_Tag1,DNA/hAT_Tip100,DNA/hAT-hATm,DNA/hAT-AcTigger,DNA/hAT_AcTigger,DNA/hAT-hAT1,DNA/hAT_hAT1,DNA/hAT-hATm-hAT-hybrid,DNA/hAT-hATm-hAT_hybrid,DNA/hAT-hATw,DNA/hAT_hATw,DNA/hAT-hATx,DNA/hAT_hATx,DNA/hAT-Pegasus,DNA/hAT-Restless,DNA/hAT_Restless,DNA/hAT-Tag11,DNA/hAT_Tag11,DNA/hAT-Tip100?,DNA/hAT_Tip100?,DNA/hAT-Tol2,DNA/hAT_Tol2,DNA/hAT-hAT19,DNA/hAT_hAT19
-Mutator_TIR_transposon	SO:0002280	Mutator_TIR_transposon,DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator,DNA/Mutator,DNA/MuDR,DNA/MULE-MuDR,DNA/MULE-NOF,DNA/MULE_MuDR,DNA/MULE_NOF,DNA/MuLE-NOF?,DNA/MuLE_NOF?,DNA/MuLE-MuDR,DNA/MuLE_MuDR,DNA/MuLE-F,DNA/MuLE_F,DNA/MUDR,DNA/MULE-MuDR?,DNA/MULE-F,DNA/MULE_F
-PIF_Harbinger_TIR_transposon	SO:0002284	PIF_Harbinger_TIR_transposon,DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger,DNA/Harbinger,DNA/PIF-Harbinger,DNA/PIF,DNA/PIF-ISL2EU,DNA/PIF_ISL2EU,DNA/PIF_Harbinger,DNA/PIF-HarbS,DNA/PIF_HarbS,DNA/PIF-Spy,DNA/PIF_Spy
-Tc1_Mariner_TIR_transposon	SO:0002278	Tc1_Mariner_TIR_transposon,stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner,DNA/Tc1-Mariner,DNA/TcMar-Pogo,DNA/Mariner,DNA/TcMar-Stowaway,DNA/TcMar-Mariner,DNA/TcMar,DNA/TcMar-Fot1,DNA/TcMar-ISRm11,DNA/TcMar-Tc1,DNA/TcMar-Tigger,DNA/TcMar_Fot1,DNA/TcMar_ISRm11,DNA/TcMar_Mariner,DNA/TcMar_Tc1,DNA/TcMar_Tc2,DNA/TcMar_Tigger,DNA/TcMar_Pogo,DNA/Tc1_Mariner,DNA/TcMar_Stowaway,DNA/TcMareSL,DNA/TcMar-Ant1,DNA/TcMar_Ant1,DNA/TcMar-Gizmo,DNA/TcMar_Gizmo,DNA/TcMar-IS630,DNA/TcMar_IS630,DNA/TcMar-IS885,DNA/TcMar_IS885,DNA/TcMar-m44,DNA/TcMar_m44,DNA/TcMar-Mogwai,DNA/TcMar_Mogwai,DNA/TcMar-Sagan,DNA/TcMar_Sagan,DNA/TcMar-Tc2,DNA/TcMar-Tc4,DNA/TcMar_Tc4,Mariner/Tc1,DNA/Mariner-Tc1,DNA/MarinerTc1,DNA/TcMar-Cweed,DNA/TcMar_Cweed
-P_TIR_transposon	SO:0001535	P_TIR_transposon,P-element,P_element,DNA/DTP,TIR/P,DNA/P,DNA/P-Fungi,DNA/P_Fungi
+MITE	SO:0000338	MITE,TIR/MITE,MITE/unknown,MITE/Unknown,MITE/NA
+CACTA_TIR_transposon	SO:0002285	CACTA_TIR_transposon,DNAauto/CACTA,DNAnona/CACTA,DNAauto/CACTG,DNAnona/CACTG,DNA/DTC,MITE/DTC,DTC,dSpm,CACTC,En-Spm,EnSpm,CMC-EnSpm,DNA/CACTA,DNA/CACTG,MITE/CACTA,MITE/CACTG,TIR/EnSpm_CACTA,DNA/EnSpm_CACTA,DNA/CMC-EnSpm,DNA/CMC_Chapaev_3,DNA/CMC_EnSpm,DNA/CMC-Chapaever,DNA/CMC-Chapaev-3,DNA/CMC-EnSpmo,DNA/CMC-Miragen,DNA/CMC-Chapaev,DNA/CMC_Chapaev,DNA/CMC,TIR/CMC,DNA/CMC-Mirage,DNA/CMC_Mirage,DNA/CACTA/MITE,DNA/CACTA/nMITE,DNA/CACTA/unknown
+hAT_TIR_transposon	SO:0002279	hAT_TIR_transposon,DNAauto/hAT,DNAnona/hAT,MITE/DTA,DNA/DTA,DTA,hAT,Ac-Ds,Ac/Ds,hAT-Ac,DNA/hAT,MITE/hAT,TIR/hAT,DNA/hAT-Ac,DNA/hAT-Tag1,DNA/hAT-Blackjack,DNA/hAT-Charlie,DNA/hAT-hAT5,DNA/hAT-hAT6,DNA/hAT-hobo,DNA/hAT-Tip100,DNA/hAT_Ac,DNA/hAT_Blackjack,DNA/hAT_Charlie,DNA/hAT_hAT5,DNA/hAT_hAT6,DNA/hAT_hobo,DNA/hAT_Pegasus,DNA/hAT_Tag1,DNA/hAT_Tip100,DNA/hAT-hATm,DNA/hAT-AcTigger,DNA/hAT_AcTigger,DNA/hAT-hAT1,DNA/hAT_hAT1,DNA/hAT-hATm-hAT-hybrid,DNA/hAT-hATm-hAT_hybrid,DNA/hAT-hATw,DNA/hAT_hATw,DNA/hAT-hATx,DNA/hAT_hATx,DNA/hAT-Pegasus,DNA/hAT-Restless,DNA/hAT_Restless,DNA/hAT-Tag11,DNA/hAT_Tag11,DNA/hAT-Tip100?,DNA/hAT_Tip100?,DNA/hAT-Tol2,DNA/hAT_Tol2,DNA/hAT-hAT19,DNA/hAT_hAT19,DNA/hAT/MITE,DNA/hAT/nMITE,DNA/hAT/unknown
+Mutator_TIR_transposon	SO:0002280	Mutator_TIR_transposon,DNAauto/MULE,DNAnona/MULE,DNAnona/MULEtir,MITE/DTM,DNA/DTM,DTM,Mutator,MuDR,DNA/MULE,DNA/MULEtir,MITE/MULE,MITE/MULEtir,MULEtir,TIR/MuDR_Mutator,DNA/Mutator,DNA/MuDR,DNA/MULE-MuDR,DNA/MULE-NOF,DNA/MULE_MuDR,DNA/MULE_NOF,DNA/MuLE-NOF?,DNA/MuLE_NOF?,DNA/MuLE-MuDR,DNA/MuLE_MuDR,DNA/MuLE-F,DNA/MuLE_F,DNA/MUDR,DNA/MULE-MuDR?,DNA/MULE-F,DNA/MULE_F,DNA/Mutator/MITE,DNA/Mutator/nMITE,DNA/Mutator/unknown
+PIF_Harbinger_TIR_transposon	SO:0002284	PIF_Harbinger_TIR_transposon,DNAnona/Tourist,MITE/Tourist,MITE/DTH,DNA/DTH,DTH,PIF-Harbinger,PIF/Harbinger,Harbinger,Tourist,DNA/Tourist,TIR/PIF_Harbinger,DNA/Harbinger,DNA/PIF-Harbinger,DNA/PIF,DNA/PIF-ISL2EU,DNA/PIF_ISL2EU,DNA/PIF_Harbinger,DNA/PIF-HarbS,DNA/PIF_HarbS,DNA/PIF-Spy,DNA/PIF_Spy,DNA/Harbinger/MITE,DNA/Harbinger/nMITE,DNA/Harbinger/unknown
+Tc1_Mariner_TIR_transposon	SO:0002278	Tc1_Mariner_TIR_transposon,stowaway,Stowaway,DNA/DTT,MITE/Stow,MITE/DTT,DTT,Tc1-Mariner,Tc1_Mariner,Tc1_mariner,Tc1/Mariner,TcMar-Stowaway,DNAauto/MLE,DNAnona/MLE,DNA/MLE,MITE/MLE,TIR/Tc1_Mariner,DNA/Tc1-Mariner,DNA/TcMar-Pogo,DNA/Mariner,DNA/TcMar-Stowaway,DNA/TcMar-Mariner,DNA/TcMar,DNA/TcMar-Fot1,DNA/TcMar-ISRm11,DNA/TcMar-Tc1,DNA/TcMar-Tigger,DNA/TcMar_Fot1,DNA/TcMar_ISRm11,DNA/TcMar_Mariner,DNA/TcMar_Tc1,DNA/TcMar_Tc2,DNA/TcMar_Tigger,DNA/TcMar_Pogo,DNA/Tc1_Mariner,DNA/TcMar_Stowaway,DNA/TcMareSL,DNA/TcMar-Ant1,DNA/TcMar_Ant1,DNA/TcMar-Gizmo,DNA/TcMar_Gizmo,DNA/TcMar-IS630,DNA/TcMar_IS630,DNA/TcMar-IS885,DNA/TcMar_IS885,DNA/TcMar-m44,DNA/TcMar_m44,DNA/TcMar-Mogwai,DNA/TcMar_Mogwai,DNA/TcMar-Sagan,DNA/TcMar_Sagan,DNA/TcMar-Tc2,DNA/TcMar-Tc4,DNA/TcMar_Tc4,Mariner/Tc1,DNA/Mariner-Tc1,DNA/MarinerTc1,DNA/TcMar-Cweed,DNA/TcMar_Cweed,DNA/TcMar/MITE,DNA/TcMar/nMITE,DNA/TcMar/unknown
+P_TIR_transposon	SO:0001535	P_TIR_transposon,P-element,P_element,DNA/DTP,TIR/P,DNA/P,DNA/P-Fungi,DNA/P_Fungi,DNA/P/nMITE
 piggyBac_TIR_transposon	SO:0002283	piggyBac_TIR_transposon,PiggyBac,DNA/DTB,MITE/DTB,TIR/PiggyBac,TIR/piggyBac,piggyBac,DNA/PiggyBac,DNA/PiggyBacen,DNA/piggyBac,DNA/PiggyBac-A,DNA/PiggyBac_A,DNA/PiggyBac-X,DNA/PiggyBac_X
 polinton	SO:0001170	polinton,maverick,Maverick,DNA/Maverick,TIR/Maverick,Polinton
 Transib_TIR_transposon	SO:0002282	Transib_TIR_transposon,transib,DNA/DTR,MITE/DTR,DNA/CMC-Transib,DNA/CMC-Transibway,DNA/Transib
@@ -120,7 +120,7 @@ Crypton_YR_transposon	SO:0002277	Crypton_YR_transposon,Crypton,DNA/DYC,DYC,DNA/C
 helitron	SO:0000544	helitron,DNAauto/Helitron,DNAnona/Helitron,DNA/Helitron,Helitron,RC/Helitron,Unknown/Helitron-2,nonDNA/Helitron,Helitron/NA,nonDNA/helitron,RC/Helitron-2,RC/Helitron_2
 
 ## LTR retrotransposons
-LTR_retrotransposon	SO:0000186	LTR_retrotransposon,LTR/unknown,LTR/Solo,LTR/Unknown,LTR/solo,LTR,LTR/NA
+LTR_retrotransposon	SO:0000186	LTR_retrotransposon,LTR/unknown,LTR/Solo,LTR/Unknown,LTR/solo,LTR,LTR/NA,LTR/mixture
 Retrovirus_LTR_retrotransposon	SO:0002267	Retrovirus_LTR_retrotransposon,LTR/retrovirus,retrovirus,LTR/RLR,RLR,LTR/Retrovirus
 TRIM	SO:0002261	TRIM,LTR/TRIM
 LARD	SO:0002260	LARD,LTR/LARD
@@ -148,7 +148,7 @@ YR_retrotransposon	SO:0002286	YR_retrotransposon,YR/unknown,YR/Unknown
 Ngaro_YR_retrotransposon	SO:0002288	Ngaro_YR_retrotransposon,YR/Ngaro,YR/RYN,Ngaro,RYN,LTR/Ngaro,DIRS/Ngaro
 DIRS_YR_retrotransposon	SO:0002287	DIRS_YR_retrotransposon,YR/DIRS,YR/RYD,DIRS,RYD,LTR/DIRS,DIRS/NA,LTR/DIRS?,DIRS/PAT-like
 Viper_YR_retrotransposon	SO:0002289	Viper_YR_retrotransposon,YR/Viper,YR/RYV,Viper,RYV,LTR/Viper
-Penelope_retrotransposon	SO:0002290	Penelope_retrotransposon,Penelope,nonLTR/RPP,RPP,nonLTR/Penelope,Penelope/NA,LINE/Penelope,PLE/Chlamys,PLE,PLE/Naiad,Penelope/Naiad,PLE/Poseidon,Penelope/Poseidon
+Penelope_retrotransposon	SO:0002290	Penelope_retrotransposon,Penelope,nonLTR/RPP,RPP,nonLTR/Penelope,Penelope/NA,LINE/Penelope,PLE/Chlamys,PLE,PLE/Naiad,Penelope/Naiad,PLE/Poseidon,Penelope/Poseidon,PLE/NA
 
 ## parts
 target_site_duplication	SO:0000434	target_site_duplication,TSD
